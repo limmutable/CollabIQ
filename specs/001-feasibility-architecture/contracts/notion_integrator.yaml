@@ -1,0 +1,165 @@
+# NotionIntegrator Component Contract
+# Responsible for all Notion API operations
+
+contract_version: "1.0.0"
+component: NotionIntegrator
+type: component
+description: |
+  Handles all interactions with Notion databases: fetching company lists,
+  creating collaboration entries, and managing relations.
+
+methods:
+  fetch_company_lists:
+    description: Fetch existing company names from스타트업 and 계열사 databases
+    inputs: {}
+
+    outputs:
+      companies:
+        type: ClassificationContext
+        description: Lists of portfolio companies and SSG affiliates
+        fields:
+          portfolio_companies:
+            type: list[str]
+            description: Company names from 스타트업 database
+            example: ["본봄", "테이블매니저", "어라운드"]
+          ssg_affiliates:
+            type: list[str]
+            description: Organization names from 계열사 database
+            example: ["신세계인터내셔널", "신세계푸드", "이마트"]
+
+    errors:
+      - NotionAuthError: Invalid API token
+      - NotionRateLimitError: Rate limit exceeded (3 req/s)
+      - NotionAPIError: API request failed
+
+    performance:
+      expected_latency: "1-2 seconds"
+      caching_strategy: "Cache for 1 hour, refresh on expiry"
+      rate_limit: "3 requests/second"
+
+  create_entry:
+    description: Create new entry in "레이더 활동" database
+    inputs:
+      entry:
+        type: NotionEntry
+        required: true
+        description: Entry data with all required fields
+        example:
+          person_in_charge: "김철수"
+          startup_name: "본봄"
+          startup_page_id: "abc123"
+          partner_org: "신세계인터내셔널"
+          partner_page_id: "def456"
+          collab_subject: "본봄-신세계인터내셔널"
+          details: "11월 1주 PoC 시작 예정..."
+          collab_type: "[A]"
+          intensity: "협력"
+          date: "2025-10-27T00:00:00"
+          summary: "본봄과 신세계인터내셔널이 파일럿 킥오프..."
+
+    outputs:
+      page_id:
+        type: str
+        description: Notion page ID of created entry
+        example: "ghi789jkl012"
+
+      url:
+        type: str
+        description: Direct URL to created Notion page
+        example: "https://notion.so/ghi789jkl012"
+
+    errors:
+      - NotionAuthError: Invalid API token
+      - NotionRateLimitError: Rate limit exceeded
+      - NotionValidationError: Invalid field values
+      - NotionRelationError: Failed to create relation link
+
+    performance:
+      expected_latency: "1-3 seconds"
+      retry_strategy: "Exponential backoff: 5s, 10s, 20s (max 5 retries)"
+
+  find_company_page:
+    description: Find Notion page ID for a company name (fuzzy matching)
+    inputs:
+      company_name:
+        type: str
+        required: true
+        description: Company name to search for
+        example: "신세계인터"
+
+      database_id:
+        type: str
+        required: true
+        description: Notion database ID (스타트업 or 계열사)
+
+    outputs:
+      page_id:
+        type: Optional[str]
+        description: Notion page ID if found, None if no match
+        example: "abc123def456"
+
+      matched_name:
+        type: Optional[str]
+        description: Actual company name from Notion database
+        example: "신세계인터내셔널"
+
+      confidence:
+        type: float
+        description: Match confidence score (0.0-1.0)
+        example: 0.87
+
+    errors:
+      - NotionAPIError: API request failed
+
+    performance:
+      expected_latency: "1-2 seconds"
+      caching_strategy: "Cache company list for fuzzy matching (refresh hourly)"
+
+example_usage: |
+  from src.notion_integrator import NotionIntegrator
+  from src.notion_integrator.types import NotionEntry
+  from datetime import datetime
+
+  # Initialize integrator
+  integrator = NotionIntegrator(api_key=settings.notion_api_key)
+
+  # Fetch company lists for LLM context
+  context = integrator.fetch_company_lists()
+  print(f"Portfolio companies: {context.portfolio_companies}")
+
+  # Create new collaboration entry
+  entry = NotionEntry(
+      person_in_charge="김철수",
+      startup_name="본봄",
+      startup_page_id="abc123",
+      partner_org="신세계인터내셔널",
+      partner_page_id="def456",
+      collab_subject="본봄-신세계인터내셔널",
+      details="11월 1주 PoC 시작 예정...",
+      collab_type="[A]",
+      intensity="협력",
+      date=datetime(2025, 10, 27),
+      summary="본봄과 신세계인터내셔널이 파일럿..."
+  )
+
+  page_id, url = integrator.create_entry(entry)
+  print(f"Created: {url}")
+
+rate_limit_handling: |
+  # Notion API limits: 3 requests/second
+
+  # Strategy 1: Local queue with rate limiting
+  # - Queue requests locally
+  # - Process at max 3 req/s
+  # - Blocks until rate limit window resets
+
+  # Strategy 2: Exponential backoff on 429 errors
+  # - Catch NotionRateLimitError
+  # - Wait and retry: 5s, 10s, 20s
+  # - Move to Dead Letter Queue after max retries
+
+notes:
+  - "Company list caching reduces API calls from 50 emails × 2 fetches = 100 req/day to 24 req/day (hourly refresh)"
+  - "Rate limit (3 req/s) = 259,200 req/day >> 50 emails × 3 operations = 150 req/day"
+  - "Relation links require page IDs from 스타트업/계열사 databases"
+  - "Auto-generate 협력주체 field as: {startup_name}-{partner_org}"

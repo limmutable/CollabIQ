@@ -1,0 +1,32 @@
+[project]
+name = "collabiq"
+version = "0.1.0"
+description = "Email-based collaboration tracking system"
+readme = "README.md"
+authors = [
+    { name = "Jeffrey Lim", email = "jlim@prorata.vc" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "google-generativeai>=0.8.5",
+    "notion-client>=2.6.0",
+    "pydantic-settings>=2.11.0",
+    "rapidfuzz>=3.14.1",
+]
+
+[project.scripts]
+collabiq = "collabiq:main"
+
+[build-system]
+requires = ["uv_build>=0.9.5,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.18.2",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
+    "pytest-mock>=3.15.1",
+    "ruff>=0.14.2",
+]

@@ -1,0 +1,105 @@
+# EmailReceiver Component Contract
+# Responsible for ingesting emails from radar@signite.co
+
+contract_version: "1.0.0"
+component: EmailReceiver
+type: component
+description: |
+  Ingests emails from radar@signite.co inbox via Gmail API, IMAP, or webhook.
+  Returns raw email objects for downstream processing.
+
+methods:
+  fetch_emails:
+    description: Fetch new emails since given timestamp
+    inputs:
+      since:
+        type: datetime
+        required: true
+        description: Fetch emails received after this timestamp
+        example: "2025-10-27T00:00:00"
+
+      limit:
+        type: Optional[int]
+        required: false
+        default: null
+        description: Maximum number of emails to fetch (null = no limit)
+
+    outputs:
+      emails:
+        type: list[RawEmail]
+        description: List of raw email objects
+        example:
+          - message_id: "CABc123xyz789"
+            subject: "본봄 파일럿 킥오프"
+            body: "어제 신세계인터와 본봄 파일럿 킥오프..."
+            sender: "kim@signite.co"
+            recipient: "radar@signite.co"
+            received_at: "2025-10-27T14:30:00"
+            attachments: []
+
+    errors:
+      - EmailAuthError: Authentication failed (invalid credentials)
+      - EmailConnectionError: Failed to connect to email server
+      - EmailRateLimitError: Rate limit exceeded (Gmail API)
+
+    performance:
+      expected_latency: "1-5 seconds for 10 emails"
+      retry_strategy: "Exponential backoff: 2s, 4s, 8s (max 3 retries)"
+
+implementations:
+  - name: GmailAPIReceiver
+    description: Gmail API implementation (OAuth 2.0)
+    pros:
+      - Official API with excellent documentation
+      - Rich filtering capabilities
+      - Reliable uptime
+    cons:
+      - OAuth setup complexity
+      - Quota limits (250 req/day free tier)
+    status: option
+    phase: Phase 1a (branch 002-email-reception)
+
+  - name: IMAPReceiver
+    description: IMAP protocol implementation
+    pros:
+      - Simple username/password auth
+      - No API quotas
+      - Works with any email provider
+    cons:
+      - Connection drops common
+      - Requires manual reconnection logic
+    status: option
+    phase: Phase 1a (branch 002-email-reception)
+
+  - name: WebhookReceiver
+    description: Webhook-based implementation (SendGrid/AWS SES/Mailgun)
+    pros:
+      - Push-based (no polling)
+      - Reliable delivery with retries
+      - Scales easily
+    cons:
+      - Requires domain/subdomain setup
+      - External service dependency
+    status: option
+    phase: Phase 1a (branch 002-email-reception)
+
+example_usage: |
+  from src.email_receiver import EmailReceiver, GmailAPIReceiver
+  from datetime import datetime, timedelta
+
+  # Initialize receiver
+  receiver: EmailReceiver = GmailAPIReceiver(credentials_path="credentials.json")
+
+  # Fetch emails from last 24 hours
+  since = datetime.now() - timedelta(days=1)
+  emails = receiver.fetch_emails(since=since, limit=50)
+
+  for email in emails:
+      print(f"From: {email.sender}")
+      print(f"Subject: {email.subject}")
+      print(f"Body: {email.body[:100]}...")
+
+notes:
+  - "Selected implementation depends on feasibility study findings (Task T008)"
+  - "All implementations must handle authentication renewal/token refresh"
+  - "Polling interval recommendation: every 5-10 minutes for low volume (50 emails/day)"

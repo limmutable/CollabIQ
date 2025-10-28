@@ -1,0 +1,227 @@
+# LLMProvider Interface Contract
+# Abstract base class for LLM providers (Gemini, GPT, Claude, Multi-LLM)
+
+contract_version: "1.0.0"
+component: LLMProvider
+type: interface
+description: |
+  Abstract interface for LLM-based entity extraction, classification, and summarization.
+  Enables swapping between different LLM providers without rewriting system logic.
+
+methods:
+  extract_entities:
+    description: Extract key entities from email text and match to existing companies
+    inputs:
+      email_text:
+        type: str
+        required: true
+        description: Normalized email body (Korean/English, signatures removed)
+        example: "어제 신세계인터와 본봄 파일럿 킥오프, 11월 1주 PoC 시작 예정"
+
+      company_context:
+        type: ClassificationContext
+        required: false
+        description: Optional context with portfolio companies and SSG affiliates for fuzzy matching
+        example:
+          portfolio_companies: ["본봄", "테이블매니저", "어라운드"]
+          ssg_affiliates: ["신세계인터내셔널", "신세계푸드", "이마트"]
+
+    outputs:
+      entities:
+        type: ExtractedEntities
+        description: Extracted entities with confidence scores
+        fields:
+          person_in_charge:
+            type: Optional[str]
+            description: 담당자 - Person who sent/received update
+            example: "김철수"
+          startup_name:
+            type: Optional[str]
+            description: 스타트업명 - Startup company name
+            example: "본봄"
+          partner_org:
+            type: Optional[str]
+            description: 협업기관 - Partner organization name
+            example: "신세계인터내셔널"
+          details:
+            type: str
+            description: 협업내용 - Full collaboration details
+            example: "11월 1주 PoC 시작 예정, 파일럿 킥오프 완료"
+          date:
+            type: Optional[datetime]
+            description: 날짜 - Date of collaboration activity
+            example: "2025-10-27T00:00:00"
+          confidence:
+            type: dict[str, float]
+            description: Per-field confidence scores (0.0-1.0)
+            example:
+              person: 0.95
+              startup: 0.92
+              partner: 0.88
+              date: 0.85
+
+      matched_companies:
+        type: list[MatchedCompany]
+        description: Companies matched to existing Notion database entries
+        example:
+          - original_name: "신세계인터"
+            matched_name: "신세계인터내셔널"
+            notion_page_id: "abc123def456"
+            confidence: 0.87
+          - original_name: "본봄"
+            matched_name: "본봄"
+            notion_page_id: "xyz789ghi012"
+            confidence: 1.0
+
+    errors:
+      - LLMAPIError: LLM API call failed after retries
+      - LLMRateLimitError: Rate limit exceeded
+      - LLMTimeoutError: Request timed out
+      - LLMParsingError: Failed to parse LLM response
+
+    performance:
+      expected_latency: "1-3 seconds"
+      retry_strategy: "Exponential backoff: 1s, 2s, 4s, 8s (max 3 retries)"
+
+  classify:
+    description: Classify collaboration type and intensity
+    inputs:
+      entities:
+        type: ExtractedEntities
+        required: true
+        description: Extracted entities from extract_entities()
+
+      context:
+        type: ClassificationContext
+        required: true
+        description: Portfolio status and SSG affiliation lookup results
+
+    outputs:
+      classification:
+        type: Classification
+        description: Collaboration type and intensity with confidence
+        fields:
+          collab_type:
+            type: str
+            description: "협업형태 - [A] PortCo×SSG, [B] Non-PortCo×SSG, [C] PortCo×PortCo, [D] Other"
+            pattern: "^\\[(A|B|C|D)\\]$"
+            example: "[A]"
+          intensity:
+            type: str
+            description: "협업강도 - 이해 (Understand), 협력 (Cooperate), 투자 (Invest), 인수 (Acquire)"
+            enum: ["이해", "협력", "투자", "인수"]
+            example: "협력"
+          confidence:
+            type: dict[str, float]
+            description: Per-classification confidence scores
+            example:
+              type: 0.91
+              intensity: 0.89
+
+    classification_rules:
+      type:
+        "[A]": "startup_name in portfolio_companies AND partner_org in ssg_affiliates"
+        "[B]": "startup_name NOT in portfolio_companies AND partner_org in ssg_affiliates"
+        "[C]": "startup_name in portfolio_companies AND partner_org in portfolio_companies"
+        "[D]": "All other combinations"
+      intensity:
+        "이해": "Keywords: meeting, discussion, introduction, 미팅, 소개, 논의"
+        "협력": "Keywords: pilot, PoC, partnership, collaboration, 파일럿, 협업, 협력"
+        "투자": "Keywords: investment, funding, financing, 투자, 펀딩, 유치"
+        "인수": "Keywords: acquisition, M&A, takeover, 인수, 합병"
+
+    errors:
+      - LLMAPIError: LLM API call failed after retries
+
+  summarize:
+    description: Generate 3-5 sentence summary preserving key details
+    inputs:
+      text:
+        type: str
+        required: true
+        description: Full collaboration details text
+        example: "어제 신세계인터내셔널과 본봄 파일럿 킥오프 미팅을 진행했습니다. 11월 1주에 PoC를 시작할 예정이며..."
+
+      max_sentences:
+        type: int
+        required: false
+        default: 5
+        description: Maximum sentences in summary (3-5)
+
+    outputs:
+      summary:
+        type: str
+        description: Summary string (Korean or English matching input)
+        example: "본봄과 신세계인터내셔널이 파일럿 킥오프를 진행하고 11월 1주에 PoC를 시작할 예정입니다. 협력은 제품 테스트와 시장 검증에 초점을 맞추고 있습니다."
+
+    errors:
+      - LLMAPIError: LLM API call failed after retries
+
+implementations:
+  - name: GeminiAdapter
+    file: src/llm_adapters/gemini.py
+    description: Gemini API implementation (extraction + matching + classification + summarization in one call)
+    status: planned
+    phase: Phase 1b (branch 003-gemini-extraction)
+
+  - name: GPTAdapter
+    file: src/llm_adapters/gpt.py
+    description: OpenAI GPT-4 implementation
+    status: future
+    phase: If Gemini accuracy insufficient
+
+  - name: ClaudeAdapter
+    file: src/llm_adapters/claude.py
+    description: Anthropic Claude implementation
+    status: future
+    phase: If Gemini accuracy insufficient
+
+  - name: MultiLLMOrchestrator
+    file: src/llm_adapters/multi_llm.py
+    description: Consensus-based multi-LLM voting for higher accuracy
+    status: future
+    phase: If single LLM accuracy insufficient
+
+example_usage: |
+  from src.llm_provider import LLMProvider
+  from src.llm_adapters import GeminiAdapter
+  from src.llm_provider.types import ClassificationContext
+
+  # Initialize provider
+  llm: LLMProvider = GeminiAdapter(api_key=settings.gemini_api_key)
+
+  # Prepare context
+  context = ClassificationContext(
+      portfolio_companies=["본봄", "테이블매니저"],
+      ssg_affiliates=["신세계인터내셔널", "신세계푸드"]
+  )
+
+  # Extract entities
+  entities, matched_companies = llm.extract_entities(
+      email_text="어제 신세계인터와 본봄 파일럿 킥오프...",
+      company_context=context
+  )
+
+  # Classify collaboration
+  classification = llm.classify(entities, context)
+
+  # Generate summary
+  summary = llm.summarize(entities.details, max_sentences=5)
+
+  print(f"Startup: {entities.startup_name}")
+  print(f"Partner: {entities.partner_org}")
+  print(f"Type: {classification.collab_type}")
+  print(f"Intensity: {classification.intensity}")
+  print(f"Summary: {summary}")
+
+swap_example: |
+  # Swapping from Gemini to GPT is trivial:
+  # llm: LLMProvider = GeminiAdapter(api_key=settings.gemini_api_key)
+  llm: LLMProvider = GPTAdapter(api_key=settings.openai_api_key)
+  # All downstream code remains unchanged!
+
+notes:
+  - "All methods return confidence scores to enable verification queue filtering"
+  - "Retry logic is handled internally by each adapter implementation"
+  - "Company matching is performed by LLM using semantic understanding (no separate FuzzyMatcher component)"
+  - "Swap time between providers: ~30 minutes to implement new adapter + change configuration"
