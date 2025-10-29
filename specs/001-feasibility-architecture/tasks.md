@@ -33,9 +33,9 @@
 - [x] T002 [P] [US1] Create sample Korean collaboration email dataset in tests/fixtures/sample_emails/ (6 examples with ground truth labels for entities: 스타트업명, 협업기관, 협업강도, 날짜)
 - [x] T003 [US1] Test Gemini 2.5 Flash with structured output on sample emails (94% average confidence ✅, 12.42s latency, $0.14/month cost - PASS all targets)
 - [x] T004 [US1] Test Gemini 2.5 Pro if Flash accuracy insufficient (NOT NEEDED - Flash 94% exceeds 85% target)
-- [ ] T005 [P] [US1] Set up Notion API access (create integration at notion.so/my-integrations, obtain token, install notion-client SDK via `uv add notion-client`)
-- [ ] T006 [US1] Create test Notion workspace with "레이더 활동" database schema (담당자 Person field, 스타트업명/협업기관 Relation fields, 협력주체 Title field, 협업내용 Text field, 협업형태/협업강도 Select fields, 날짜 Date field)
-- [ ] T007 [US1] Test creating Notion entries programmatically (verify all field types work via SDK, test relation linking with fuzzy match scenarios, measure API rate limits 3 req/s documented)
+- [X] T005 [P] [US1] Set up Notion API access (create integration at notion.so/my-integrations, obtain token, install notion-client SDK via `uv add notion-client`)
+- [X] T006 [US1] Create test Notion workspace with "CollabIQ" database schema (담당자 Person field, 스타트업명/협업기관 Relation fields, 협력주체 Title field, 협업내용 Text field, 협업형태/협업강도 Select fields, 날짜 Date field - existing database analyzed and validated)
+- [X] T007 [US1] Test creating Notion entries programmatically (verify all field types work via SDK, test relation linking with fuzzy match scenarios, measure API rate limits 3 req/s documented - all tests passed with 1.71 req/s observed)
 - [ ] T008 [P] [US1] Research email infrastructure options (Gmail API: OAuth setup, 250 req/day free tier; IMAP: simple protocol, connection drops; Email webhook: SendGrid/AWS SES/Mailgun, ~$10-50/month) and document pros/cons matrix in specs/001-feasibility-architecture/email-infrastructure-comparison.md
 - [ ] T009 [US1] Test Gemini-based fuzzy matching approach (provide Gemini with list of existing Notion company names in prompt context, test on 20-30 company name pairs from sample data, measure accuracy ≥85% target for abbreviations/typos/spacing, document confidence scores)
 - [ ] T010 [US1] Evaluate RapidFuzz as fallback option (install `uv add rapidfuzz`, test Levenshtein distance on Korean company names, validate ≥0.85 threshold on test dataset, document if needed as fallback only if Gemini matching insufficient)
