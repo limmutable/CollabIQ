@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(uv run:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "SlashCommand(/speckit.specify analyze and clean up project structure and documents. add file naming rules in constitution.md with the best practices for this project.)",
+      "SlashCommand(/speckit.specify:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []
