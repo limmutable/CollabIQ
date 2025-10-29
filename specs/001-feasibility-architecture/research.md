@@ -118,10 +118,11 @@ Gemini 2.5 Flash achieves 94% average confidence, well above the 85% target. Tes
 
 ### 2.2 Database Schema Validation
 
-**Test Databases Created**:
-- ✅ 레이더 활동 (Radar Activities) - Main collaboration tracking database
-- ✅ 스타트업 (Startups) - Portfolio companies
-- ✅ 계열사 (Corporate Partners) - SSG affiliates
+**Existing Databases Analyzed**:
+- ✅ **CollabIQ** (formerly 레이더 활동) - Main collaboration tracking database with 15 fields
+- ✅ **Company Database** - Unified database containing all companies (startups, portfolio companies, and Shinsegate affiliates) with 23 fields
+  - Uses checkbox fields "Is Portfolio?" and "Shinsegae affiliates?" to distinguish company types
+  - Replaces separate 스타트업 and 계열사 databases with a single unified structure
 
 #### Required Field Types
 
