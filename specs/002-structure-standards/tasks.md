@@ -24,10 +24,10 @@
 
 **Purpose**: Ensure clean environment and prerequisites for standards documentation
 
-- [ ] T001 Verify Git repository is clean with no uncommitted changes (run `git status`)
-- [ ] T002 [P] Verify pytest is installed for final verification (run `uv run pytest --version` or `uv add --dev pytest`)
-- [ ] T003 [P] Create backup of current constitution.md at `.specify/memory/constitution.md.backup`
-- [ ] T004 [P] Create reports directory at `specs/002-structure-standards/reports/`
+- [X] T001 Verify Git repository is clean with no uncommitted changes (run `git status`)
+- [X] T002 [P] Verify pytest is installed for final verification (run `uv run pytest --version` or `uv add --dev pytest`)
+- [X] T003 [P] Create backup of current constitution.md at `.specify/memory/constitution.md.backup`
+- [X] T004 [P] Create reports directory at `specs/002-structure-standards/reports/`
 
 **Checkpoint**: Environment ready - user story implementation can now begin
 
