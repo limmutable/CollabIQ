@@ -96,6 +96,194 @@ All complexity MUST be justified explicitly; simpler alternatives MUST be consid
 
 **Rationale**: Complexity is a liability. Every abstraction, pattern, or framework carries maintenance cost. Forcing explicit justification prevents cargo-cult engineering and premature optimization.
 
+## File Naming Standards
+
+### Overview
+
+This section defines naming conventions for all file types in the CollabIQ project. These standards ensure consistency, readability, and compatibility with tooling.
+
+### Python Source Files
+
+#### Module and Package Names
+
+- **Format**: `lowercase_with_underscores` (snake_case)
+- **Pattern**: `^[a-z][a-z0-9_]*\.py$`
+- **Rationale**: PEP 8 standard, importable without escaping, widely recognized in Python ecosystem
+
+**Valid Examples**:
+- `email_receiver.py` ✅
+- `llm_adapters.py` ✅
+- `notion_integrator.py` ✅
+
+**Invalid Examples**:
+- `emailReceiver.py` ❌ (camelCase not allowed)
+- `llm-adapters.py` ❌ (hyphens not importable)
+- `LLMAdapters.py` ❌ (PascalCase not allowed)
+
+**Exceptions**: Python special files (`__init__.py`, `__main__.py`, `__version__.py`) follow Python conventions and must never be renamed.
+
+#### Package Directories
+
+- **Format**: `lowercase_with_underscores` (snake_case, no .py extension)
+- **Examples**: `email_receiver/`, `llm_adapters/`, `notion_integrator/`
+- **Required**: Must contain `__init__.py` to be a Python package
+
+### Documentation Files
+
+#### Ecosystem Standards (NEVER change)
+
+- `README.md` - Project overview
+- `LICENSE` - Legal information
+- `CHANGELOG.md` - Version history
+- `CONTRIBUTING.md` - Contribution guidelines
+
+**Rationale**: Universally recognized by developers and tools (GitHub, GitLab, package managers)
+
+#### Major Technical Documentation
+
+- **Format**: `SCREAMING_SNAKE_CASE.md`
+- **Purpose**: High-importance architectural, technical, or reference documents
+- **Location**: `docs/` directory
+
+**Examples**:
+- `ARCHITECTURE.md` ✅
+- `API_CONTRACTS.md` ✅
+- `IMPLEMENTATION_ROADMAP.md` ✅
+- `FEASIBILITY_TESTING.md` ✅
+
+**Rationale**: Visual prominence in file listings, clearly distinct from guides
+
+#### Guides and Tutorials
+
+- **Format**: `descriptive-kebab-case.md`
+- **Purpose**: Step-by-step instructions, explanatory content
+- **Location**: `docs/` directory or feature specs
+
+**Examples**:
+- `quickstart.md` ✅
+- `getting-started.md` ✅
+- `email-infrastructure-comparison.md` ✅
+
+**Rationale**: Readable, URL-friendly, lower visual weight than major docs
+
+**Boundary Rule**: If the document describes system architecture or serves as a permanent reference → SCREAMING_SNAKE_CASE. If it provides instructions or explanations → kebab-case.
+
+### Test Files
+
+#### Test Modules
+
+- **Format**: `test_<module_or_feature>.py`
+- **Pattern**: `^test_[a-z][a-z0-9_]*\.py$`
+- **Rationale**: pytest discovery convention
+
+**Examples**:
+- `test_email_receiver.py` ✅
+- `test_gemini_extraction.py` ✅
+- `test_notion_api.py` ✅
+
+#### Test Organization
+
+```text
+tests/
+├── contract/          # API/interface boundary tests
+├── integration/       # Multi-component workflow tests
+├── unit/              # Single-component tests
+└── fixtures/          # Test data and mocks
+```
+
+**Directory Names**: `lowercase` (single word preferred)
+
+#### Test Fixtures
+
+- **Format**: Descriptive name with appropriate extension
+- **Numbering**: Sequential for series (`sample-001.txt`, `sample-002.txt`)
+- **Case**: `kebab-case` for multi-word names
+
+**Examples**:
+- `sample-001.txt` ✅ (email samples)
+- `mock-response.json` ✅ (API mocks)
+- `test-data.csv` ✅ (data fixtures)
+
+**Documentation**: Include `README.md` explaining fixture purpose and `GROUND_TRUTH.md` for expected results
+
+### SpecKit Framework Conventions (Inherited)
+
+**Feature Directories**:
+- **Format**: `specs/###-feature-name/`
+- **Pattern**: Zero-padded 3-digit number + kebab-case name
+- **Examples**: `001-feasibility-architecture`, `002-structure-standards`
+
+**Specification Files** (inside feature directory):
+- `spec.md` - Feature specification
+- `plan.md` - Implementation plan
+- `research.md` - Research findings
+- `data-model.md` - Entity definitions
+- `tasks.md` - Implementation tasks
+- `quickstart.md` - Usage instructions
+- `completion-report.md` - Completion summary
+
+**Subdirectories**:
+- `contracts/` - API specifications
+- `checklists/` - Quality validation
+- `scripts/` - Feature-specific automation
+
+**Rationale**: These conventions are defined by the SpecKit framework and ensure consistency across all SpecKit-based projects. Do not modify.
+
+### Configuration Files (Ecosystem Standards)
+
+**NEVER rename these files** - they follow ecosystem conventions:
+
+- `pyproject.toml` - Python project configuration (PEP 518)
+- `Makefile` - Build automation
+- `uv.lock` - UV dependency lock file
+- `.gitignore` - Git ignore patterns
+- `.env` - Environment variables
+- `.env.example` - Environment template
+
+**Rationale**: Required by tools and expected by developers across the ecosystem
+
+### Git Workflow for Renames
+
+#### Use `git mv` for All Renames
+
+```bash
+# Correct - preserves history
+git mv old_name.py new_name.py
+
+# Incorrect - may lose history
+mv old_name.py new_name.py && git add new_name.py
+```
+
+#### Commit Strategy
+
+1. **Separate commit per rename category**:
+   ```bash
+   git mv docs/old_doc.md docs/NEW_DOC.md
+   git commit -m "Rename: old_doc.md → NEW_DOC.md (conform to SCREAMING_SNAKE_CASE)"
+   ```
+
+2. **Never mix renames with content changes** in same commit
+
+3. **Include before/after paths** in commit message
+
+4. **Update references in separate commit**:
+   ```bash
+   # After renaming module
+   git commit -m "Update imports after email_receiver → email_processor rename"
+   ```
+
+#### Verify History Preservation
+
+```bash
+git log --follow new_name.py  # Should show full history including pre-rename
+```
+
+### Version
+
+**Standards Version**: 1.0.0
+**Ratified**: 2025-10-29
+**Next Review**: After 001-feasibility-architecture merge to main
+
 ## Development Workflow
 
 ### Feature Lifecycle
@@ -186,4 +374,7 @@ Constitution version follows semantic versioning (MAJOR.MINOR.PATCH):
 - Test-first discipline MUST be enforced when tests are required
 - Specification-first workflow MUST be mandatory
 
-**Version**: 1.0.0 | **Ratified**: 2025-10-28 | **Last Amended**: 2025-10-28
+**Version**: 1.1.0 | **Ratified**: 2025-10-28 | **Last Amended**: 2025-10-29
+
+**Amendment Notes**:
+- v1.1.0 (2025-10-29): Added "File Naming Standards" section (MINOR version bump - new section added with comprehensive naming conventions for Python modules, documentation, tests, fixtures, SpecKit framework, and Git workflow)
