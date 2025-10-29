@@ -1,11 +1,12 @@
-File: sample-001.txt
-From: jeffreylim@signite.co
-To: [recipient@ssg.com]
-Subject: 브레이크앤컴퍼니 x 신세계 PoC 킥오프 결과
+보낸사람: Giseon Teddy.Lee <ks.lee@break.co.kr>
+받는사람: 안동훈 <cogito9@shinsegae.com>
+참조: 김주영 <gloriakim@signite.co>
+날짜: 2025-10-28 14:42
+제목: 브레이크앤컴퍼니 x 신세계 PoC 킥오프 결과
 
-안녕하세요,
+안녕하세요, 안동훈 담당님,
 
-어제 브레이크앤컴퍼니와 신세계 유통 디지털 혁신팀과의 PoC 킥오프 미팅을 진행했습니다.
+어제 신세계 유통 디지털 혁신팀과의 PoC 킥오프 미팅 요약 전달드립니다.
 
 주요 논의 내용:
 - 브레이크앤컴퍼니의 AI 기반 재고 최적화 솔루션 데모
@@ -17,7 +18,5 @@ Subject: 브레이크앤컴퍼니 x 신세계 PoC 킥오프 결과
 - 11/3(금) 기술 통합 회의 예정
 - 11/10(금) 파일럿 시작
 
-협업 강도: 협력 (파일럿 진행 중)
-
 감사합니다.
-Jeffrey Lim
+이기선 드림
