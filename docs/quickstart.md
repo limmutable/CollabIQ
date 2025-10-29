@@ -168,7 +168,7 @@ You'll need to choose one of three approaches:
 ### Option 2: IMAP
 - **Pros**: Simple, works with any email provider
 - **Cons**: Polling-based, may miss emails
-- **Setup**: Use app-specific password for `radar@signite.co`
+- **Setup**: Use app-specific password for `portfolioupdates@signite.co`
 
 ### Option 3: Webhook (Recommended for Production)
 - **Pros**: Real-time, scalable, no polling

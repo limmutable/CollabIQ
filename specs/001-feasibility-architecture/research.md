@@ -233,7 +233,7 @@ Detailed comparison available in: `specs/001-feasibility-architecture/email-infr
 ### 4.2 Selected Approach
 
 **Development/Pilot**: Gmail API
-- Easy OAuth setup for `radar@signite.co`
+- Easy OAuth setup for `portfolioupdates@signite.co`
 - 250 requests/day sufficient for pilot (50 emails/day = ~100 API calls)
 - Rich email metadata for debugging
 

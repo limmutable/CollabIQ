@@ -43,7 +43,7 @@ CollabIQ is an email-based collaboration tracking system that extracts entities 
 └─────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────┐
-│  EmailReceiver   │  ← Ingest emails from radar@signite.co
+│  EmailReceiver   │  ← Ingest emails from portfolioupdates@signite.co
 └────────┬─────────┘
          │ Raw email text
          ▼
@@ -93,7 +93,7 @@ CollabIQ is an email-based collaboration tracking system that extracts entities 
 
 | Component | Responsibility | Phase Implemented |
 |-----------|---------------|-------------------|
-| **EmailReceiver** | Ingest emails from radar@signite.co via Gmail API/IMAP/webhook | Phase 1a (branch 002) |
+| **EmailReceiver** | Ingest emails from portfolioupdates@signite.co via Gmail API/IMAP/webhook | Phase 1a (branch 002) |
 | **ContentNormalizer** | Remove signatures, quoted threads, disclaimers from email body | Phase 1a (branch 002) |
 | **LLMProvider** | Abstract interface for entity extraction, classification, summarization | Phase 1b (branch 003) |
 | **GeminiAdapter** | Concrete implementation using Gemini API for all NLP tasks | Phase 1b (branch 003) |

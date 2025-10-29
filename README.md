@@ -15,7 +15,7 @@ Email-based collaboration tracking system that automatically extracts collaborat
 ## Overview
 
 CollabIQ automates the tedious process of tracking collaboration activities by:
-1. **Receiving** emails from `radar@signite.co`
+1. **Receiving** emails from `portfolioupdates@signite.co`
 2. **Extracting** key information using Gemini API:
    - 담당자 (Person in charge)
    - 스타트업명 (Startup name)

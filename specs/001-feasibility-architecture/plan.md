@@ -275,7 +275,7 @@ CollabIQ/
 
 3. **Email Infrastructure Options Analysis**
    - Research email processing approaches:
-     - **Gmail API**: Programmatic access to radar@signite.co inbox
+     - **Gmail API**: Programmatic access to portfolioupdates@signite.co inbox
        - Pros: Official API, rich filtering, attachment handling
        - Cons: OAuth setup complexity, quota limits (250 req/day free tier)
        - Cost: Free for reasonable volume, scales with usage
@@ -289,7 +289,7 @@ CollabIQ/
        - Cost: ~$10-50/month depending on volume
    - Recommend approach based on CollabIQ constraints:
      - 50 emails/day baseline (low volume)
-     - radar@signite.co email address (existing Gmail/Google Workspace?)
+     - portfolioupdates@signite.co email address (existing Gmail/Google Workspace?)
      - Reliability requirements (email loss tolerance)
    - Document findings in `research.md` with pros/cons matrix
 
@@ -348,7 +348,7 @@ CollabIQ/
 
 1. **Component Architecture Design**
    - Define system components with single responsibilities:
-     - **EmailReceiver**: Ingest emails from radar@signite.co (Phase 1 implementation)
+     - **EmailReceiver**: Ingest emails from portfolioupdates@signite.co (Phase 1 implementation)
      - **ContentNormalizer**: Strip signatures, quoted threads, disclaimers (Phase 1)
      - **LLMProvider** (abstraction layer): Interface for entity extraction, classification, summarization, **AND company name matching** (all-in-one)
      - **GeminiAdapter** (implementation): Gemini API integration implementing LLMProvider
@@ -838,7 +838,7 @@ CollabIQ/
      # Option 2: IMAP
      IMAP_HOST=imap.gmail.com
      IMAP_PORT=993
-     IMAP_USERNAME=radar@signite.co
+     IMAP_USERNAME=portfolioupdates@signite.co
      IMAP_PASSWORD=your_password_here
      # Option 3: Webhook
      WEBHOOK_SECRET=your_webhook_secret_here

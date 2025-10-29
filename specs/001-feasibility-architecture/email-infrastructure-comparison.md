@@ -1,6 +1,6 @@
 # Email Infrastructure Options Comparison
 
-**Purpose**: Evaluate email processing approaches for radar@signite.co inbox
+**Purpose**: Evaluate email processing approaches for portfolioupdates@signite.co inbox
 **Status**: 📝 TEMPLATE - Complete with actual research findings
 **Requirement**: Process ~50 emails/day baseline, scale to 100+ without architecture changes
 
@@ -162,7 +162,7 @@ Email webhook service that POSTs incoming emails to your endpoint
 - ❌ Requires domain/subdomain setup (MX records)
 - ❌ External service dependency
 - ❌ Need publicly accessible webhook endpoint
-- ❌ Subdomain change (radar@parse.signite.co vs radar@signite.co)
+- ❌ Subdomain change (radar@parse.signite.co vs portfolioupdates@signite.co)
 
 ### Reliability
 **Rating**: [High / Medium / Low]
@@ -217,7 +217,7 @@ Amazon's email receiving service with S3 storage or Lambda triggers
 - ❌ Requires MX record changes
 - ❌ AWS ecosystem lock-in
 - ❌ More complex setup (IAM, S3, SES rules)
-- ❌ May not work with existing radar@signite.co address
+- ❌ May not work with existing portfolioupdates@signite.co address
 
 ### Reliability
 **Rating**: [High / Medium / Low]
@@ -306,7 +306,7 @@ Email webhook service similar to SendGrid, with powerful routing rules
 ### Must-Have Requirements
 1. ✅ Process ~50 emails/day baseline
 2. ✅ Scale to 100+ without architecture changes
-3. ✅ Work with radar@signite.co address (or acceptable alternative)
+3. ✅ Work with portfolioupdates@signite.co address (or acceptable alternative)
 4. ✅ Handle attachments (if collaboration emails include them)
 5. ✅ Reliable delivery (no email loss)
 

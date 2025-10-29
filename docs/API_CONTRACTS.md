@@ -187,7 +187,7 @@ llm: LLMProvider = GPTAdapter(api_key=settings.openai_api_key)
 ## EmailReceiver Component
 
 **Type**: Component
-**Purpose**: Ingest emails from `radar@signite.co` inbox via Gmail API, IMAP, or webhook.
+**Purpose**: Ingest emails from `portfolioupdates@signite.co` inbox via Gmail API, IMAP, or webhook.
 
 ### Methods
 
@@ -209,7 +209,7 @@ Fetches new emails since given timestamp.
           subject="본봄 파일럿 킥오프",
           body="어제 신세계인터와 본봄 파일럿 킥오프...",
           sender="kim@signite.co",
-          recipient="radar@signite.co",
+          recipient="portfolioupdates@signite.co",
           received_at=datetime(2025, 10, 27, 14, 30, 0),
           attachments=[]
       )

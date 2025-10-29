@@ -5,7 +5,7 @@
 **Status**: Draft - Foundational Analysis Phase
 **Scope**: Feasibility study, technology assessment, architecture design, and implementation strategy for the full CollabIQ system
 
-**Original Vision**: Email-based collaboration tracking system that extracts key entities (담당자, 스타트업명, 협업기관, 협업내용) from Korean/English emails sent to radar@signite.co, automatically creates entries in Notion "CollabIQ" database with proper relation mapping (fuzzy matching ≥0.85 confidence), classifies collaboration type ([A] PortCo×SSG, [B] Non-PortCo×SSG, [C] PortCo×PortCo, [D] Other) and intensity (이해/협력/투자/인수), generates 3-5 sentence summaries, validates required fields, handles low-confidence matches through verification queue, and produces periodic summary reports. Note: Uses a unified Company database (NOTION_DATABASE_ID_CORP) containing all startups, portfolio companies, and Shinsegate affiliates.
+**Original Vision**: Email-based collaboration tracking system that extracts key entities (담당자, 스타트업명, 협업기관, 협업내용) from Korean/English emails sent to portfolioupdates@signite.co, automatically creates entries in Notion "CollabIQ" database with proper relation mapping (fuzzy matching ≥0.85 confidence), classifies collaboration type ([A] PortCo×SSG, [B] Non-PortCo×SSG, [C] PortCo×PortCo, [D] Other) and intensity (이해/협력/투자/인수), generates 3-5 sentence summaries, validates required fields, handles low-confidence matches through verification queue, and produces periodic summary reports. Note: Uses a unified Company database (NOTION_DATABASE_ID_CORP) containing all startups, portfolio companies, and Shinsegate affiliates.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -30,7 +30,7 @@ The development team needs to validate that the CollabIQ vision is technically f
 2. **Given** need for future flexibility, **When** architect designs LLM abstraction layer, **Then** produces interface definition (LLMProvider abstract class) with methods: extract_entities(), classify(), summarize(), allowing Gemini/GPT/Claude/multi-LLM implementations
 3. **Given** Notion API integration requirements, **When** team reviews Notion API documentation and rate limits, **Then** validates all required field types are supported (Person, Relation, Select, Text, Date) and documents rate limit constraints (3 requests/second)
 4. **Given** fuzzy matching requirement (≥0.85 similarity), **When** team evaluates matching approaches (LLM-based semantic matching vs traditional algorithms like Levenshtein, Jaro-Winkler), **Then** selects approach and validates threshold achieves acceptable precision/recall on Korean company names
-5. **Given** email processing requirement (radar@signite.co), **When** team compares email infrastructure options (Gmail API, IMAP, email forwarding webhook), **Then** documents pros/cons and recommends approach with cost/complexity analysis
+5. **Given** email processing requirement (portfolioupdates@signite.co), **When** team compares email infrastructure options (Gmail API, IMAP, email forwarding webhook), **Then** documents pros/cons and recommends approach with cost/complexity analysis
 6. **Given** all technical components evaluated, **When** team assesses integration complexity and risk, **Then** produces go-no-go recommendation with identified technical blockers or mitigation strategies
 
 ---

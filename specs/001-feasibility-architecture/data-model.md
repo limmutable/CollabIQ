@@ -306,7 +306,7 @@ class RawEmail(BaseModel):
     subject: str = Field(..., description="Email subject line")
     body: str = Field(..., description="Email body (plain text)")
     sender: str = Field(..., description="Sender email address")
-    recipient: str = Field(..., description="Recipient email address (radar@signite.co)")
+    recipient: str = Field(..., description="Recipient email address (portfolioupdates@signite.co)")
     received_at: datetime = Field(..., description="Timestamp when email was received")
     attachments: list[str] = Field(
         default_factory=list,
@@ -320,7 +320,7 @@ class RawEmail(BaseModel):
                 "subject": "본봄 파일럿 킥오프",
                 "body": "어제 신세계인터와 본봄 파일럿 킥오프...",
                 "sender": "kim@signite.co",
-                "recipient": "radar@signite.co",
+                "recipient": "portfolioupdates@signite.co",
                 "received_at": "2025-10-27T14:30:00",
                 "attachments": []
             }

@@ -1,11 +1,11 @@
 # EmailReceiver Component Contract
-# Responsible for ingesting emails from radar@signite.co
+# Responsible for ingesting emails from portfolioupdates@signite.co
 
 contract_version: "1.0.0"
 component: EmailReceiver
 type: component
 description: |
-  Ingests emails from radar@signite.co inbox via Gmail API, IMAP, or webhook.
+  Ingests emails from portfolioupdates@signite.co inbox via Gmail API, IMAP, or webhook.
   Returns raw email objects for downstream processing.
 
 methods:
@@ -33,7 +33,7 @@ methods:
             subject: "본봄 파일럿 킥오프"
             body: "어제 신세계인터와 본봄 파일럿 킥오프..."
             sender: "kim@signite.co"
-            recipient: "radar@signite.co"
+            recipient: "portfolioupdates@signite.co"
             received_at: "2025-10-27T14:30:00"
             attachments: []
 
