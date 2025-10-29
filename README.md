@@ -75,8 +75,7 @@ Edit `.env` with your credentials:
 # Required
 GEMINI_API_KEY=your_gemini_api_key_here
 NOTION_API_KEY=your_notion_integration_token_here
-NOTION_DATABASE_ID_RADAR=your_radar_database_id_here
-NOTION_DATABASE_ID_STARTUP=your_startup_database_id_here
+NOTION_DATABASE_ID_COLLABIQ=your_collabiq_database_id_here
 NOTION_DATABASE_ID_CORP=your_corp_database_id_here
 
 # Optional - Email infrastructure (choose one approach)

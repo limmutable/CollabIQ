@@ -5,7 +5,7 @@
 **Status**: Draft - Foundational Analysis Phase
 **Scope**: Feasibility study, technology assessment, architecture design, and implementation strategy for the full CollabIQ system
 
-**Original Vision**: Email-based collaboration tracking system that extracts key entities (담당자, 스타트업명, 협업기관, 협업내용) from Korean/English emails sent to radar@signite.co, automatically creates entries in Notion "레이더 활동" database with proper relation mapping (fuzzy matching ≥0.85 confidence), classifies collaboration type ([A] PortCo×SSG, [B] Non-PortCo×SSG, [C] PortCo×PortCo, [D] Other) and intensity (이해/협력/투자/인수), generates 3-5 sentence summaries, validates required fields, handles low-confidence matches through verification queue, and produces periodic summary reports.
+**Original Vision**: Email-based collaboration tracking system that extracts key entities (담당자, 스타트업명, 협업기관, 협업내용) from Korean/English emails sent to radar@signite.co, automatically creates entries in Notion "CollabIQ" database with proper relation mapping (fuzzy matching ≥0.85 confidence), classifies collaboration type ([A] PortCo×SSG, [B] Non-PortCo×SSG, [C] PortCo×PortCo, [D] Other) and intensity (이해/협력/투자/인수), generates 3-5 sentence summaries, validates required fields, handles low-confidence matches through verification queue, and produces periodic summary reports. Note: Uses a unified Company database (NOTION_DATABASE_ID_CORP) containing all startups, portfolio companies, and Shinsegate affiliates.
 
 ## User Scenarios & Testing *(mandatory)*
 

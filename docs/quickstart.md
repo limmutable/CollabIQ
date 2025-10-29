@@ -49,10 +49,9 @@ This will:
 
 ### Notion Database IDs
 
-You need the IDs for three databases:
-- **레이더 활동** (Radar Activities)
-- **스타트업** (Startups)
-- **계열사** (Corporate Partners)
+You need the IDs for two databases:
+- **CollabIQ** - Main collaboration tracking database
+- **Company Database** - Unified database containing all companies: startups, portfolio companies, and Shinsegate affiliates (this consolidates what were previously separate startup and affiliate databases)
 
 To get a database ID:
 1. Open the database in Notion
@@ -82,8 +81,7 @@ GEMINI_MODEL=gemini-2.5-flash
 
 # Required: Notion API
 NOTION_API_KEY=secret_...your_actual_token_here
-NOTION_DATABASE_ID_RADAR=32_character_database_id_here
-NOTION_DATABASE_ID_STARTUP=32_character_database_id_here
+NOTION_DATABASE_ID_COLLABIQ=32_character_database_id_here
 NOTION_DATABASE_ID_CORP=32_character_database_id_here
 
 # Optional: Email Infrastructure (set up later)

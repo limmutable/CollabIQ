@@ -263,8 +263,7 @@ CollabIQ/
    # Edit .env file
    GEMINI_API_KEY=<your_actual_gemini_key>
    NOTION_API_KEY=<your_actual_notion_token>
-   NOTION_DATABASE_ID_RADAR=<your_radar_db_id>
-   NOTION_DATABASE_ID_STARTUP=<your_startup_db_id>
+   NOTION_DATABASE_ID_COLLABIQ=<your_collabiq_db_id>
    NOTION_DATABASE_ID_CORP=<your_corp_db_id>
    ```
 

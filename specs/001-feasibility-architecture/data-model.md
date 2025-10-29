@@ -367,12 +367,12 @@ from typing import Optional
 from datetime import datetime
 
 class NotionEntry(BaseModel):
-    """Entry to be created in Notion 레이더 활동 database"""
+    """Entry to be created in Notion CollabIQ database"""
 
     person_in_charge: str = Field(..., description="담당자 - Person field")
-    startup_name: str = Field(..., description="스타트업명 - Relation to 스타트업 DB")
+    startup_name: str = Field(..., description="스타트업명 - Relation to Company DB (CORP)")
     startup_page_id: Optional[str] = Field(None, description="Notion page ID for startup")
-    partner_org: str = Field(..., description="협업기관 - Relation to 계열사 DB")
+    partner_org: str = Field(..., description="협업기관 - Relation to Company DB (CORP)")
     partner_page_id: Optional[str] = Field(None, description="Notion page ID for partner")
     collab_subject: str = Field(..., description="협력주체 - Title (auto-generated)")
     details: str = Field(..., description="협업내용 - Text field")
@@ -487,40 +487,37 @@ See `contracts/` directory for detailed YAML specifications:
 
 ## Notion Database Schema
 
-### 레이더 활동 Database
+### CollabIQ Database (formerly 레이더 활동)
 
 **Purpose**: Main database storing all collaboration records
 
 | Field Name (Korean) | Field Name (English) | Type | Description | Example |
 |---------------------|----------------------|------|-------------|---------|
 | 담당자 | Person in Charge | Person | Team member who reported | 김철수 |
-| 스타트업명 | Startup Name | Relation (→스타트업) | Startup company involved | 본봄 |
-| 협업기관 | Partner Organization | Relation (→계열사) | Partner org (SSG or other) | 신세계인터내셔널 |
+| 스타트업명 | Startup Name | Relation (→Company DB) | Startup company involved | 본봄 |
+| 협업기관 | Partner Organization | Relation (→Company DB) | Partner org (SSG or other) | 신세계인터내셔널 |
 | 협력주체 | Collaboration Subject | Title | Auto-generated: {startup}-{partner} | 본봄-신세계인터내셔널 |
 | 협업내용 | Collaboration Details | Text | Full details from email | 11월 1주 PoC 시작... |
 | 협업형태 | Collaboration Type | Select | [A], [B], [C], [D] | [A] |
 | 협업강도 | Collaboration Intensity | Select | 이해, 협력, 투자, 인수 | 협력 |
 | 날짜 | Date | Date | Date of activity | 2025-10-27 |
 
-### 스타트업 Database
+### Company Database (NOTION_DATABASE_ID_CORP)
 
-**Purpose**: Master list of portfolio companies
+**Purpose**: Unified database containing ALL companies (startups, portfolio companies, and Shinsegate affiliates)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| 회사명 | Title | Startup company name |
-| 포트폴리오 여부 | Checkbox | Is this a portfolio company? |
-| 투자 날짜 | Date | Investment date (if portfolio) |
-
-### 계열사 Database
-
-**Purpose**: Master list of SSG affiliates and partner organizations
+**Note**: This is a single database that consolidates what were previously separate databases. Company types are distinguished by fields within this database.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| 회사명 | Title | Organization name |
-| SSG 계열사 여부 | Checkbox | Is this an SSG affiliate? |
+| 회사명 | Title | Company name |
+| Company Type | Select/Multi-select | Distinguishes between: Startup, Portfolio Company, Shinsegate Affiliate |
+| 포트폴리오 여부 | Checkbox | Is this a portfolio company? (if applicable) |
+| SSG 계열사 여부 | Checkbox | Is this an SSG affiliate? (if applicable) |
+| 투자 날짜 | Date | Investment date (for portfolio companies) |
 | 비고 | Text | Notes |
+
+**Important**: The actual field names and structure should be verified through database structure analysis (see Section 2.2 of research-template.md). This table shows the expected schema.
 
 ---
 
@@ -565,8 +562,7 @@ class Settings(BaseSettings):
 
     # Notion API
     notion_api_key: str
-    notion_database_id_radar: str
-    notion_database_id_startup: str
+    notion_database_id_collabiq: str
     notion_database_id_corp: str
 
     # Email (optional - depends on selected infrastructure)

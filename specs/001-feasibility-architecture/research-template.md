@@ -111,27 +111,77 @@ Ground Truth Labels:
 - [ ] Create Notion integration at [Notion Integrations](https://www.notion.so/my-integrations)
 - [ ] Obtain integration token
 - [ ] Set NOTION_API_KEY in .env file
+- [ ] Set NOTION_DATABASE_ID_COLLABIQ in .env file (main "CollabIQ" database)
+- [ ] Set NOTION_DATABASE_ID_CORP in .env file (unified company database)
 - [ ] Install notion-client SDK (`uv add notion-client`)
 - [ ] Grant integration access to test workspace
 
-### 2.2 Test Database Schema (T006)
+### 2.2 Prerequisites - Notion Database Structure Analysis
 
-**Database Name**: "레이더 활동" (Test)
+**IMPORTANT**: Before proceeding with validation, you MUST analyze the existing Notion database structure to understand:
 
-**Required Fields**:
+1. **CollabIQ Database Structure**:
+   - Analyze the current field schema in "CollabIQ" database
+   - Document all existing field names, types, and relationships
+   - Verify which fields already exist vs. which need to be created
+   - Check for any custom properties or configurations
+
+2. **Company Database (NOTION_DATABASE_ID_CORP) Structure**:
+   - This is a **unified database** containing ALL companies:
+     - Startup companies (non-portfolio)
+     - Portfolio companies
+     - Shinsegate affiliate companies
+   - Analyze the field that distinguishes company types (likely a Select or Multi-select field)
+   - Document the company classification field values
+   - Understand the naming conventions used in this database
+
+3. **Create Analysis Script** (T005a - NEW):
+   - Create `specs/001-feasibility-architecture/scripts/analyze_notion_structure.py`
+   - Script should:
+     - Connect to Notion API
+     - Retrieve and display the schema of NOTION_DATABASE_ID_COLLABIQ
+     - Retrieve and display the schema of NOTION_DATABASE_ID_CORP
+     - List all field names, types, and configurations
+     - Export results to `specs/001-feasibility-architecture/notion-schema-analysis.md`
+   - Status: [ ] Complete
+
+**Analysis Output** (to be filled after running script):
+```
+CollabIQ Database Fields:
+- Field 1: [Name] ([Type]) - [Description]
+- Field 2: [Name] ([Type]) - [Description]
+...
+
+Company Database Fields:
+- Field 1: [Name] ([Type]) - [Description]
+- Company Type Field: [Name] ([Type]) - Options: [list all]
+...
+```
+
+### 2.3 Test Database Schema (T006)
+
+**Database Name**: "CollabIQ" (formerly "레이더 활동")
+
+**Note**: Field requirements below are based on the original design. After completing the database structure analysis (2.2), update this section to reflect the **actual** fields in your Notion database.
+
+**Expected Fields** (verify against actual schema):
 1. **담당자** (Person field)
-   - [ ] Created
+   - [ ] Exists in database (or created)
    - [ ] Tested with SDK
    - [ ] Works correctly
 
-2. **스타트업명** (Relation to 스타트업 DB)
-   - [ ] Created
-   - [ ] Tested linking
+2. **스타트업명** (Relation to Company DB)
+   - **Note**: This now relates to NOTION_DATABASE_ID_CORP (unified company database)
+   - [ ] Exists in database (or created)
+   - [ ] Tested linking to companies in CORP database
+   - [ ] Verified filtering works for startup companies
    - [ ] Works correctly
 
-3. **협업기관** (Relation to 계열사 DB)
-   - [ ] Created
-   - [ ] Tested linking
+3. **협업기관** (Relation to Company DB)
+   - **Note**: This now relates to NOTION_DATABASE_ID_CORP (unified company database)
+   - [ ] Exists in database (or created)
+   - [ ] Tested linking to companies in CORP database
+   - [ ] Verified filtering works for partner/affiliate companies
    - [ ] Works correctly
 
 4. **협력주체** (Title field, auto-generated)
@@ -161,23 +211,43 @@ Ground Truth Labels:
 
 **Schema Validation**: [ ] PASS / [ ] FAIL (details: ____________)
 
-### 2.3 Programmatic Entry Creation (T007)
+### 2.4 Programmatic Entry Creation (T007)
 
 **Test Script**: `specs/001-feasibility-architecture/scripts/test_notion_write.py`
 
+**Prerequisites**:
+- Notion API token configured in .env
+- Database IDs configured (NOTION_DATABASE_ID_COLLABIQ, NOTION_DATABASE_ID_CORP)
+- Database structure analysis completed (Section 2.2)
+- At least a few test company entries exist in NOTION_DATABASE_ID_CORP
+
 **Tests**:
 1. Create entry with all field types
+   - Test data should use actual field names from your schema analysis
    - Status: [ ] Success / [ ] Failed (reason: _________)
 
-2. Test relation linking (fuzzy match scenario)
+2. Test relation linking to unified company database
+   - Test linking to a startup company from CORP database
+   - Test linking to an affiliate company from CORP database
+   - Verify the relation properly filters by company type if needed
    - Status: [ ] Success / [ ] Failed (reason: _________)
 
-3. Measure API rate limits
+3. Test fuzzy matching scenario
+   - Create a company relation using partial/abbreviated name
+   - Verify system can match to existing CORP database entry
+   - Status: [ ] Success / [ ] Failed (reason: _________)
+
+4. Measure API rate limits
    - Documented limit: 3 requests/second
    - Actual observed limit: ____ requests/second
    - Rate limit errors encountered: [ ] Yes / [ ] No
 
 **Result**: [ ] All tests passed / [ ] Some tests failed
+
+**Important Notes**:
+- The unified CORP database means you don't need separate STARTUP and affiliate databases
+- Your script should handle the single company database with proper filtering
+- Document how company types are distinguished in the database (checkbox? select field?)
 
 ---
 
