@@ -202,13 +202,13 @@ For now, you can skip this step - it's needed for Phase 1c.
 
 ```bash
 # View system architecture
-cat docs/ARCHITECTURE.md
+cat docs/architecture/ARCHITECTURE.md
 
 # View implementation roadmap
-cat docs/IMPLEMENTATION_ROADMAP.md
+cat docs/architecture/IMPLEMENTATION_ROADMAP.md
 
 # View API contracts
-cat docs/API_CONTRACTS.md
+cat docs/architecture/API_CONTRACTS.md
 
 # Explore project structure
 tree src/
@@ -253,9 +253,9 @@ uv run pytest -v
 
 ## Getting Help
 
-- **Architecture Questions**: See [docs/ARCHITECTURE.md](ARCHITECTURE.md)
-- **Implementation Plan**: See [docs/IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md)
-- **API Contracts**: See [docs/API_CONTRACTS.md](API_CONTRACTS.md)
+- **Architecture Questions**: See [docs/architecture/ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Implementation Plan**: See [docs/architecture/IMPLEMENTATION_ROADMAP.md](../architecture/IMPLEMENTATION_ROADMAP.md)
+- **API Contracts**: See [docs/architecture/API_CONTRACTS.md](../architecture/API_CONTRACTS.md)
 - **SpecKit Commands**: Run `ls .claude/commands/` to see available workflows
 
 ## Development Workflow
