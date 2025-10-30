@@ -12,7 +12,7 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Goal
 
-Automate the cleanup process for completed features following the established SpecKit cleanup pattern. This command performs verification, artifact preservation, and specs directory removal after a feature has been successfully merged to main.
+Automate the cleanup process for completed features. This command performs verification, artifact preservation, and specs directory removal after a feature has been successfully merged to main.
 
 ## Prerequisites
 
@@ -342,7 +342,7 @@ git push
 
 ## Notes
 
-- This command follows the established cleanup pattern from `.specify/CLEANUP_PATTERN.md`
 - Step 6 (commit cleanup changes) is intentionally left manual for user control
 - The command is safe to run multiple times (will abort if specs directory doesn't exist)
 - Always verify feature is merged to main before running this command
+- This cleanup process follows the standard pattern: verify → preserve → remove → commit
