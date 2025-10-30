@@ -44,7 +44,7 @@ Email → EmailReceiver → ContentNormalizer → LLMProvider (Gemini)
 - **GCP Cloud Run**: Serverless container deployment
 - **Pydantic Validation**: Type-safe data handling throughout
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed component diagrams and data flow.
+See [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) for detailed component diagrams and data flow.
 
 ## Quick Start
 
@@ -90,25 +90,22 @@ FUZZY_MATCH_THRESHOLD=0.85
 CONFIDENCE_THRESHOLD=0.85
 ```
 
-See [docs/quickstart.md](docs/quickstart.md) for detailed setup instructions.
+See [docs/setup/quickstart.md](docs/setup/quickstart.md) for detailed setup instructions.
 
 ## Documentation
 
+📚 **[Browse all documentation](docs/README.md)** - Complete documentation index
+
 ### Core Documentation
-- [Architecture](docs/ARCHITECTURE.md) - System design and component diagrams
-- [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md) - 12-phase development plan
-- [API Contracts](docs/API_CONTRACTS.md) - Interface specifications
-- [Quick Start Guide](docs/quickstart.md) - Setup and configuration
+- [Architecture](docs/architecture/ARCHITECTURE.md) - System design and component diagrams
+- [Implementation Roadmap](docs/architecture/IMPLEMENTATION_ROADMAP.md) - 12-phase development plan
+- [API Contracts](docs/architecture/API_CONTRACTS.md) - Interface specifications
+- [Quick Start Guide](docs/setup/quickstart.md) - Setup and configuration
 
-### Feasibility & Testing
-- [Notion API Validation](docs/NOTION_API_VALIDATION.md) - ✅ Complete validation results (T005-T007)
-- [Notion Schema Analysis](docs/NOTION_SCHEMA_ANALYSIS.md) - Database structure documentation
-- [Feasibility Testing Guide](docs/FEASIBILITY_TESTING.md) - Gemini + Notion validation procedures
-- [Foundation Work Report](docs/FOUNDATION_WORK_REPORT.md) - Phase 0 completion status
-
-### Infrastructure & Setup
-- [Email Infrastructure Guide](docs/EMAIL_INFRASTRUCTURE.md) - Gmail API vs IMAP vs Webhook comparison
-- [Quick Start Guide](docs/quickstart.md) - Setup and configuration
+### Validation Results
+- [Notion API Validation](docs/validation/NOTION_API_VALIDATION.md) - ✅ Complete validation results (T005-T007)
+- [Notion Schema Analysis](docs/validation/NOTION_SCHEMA_ANALYSIS.md) - Database structure documentation
+- [Foundation Work Report](specs/001-feasibility-architecture/FOUNDATION_WORK_REPORT.md) - Phase 0 completion status
 
 ## Implementation Plan
 
@@ -119,7 +116,7 @@ See [docs/quickstart.md](docs/quickstart.md) for detailed setup instructions.
 - Phase 1c: Email Receiver Prototype (2-3 days)
 
 **Full System**: 12 phases (~30-45 days)
-- See [docs/IMPLEMENTATION_ROADMAP.md](docs/IMPLEMENTATION_ROADMAP.md) for complete timeline
+- See [docs/architecture/IMPLEMENTATION_ROADMAP.md](docs/architecture/IMPLEMENTATION_ROADMAP.md) for complete timeline
 
 ## Testing
 
