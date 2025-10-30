@@ -408,9 +408,9 @@ print(f"Created: {url}")
 ## Contract Files
 
 For the full YAML specification of each contract, see:
-- [specs/001-feasibility-architecture/contracts/llm_provider.yaml](../specs/001-feasibility-architecture/contracts/llm_provider.yaml)
-- [specs/001-feasibility-architecture/contracts/email_receiver.yaml](../specs/001-feasibility-architecture/contracts/email_receiver.yaml)
-- [specs/001-feasibility-architecture/contracts/notion_integrator.yaml](../specs/001-feasibility-architecture/contracts/notion_integrator.yaml)
+- [specs/001-feasibility-architecture/contracts/llm_provider.yaml](../../specs/001-feasibility-architecture/contracts/llm_provider.yaml)
+- [specs/001-feasibility-architecture/contracts/email_receiver.yaml](../../specs/001-feasibility-architecture/contracts/email_receiver.yaml)
+- [specs/001-feasibility-architecture/contracts/notion_integrator.yaml](../../specs/001-feasibility-architecture/contracts/notion_integrator.yaml)
 
 ---
 
