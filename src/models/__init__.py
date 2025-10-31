@@ -5,6 +5,7 @@ This package contains Pydantic models for representing raw and cleaned email dat
 """
 
 from .cleaned_email import CleanedEmail, CleaningStatus, RemovedContent
+from .duplicate_tracker import DuplicateTracker
 from .raw_email import EmailAttachment, EmailMetadata, RawEmail
 
 __all__ = [
@@ -16,4 +17,6 @@ __all__ = [
     "CleanedEmail",
     "CleaningStatus",
     "RemovedContent",
+    # Duplicate tracking
+    "DuplicateTracker",
 ]

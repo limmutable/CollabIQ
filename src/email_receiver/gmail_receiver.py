@@ -22,9 +22,11 @@ from googleapiclient.errors import HttpError
 
 try:
     from ..models.raw_email import EmailAttachment, EmailMetadata, RawEmail
+    from ..models.duplicate_tracker import DuplicateTracker
     from .base import EmailReceiver
 except ImportError:
     from models.raw_email import EmailAttachment, EmailMetadata, RawEmail
+    from models.duplicate_tracker import DuplicateTracker
     from email_receiver.base import EmailReceiver
 
 # Configure logging
@@ -462,27 +464,92 @@ class GmailReceiver(EmailReceiver):
 
     def is_duplicate(self, message_id: str) -> bool:
         """
-        Check if email has been processed (placeholder).
+        Check if email has been processed using DuplicateTracker.
 
-        TODO: Implement DuplicateTracker integration in later tasks.
+        Loads the tracker from data/metadata/processed_ids.json and checks
+        if the message ID exists in the processed set.
 
         Args:
             message_id: Email message ID to check
 
         Returns:
-            False (always returns False for now)
+            True if message has been processed, False otherwise
+
+        Raises:
+            EmailReceiverError: With code TRACKER_LOAD_FAILED if tracker cannot be loaded
         """
-        # Placeholder - will implement DuplicateTracker in Phase 4
-        return False
+        try:
+            tracker_path = self.metadata_dir / "processed_ids.json"
+            tracker = DuplicateTracker.load(tracker_path)
+            is_dup = tracker.is_duplicate(message_id)
+
+            if is_dup:
+                logger.debug(f"Duplicate detected: {message_id}")
+            else:
+                logger.debug(f"New message: {message_id}")
+
+            return is_dup
+
+        except ValueError as e:
+            logger.error(f"Failed to load duplicate tracker: {e}")
+            raise EmailReceiverError(
+                code="TRACKER_LOAD_FAILED",
+                message=f"Failed to load duplicate tracker: {str(e)}",
+                retry_count=0
+            )
+        except Exception as e:
+            logger.error(f"Unexpected error checking duplicate: {e}")
+            raise EmailReceiverError(
+                code="TRACKER_LOAD_FAILED",
+                message=f"Unexpected error checking duplicate: {str(e)}",
+                retry_count=0
+            )
 
     def mark_processed(self, message_id: str) -> None:
         """
-        Mark email as processed (placeholder).
+        Mark email as processed using DuplicateTracker.
 
-        TODO: Implement DuplicateTracker integration in later tasks.
+        Adds the message ID to the processed set and saves the tracker
+        to data/metadata/processed_ids.json.
 
         Args:
             message_id: Email message ID to mark as processed
+
+        Raises:
+            EmailReceiverError: With code TRACKER_SAVE_FAILED if tracker cannot be saved
         """
-        # Placeholder - will implement DuplicateTracker in Phase 4
-        pass
+        try:
+            tracker_path = self.metadata_dir / "processed_ids.json"
+
+            # Load existing tracker or create new one
+            tracker = DuplicateTracker.load(tracker_path)
+
+            # Mark as processed
+            tracker.mark_processed(message_id)
+
+            # Save updated tracker
+            tracker.save(tracker_path)
+
+            logger.info(f"Marked as processed: {message_id} (total: {tracker.count()})")
+
+        except ValueError as e:
+            logger.error(f"Failed to load duplicate tracker: {e}")
+            raise EmailReceiverError(
+                code="TRACKER_SAVE_FAILED",
+                message=f"Failed to load duplicate tracker: {str(e)}",
+                retry_count=0
+            )
+        except OSError as e:
+            logger.error(f"Failed to save duplicate tracker: {e}")
+            raise EmailReceiverError(
+                code="TRACKER_SAVE_FAILED",
+                message=f"Failed to save duplicate tracker: {str(e)}",
+                retry_count=0
+            )
+        except Exception as e:
+            logger.error(f"Unexpected error marking as processed: {e}")
+            raise EmailReceiverError(
+                code="TRACKER_SAVE_FAILED",
+                message=f"Unexpected error marking as processed: {str(e)}",
+                retry_count=0
+            )

@@ -101,10 +101,10 @@
 
 ### Duplicate Detection Implementation
 
-- [ ] T042 [US1] Create DuplicateTracker Pydantic model in `src/models/duplicate_tracker.py` per data-model.md
-- [ ] T043 [US1] Implement `is_duplicate()` method checking message ID in `data/metadata/processed_ids.json` per FR-011
-- [ ] T044 [US1] Implement `mark_as_processed()` method adding message ID to tracker per FR-011
-- [ ] T045 [US1] Integrate duplicate detection into GmailReceiver.fetch_new_messages() per FR-011
+- [X] T042 [US1] Create DuplicateTracker Pydantic model in `src/models/duplicate_tracker.py` per data-model.md
+- [X] T043 [US1] Implement `is_duplicate()` method checking message ID in `data/metadata/processed_ids.json` per FR-011
+- [X] T044 [US1] Implement `mark_as_processed()` method adding message ID to tracker per FR-011
+- [X] T045 [US1] Integrate duplicate detection into GmailReceiver.fetch_new_messages() per FR-011
 
 **Checkpoint**: Gmail API receiver fully functional - emails retrieved, saved as raw JSON, duplicates handled ✅
 
