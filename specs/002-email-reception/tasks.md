@@ -187,29 +187,29 @@ uv run pytest tests/unit/test_content_normalizer.py::test_signature_removal_accu
 
 ### Unit Tests for User Story 3 (TDD - Write First)
 
-- [ ] T062 [P] [US3] Create test fixtures: quoted thread samples in `tests/fixtures/sample_emails/quoted_thread_*.txt` (angle brackets, headers, nested)
-- [ ] T063 [US3] Write unit test `test_detect_angle_bracket_quotes()` in `tests/unit/test_content_normalizer.py` - verify "> " prefix detection
-- [ ] T064 [US3] Write unit test `test_detect_on_date_header()` in `tests/unit/test_content_normalizer.py` - verify "On [date] wrote:" detection
-- [ ] T065 [US3] Write unit test `test_remove_nested_quotes()` in `tests/unit/test_content_normalizer.py` - verify multi-level quote removal
-- [ ] T066 [US3] Write unit test `test_no_quotes_no_change()` in `tests/unit/test_content_normalizer.py` - verify fresh emails unchanged
+- [X] T062 [P] [US3] Create test fixtures: quoted thread samples in `tests/fixtures/sample_emails/quoted_thread_*.txt` (5 samples: angle brackets, headers, nested, Korean, no quotes)
+- [X] T063 [US3] Write unit test `test_detect_angle_bracket_quotes()` in `tests/unit/test_quoted_thread_detection.py` - verify "> " prefix detection
+- [X] T064 [US3] Write unit test `test_detect_on_date_header()` in `tests/unit/test_quoted_thread_detection.py` - verify "On [date] wrote:" detection
+- [X] T065 [US3] Write unit test `test_remove_nested_quotes()` in `tests/unit/test_quoted_thread_detection.py` - verify multi-level quote removal
+- [X] T066 [US3] Write unit test `test_no_quotes_no_change()` in `tests/unit/test_quoted_thread_detection.py` - verify fresh emails unchanged
 
 ### Quote Pattern Library Implementation
 
-- [ ] T067 [US3] Define angle bracket quote regex patterns in `src/content_normalizer/patterns.py` per FR-005
-- [ ] T068 [US3] Define "On [date] wrote:" header patterns in `src/content_normalizer/patterns.py` per FR-005
-- [ ] T069 [US3] Implement nested quote detection algorithm in `src/content_normalizer/patterns.py` per acceptance scenarios
+- [X] T067 [US3] Define angle bracket quote regex patterns in `src/content_normalizer/patterns.py` per FR-005
+- [X] T068 [US3] Define "On [date] wrote:" header patterns in `src/content_normalizer/patterns.py` per FR-005 (5 patterns: Gmail, Outlook, Korean, simple)
+- [X] T069 [US3] Implement nested quote detection algorithm in `src/content_normalizer/patterns.py` per acceptance scenarios
 
 ### ContentNormalizer Implementation (Quote Removal)
 
-- [ ] T070 [US3] Implement `detect_quoted_thread()` method in `src/content_normalizer/normalizer.py` using patterns per FR-005
-- [ ] T071 [US3] Implement `remove_quoted_thread()` method in `src/content_normalizer/normalizer.py` per FR-005
-- [ ] T072 [US3] Implement quote removal accuracy tracking in RemovedContent model per SC-003
-- [ ] T073 [US3] Add logging for quote detection and removal per FR-009
+- [X] T070 [US3] Implement `detect_quoted_thread()` method in `src/content_normalizer/normalizer.py` using patterns per FR-005
+- [X] T071 [US3] Implement `remove_quoted_thread()` method in `src/content_normalizer/normalizer.py` per FR-005
+- [X] T072 [US3] Implement quote removal accuracy tracking in RemovedContent model per SC-003
+- [X] T073 [US3] Add logging for quote detection and removal per FR-009
 
 ### Accuracy Tests for User Story 3
 
-- [ ] T074 [US3] Write accuracy test `test_quote_removal_accuracy_95_percent()` in `tests/unit/test_content_normalizer.py` - verify SC-003 target
-- [ ] T075 [US3] Create accuracy test dataset (20+ reply emails) in `tests/fixtures/sample_emails/accuracy_test_quotes/`
+- [X] T074 [US3] Write accuracy test `test_quote_removal_accuracy_95_percent()` in `tests/unit/test_quoted_thread_accuracy.py` - verify SC-003 target (100% accuracy achieved)
+- [X] T075 [US3] Create accuracy test dataset (21 emails: angle brackets, Gmail/Outlook headers, mixed, Korean) in `tests/unit/test_quoted_thread_accuracy.py`
 
 **Checkpoint**: Quoted thread removal implemented with 95% accuracy target ✅
 

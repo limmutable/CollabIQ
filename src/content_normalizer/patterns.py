@@ -296,6 +296,177 @@ def remove_signature(text: str) -> str:
 
 
 # ============================================================================
+# Quoted Thread Patterns (T067-T069)
+# ============================================================================
+
+# Pattern 1: angle_bracket_quotes
+# Matches: Lines starting with "> " (standard email quote prefix)
+ANGLE_BRACKET_QUOTES = re.compile(
+    r'^>.*$',
+    re.MULTILINE
+)
+
+# Pattern 2: gmail_reply_header (English)
+# Matches: "On Mon, Oct 30, 2025 at 2:30 PM, John Smith wrote:"
+GMAIL_REPLY_HEADER = re.compile(
+    r'On\s+(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+'
+    r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4}'
+    r'(?:\s+at\s+\d{1,2}:\d{2}\s*(?:AM|PM)?)?'
+    r',?\s+.+?\s+wrote:',
+    re.MULTILINE | re.IGNORECASE
+)
+
+# Pattern 3: outlook_reply_header (English)
+# Matches: "From: John Smith\nSent: Monday, October 30, 2025"
+OUTLOOK_REPLY_HEADER = re.compile(
+    r'^From:\s*.+\n'
+    r'Sent:\s*(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s*'
+    r'(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}',
+    re.MULTILINE | re.IGNORECASE
+)
+
+# Pattern 4: korean_reply_header
+# Matches: "2025년 10월 30일 화요일, 김철수님이 작성:"
+KOREAN_REPLY_HEADER = re.compile(
+    r'\d{4}년\s+\d{1,2}월\s+\d{1,2}일\s+(?:월|화|수|목|금|토|일)요일,?\s*.+?(?:님이\s*작성|wrote):',
+    re.MULTILINE | re.UNICODE
+)
+
+# Pattern 5: simple_on_date_wrote
+# Matches: "On [date]... wrote:" (more flexible than Gmail-specific)
+SIMPLE_ON_DATE_WROTE = re.compile(
+    r'On\s+.+?\s+wrote:',
+    re.MULTILINE | re.IGNORECASE
+)
+
+
+# ============================================================================
+# Quoted Thread Detection Functions
+# ============================================================================
+
+def find_quoted_thread(text: str) -> Optional[Tuple[int, str]]:
+    """
+    Search for quoted thread patterns in text.
+
+    Args:
+        text: Email body text
+
+    Returns:
+        Tuple of (start_position, pattern_name) if found, else None
+    """
+    if not text or not text.strip():
+        return None
+
+    # Try reply headers first (more specific)
+    patterns = [
+        (GMAIL_REPLY_HEADER, "gmail_reply_header"),
+        (OUTLOOK_REPLY_HEADER, "outlook_reply_header"),
+        (KOREAN_REPLY_HEADER, "korean_reply_header"),
+        (SIMPLE_ON_DATE_WROTE, "simple_on_date_wrote"),
+    ]
+
+    for pattern, name in patterns:
+        match = pattern.search(text)
+        if match:
+            return (match.start(), name)
+
+    # Try angle bracket quotes (less specific, check last)
+    # Find first line starting with ">"
+    match = ANGLE_BRACKET_QUOTES.search(text)
+    if match:
+        return (match.start(), "angle_bracket_quotes")
+
+    return None
+
+
+def detect_nested_quotes(text: str) -> Optional[int]:
+    """
+    Detect nested quoted content (multiple levels of ">").
+
+    This handles cases like:
+    > Level 1 quote
+    > > Level 2 quote
+    > > > Level 3 quote
+
+    Args:
+        text: Email body text
+
+    Returns:
+        Starting position of first quote line, or None
+    """
+    # Find first line with "> " (any level)
+    match = re.search(r'^>\s*.*$', text, re.MULTILINE)
+    if match:
+        return match.start()
+    return None
+
+
+def detect_quoted_thread(text: str) -> Optional[Tuple[int, str]]:
+    """
+    Detect quoted thread in email text using all available patterns.
+
+    Tries patterns in order:
+    1. Reply headers ("On [date] wrote:", Korean headers)
+    2. Angle bracket quotes ("> ")
+    3. Nested quotes
+
+    Args:
+        text: Email body text
+
+    Returns:
+        Tuple of (start_position, pattern_name) if quoted thread found, else None
+
+    Examples:
+        >>> text = "Thanks!\\n\\n> On Oct 30, John wrote:\\n> Previous message"
+        >>> result = detect_quoted_thread(text)
+        >>> result[0]  # Start position
+        9
+        >>> result[1]  # Pattern name
+        'angle_bracket_quotes'
+    """
+    result = find_quoted_thread(text)
+    if result:
+        return result
+
+    # Try nested quote detection as fallback
+    pos = detect_nested_quotes(text)
+    if pos is not None:
+        return (pos, "nested_quotes")
+
+    return None
+
+
+def remove_quoted_thread(text: str) -> str:
+    """
+    Remove detected quoted thread from email text.
+
+    Args:
+        text: Email body text
+
+    Returns:
+        Text with quoted thread removed, or original text if no quotes detected
+
+    Examples:
+        >>> text = "New message\\n\\n> Quoted text"
+        >>> remove_quoted_thread(text)
+        'New message'
+    """
+    if not text or not text.strip():
+        return text
+
+    result = detect_quoted_thread(text)
+    if result is None:
+        return text
+
+    quote_start, pattern_name = result
+
+    # Remove quoted thread from text
+    cleaned_text = text[:quote_start].rstrip()
+
+    return cleaned_text
+
+
+# ============================================================================
 # Pattern Statistics and Debugging
 # ============================================================================
 

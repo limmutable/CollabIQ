@@ -139,7 +139,22 @@ class ContentNormalizer:
 
         return cleaned_body
 
-    def remove_quoted_thread(self, body: str) -> Tuple[str, Optional[str]]:
+    def detect_quoted_thread(self, body: str) -> Optional[int]:
+        """
+        Detect quoted thread location in email body text.
+
+        Args:
+            body: Email body text
+
+        Returns:
+            Starting position of quoted thread, or None if no quotes detected
+        """
+        result = patterns.detect_quoted_thread(body)
+        if result is None:
+            return None
+        return result[0]  # Return only position
+
+    def remove_quoted_thread(self, body: str) -> str:
         """
         Remove quoted email thread content (reply chains).
 
@@ -152,16 +167,33 @@ class ContentNormalizer:
             body: Email body text
 
         Returns:
-            Tuple of (cleaned_body, pattern_name)
-            - cleaned_body: Text with quoted content removed
-            - pattern_name: Name of pattern that matched (e.g., 'angle_bracket')
-                           or None if no quoted content detected
+            Text with quoted content removed (or original if no quotes detected)
 
-        Raises:
-            ContentNormalizerError: With error code PATTERN_ERROR
+        Implementation:
+        - T070: detect_quoted_thread() method
+        - T071: remove_quoted_thread() method
+        - T073: Logging per FR-009
         """
-        # Placeholder implementation - will be implemented in later tasks
-        raise NotImplementedError("ContentNormalizer.remove_quoted_thread() not yet implemented")
+        if not body or not body.strip():
+            logger.debug("Empty body provided to remove_quoted_thread")
+            return body
+
+        result = patterns.detect_quoted_thread(body)
+        if result is None:
+            logger.debug("No quoted thread detected in email body")
+            return body
+
+        quote_start, pattern_name = result
+        cleaned_body = body[:quote_start].rstrip()
+
+        # Log quoted thread removal (FR-009)
+        removed_chars = len(body) - len(cleaned_body)
+        logger.info(
+            f"Quoted thread removed using pattern '{pattern_name}': "
+            f"{removed_chars} characters removed"
+        )
+
+        return cleaned_body
 
     def remove_disclaimer(self, body: str) -> Tuple[str, Optional[str]]:
         """
