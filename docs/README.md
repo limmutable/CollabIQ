@@ -14,7 +14,7 @@ Learn about the system design and implementation strategy:
 
 - [System Architecture](architecture/ARCHITECTURE.md) - Component design, data flow, deployment architecture
 - [API Contracts](architecture/API_CONTRACTS.md) - Interface specifications for all components
-- [Implementation Roadmap](architecture/IMPLEMENTATION_ROADMAP.md) - 12-phase development plan
+- [Implementation Roadmap](architecture/ROADMAP.md) - 12-phase development plan with progress tracking
 
 ## Validation Results
 

@@ -148,7 +148,7 @@ This section defines naming conventions for all file types in the CollabIQ proje
 **Examples**:
 - `ARCHITECTURE.md` ✅
 - `API_CONTRACTS.md` ✅
-- `IMPLEMENTATION_ROADMAP.md` ✅
+- `ROADMAP.md` ✅
 - `FEASIBILITY_TESTING.md` ✅
 
 **Rationale**: Visual prominence in file listings, clearly distinct from guides

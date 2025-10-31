@@ -205,7 +205,7 @@ For now, you can skip this step - it's needed for Phase 1c.
 cat docs/architecture/ARCHITECTURE.md
 
 # View implementation roadmap
-cat docs/architecture/IMPLEMENTATION_ROADMAP.md
+cat docs/architecture/ROADMAP.md
 
 # View API contracts
 cat docs/architecture/API_CONTRACTS.md
@@ -254,7 +254,7 @@ uv run pytest -v
 ## Getting Help
 
 - **Architecture Questions**: See [docs/architecture/ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
-- **Implementation Plan**: See [docs/architecture/IMPLEMENTATION_ROADMAP.md](../architecture/IMPLEMENTATION_ROADMAP.md)
+- **Implementation Plan**: See [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md)
 - **API Contracts**: See [docs/architecture/API_CONTRACTS.md](../architecture/API_CONTRACTS.md)
 - **SpecKit Commands**: Run `ls .claude/commands/` to see available workflows
 

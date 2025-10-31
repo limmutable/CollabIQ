@@ -138,10 +138,12 @@ CollabIQ/
 │   ├── settings.py                    # Pydantic settings
 │   └── __init__.py
 ├── docs/
-│   ├── ARCHITECTURE.md                # System design
-│   ├── IMPLEMENTATION_ROADMAP.md      # 12-phase plan
-│   ├── API_CONTRACTS.md               # Interface specs
-│   └── quickstart.md                  # Setup guide
+│   ├── architecture/
+│   │   ├── ARCHITECTURE.md            # System design
+│   │   ├── ROADMAP.md                 # 12-phase plan with progress
+│   │   └── API_CONTRACTS.md           # Interface specs
+│   └── setup/
+│       └── quickstart.md              # Setup guide
 ├── specs/001-feasibility-architecture/ # Foundation work specs
 ├── .env.example                       # Configuration template
 ├── .env                               # Placeholder values for user
@@ -165,10 +167,10 @@ CollabIQ/
 
 **4. Documentation** ✅
 - [README.md](README.md) - Project overview with navigation
-- [docs/quickstart.md](docs/quickstart.md) - Detailed setup instructions (300+ lines)
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - System architecture
-- [docs/IMPLEMENTATION_ROADMAP.md](docs/IMPLEMENTATION_ROADMAP.md) - Implementation plan
-- [docs/API_CONTRACTS.md](docs/API_CONTRACTS.md) - Component interfaces (500+ lines)
+- [docs/setup/quickstart.md](setup/quickstart.md) - Detailed setup instructions (300+ lines)
+- [docs/architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) - System architecture
+- [docs/architecture/ROADMAP.md](architecture/ROADMAP.md) - Implementation plan with progress
+- [docs/architecture/API_CONTRACTS.md](architecture/API_CONTRACTS.md) - Component interfaces (500+ lines)
 
 **5. CI/CD Pipeline** ✅
 - [.github/workflows/ci.yml](.github/workflows/ci.yml) - GitHub Actions workflow
@@ -203,10 +205,10 @@ CollabIQ/
 
 ### Repository Artifacts
 10. ✅ README.md (project overview)
-11. ✅ docs/ARCHITECTURE.md (copied from specs/)
-12. ✅ docs/IMPLEMENTATION_ROADMAP.md (copied from specs/)
-13. ✅ docs/API_CONTRACTS.md (consolidated)
-14. ✅ docs/quickstart.md (copied from specs/)
+11. ✅ docs/architecture/ARCHITECTURE.md (copied from specs/)
+12. ✅ docs/architecture/ROADMAP.md (copied from specs/, updated with Phase 1a progress)
+13. ✅ docs/architecture/API_CONTRACTS.md (consolidated)
+14. ✅ docs/setup/quickstart.md (copied from specs/)
 15. ✅ Project structure (src/, tests/, config/ directories)
 16. ✅ pyproject.toml (dependencies)
 17. ✅ Makefile (automation)

@@ -98,7 +98,7 @@ See [docs/setup/quickstart.md](docs/setup/quickstart.md) for detailed setup inst
 
 ### Core Documentation
 - [Architecture](docs/architecture/ARCHITECTURE.md) - System design and component diagrams
-- [Implementation Roadmap](docs/architecture/IMPLEMENTATION_ROADMAP.md) - 12-phase development plan
+- [Implementation Roadmap](docs/architecture/ROADMAP.md) - 12-phase development plan with progress tracking
 - [API Contracts](docs/architecture/API_CONTRACTS.md) - Interface specifications
 - [Quick Start Guide](docs/setup/quickstart.md) - Setup and configuration
 
@@ -116,7 +116,7 @@ See [docs/setup/quickstart.md](docs/setup/quickstart.md) for detailed setup inst
 - Phase 1c: Email Receiver Prototype (2-3 days)
 
 **Full System**: 12 phases (~30-45 days)
-- See [docs/architecture/IMPLEMENTATION_ROADMAP.md](docs/architecture/IMPLEMENTATION_ROADMAP.md) for complete timeline
+- See [docs/architecture/ROADMAP.md](docs/architecture/ROADMAP.md) for complete timeline
 
 ## Testing
 
