@@ -1,0 +1,126 @@
+{
+  "messages": [
+    {
+      "id": "18c5f2e8b3a4d1f0",
+      "threadId": "18c5f2e8b3a4d1f0"
+    },
+    {
+      "id": "18c5f2e8b3a4d1f1",
+      "threadId": "18c5f2e8b3a4d1f1"
+    }
+  ],
+  "resultSizeEstimate": 2,
+  "message_details": {
+    "18c5f2e8b3a4d1f0": {
+      "id": "18c5f2e8b3a4d1f0",
+      "threadId": "18c5f2e8b3a4d1f0",
+      "labelIds": ["INBOX", "UNREAD"],
+      "snippet": "안녕하세요, 지난주 회의에서 논의한 프로젝트 진행 상황을 공유드립니다.",
+      "payload": {
+        "partId": "",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "partner@example.com"
+          },
+          {
+            "name": "To",
+            "value": "portfolioupdates@signite.co"
+          },
+          {
+            "name": "Subject",
+            "value": "CollabIQ 협업 업데이트"
+          },
+          {
+            "name": "Date",
+            "value": "Wed, 30 Oct 2025 14:35:22 +0900"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<CABc123@mail.gmail.com>"
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 156,
+              "data": "7JWI64WV7ZWY7IS47JqULAoK7KeA64K067KI7KO8IO2ajOydmOyXkOyEnCDrhbztpZTtlZwg7ZSE66Gc7KCd7Yq47Yq4IOyngO2Wiesg7IOB7Zmp7J2EIOqzte2VtOuTnOumvOuLiOuLpC4KCuqwkOyCrO2VqeuLiOuLpC4K6rmA7LKg7IiYIOuTnOumvA=="
+            }
+          },
+          {
+            "partId": "1",
+            "mimeType": "text/html",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=\"UTF-8\""
+              }
+            ],
+            "body": {
+              "size": 256,
+              "data": "PGRpdj7slYjrhZXtlZjshLjsmpQsPGJyPjxicj7sp4Drgrjso7wg7ZqM7J2Y7JeQ7IScIOuFvOydmO2VnCDtlITroZzsooXtirgg7KeE7ZaJ7IOBIO2ZqeyepCDqs7Xsm4ztlITrtYzsmpTri6jripQuPGJyPjxicj7qsJDsgqztlanri4jri6QuPGJyPuq5gOyyoOyImCDrk5zrprw8L2Rpdj4="
+            }
+          }
+        ]
+      },
+      "sizeEstimate": 3456,
+      "historyId": "123456",
+      "internalDate": "1730267722000"
+    },
+    "18c5f2e8b3a4d1f1": {
+      "id": "18c5f2e8b3a4d1f1",
+      "threadId": "18c5f2e8b3a4d1f1",
+      "labelIds": ["INBOX", "UNREAD"],
+      "snippet": "Thank you for the update. We look forward to collaborating with you.",
+      "payload": {
+        "partId": "",
+        "mimeType": "text/plain",
+        "filename": "",
+        "headers": [
+          {
+            "name": "From",
+            "value": "john.doe@example.com"
+          },
+          {
+            "name": "To",
+            "value": "portfolioupdates@signite.co"
+          },
+          {
+            "name": "Subject",
+            "value": "Re: Partnership Discussion"
+          },
+          {
+            "name": "Date",
+            "value": "Wed, 30 Oct 2025 15:20:10 +0900"
+          },
+          {
+            "name": "Message-ID",
+            "value": "<DEF456@mail.example.com>"
+          }
+        ],
+        "body": {
+          "size": 245,
+          "data": "VGhhbmsgdGhhbmsgeW91IGZvciB0aGUgdXBkYXRlLiBXZSBsb29rIGZvcndhcmQgdG8gY29sbGFib3JhdGluZyB3aXRoIHlvdS4KCkJlc3QgcmVnYXJkcywKSm9obiBEb2UKUGFydG5lcnNoaXAgTWFuYWdlcgpFeGFtcGxlIENvcnAKam9obi5kb2VAZXhhbXBsZS5jb20="
+        }
+      },
+      "sizeEstimate": 2048,
+      "historyId": "123457",
+      "internalDate": "1730270410000"
+    }
+  }
+}

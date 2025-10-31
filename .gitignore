@@ -40,6 +40,9 @@ uv.lock
 *~
 .DS_Store
 
+# Local configuration files
+*.local.json
+
 # Testing
 .pytest_cache/
 .coverage
@@ -70,3 +73,6 @@ token.json
 # Email samples (may contain sensitive data)
 specs/001-feasibility-architecture/samples/emails/*.eml
 specs/001-feasibility-architecture/samples/emails/*.txt
+
+# Email Reception Feature - Raw and cleaned email data
+data/
