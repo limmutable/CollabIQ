@@ -22,6 +22,9 @@ Review the feasibility testing and API validation results:
 
 - [Notion API Validation](validation/NOTION_API_VALIDATION.md) - Comprehensive Notion API test results
 - [Notion Schema Analysis](validation/NOTION_SCHEMA_ANALYSIS.md) - Database field structures and types
+- [Foundation Work Report](validation/FOUNDATION_WORK_REPORT.md) - Phase 0 completion summary
+- [Feasibility Testing](validation/FEASIBILITY_TESTING.md) - Gemini API and Notion API validation results
+- [Email Infrastructure](validation/EMAIL_INFRASTRUCTURE.md) - Gmail API, IMAP, and webhook comparison
 
 ## Project Status
 
@@ -37,11 +40,6 @@ Review the feasibility testing and API validation results:
 - [Main README](../README.md) - Project overview
 - [Speckit Commands](../.claude/commands/) - Available development workflows
 - [Test Fixtures](../tests/fixtures/) - Sample data for testing
-
-## Additional Resources
-
-For historical context and completed work:
-- [Foundation Work Report](../specs/001-feasibility-architecture/FOUNDATION_WORK_REPORT.md) - Completion summary
 
 ## Need Help?
 

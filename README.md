@@ -105,7 +105,9 @@ See [docs/setup/quickstart.md](docs/setup/quickstart.md) for detailed setup inst
 ### Validation Results
 - [Notion API Validation](docs/validation/NOTION_API_VALIDATION.md) - ✅ Complete validation results (T005-T007)
 - [Notion Schema Analysis](docs/validation/NOTION_SCHEMA_ANALYSIS.md) - Database structure documentation
-- [Foundation Work Report](specs/001-feasibility-architecture/FOUNDATION_WORK_REPORT.md) - Phase 0 completion status
+- [Foundation Work Report](docs/validation/FOUNDATION_WORK_REPORT.md) - Phase 0 completion status
+- [Feasibility Testing](docs/validation/FEASIBILITY_TESTING.md) - Gemini API and Notion API validation results
+- [Email Infrastructure](docs/validation/EMAIL_INFRASTRUCTURE.md) - Gmail API, IMAP, and webhook comparison
 
 ## Implementation Plan
 
