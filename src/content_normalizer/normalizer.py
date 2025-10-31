@@ -195,7 +195,22 @@ class ContentNormalizer:
 
         return cleaned_body
 
-    def remove_disclaimer(self, body: str) -> Tuple[str, Optional[str]]:
+    def detect_disclaimer(self, body: str) -> Optional[int]:
+        """
+        Detect disclaimer location in email body text.
+
+        Args:
+            body: Email body text
+
+        Returns:
+            Starting position of disclaimer, or None if no disclaimer detected
+        """
+        result = patterns.detect_disclaimer(body)
+        if result is None:
+            return None
+        return result[0]  # Return only position
+
+    def remove_disclaimer(self, body: str) -> str:
         """
         Remove legal disclaimers and confidentiality notices.
 
@@ -208,16 +223,33 @@ class ContentNormalizer:
             body: Email body text
 
         Returns:
-            Tuple of (cleaned_body, pattern_name)
-            - cleaned_body: Text with disclaimer removed
-            - pattern_name: Name of pattern that matched (e.g., 'confidentiality')
-                           or None if no disclaimer detected
+            Text with disclaimer removed (or original if no disclaimer detected)
 
-        Raises:
-            ContentNormalizerError: With error code PATTERN_ERROR
+        Implementation:
+        - T083: detect_disclaimer() method
+        - T084: remove_disclaimer() method
+        - T086: Logging per FR-009
         """
-        # Placeholder implementation - will be implemented in later tasks
-        raise NotImplementedError("ContentNormalizer.remove_disclaimer() not yet implemented")
+        if not body or not body.strip():
+            logger.debug("Empty body provided to remove_disclaimer")
+            return body
+
+        result = patterns.detect_disclaimer(body)
+        if result is None:
+            logger.debug("No disclaimer detected in email body")
+            return body
+
+        disclaimer_start, pattern_name = result
+        cleaned_body = body[:disclaimer_start].rstrip()
+
+        # Log disclaimer removal (FR-009)
+        removed_chars = len(body) - len(cleaned_body)
+        logger.info(
+            f"Disclaimer removed using pattern '{pattern_name}': "
+            f"{removed_chars} characters removed"
+        )
+
+        return cleaned_body
 
     def process_raw_email(self, raw_email: RawEmail) -> CleanedEmail:
         """

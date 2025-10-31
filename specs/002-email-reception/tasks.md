@@ -234,23 +234,23 @@ uv run pytest tests/unit/test_content_normalizer.py::test_quote_removal_accuracy
 
 ### Unit Tests for User Story 4 (TDD - Write First)
 
-- [ ] T076 [P] [US4] Create test fixtures: disclaimer samples in `tests/fixtures/sample_emails/disclaimer_*.txt` (confidentiality, legal, "intended only")
-- [ ] T077 [US4] Write unit test `test_detect_confidentiality_disclaimer()` in `tests/unit/test_content_normalizer.py` - verify pattern matching
-- [ ] T078 [US4] Write unit test `test_detect_intended_only_notice()` in `tests/unit/test_content_normalizer.py` - verify pattern matching
-- [ ] T079 [US4] Write unit test `test_remove_disclaimer_preserves_content()` in `tests/unit/test_content_normalizer.py` - verify collaboration content intact
+- [X] T076 [P] [US4] Create test fixtures: disclaimer samples in `tests/fixtures/sample_emails/disclaimer_*.txt` (4 samples: confidentiality, intended_only, legal, no_disclaimer)
+- [X] T077 [US4] Write unit test `test_detect_confidentiality_disclaimer()` in `tests/unit/test_disclaimer_detection.py` - verify pattern matching
+- [X] T078 [US4] Write unit test `test_detect_intended_only_notice()` in `tests/unit/test_disclaimer_detection.py` - verify pattern matching
+- [X] T079 [US4] Write unit test `test_remove_disclaimer_preserves_content()` in `tests/unit/test_disclaimer_detection.py` - verify collaboration content intact
 
 ### Disclaimer Pattern Library Implementation
 
-- [ ] T080 [US4] Define confidentiality disclaimer patterns in `src/content_normalizer/patterns.py` per FR-006
-- [ ] T081 [US4] Define "intended only" notice patterns in `src/content_normalizer/patterns.py` per FR-006
-- [ ] T082 [US4] Define common corporate boilerplate patterns in `src/content_normalizer/patterns.py`
+- [X] T080 [US4] Define confidentiality disclaimer patterns in `src/content_normalizer/patterns.py` per FR-006 (7 patterns implemented)
+- [X] T081 [US4] Define "intended only" notice patterns in `src/content_normalizer/patterns.py` per FR-006
+- [X] T082 [US4] Define common corporate boilerplate patterns in `src/content_normalizer/patterns.py` (privileged, unauthorized, separator patterns)
 
 ### ContentNormalizer Implementation (Disclaimer Removal)
 
-- [ ] T083 [US4] Implement `detect_disclaimer()` method in `src/content_normalizer/normalizer.py` using patterns per FR-006
-- [ ] T084 [US4] Implement `remove_disclaimer()` method in `src/content_normalizer/normalizer.py` per FR-006
-- [ ] T085 [US4] Implement disclaimer removal tracking in RemovedContent model
-- [ ] T086 [US4] Add logging for disclaimer detection and removal per FR-009
+- [X] T083 [US4] Implement `detect_disclaimer()` method in `src/content_normalizer/normalizer.py` using patterns per FR-006
+- [X] T084 [US4] Implement `remove_disclaimer()` method in `src/content_normalizer/normalizer.py` per FR-006
+- [X] T085 [US4] Implement disclaimer removal tracking in RemovedContent model
+- [X] T086 [US4] Add logging for disclaimer detection and removal per FR-009
 
 **Checkpoint**: Disclaimer removal implemented ✅
 

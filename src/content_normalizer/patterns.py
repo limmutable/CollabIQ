@@ -467,6 +467,156 @@ def remove_quoted_thread(text: str) -> str:
 
 
 # ============================================================================
+# Disclaimer Patterns (T080-T082)
+# ============================================================================
+
+# Pattern 1: confidentiality_notice
+# Matches: "CONFIDENTIALITY NOTICE:", "CONFIDENTIAL:", etc.
+CONFIDENTIALITY_NOTICE = re.compile(
+    r'(?:^|\n)\s*CONFIDENTIALITY\s+NOTICE\s*:.*',
+    re.MULTILINE | re.IGNORECASE | re.DOTALL
+)
+
+# Pattern 2: confidential_disclaimer
+# Matches: "This email is confidential..."
+CONFIDENTIAL_DISCLAIMER = re.compile(
+    r'(?:^|\n)\s*(?:This\s+)?(?:email|message|communication)\s+(?:and\s+any\s+attachments\s+)?'
+    r'(?:is|are)\s+confidential.*',
+    re.MULTILINE | re.IGNORECASE | re.DOTALL
+)
+
+# Pattern 3: intended_only_notice
+# Matches: "This message is intended only for..."
+INTENDED_ONLY_NOTICE = re.compile(
+    r'(?:^|\n)\s*This\s+(?:message|email|communication)\s+is\s+intended\s+only\s+for.*',
+    re.MULTILINE | re.IGNORECASE | re.DOTALL
+)
+
+# Pattern 4: legal_disclaimer
+# Matches: "LEGAL DISCLAIMER:", "DISCLAIMER:", etc.
+LEGAL_DISCLAIMER = re.compile(
+    r'(?:^|\n)\s*(?:LEGAL\s+)?DISCLAIMER\s*:.*',
+    re.MULTILINE | re.IGNORECASE | re.DOTALL
+)
+
+# Pattern 5: privileged_communication
+# Matches: "privileged and confidential", "attorney-client privilege"
+PRIVILEGED_COMMUNICATION = re.compile(
+    r'(?:^|\n)\s*.*?(?:privileged|privilege).*?(?:confidential|communication).*',
+    re.MULTILINE | re.IGNORECASE | re.DOTALL
+)
+
+# Pattern 6: unauthorized_use
+# Matches: "unauthorized use", "strictly prohibited"
+UNAUTHORIZED_USE = re.compile(
+    r'(?:^|\n)\s*.*?(?:unauthorized|unauthorised)\s+(?:use|disclosure|distribution).*?'
+    r'(?:prohibited|forbidden).*',
+    re.MULTILINE | re.IGNORECASE | re.DOTALL
+)
+
+# Pattern 7: separator_disclaimer (heuristic)
+# Matches: "---" or "===" followed by disclaimer-like text
+SEPARATOR_DISCLAIMER = re.compile(
+    r'(?:^|\n)\s*[-=_]{3,}\s*\n'
+    r'.*?(?:confidential|disclaimer|legal|privileged|intended\s+only).*',
+    re.MULTILINE | re.IGNORECASE | re.DOTALL
+)
+
+
+# ============================================================================
+# Disclaimer Detection Functions
+# ============================================================================
+
+def find_disclaimer(text: str) -> Optional[Tuple[int, str]]:
+    """
+    Search for disclaimer patterns in text.
+
+    Args:
+        text: Email body text
+
+    Returns:
+        Tuple of (start_position, pattern_name) if found, else None
+    """
+    if not text or not text.strip():
+        return None
+
+    # Try specific patterns first (most reliable)
+    patterns = [
+        (CONFIDENTIALITY_NOTICE, "confidentiality_notice"),
+        (LEGAL_DISCLAIMER, "legal_disclaimer"),
+        (INTENDED_ONLY_NOTICE, "intended_only_notice"),
+        (SEPARATOR_DISCLAIMER, "separator_disclaimer"),
+        (CONFIDENTIAL_DISCLAIMER, "confidential_disclaimer"),
+        (PRIVILEGED_COMMUNICATION, "privileged_communication"),
+        (UNAUTHORIZED_USE, "unauthorized_use"),
+    ]
+
+    for pattern, name in patterns:
+        match = pattern.search(text)
+        if match:
+            return (match.start(), name)
+
+    return None
+
+
+def detect_disclaimer(text: str) -> Optional[Tuple[int, str]]:
+    """
+    Detect disclaimer in email text using all available patterns.
+
+    Tries patterns in order of specificity:
+    1. Confidentiality notices
+    2. Legal disclaimers
+    3. "Intended only" notices
+    4. General confidential/privileged patterns
+
+    Args:
+        text: Email body text
+
+    Returns:
+        Tuple of (start_position, pattern_name) if disclaimer found, else None
+
+    Examples:
+        >>> text = "Message here\\n\\nCONFIDENTIALITY NOTICE: Confidential."
+        >>> result = detect_disclaimer(text)
+        >>> result[0]  # Start position
+        14
+        >>> result[1]  # Pattern name
+        'confidentiality_notice'
+    """
+    return find_disclaimer(text)
+
+
+def remove_disclaimer(text: str) -> str:
+    """
+    Remove detected disclaimer from email text.
+
+    Args:
+        text: Email body text
+
+    Returns:
+        Text with disclaimer removed, or original text if no disclaimer detected
+
+    Examples:
+        >>> text = "Content\\n\\nCONFIDENTIALITY: Private"
+        >>> remove_disclaimer(text)
+        'Content'
+    """
+    if not text or not text.strip():
+        return text
+
+    result = detect_disclaimer(text)
+    if result is None:
+        return text
+
+    disclaimer_start, pattern_name = result
+
+    # Remove disclaimer from text
+    cleaned_text = text[:disclaimer_start].rstrip()
+
+    return cleaned_text
+
+
+# ============================================================================
 # Pattern Statistics and Debugging
 # ============================================================================
 
