@@ -97,7 +97,8 @@ See [docs/setup/quickstart.md](docs/setup/quickstart.md) for detailed setup inst
 📚 **[Browse all documentation](docs/README.md)** - Complete documentation index
 
 ### Core Documentation
-- [Architecture](docs/architecture/ARCHITECTURE.md) - System design and component diagrams
+- [Architecture](docs/architecture/ARCHITECTURE.md) - High-level system design and component diagrams
+- [Tech Stack](docs/architecture/TECHSTACK.md) - Implementation details, dependencies, and technical debt
 - [Implementation Roadmap](docs/architecture/ROADMAP.md) - 12-phase development plan with progress tracking
 - [API Contracts](docs/architecture/API_CONTRACTS.md) - Interface specifications
 - [Quick Start Guide](docs/setup/quickstart.md) - Setup and configuration

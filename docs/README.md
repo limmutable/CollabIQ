@@ -12,7 +12,8 @@ If you're new to CollabIQ, start here:
 
 Learn about the system design and implementation strategy:
 
-- [System Architecture](architecture/ARCHITECTURE.md) - Component design, data flow, deployment architecture
+- [System Architecture](architecture/ARCHITECTURE.md) - High-level component design, data flow, deployment architecture
+- [Tech Stack](architecture/TECHSTACK.md) - Implementation details, dependencies, patterns, and technical debt
 - [API Contracts](architecture/API_CONTRACTS.md) - Interface specifications for all components
 - [Implementation Roadmap](architecture/ROADMAP.md) - 12-phase development plan with progress tracking
 
@@ -44,5 +45,6 @@ Review the feasibility testing and API validation results:
 ## Need Help?
 
 - Check the [Quick Start Guide](setup/quickstart.md) for setup issues
-- Review [Architecture](architecture/ARCHITECTURE.md) for system design questions
-- See [API Contracts](architecture/API_CONTRACTS.md) for interface specifications
+- Review [Architecture](architecture/ARCHITECTURE.md) for high-level system design
+- See [Tech Stack](architecture/TECHSTACK.md) for implementation details and troubleshooting
+- Check [API Contracts](architecture/API_CONTRACTS.md) for interface specifications
