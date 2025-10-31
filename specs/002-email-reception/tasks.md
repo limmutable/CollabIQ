@@ -270,11 +270,11 @@ uv run pytest tests/unit/test_content_normalizer.py::test_remove_disclaimer_pres
 
 ### ContentNormalizer Main Pipeline
 
-- [ ] T087 Implement three-stage cleaning pipeline in `src/content_normalizer/normalizer.py` (disclaimers → quotes → signatures) per plan.md
-- [ ] T088 Implement `normalize()` main method orchestrating all cleaning stages per contracts/content_normalizer.yaml
-- [ ] T089 Implement empty content handling per FR-012 (flag emails with no content after cleaning)
-- [ ] T090 Implement CleanedEmail model creation with RemovedContent summary per data-model.md
-- [ ] T091 Implement `save_cleaned_email()` method saving to `data/cleaned/YYYY/MM/YYYYMMDD_HHMMSS_{message_id}.json` per FR-008
+- [X] T087 Implement three-stage cleaning pipeline in `src/content_normalizer/normalizer.py` (disclaimers → quotes → signatures) per plan.md
+- [X] T088 Implement `process_raw_email()` main method orchestrating all cleaning stages per contracts/content_normalizer.yaml
+- [X] T089 Implement empty content handling per FR-012 (flag emails with no content after cleaning)
+- [X] T090 Implement CleanedEmail model creation with RemovedContent summary per data-model.md
+- [X] T091 Implement `save_cleaned_email()` method saving to `data/cleaned/YYYY/MM/YYYYMMDD_HHMMSS_{message_id}.json` per FR-008
 
 ### End-to-End Integration Tests
 

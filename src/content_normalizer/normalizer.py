@@ -5,7 +5,10 @@ This module defines the ContentNormalizer class that removes signatures,
 quoted threads, and disclaimers from email body text.
 """
 
+import json
 import logging
+from datetime import datetime
+from pathlib import Path
 from typing import Optional, Tuple
 
 try:
@@ -62,7 +65,10 @@ class ContentNormalizer:
         """
         Remove signatures, quoted threads, and disclaimers from email body text.
 
-        This is the primary cleaning method.
+        This is the primary cleaning method implementing three-stage pipeline:
+        Stage 1: Remove disclaimers
+        Stage 2: Remove quoted threads
+        Stage 3: Remove signatures
 
         Args:
             body: Raw email body text containing collaboration content mixed with
@@ -75,16 +81,72 @@ class ContentNormalizer:
             CleaningResult object containing cleaned body text and removal metadata.
             cleaned_body may be empty if entire email was noise (FR-012).
 
-        Raises:
-            ContentNormalizerError: With one of the following error codes:
-                - VALIDATION_FAILED: Input body text failed validation
-                - PATTERN_ERROR: Regex pattern compilation or matching failed
-
-        Side Effects:
-            None (pure function - no I/O, no logging, no state changes)
+        Implementation:
+            - T087: Three-stage cleaning pipeline (disclaimers → quotes → signatures)
+            - T089: Empty content handling per FR-012
         """
-        # Placeholder implementation - will be implemented in later tasks
-        raise NotImplementedError("ContentNormalizer.clean() not yet implemented")
+        if not body or not body.strip():
+            logger.debug("Empty body provided to clean()")
+            return CleaningResult(
+                cleaned_body="",
+                removed_content=RemovedContent(
+                    original_length=len(body),
+                    cleaned_length=0,
+                    signature_removed=False,
+                    quoted_thread_removed=False,
+                    disclaimer_removed=False
+                )
+            )
+
+        original_length = len(body)
+        cleaned = body
+
+        # Track what was removed
+        signature_removed = False
+        quoted_thread_removed = False
+        disclaimer_removed = False
+
+        # Stage 1: Remove disclaimers (FR-006)
+        if remove_disclaimers:
+            disclaimer_result = self.remove_disclaimer(cleaned)
+            if len(disclaimer_result) < len(cleaned):
+                disclaimer_removed = True
+                cleaned = disclaimer_result
+
+        # Stage 2: Remove quoted threads (FR-005)
+        if remove_quotes:
+            quote_result = self.remove_quoted_thread(cleaned)
+            if len(quote_result) < len(cleaned):
+                quoted_thread_removed = True
+                cleaned = quote_result
+
+        # Stage 3: Remove signatures (FR-004)
+        if remove_signatures:
+            signature_result = self.remove_signature(cleaned)
+            if len(signature_result) < len(cleaned):
+                signature_removed = True
+                cleaned = signature_result
+
+        cleaned = cleaned.strip()
+        cleaned_length = len(cleaned)
+
+        # Log final result
+        logger.info(
+            f"Email cleaned: {original_length} → {cleaned_length} chars "
+            f"(signature={signature_removed}, quotes={quoted_thread_removed}, "
+            f"disclaimer={disclaimer_removed})"
+        )
+
+        return CleaningResult(
+            cleaned_body=cleaned,
+            removed_content=RemovedContent(
+                original_length=original_length,
+                cleaned_length=cleaned_length,
+                signature_removed=signature_removed,
+                quoted_thread_removed=quoted_thread_removed,
+                disclaimer_removed=disclaimer_removed
+            )
+        )
 
     def detect_signature(self, body: str) -> Optional[int]:
         """
@@ -263,8 +325,73 @@ class ContentNormalizer:
         Returns:
             CleanedEmail object with cleaned body and processing metadata
 
-        Raises:
-            ContentNormalizerError: If cleaning fails
+        Implementation:
+            - T088: Main method orchestrating all cleaning stages
+            - T090: CleanedEmail model creation with RemovedContent summary
+            - T089: Empty content handling per FR-012
         """
-        # Placeholder implementation - will be implemented in later tasks
-        raise NotImplementedError("ContentNormalizer.process_raw_email() not yet implemented")
+        # Clean the email body
+        cleaning_result = self.clean(raw_email.body)
+
+        # Determine cleaning status and is_empty flag
+        is_empty = not cleaning_result.cleaned_body or not cleaning_result.cleaned_body.strip()
+
+        if is_empty:
+            # Email is entirely noise (FR-012)
+            status = CleaningStatus.EMPTY
+            logger.warning(
+                f"Email {raw_email.metadata.message_id} resulted in empty content after cleaning"
+            )
+        else:
+            status = CleaningStatus.SUCCESS
+
+        # Create CleanedEmail model
+        cleaned_email = CleanedEmail(
+            original_message_id=raw_email.metadata.message_id,
+            cleaned_body=cleaning_result.cleaned_body,
+            removed_content=cleaning_result.removed_content,
+            processed_at=datetime.utcnow(),
+            status=status,
+            is_empty=is_empty
+        )
+
+        logger.info(
+            f"Processed email {raw_email.metadata.message_id}: "
+            f"status={status}, length={len(cleaning_result.cleaned_body)}"
+        )
+
+        return cleaned_email
+
+    def save_cleaned_email(self, cleaned_email: CleanedEmail, base_dir: Path = Path("data/cleaned")) -> Path:
+        """
+        Save cleaned email to file storage with monthly directory structure.
+
+        Args:
+            cleaned_email: The CleanedEmail object to save
+            base_dir: Base directory for cleaned emails (default: data/cleaned)
+
+        Returns:
+            Path to the saved file
+
+        Implementation:
+            - T091: Save to data/cleaned/YYYY/MM/YYYYMMDD_HHMMSS_{message_id}.json per FR-008
+        """
+        # Create monthly directory structure: data/cleaned/YYYY/MM/
+        processed_date = cleaned_email.processed_at
+        monthly_dir = base_dir / str(processed_date.year) / f"{processed_date.month:02d}"
+        monthly_dir.mkdir(parents=True, exist_ok=True)
+
+        # Generate filename: YYYYMMDD_HHMMSS_{message_id}.json
+        timestamp = processed_date.strftime("%Y%m%d_%H%M%S")
+        # Clean message_id for filename (remove < > and @ symbols)
+        clean_id = cleaned_email.original_message_id.strip("<>").replace("@", "_at_").replace("/", "_")
+        filename = f"{timestamp}_{clean_id}.json"
+        file_path = monthly_dir / filename
+
+        # Serialize CleanedEmail to JSON
+        cleaned_dict = cleaned_email.model_dump(mode='json')
+        file_path.write_text(json.dumps(cleaned_dict, indent=2, ensure_ascii=False))
+
+        logger.info(f"Saved cleaned email to {file_path}")
+
+        return file_path
