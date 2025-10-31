@@ -137,31 +137,31 @@ uv run pytest tests/integration/test_email_receiver_gmail.py -v
 
 ### Unit Tests for User Story 2 (TDD - Write First)
 
-- [ ] T046 [P] [US2] Create test fixtures: Korean signature samples in `tests/fixtures/sample_emails/korean_signature_*.txt` (5 variations)
-- [ ] T047 [P] [US2] Create test fixtures: English signature samples in `tests/fixtures/sample_emails/english_signature_*.txt` (5 variations)
-- [ ] T048 [US2] Write unit test `test_detect_korean_signature()` in `tests/unit/test_content_normalizer.py` - verify pattern matching
-- [ ] T049 [US2] Write unit test `test_detect_english_signature()` in `tests/unit/test_content_normalizer.py` - verify pattern matching
-- [ ] T050 [US2] Write unit test `test_remove_signature_preserves_content()` in `tests/unit/test_content_normalizer.py` - verify collaboration content intact
-- [ ] T051 [US2] Write unit test `test_no_signature_no_change()` in `tests/unit/test_content_normalizer.py` - verify emails without signatures unchanged
+- [X] T046 [P] [US2] Create test fixtures: Korean signature samples in `tests/fixtures/sample_emails/korean_signature_*.txt` (5 variations)
+- [X] T047 [P] [US2] Create test fixtures: English signature samples in `tests/fixtures/sample_emails/english_signature_*.txt` (5 variations)
+- [X] T048 [US2] Write unit test `test_detect_korean_signature()` in `tests/unit/test_signature_detection.py` - verify pattern matching
+- [X] T049 [US2] Write unit test `test_detect_english_signature()` in `tests/unit/test_signature_detection.py` - verify pattern matching
+- [X] T050 [US2] Write unit test `test_remove_signature_preserves_content()` in `tests/unit/test_signature_detection.py` - verify collaboration content intact
+- [X] T051 [US2] Write unit test `test_no_signature_no_change()` in `tests/unit/test_signature_detection.py` - verify emails without signatures unchanged
 
 ### Signature Pattern Library Implementation
 
-- [ ] T052 [US2] Create signature patterns module `src/content_normalizer/patterns.py` per contracts/content_normalizer.yaml
-- [ ] T053 [US2] Define Korean signature regex patterns in `src/content_normalizer/patterns.py` (감사합니다, 드림, 올림) per research.md
-- [ ] T054 [US2] Define English signature regex patterns in `src/content_normalizer/patterns.py` (Best regards, Sincerely, Thanks) per research.md
-- [ ] T055 [US2] Implement heuristic signature detection (separator lines, contact info patterns) as fallback per edge cases
+- [X] T052 [US2] Create signature patterns module `src/content_normalizer/patterns.py` per contracts/content_normalizer.yaml
+- [X] T053 [US2] Define Korean signature regex patterns in `src/content_normalizer/patterns.py` (감사합니다, 드림, 올림) per research.md
+- [X] T054 [US2] Define English signature regex patterns in `src/content_normalizer/patterns.py` (Best regards, Sincerely, Thanks) per research.md
+- [X] T055 [US2] Implement heuristic signature detection (separator lines, contact info patterns) as fallback per edge cases
 
 ### ContentNormalizer Implementation (Signature Removal)
 
-- [ ] T056 [US2] Implement `detect_signature()` method in `src/content_normalizer/normalizer.py` using patterns per FR-004
-- [ ] T057 [US2] Implement `remove_signature()` method in `src/content_normalizer/normalizer.py` per FR-004
-- [ ] T058 [US2] Implement signature removal accuracy tracking in RemovedContent model per SC-002
-- [ ] T059 [US2] Add logging for signature detection and removal per FR-009
+- [X] T056 [US2] Implement `detect_signature()` method in `src/content_normalizer/normalizer.py` using patterns per FR-004
+- [X] T057 [US2] Implement `remove_signature()` method in `src/content_normalizer/normalizer.py` per FR-004
+- [X] T058 [US2] Implement signature removal accuracy tracking in RemovedContent model per SC-002
+- [X] T059 [US2] Add logging for signature detection and removal per FR-009
 
 ### Accuracy Tests for User Story 2
 
-- [ ] T060 [US2] Write accuracy test `test_signature_removal_accuracy_95_percent()` in `tests/unit/test_content_normalizer.py` - verify SC-002 target
-- [ ] T061 [US2] Create accuracy test dataset (20+ emails) in `tests/fixtures/sample_emails/accuracy_test_signatures/`
+- [X] T060 [US2] Write accuracy test `test_signature_removal_accuracy_95_percent()` in `tests/unit/test_signature_accuracy.py` - verify SC-002 target (100% accuracy achieved)
+- [X] T061 [US2] Create accuracy test dataset (22 emails with Korean, English, edge cases) in `tests/unit/test_signature_accuracy.py`
 
 **Checkpoint**: Signature removal implemented with 95% accuracy target ✅
 

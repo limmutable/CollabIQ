@@ -5,14 +5,20 @@ This module defines the ContentNormalizer class that removes signatures,
 quoted threads, and disclaimers from email body text.
 """
 
+import logging
 from typing import Optional, Tuple
 
 try:
     from ..models.cleaned_email import CleanedEmail, CleaningStatus, RemovedContent
     from ..models.raw_email import RawEmail
+    from . import patterns
 except ImportError:
     from models.cleaned_email import CleanedEmail, CleaningStatus, RemovedContent
     from models.raw_email import RawEmail
+    from content_normalizer import patterns
+
+# Configure logging (FR-009)
+logger = logging.getLogger(__name__)
 
 
 class CleaningResult:
@@ -80,7 +86,22 @@ class ContentNormalizer:
         # Placeholder implementation - will be implemented in later tasks
         raise NotImplementedError("ContentNormalizer.clean() not yet implemented")
 
-    def remove_signature(self, body: str) -> Tuple[str, Optional[str]]:
+    def detect_signature(self, body: str) -> Optional[int]:
+        """
+        Detect signature location in email body text.
+
+        Args:
+            body: Email body text
+
+        Returns:
+            Starting position of signature, or None if no signature detected
+        """
+        result = patterns.detect_signature(body)
+        if result is None:
+            return None
+        return result[0]  # Return only position
+
+    def remove_signature(self, body: str) -> str:
         """
         Remove email signature from body text using Korean and English patterns.
 
@@ -90,16 +111,33 @@ class ContentNormalizer:
             body: Email body text
 
         Returns:
-            Tuple of (cleaned_body, pattern_name)
-            - cleaned_body: Text with signature removed
-            - pattern_name: Name of pattern that matched (e.g., 'korean_thanks_name')
-                           or None if no signature detected
+            Text with signature removed (or original if no signature detected)
 
-        Raises:
-            ContentNormalizerError: With error code PATTERN_ERROR
+        Implementation:
+        - T056: detect_signature() method
+        - T057: remove_signature() method
+        - T059: Logging per FR-009
         """
-        # Placeholder implementation - will be implemented in later tasks
-        raise NotImplementedError("ContentNormalizer.remove_signature() not yet implemented")
+        if not body or not body.strip():
+            logger.debug("Empty body provided to remove_signature")
+            return body
+
+        result = patterns.detect_signature(body)
+        if result is None:
+            logger.debug("No signature detected in email body")
+            return body
+
+        signature_start, pattern_name = result
+        cleaned_body = body[:signature_start].rstrip()
+
+        # Log signature removal (FR-009)
+        removed_chars = len(body) - len(cleaned_body)
+        logger.info(
+            f"Signature removed using pattern '{pattern_name}': "
+            f"{removed_chars} characters removed"
+        )
+
+        return cleaned_body
 
     def remove_quoted_thread(self, body: str) -> Tuple[str, Optional[str]]:
         """
