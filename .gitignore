@@ -40,6 +40,9 @@ uv.lock
 *~
 .DS_Store
 
+# Local configuration files
+*.local.json
+
 # Testing
 .pytest_cache/
 .coverage
