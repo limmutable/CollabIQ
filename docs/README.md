@@ -7,7 +7,7 @@ Welcome to the CollabIQ documentation. This guide will help you navigate all ava
 If you're new to CollabIQ, start here:
 
 - [Quick Start Guide](setup/quickstart.md) - Set up your development environment in under 15 minutes
-- [Infisical Secret Management](../specs/003-infisical-secrets/quickstart.md) - Optional centralized secret management for teams
+- [Infisical Secret Management](setup/infisical-setup.md) - Optional centralized secret management for teams
 
 ## Architecture & Design
 

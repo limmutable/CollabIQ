@@ -101,7 +101,7 @@ uv run collabiq verify-infisical
 uv run collabiq fetch
 ```
 
-**📖 Full Infisical Setup Guide**: [specs/003-infisical-secrets/quickstart.md](specs/003-infisical-secrets/quickstart.md)
+**📖 Full Infisical Setup Guide**: [docs/setup/infisical-setup.md](docs/setup/infisical-setup.md)
 
 #### Option 2: Local .env File
 

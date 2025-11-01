@@ -98,7 +98,7 @@ INFISICAL_CLIENT_SECRET=secret-xyz789
 uv run collabiq verify-infisical
 ```
 
-**📖 Full Infisical Setup Guide:** [specs/003-infisical-secrets/quickstart.md](../specs/003-infisical-secrets/quickstart.md)
+**📖 Full Infisical Setup Guide:** [docs/setup/infisical-setup.md](infisical-setup.md)
 
 ### Option B: Local .env File
 
