@@ -102,6 +102,14 @@ def test_gmail_receiver_connect(mock_creds_class, mock_build, mock_credentials_p
     - Gmail API service is built successfully
     - Connection state is established
     """
+    # Create mock token file to avoid OAuth flow
+    token_data = {
+        "token": "mock_token",
+        "refresh_token": "mock_refresh",
+        "expiry": "2025-12-31T00:00:00Z"
+    }
+    mock_token_path.write_text(json.dumps(token_data))
+
     # Setup mock credentials
     mock_creds = Mock()
     mock_creds.valid = True
@@ -140,6 +148,14 @@ def test_gmail_receiver_fetch_new_messages(
     - Response contains expected message IDs
     - Messages are returned in chronological order
     """
+    # Create mock token file to avoid OAuth flow
+    token_data = {
+        "token": "mock_token",
+        "refresh_token": "mock_refresh",
+        "expiry": "2025-12-31T00:00:00Z"
+    }
+    mock_token_path.write_text(json.dumps(token_data))
+
     # Setup mocks
     mock_creds = Mock()
     mock_creds.valid = True
@@ -178,7 +194,7 @@ def test_gmail_receiver_fetch_new_messages(
 
 
 # T026: Test Gmail receiver parse message
-def test_gmail_receiver_parse_message(gmail_api_message_detail, mock_credentials_path, mock_token_path):
+def test_gmail_receiver_parse_message(gmail_api_message_detail, mock_credentials_path, mock_token_path, tmp_path):
     """
     Test parsing Gmail API response to RawEmail model.
 
@@ -188,6 +204,14 @@ def test_gmail_receiver_parse_message(gmail_api_message_detail, mock_credentials
     - RawEmail model is created with valid data
     - All required fields are populated
     """
+    # Create mock token file to avoid OAuth flow
+    token_data = {
+        "token": "mock_token",
+        "refresh_token": "mock_refresh",
+        "expiry": "2025-12-31T00:00:00Z"
+    }
+    mock_token_path.write_text(json.dumps(token_data))
+
     receiver = GmailReceiver(
         credentials_path=mock_credentials_path,
         token_path=mock_token_path
@@ -216,6 +240,14 @@ def test_gmail_receiver_save_raw_email(tmp_path, mock_credentials_path, mock_tok
     - File contains valid JSON matching RawEmail schema
     - File content can be deserialized back to RawEmail
     """
+    # Create mock token file to avoid OAuth flow
+    token_data = {
+        "token": "mock_token",
+        "refresh_token": "mock_refresh",
+        "expiry": "2025-12-31T00:00:00Z"
+    }
+    mock_token_path.write_text(json.dumps(token_data))
+
     # Create test email
     raw_email = RawEmail(
         metadata=EmailMetadata(
@@ -263,11 +295,19 @@ def test_gmail_receiver_exponential_backoff(
     Test exponential backoff retry logic per FR-010.
 
     Verifies:
-    - Retries 3 times with increasing delays (2s, 4s, 8s)
+    - Retries 3 times with increasing delays (4s, 8s, 16s)
     - Raises EmailReceiverError with code CONNECTION_FAILED after max retries
     - Logs ProcessingEvent.CONNECTION_RETRY for each retry
     - Does not retry on authentication failures (401)
     """
+    # Create mock token file to avoid OAuth flow
+    token_data = {
+        "token": "mock_token",
+        "refresh_token": "mock_refresh",
+        "expiry": "2025-12-31T00:00:00Z"
+    }
+    mock_token_path.write_text(json.dumps(token_data))
+
     # Setup mocks
     mock_creds = Mock()
     mock_creds.valid = True
@@ -302,9 +342,9 @@ def test_gmail_receiver_exponential_backoff(
     # Verify exponential backoff delays
     assert mock_sleep.call_count >= 3  # At least 3 retries
     sleep_calls = [call_args[0][0] for call_args in mock_sleep.call_args_list]
-    assert sleep_calls[0] == 2  # First retry: 2 seconds
-    assert sleep_calls[1] == 4  # Second retry: 4 seconds
-    assert sleep_calls[2] == 8  # Third retry: 8 seconds
+    assert sleep_calls[0] == 4  # First retry: 2 * 2^1 = 4 seconds
+    assert sleep_calls[1] == 8  # Second retry: 2 * 2^2 = 8 seconds
+    assert sleep_calls[2] == 16  # Third retry: 2 * 2^3 = 16 seconds
 
 
 @patch('email_receiver.gmail_receiver.build')
@@ -320,6 +360,14 @@ def test_gmail_receiver_no_retry_on_auth_failure(
     - Raises EmailReceiverError with code AUTHENTICATION_FAILED immediately
     - Does not retry on 401 errors
     """
+    # Create mock token file to avoid OAuth flow
+    token_data = {
+        "token": "mock_token",
+        "refresh_token": "mock_refresh",
+        "expiry": "2025-12-31T00:00:00Z"
+    }
+    mock_token_path.write_text(json.dumps(token_data))
+
     # Setup mocks
     mock_creds = Mock()
     mock_creds.valid = True

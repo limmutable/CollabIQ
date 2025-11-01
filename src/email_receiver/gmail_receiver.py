@@ -119,7 +119,9 @@ class GmailReceiver(EmailReceiver):
                         str(self.credentials_path),
                         self.SCOPES
                     )
-                    self.creds = flow.run_local_server(port=0)
+                    # Use port 8080 per research.md Decision 4 (http://127.0.0.1:8080)
+                    # This must match the redirect URI configured in Google Cloud Console
+                    self.creds = flow.run_local_server(port=8080)
 
                 # Save token for next run
                 self.token_path.parent.mkdir(parents=True, exist_ok=True)
@@ -130,18 +132,61 @@ class GmailReceiver(EmailReceiver):
             self.service = build('gmail', 'v1', credentials=self.creds)
             logger.info("Successfully connected to Gmail API")
 
-        except Exception as e:
-            logger.error(f"OAuth2 authentication failed: {e}")
+        except FileNotFoundError as e:
+            logger.error(f"OAuth2 credentials file not found: {e}")
             raise EmailReceiverError(
                 code="AUTHENTICATION_FAILED",
-                message=f"Failed to authenticate with Gmail API: {str(e)}",
+                message=(
+                    f"Gmail API credentials file not found at {self.credentials_path}. "
+                    f"Please follow the setup guide at docs/gmail-oauth-setup.md to: "
+                    f"1) Create OAuth2 credentials in Google Cloud Console, "
+                    f"2) Download credentials.json, "
+                    f"3) Place it at the path specified in GOOGLE_CREDENTIALS_PATH or GMAIL_CREDENTIALS_PATH environment variable."
+                ),
+                retry_count=0
+            )
+        except Exception as e:
+            error_str = str(e).lower()
+            # Provide specific guidance based on error type
+            if "redirect_uri_mismatch" in error_str or "redirect uri" in error_str:
+                message = (
+                    f"OAuth2 redirect URI mismatch. "
+                    f"Ensure your Google Cloud Console OAuth2 client has 'http://127.0.0.1:8080' "
+                    f"in the authorized redirect URIs list. See docs/troubleshooting-gmail-api.md for details."
+                )
+            elif "invalid_grant" in error_str or "token" in error_str:
+                message = (
+                    f"OAuth2 token is invalid or expired. "
+                    f"Delete {self.token_path} and re-run authentication to refresh your tokens. "
+                    f"If this persists, check that your OAuth2 consent screen is configured correctly."
+                )
+            elif "access_denied" in error_str or "insufficient" in error_str:
+                message = (
+                    f"OAuth2 access denied or insufficient permissions. "
+                    f"Ensure the OAuth2 credentials have 'gmail.readonly' scope enabled. "
+                    f"Check your Google Cloud Console OAuth consent screen configuration."
+                )
+            else:
+                message = (
+                    f"Failed to authenticate with Gmail API: {str(e)}. "
+                    f"Check that: 1) credentials.json is valid, "
+                    f"2) OAuth2 consent screen is configured, "
+                    f"3) Gmail API is enabled in Google Cloud Console. "
+                    f"See docs/troubleshooting-gmail-api.md for common solutions."
+                )
+
+            logger.error(f"OAuth2 authentication failed: {message}")
+            raise EmailReceiverError(
+                code="AUTHENTICATION_FAILED",
+                message=message,
                 retry_count=0
             )
 
     def fetch_emails(
         self,
         since: Optional[datetime] = None,
-        max_emails: int = 100
+        max_emails: int = 100,
+        query: Optional[str] = None
     ) -> List[RawEmail]:
         """
         Retrieve unprocessed emails from Gmail inbox (T031).
@@ -151,6 +196,7 @@ class GmailReceiver(EmailReceiver):
         Args:
             since: Only retrieve emails after this timestamp
             max_emails: Maximum number of emails to retrieve (1-500)
+            query: Custom Gmail search query (T020). If None, defaults to 'deliveredto:"collab@signite.co" in:inbox'
 
         Returns:
             List of RawEmail objects in chronological order (oldest first)
@@ -171,16 +217,25 @@ class GmailReceiver(EmailReceiver):
 
         while retry_count <= self.MAX_RETRIES:
             try:
-                # Build query
-                query = "in:inbox"
+                # Build query (T020, T021, T022)
+                if query is None:
+                    # Default query filters emails sent to group alias (T022)
+                    # Using 'to:' operator which works reliably with Gmail API
+                    # Note: 'in:inbox' filter is omitted because group-forwarded emails
+                    # may not retain inbox label in the authenticated user's mailbox
+                    query_str = 'to:collab@signite.co'
+                else:
+                    query_str = query
+
+                # Add timestamp filter if provided
                 if since:
-                    query += f" after:{int(since.timestamp())}"
+                    query_str += f" after:{int(since.timestamp())}"
 
                 # Fetch message list
-                logger.info(f"Fetching emails with query: {query}, max: {max_emails}")
+                logger.info(f"Fetching emails with query: {query_str}, max: {max_emails}")
                 results = self.service.users().messages().list(
                     userId='me',
-                    q=query,
+                    q=query_str,
                     maxResults=max_emails
                 ).execute()
 

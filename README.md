@@ -138,6 +138,37 @@ CONFIDENCE_THRESHOLD=0.85
 
 See [docs/setup/quickstart.md](docs/setup/quickstart.md) for detailed setup instructions.
 
+### Gmail API Setup
+
+To retrieve emails from Gmail, you need to configure OAuth2 credentials:
+
+**Quick Setup** (10-15 minutes):
+1. **Create OAuth2 credentials** in Google Cloud Console:
+   - Follow the step-by-step guide: [docs/gmail-oauth-setup.md](docs/gmail-oauth-setup.md)
+   - Download `credentials.json` to your project root
+
+2. **Authenticate with Gmail**:
+   ```bash
+   uv run python scripts/authenticate_gmail.py
+   ```
+   - A browser window will open for you to sign in
+   - Grant read-only access to your Gmail
+   - Token is automatically saved and refreshed
+
+3. **Start retrieving emails**:
+   ```bash
+   uv run python src/cli/extract_entities.py
+   ```
+
+**For Group Aliases** (e.g., collab@signite.co):
+- Authenticate with any Google Workspace account that is a **member** of the group
+- The system automatically filters emails using `to:collab@signite.co`
+- See [docs/gmail-oauth-setup.md](docs/gmail-oauth-setup.md) for detailed instructions
+
+**Troubleshooting**:
+- If authentication fails, see [docs/troubleshooting-gmail-api.md](docs/troubleshooting-gmail-api.md)
+- Common issues: redirect URI mismatch, invalid credentials, expired tokens
+
 ## Documentation
 
 📚 **[Browse all documentation](docs/README.md)** - Complete documentation index

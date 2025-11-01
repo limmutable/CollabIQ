@@ -69,6 +69,7 @@ Thumbs.db
 # Notion/API credentials
 credentials.json
 token.json
+gmail_credentials.json
 
 # Email samples (may contain sensitive data)
 specs/001-feasibility-architecture/samples/emails/*.eml
