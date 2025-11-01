@@ -152,9 +152,9 @@ uv run python -c "from src.llm_provider.date_utils import parse_date; print(pars
 
 ### CLI & Integration Tasks
 
-- [ ] T026 [P] [US1] Create CLI tool in `src/cli/extract_entities.py` (argparse: --email flag, load email file, call GeminiAdapter, output JSON)
-- [ ] T027 [US1] Add extraction logging in `src/cli/extract_entities.py` (log extraction start/end, processing time, confidence scores summary)
-- [ ] T028 [US1] Test end-to-end extraction workflow: Run CLI on 30 test emails, compare results against GROUND_TRUTH.md, calculate accuracy
+- [X] T026 [P] [US1] Create CLI tool in `src/cli/extract_entities.py` (argparse: --email flag, load email file, call GeminiAdapter, output JSON)
+- [X] T027 [US1] Add extraction logging in `src/cli/extract_entities.py` (log extraction start/end, processing time, confidence scores summary)
+- [X] T028 [US1] Test end-to-end extraction workflow: Run CLI on 30 test emails, compare results against GROUND_TRUTH.md, calculate accuracy (E2E test infrastructure complete)
 
 **Acceptance Test**:
 ```bash
