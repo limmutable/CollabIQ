@@ -9,10 +9,11 @@
 
 ## Executive Summary
 
-This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 002-012), each delivering incremental value. Work proceeds at your own pace without deadlines - just complete phases step-by-step.
+This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 002-014), each delivering incremental value. Work proceeds at your own pace without deadlines - just complete phases step-by-step.
 
-**Total Effort**: 30-42 days across 12 phases
-**MVP Target**: Phases 1a+1b (6-9 days) deliver extraction → JSON output for manual review
+**Total Effort**: 32-45 days across 13 phases (including Gmail OAuth2 setup)
+**MVP Target**: Phases 1a+1b (6-9 days) deliver extraction → JSON output for manual review ✅ **COMPLETE**
+**Current Progress**: 3/13 phases complete (Phases 1a, 1b, 005)
 
 ---
 
@@ -70,29 +71,55 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ---
 
-**Phase 1b - Gemini Entity Extraction (MVP)** (Branch: `004-gemini-extraction`)
-**Timeline**: 3-5 days
+**Phase 1b - Gemini Entity Extraction (MVP)** (Branch: `004-gemini-extraction`) ✅ **COMPLETE**
+**Timeline**: 3-5 days (Actual: Completed 2025-10-31)
 **Complexity**: Medium
+**Status**: Merged to main, specs directory cleaned up
 
-**Deliverables**:
+**Deliverables**: ✅
 - LLMProvider abstract base class
 - GeminiAdapter implementing extraction (NO matching/classification yet, just entities)
 - Configuration management (API keys, settings)
 - Output: JSON file with extracted entities + confidence scores
 
-**Tests**: Integration tests for Gemini API (mocked + real), accuracy tests on sample emails
+**Tests**: ✅ Integration tests for Gemini API (mocked + real), accuracy tests on sample emails
 
-**Success Criteria**:
+**Success Criteria**: ✅
 - ≥85% entity extraction accuracy on test dataset
 - ≥90% confidence scores accurate (calibrated vs human judgment)
 
-**🎯 MVP Complete**: After Phase 1b, team can manually create Notion entries from JSON output
+**🎯 MVP Complete**: ✅ After Phase 1b, team can manually create Notion entries from JSON output
+
+---
+
+**Phase 005 - Gmail OAuth2 Setup** (Branch: `005-gmail-setup`) ✅ **COMPLETE**
+**Timeline**: 2-3 days (Actual: Completed 2025-11-01)
+**Complexity**: Low
+**Status**: Merged to main, specs directory cleaned up
+
+**Deliverables**: ✅
+- OAuth2 Desktop Application flow for Gmail API
+- Group alias email access (collab@signite.co)
+- Authentication scripts and manual test utilities
+- Comprehensive documentation (gmail-oauth-setup.md, troubleshooting-gmail-api.md)
+- Token management (access tokens + refresh tokens)
+
+**Tests**: ✅ 20/20 tests passing (100% pass rate)
+- 6 unit tests for query construction
+- 8 OAuth2 integration tests
+- 6 Gmail receiver unit tests
+
+**Success Criteria**: ✅
+- Setup completes in <15 minutes following documentation
+- Successfully retrieves emails from collab@signite.co (3 emails validated)
+- Token auto-refresh works without user intervention
+- All P1 user stories complete (27/30 tasks, 90%)
 
 ---
 
 ### Automation Track (Phases 2a-2e)
 
-**Phase 2a - Notion Read Operations** (Branch: `005-notion-read`)
+**Phase 2a - Notion Read Operations** (Branch: `006-notion-read`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -111,7 +138,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ---
 
-**Phase 2b - LLM-Based Company Matching** (Branch: `006-llm-matching`)
+**Phase 2b - LLM-Based Company Matching** (Branch: `007-llm-matching`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -128,7 +155,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ---
 
-**Phase 2c - Classification & Summarization** (Branch: `007-classification-summarization`)
+**Phase 2c - Classification & Summarization** (Branch: `008-classification-summarization`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -148,7 +175,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ---
 
-**Phase 2d - Notion Write Operations** (Branch: `008-notion-write`)
+**Phase 2d - Notion Write Operations** (Branch: `009-notion-write`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -166,7 +193,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ---
 
-**Phase 2e - Error Handling & Retry Logic** (Branch: `009-error-handling`)
+**Phase 2e - Error Handling & Retry Logic** (Branch: `010-error-handling`)
 **Timeline**: 2-3 days
 **Complexity**: Medium
 
@@ -187,7 +214,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ### Quality Track (Phases 3a-3b)
 
-**Phase 3a - Verification Queue Storage** (Branch: `010-queue-storage`)
+**Phase 3a - Verification Queue Storage** (Branch: `011-queue-storage`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -205,7 +232,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ---
 
-**Phase 3b - Review UI** (Branch: `011-review-ui`)
+**Phase 3b - Review UI** (Branch: `012-review-ui`)
 **Timeline**: 3-4 days
 **Complexity**: Medium
 
@@ -227,7 +254,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ### Analytics Track (Phases 4a-4b)
 
-**Phase 4a - Basic Reporting** (Branch: `012-basic-reporting`)
+**Phase 4a - Basic Reporting** (Branch: `013-basic-reporting`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -245,7 +272,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ---
 
-**Phase 4b - Advanced Analytics** (Branch: `013-advanced-analytics`)
+**Phase 4b - Advanced Analytics** (Branch: `014-advanced-analytics`)
 **Timeline**: 3-4 days
 **Complexity**: Medium
 
@@ -268,27 +295,29 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 ## Dependency Graph
 
 ```
-✅ Phase 1a (email reception) - COMPLETE
+✅ Phase 1a (002-email-reception) - COMPLETE
     ↓
-Phase 1b (extraction) → 🎯 MVP ✅
+✅ Phase 1b (004-gemini-extraction) → 🎯 MVP ✅ - COMPLETE
     ↓
-Phase 2a (Notion read)
+✅ Phase 005 (005-gmail-setup) - COMPLETE
     ↓
-Phase 2b (LLM matching) ← depends on 2a
+Phase 2a (006-notion-read)
     ↓
-Phase 2c (classification) ← depends on 2b
+Phase 2b (007-llm-matching) ← depends on 2a
     ↓
-Phase 2d (Notion write) ← depends on 2a, 2c
+Phase 2c (008-classification-summarization) ← depends on 2b
     ↓
-Phase 2e (error handling) ← depends on 2d → 🎯 Full Automation ✅
+Phase 2d (009-notion-write) ← depends on 2a, 2c
     ↓
-Phase 3a (queue storage) ← depends on 2e
+Phase 2e (010-error-handling) ← depends on 2d → 🎯 Full Automation ✅
     ↓
-Phase 3b (review UI) ← depends on 3a → 🎯 Production-Ready ✅
+Phase 3a (011-queue-storage) ← depends on 2e
     ↓
-Phase 4a (basic reporting) ← depends on 2d (needs data)
+Phase 3b (012-review-ui) ← depends on 3a → 🎯 Production-Ready ✅
     ↓
-Phase 4b (advanced analytics) ← depends on 4a → 🎯 Complete System ✅
+Phase 4a (013-basic-reporting) ← depends on 2d (needs data)
+    ↓
+Phase 4b (014-advanced-analytics) ← depends on 4a → 🎯 Complete System ✅
 ```
 
 ---
@@ -388,22 +417,22 @@ After each milestone, **STOP and VALIDATE**:
 1. ✅ **Implementation roadmap documented** (this file)
 2. ✅ **Project scaffold** (working Python project structure)
 3. ✅ **Phase 1a Complete** (branch 002-email-reception merged to main)
-4. ✅ **Phase 1b Specification** (branch 004-gemini-extraction created, spec.md complete)
-5. → **Continue with Phase 1b implementation** - **CURRENT**
-6. → **Continue through all remaining phases** sequentially
+4. ✅ **Phase 1b Complete** (branch 004-gemini-extraction merged to main) → **🎯 MVP COMPLETE**
+5. ✅ **Phase 005 Complete** (branch 005-gmail-setup merged to main)
+6. → **Ready for Phase 2a** (006-notion-read) - **NEXT**
 
-**Current Status**: Phase 1a complete and merged. Phase 1b specification complete. Ready to implement.
+**Current Status**: MVP complete (Phases 1a + 1b). Gmail OAuth2 setup complete (Phase 005). Ready to begin automation track with Notion integration.
 
-**Phase 1b Next Actions**:
-1. ✅ Create branch `004-gemini-extraction`
-2. ✅ Run `/speckit.specify` to create feature specification
+**Phase 2a (006-notion-read) Next Actions**:
+1. → Create branch `006-notion-read`
+2. → Run `/speckit.specify` to create feature specification
 3. → Run `/speckit.plan` to create implementation plan
-4. → Implement LLMProvider abstract base class
-5. → Implement GeminiAdapter for entity extraction
-6. → Test extraction accuracy on sample emails
+4. → Implement NotionIntegrator (read operations)
+5. → Fetch company lists from Notion databases
+6. → Test integration with real Notion API
 
 ---
 
-**Document Version**: 1.2.0
-**Last Updated**: 2025-11-01 (Phase 1b specification complete, branch numbers updated)
-**Next Review**: After Phase 1b (MVP) completion
+**Document Version**: 1.3.0
+**Last Updated**: 2025-11-01 (Phase 1b and 005 complete, branch numbers renumbered)
+**Next Review**: After Phase 2a (Notion Read) completion
