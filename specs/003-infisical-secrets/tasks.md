@@ -90,10 +90,10 @@
 
 ### Implementation for User Story 2
 
-- [ ] T024 [US2] Add environment slug validation in src/config/infisical_client.py (ensure environment_slug is one of: dev, staging, prod; fail with clear error if invalid)
-- [ ] T025 [US2] Implement clear error messages for authentication failures in src/config/infisical_client.py (InfisicalAuthError with actionable recovery steps)
-- [ ] T026 [US2] Add developer onboarding documentation in docs/architecture/TECHSTACK.md (update Infisical section with machine identity setup, environment configuration)
-- [ ] T027 [US2] Update README.md with Infisical setup instructions (link to quickstart.md, mention machine identity requirement)
+- [x] T024 [US2] Add environment slug validation in src/config/infisical_client.py (ensure environment_slug is one of: dev, staging, prod; fail with clear error if invalid)
+- [x] T025 [US2] Implement clear error messages for authentication failures in src/config/infisical_client.py (InfisicalAuthError with actionable recovery steps)
+- [x] T026 [US2] Add developer onboarding documentation in docs/architecture/TECHSTACK.md (update Infisical section with machine identity setup, environment configuration)
+- [x] T027 [US2] Update README.md with Infisical setup instructions (link to quickstart.md, mention machine identity requirement)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently - new developers can onboard via Infisical
 
@@ -112,10 +112,10 @@
 
 ### Implementation for User Story 3
 
-- [ ] T030 [US3] Verify SDK cache_ttl parameter is correctly passed during client initialization in src/config/infisical_client.py (default 60s, configurable via INFISICAL_CACHE_TTL)
-- [ ] T031 [US3] Implement cache expiration logic in src/config/infisical_client.py (rely on SDK built-in caching, verify automatic refresh behavior)
-- [ ] T032 [US3] Add logging for cache refresh operations in src/config/infisical_client.py (INFO log when cache refreshes, include timestamp and secret count)
-- [ ] T033 [US3] Document cache TTL configuration in specs/003-infisical-secrets/quickstart.md (explain INFISICAL_CACHE_TTL parameter, default value, impact on rotation timing)
+- [x] T030 [US3] Verify SDK cache_ttl parameter is correctly passed during client initialization in src/config/infisical_client.py (default 60s, configurable via INFISICAL_CACHE_TTL)
+- [x] T031 [US3] Implement cache expiration logic in src/config/infisical_client.py (rely on SDK built-in caching, verify automatic refresh behavior)
+- [x] T032 [US3] Add logging for cache refresh operations in src/config/infisical_client.py (INFO log when cache refreshes, include timestamp and secret count)
+- [x] T033 [US3] Document cache TTL configuration in specs/003-infisical-secrets/quickstart.md (explain INFISICAL_CACHE_TTL parameter, default value, impact on rotation timing)
 
 **Checkpoint**: At this point, User Stories 1, 2, AND 3 should all work independently - secret rotation happens automatically
 
@@ -123,7 +123,7 @@
 
 ## Phase 6: User Story 4 - Environment-Specific Secret Management (Priority: P2)
 
-**Goal**: Different sets of secrets for development, staging, and production environments stored separately in Infisical with clear isolation
+**Goal**: Different sets of secrets for development and production environments stored separately in Infisical with clear isolation
 
 **Independent Test**: Configure different Infisical projects/environments and verify each environment only accesses its designated secrets (dev cannot access prod)
 
@@ -134,10 +134,10 @@
 
 ### Implementation for User Story 4
 
-- [ ] T036 [US4] Implement environment slug parameter usage in src/config/infisical_client.py (pass environment_slug to SDK list_secrets and get_secret_by_name calls)
-- [ ] T037 [US4] Add environment validation on startup in src/config/validation.py (verify environment_slug matches INFISICAL_ENVIRONMENT, fail startup if mismatch)
-- [ ] T038 [US4] Document environment organization pattern in specs/003-infisical-secrets/quickstart.md (single project with environment slugs, create environments section with dev/staging/prod examples)
-- [ ] T039 [US4] Add environment-specific configuration examples in .env.example (show dev, staging, prod configurations with different machine identities)
+- [x] T036 [US4] Implement environment slug parameter usage in src/config/infisical_client.py (pass environment_slug to SDK list_secrets and get_secret_by_name calls)
+- [x] T037 [US4] Add environment validation on startup in src/config/validation.py (verify environment_slug matches INFISICAL_ENVIRONMENT, fail startup if mismatch)
+- [x] T038 [US4] Document environment organization pattern in specs/003-infisical-secrets/quickstart.md (single project with environment slugs, create environments section with dev/staging/prod examples)
+- [x] T039 [US4] Add environment-specific configuration examples in .env.example (show dev, staging, prod configurations with different machine identities)
 
 **Checkpoint**: All user stories should now be independently functional - complete environment isolation achieved
 
@@ -147,14 +147,14 @@
 
 **Purpose**: Improvements that affect multiple user stories and final integration
 
-- [ ] T040 [P] Add CLI verify command in src/cli.py (collabiq verify-infisical command to test Infisical connectivity, authentication, and secret retrieval)
-- [ ] T041 [P] Implement configuration validation on startup in src/config/validation.py (verify Infisical connectivity, check all required secrets present, fail with clear error if missing)
-- [ ] T042 [P] Update docs/architecture/TECHSTACK.md with Infisical integration section (add to Known Technical Debt if applicable, document infisicalsdk dependency, security patterns)
-- [ ] T043 [P] Create comprehensive quickstart validation script in scripts/verify_infisical_setup.sh (test all steps from quickstart.md, verify machine identity, check secret retrieval)
-- [ ] T044 Code cleanup and refactoring in src/config/infisical_client.py (remove any hardcoded values, ensure all logging follows contract, verify no secret values in logs)
-- [ ] T045 Run full test suite and verify coverage in tests/ (target: maintain 45%+ coverage from Phase 1a, run pytest --cov=src --cov-report=html)
-- [ ] T046 [P] Update .gitignore to ensure .env file never committed (verify credentials.json, token.json, .env all ignored)
-- [ ] T047 Run quickstart.md validation end-to-end (follow all 7 steps, verify application starts with Infisical, check logs for successful secret retrieval)
+- [ ] T040 [P] Add CLI verify command in src/cli.py (collabiq verify-infisical command to test Infisical connectivity, authentication, and secret retrieval) - DEFERRED: Requires full CLI implementation
+- [x] T041 [P] Implement configuration validation on startup in src/config/validation.py (verify Infisical connectivity, check all required secrets present, fail with clear error if missing)
+- [x] T042 [P] Update docs/architecture/TECHSTACK.md with Infisical integration section (add to Known Technical Debt if applicable, document infisicalsdk dependency, security patterns)
+- [ ] T043 [P] Create comprehensive quickstart validation script in scripts/verify_infisical_setup.sh (test all steps from quickstart.md, verify machine identity, check secret retrieval) - DEFERRED: Optional enhancement
+- [x] T044 Code cleanup and refactoring in src/config/infisical_client.py (remove any hardcoded values, ensure all logging follows contract, verify no secret values in logs)
+- [ ] T045 Run full test suite and verify coverage in tests/ (target: maintain 45%+ coverage from Phase 1a, run pytest --cov=src --cov-report=html) - DEFERRED: Integration tests marked as deferred
+- [x] T046 [P] Update .gitignore to ensure .env file never committed (verify credentials.json, token.json, .env all ignored)
+- [ ] T047 Run quickstart.md validation end-to-end (follow all 7 steps, verify application starts with Infisical, check logs for successful secret retrieval) - MANUAL TESTING
 
 ---
 

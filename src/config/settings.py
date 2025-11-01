@@ -146,12 +146,18 @@ class Settings(BaseSettings):
     @field_validator("infisical_environment")
     @classmethod
     def validate_infisical_environment(cls, v: Optional[str]) -> Optional[str]:
-        """Validate Infisical environment slug."""
+        """Validate Infisical environment slug.
+
+        Valid environments: development, production
+        Enforces FR-005 (environment-specific secret management)
+        """
         if v is not None:
             valid_envs = {"development", "production"}
             if v not in valid_envs:
                 raise ValueError(
-                    f"Invalid environment: {v}. Must be one of {valid_envs}"
+                    f"Invalid environment slug '{v}'. "
+                    f"Must be one of: {', '.join(sorted(valid_envs))}. "
+                    f"Please set INFISICAL_ENVIRONMENT to 'development' or 'production'."
                 )
         return v
 

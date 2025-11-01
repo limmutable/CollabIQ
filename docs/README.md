@@ -7,13 +7,14 @@ Welcome to the CollabIQ documentation. This guide will help you navigate all ava
 If you're new to CollabIQ, start here:
 
 - [Quick Start Guide](setup/quickstart.md) - Set up your development environment in under 15 minutes
+- [Infisical Secret Management](../specs/003-infisical-secrets/quickstart.md) - Optional centralized secret management for teams
 
 ## Architecture & Design
 
 Learn about the system design and implementation strategy:
 
 - [System Architecture](architecture/ARCHITECTURE.md) - High-level component design, data flow, deployment architecture
-- [Tech Stack](architecture/TECHSTACK.md) - Implementation details, dependencies, patterns, and technical debt
+- [Tech Stack](architecture/TECHSTACK.md) - Implementation details, dependencies, patterns, technical debt, and Infisical integration
 - [API Contracts](architecture/API_CONTRACTS.md) - Interface specifications for all components
 - [Implementation Roadmap](architecture/ROADMAP.md) - 12-phase development plan with progress tracking
 

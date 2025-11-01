@@ -10,6 +10,7 @@ Before starting, ensure you have:
 2. **UV package manager** ([install here](https://github.com/astral-sh/uv))
 3. **Gemini API key** from [Google AI Studio](https://makersuite.google.com/app/apikey)
 4. **Notion integration token** and database IDs
+5. **(Optional)** [Infisical](https://infisical.com) account for centralized secret management (recommended for teams)
 
 ## Step 1: Clone and Setup
 
@@ -64,6 +65,45 @@ To get a database ID:
 
 ## Step 3: Configure Environment
 
+You have two options for managing secrets:
+
+### Option A: Infisical (Recommended for Teams)
+
+**Benefits:**
+- ✅ No API keys in `.env` files (secure)
+- ✅ Environment isolation (development/production)
+- ✅ Centralized secret rotation
+- ✅ Team onboarding without manual key sharing
+
+**Setup** (10-15 minutes):
+
+1. Get Infisical machine identity credentials from your team lead
+2. Configure `.env` with Infisical settings:
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env and configure Infisical
+INFISICAL_ENABLED=true
+INFISICAL_PROJECT_ID=your-project-id
+INFISICAL_ENVIRONMENT=development
+INFISICAL_CLIENT_ID=machine-identity-abc123
+INFISICAL_CLIENT_SECRET=secret-xyz789
+```
+
+3. Verify connection:
+```bash
+# Application will automatically fetch secrets from Infisical
+uv run collabiq verify-infisical
+```
+
+**📖 Full Infisical Setup Guide:** [specs/003-infisical-secrets/quickstart.md](../specs/003-infisical-secrets/quickstart.md)
+
+### Option B: Local .env File
+
+For local development or if you prefer managing secrets directly:
+
 ```bash
 # Copy the example environment file
 cp .env.example .env
@@ -75,6 +115,9 @@ nano .env  # or vim, code, etc.
 Fill in the required values:
 
 ```bash
+# Disable Infisical
+INFISICAL_ENABLED=false
+
 # Required: Gemini API
 GEMINI_API_KEY=AIzaSy...your_actual_key_here
 GEMINI_MODEL=gemini-2.5-flash

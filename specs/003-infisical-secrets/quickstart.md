@@ -284,6 +284,135 @@ INFISICAL_CLIENT_SECRET=prod-machine-identity-secret
 
 ---
 
+## Cache TTL Configuration & Secret Rotation
+
+### Understanding Cache TTL
+
+The `INFISICAL_CACHE_TTL` parameter controls how long secrets are cached in memory before being refreshed from Infisical. This directly impacts how quickly rotated secrets are picked up by your application.
+
+**Default Value**: 60 seconds
+**Range**: 0-3600 seconds (0 = no caching, 3600 = 1 hour)
+
+### How Caching Works
+
+1. **First Access**: Secret fetched from Infisical API → Stored in cache with timestamp
+2. **Subsequent Access (within TTL)**: Secret retrieved from cache (< 10ms, no API call)
+3. **After TTL Expires**: Secret refetched from Infisical API → Cache updated with new value
+4. **API Unreachable**: Falls back to stale cached value (graceful degradation)
+
+### Secret Rotation Timeline
+
+When you rotate a secret in Infisical (e.g., update `GEMINI_API_KEY`):
+
+```
+Time 0s:   Admin updates secret in Infisical dashboard
+Time 0-60s: Running instances still use old cached value
+Time 60s+:  Cache expires, instances fetch new value on next access
+Time 61s:   All instances now using new secret value
+```
+
+**No restart required** - rotation happens automatically!
+
+### Configuration Examples
+
+#### Fast Rotation (Development)
+```bash
+INFISICAL_CACHE_TTL=10  # Secrets refresh every 10 seconds
+```
+- **Pros**: Near-instant secret rotation detection
+- **Cons**: More API calls, higher latency (100-300ms every 10s)
+- **Use Case**: Development, testing secret rotation
+
+#### Balanced (Default)
+```bash
+INFISICAL_CACHE_TTL=60  # Secrets refresh every 60 seconds
+```
+- **Pros**: Good balance of performance and rotation speed
+- **Cons**: Up to 1-minute delay for secret rotation
+- **Use Case**: Production, staging environments
+
+#### Long-Lived Cache (High Performance)
+```bash
+INFISICAL_CACHE_TTL=300  # Secrets refresh every 5 minutes
+```
+- **Pros**: Minimal API calls, lowest latency (cache hits)
+- **Cons**: Up to 5-minute delay for secret rotation
+- **Use Case**: Production with infrequent secret rotation
+
+#### No Caching (Always Fresh)
+```bash
+INFISICAL_CACHE_TTL=0  # No caching, always fetch from API
+```
+- **Pros**: Instant secret rotation detection
+- **Cons**: High latency (100-300ms per secret access), more API calls
+- **Use Case**: Critical systems requiring immediate rotation
+
+### Cache Refresh Logs
+
+Monitor cache refresh behavior in application logs:
+
+```bash
+# First access (cache miss)
+INFO | ✓ Retrieved 'GEMINI_API_KEY' from Infisical API (first fetch)
+
+# Cached access (within TTL)
+DEBUG | ✓ Retrieved 'GEMINI_API_KEY' from cache (age: 25s)
+
+# Cache expiration + refresh
+INFO | Cache expired for 'GEMINI_API_KEY' (TTL: 60s) - refreshing from Infisical
+INFO | ✓ Cache refreshed for 'GEMINI_API_KEY' from Infisical API
+
+# Bulk cache refresh (get_all_secrets)
+INFO | Fetching all secrets from Infisical (environment: development)
+INFO | ✓ Cache refreshed with 3 secrets from Infisical (TTL: 60s)
+```
+
+### Best Practices
+
+**Development**:
+- Use `INFISICAL_CACHE_TTL=30` for faster iteration
+- Test secret rotation by updating secrets in Infisical and waiting 30s
+
+**Staging**:
+- Use `INFISICAL_CACHE_TTL=60` (default) for production-like behavior
+- Validate rotation timing matches production
+
+**Production**:
+- Use `INFISICAL_CACHE_TTL=60-120` for balance
+- Consider `INFISICAL_CACHE_TTL=300` for high-traffic applications with stable secrets
+- Never use `INFISICAL_CACHE_TTL=0` in production (performance impact)
+
+### Testing Secret Rotation
+
+1. **Set short TTL** for testing:
+   ```bash
+   INFISICAL_CACHE_TTL=10  # 10 seconds for faster testing
+   ```
+
+2. **Start application and access a secret**:
+   ```bash
+   uv run collabiq fetch
+   # Check logs: "✓ Retrieved 'GEMINI_API_KEY' from Infisical API (first fetch)"
+   ```
+
+3. **Update secret in Infisical dashboard**:
+   - Go to Infisical → CollabIQ project → development environment
+   - Edit `GEMINI_API_KEY` value
+   - Save changes
+
+4. **Wait for cache to expire** (10 seconds in this example)
+
+5. **Access secret again**:
+   ```bash
+   uv run collabiq fetch
+   # Check logs: "Cache expired for 'GEMINI_API_KEY' (TTL: 10s) - refreshing from Infisical"
+   # Check logs: "✓ Cache refreshed for 'GEMINI_API_KEY' from Infisical API"
+   ```
+
+6. **Verify new value is used** - application now using rotated secret!
+
+---
+
 ## Troubleshooting
 
 ### Error: "Authentication failed: Invalid client ID or secret"
