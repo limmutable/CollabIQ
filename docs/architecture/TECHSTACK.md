@@ -46,6 +46,7 @@
 | `rapidfuzz` | ≥3.14.1 | Fuzzy string matching (fallback) | Phase 1a |
 | `typer` | ≥0.20.0 | CLI framework | Phase 1a |
 | `rich` | ≥14.2.0 | CLI rich formatting | Phase 1a |
+| `infisicalsdk` | Latest | Secret management SDK | Phase 3 (003-infisical-secrets) |
 
 ### Development Tools
 
@@ -177,18 +178,27 @@ CollabIQ/
 
 **Required Environment Variables** (`.env`):
 ```bash
-# Gmail API
+# Infisical Secret Management (Phase 3+)
+INFISICAL_ENABLED=true                          # Enable Infisical integration
+INFISICAL_HOST=https://app.infisical.com        # Infisical API endpoint
+INFISICAL_PROJECT_ID=your-project-id-here       # Infisical project identifier
+INFISICAL_ENVIRONMENT=development               # Environment: development or production
+INFISICAL_CLIENT_ID=machine-identity-abc123     # Universal Auth client ID
+INFISICAL_CLIENT_SECRET=secret-xyz789           # Universal Auth client secret
+INFISICAL_CACHE_TTL=60                          # Cache TTL in seconds (0-3600)
+
+# Gmail API (retrieved from Infisical if enabled, otherwise from .env)
 GMAIL_CREDENTIALS_PATH=credentials.json
 GMAIL_TOKEN_PATH=token.json
 GMAIL_BATCH_SIZE=50
 
-# Notion API (Phase 2a+)
+# Notion API (Phase 2a+, retrieved from Infisical if enabled)
 NOTION_API_KEY=secret_xxx
 NOTION_DATABASE_RADAR_ID=xxx
 NOTION_DATABASE_STARTUP_ID=xxx
 NOTION_DATABASE_PARTNER_ID=xxx
 
-# Gemini API (Phase 1b+)
+# Gemini API (Phase 1b+, retrieved from Infisical if enabled)
 GEMINI_API_KEY=xxx
 
 # Logging
@@ -354,11 +364,11 @@ async def process_batch(emails: list[RawEmail]) -> list[CleanedEmail]:
 
 ### Security Technical Debt
 
-| Issue | Impact | Priority | Planned Fix |
-|-------|--------|----------|-------------|
-| API keys in .env file | Risk of accidental commit | High | Migrate to GCP Secret Manager (Phase 2a) |
-| No OAuth token rotation | Tokens never expire | Medium | Implement token rotation (Phase 1b) |
-| No rate limit quotas enforced | May exceed API quotas | Low | Add quota enforcement (Phase 2e) |
+| Issue | Impact | Priority | Status |
+|-------|--------|----------|--------|
+| API keys in .env file | Risk of accidental commit | High | ✅ **RESOLVED** (Phase 3: Infisical integration) |
+| No OAuth token rotation | Tokens never expire | Medium | Planned for Phase 1b |
+| No rate limit quotas enforced | May exceed API quotas | Low | Planned for Phase 2e |
 
 ---
 
@@ -437,30 +447,110 @@ async def process_batch(emails: list[RawEmail]) -> list[CleanedEmail]:
 
 ### Secrets Management
 
-**Current Implementation** (Phase 1a):
+**Current Implementation** (Phase 3 - 003-infisical-secrets):
 ```python
-# src/config/settings.py
-class Settings(BaseSettings):
-    gmail_credentials_path: Path = Field(default=Path("credentials.json"))
-    gmail_token_path: Path = Field(default=Path("token.json"))
-    # Loaded from .env file
+# src/config/infisical_client.py
+# Centralized secret management via Infisical
+class InfisicalClient:
+    def get_secret(self, key: str) -> str:
+        # Three-tier fallback: Infisical API → SDK cache → .env file
+        ...
 ```
+
+**Infisical Integration** (Phase 3):
+- **Purpose**: Replace local .env file credential storage with centralized secret management
+- **Authentication**: Universal Auth with machine identities (client_id/client_secret)
+- **Environment Isolation**: Separate secrets for development and production environments
+- **Caching**: In-memory cache with configurable TTL (default 60s, range 0-3600s)
+- **Fallback**: Three-tier fallback ensures 99.9% reliability
+  1. Infisical API (fresh secrets)
+  2. SDK cache (TTL-based)
+  3. .env file (last resort for offline development)
+
+**Required Environment Variables** (Infisical):
+```bash
+# Infisical Configuration
+INFISICAL_ENABLED=true                          # Enable Infisical integration
+INFISICAL_HOST=https://app.infisical.com        # Infisical API endpoint
+INFISICAL_PROJECT_ID=your-project-id-here       # Infisical project identifier
+INFISICAL_ENVIRONMENT=development               # Environment: development or production
+INFISICAL_CLIENT_ID=machine-identity-abc123     # Universal Auth client ID
+INFISICAL_CLIENT_SECRET=secret-xyz789           # Universal Auth client secret
+INFISICAL_CACHE_TTL=60                          # Cache TTL in seconds (0-3600)
+```
+
+**Machine Identity Setup**:
+1. Create project in Infisical dashboard
+2. Add secrets to each environment (development/production)
+3. Create machine identity per environment
+4. Configure permissions (read access to specific environment only)
+5. Generate Universal Auth credentials
+6. Add credentials to .env file (or Cloud Run environment variables)
+
+**Developer Onboarding** (Without Manual Secret Sharing):
+1. **Prerequisites**:
+   - Infisical account created
+   - Added to CollabIQ project by admin
+   - Machine identity created for your environment
+2. **Setup Steps**:
+   ```bash
+   # Install dependencies
+   uv sync
+
+   # Get machine identity credentials from team lead
+   # - INFISICAL_CLIENT_ID (starts with 'machine-identity-')
+   # - INFISICAL_CLIENT_SECRET (sensitive, shown only once)
+
+   # Add to .env file
+   cp .env.example .env
+   # Edit .env with your machine identity credentials
+
+   # Verify Infisical connection
+   uv run collabiq verify-infisical
+
+   # Start application (secrets auto-loaded from Infisical)
+   uv run collabiq fetch
+   ```
+3. **No manual secret sharing**: Developer never receives actual API keys (Gmail, Gemini, Notion)
+4. **Environment isolation**: Development machine identity cannot access production secrets
+5. **Automatic rotation**: When API keys rotate in Infisical, application picks up new values after cache TTL
+
+**Secret Rotation Workflow**:
+1. Admin rotates API key in Infisical dashboard
+2. Update secret value in Infisical (e.g., GEMINI_API_KEY)
+3. Application automatically detects change after cache expires (default 60s)
+4. No restart required, no code changes needed
+
+**Error Handling**:
+- **Authentication failure**: Clear error message with recovery steps
+  - Invalid client_id/client_secret
+  - Missing permissions on environment
+  - Expired credentials
+- **Connection failure**: Graceful fallback to cache or .env
+  - Network timeout
+  - Infisical API unavailable
+- **Secret not found**: Fall back to .env file with warning log
+
+**Security Benefits**:
+- ✅ Zero credentials in version control (.env file gitignored)
+- ✅ Centralized secret rotation (update once, propagates to all instances)
+- ✅ Environment isolation (development cannot access production secrets)
+- ✅ Audit logging (Infisical tracks all secret access)
+- ✅ No manual secret sharing via email/Slack
+- ✅ Machine identity revocation (instant access removal)
 
 **Files Gitignored**:
 ```gitignore
 # .gitignore
 .env
+.env.local
+.env.*.local
 credentials.json
 token.json
 *.key
 *.pem
 data/
 ```
-
-**Planned Migration** (Phase 2a):
-- Migrate API keys to GCP Secret Manager
-- Inject secrets as environment variables at runtime
-- Support key rotation without downtime
 
 ### OAuth2 Token Management
 

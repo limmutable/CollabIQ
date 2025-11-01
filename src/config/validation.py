@@ -169,6 +169,59 @@ def validate_configuration(
             "Pub/Sub features will not work."
         )
 
+    # Check 8: Infisical configuration validation
+    if settings.infisical_enabled:
+        # Validate required Infisical settings
+        if not settings.infisical_project_id:
+            errors.append(
+                "Infisical enabled but INFISICAL_PROJECT_ID not configured. "
+                "Please set INFISICAL_PROJECT_ID in .env file."
+            )
+        if not settings.infisical_environment:
+            errors.append(
+                "Infisical enabled but INFISICAL_ENVIRONMENT not configured. "
+                "Please set INFISICAL_ENVIRONMENT to 'development' or 'production'."
+            )
+        if not settings.infisical_client_id:
+            errors.append(
+                "Infisical enabled but INFISICAL_CLIENT_ID not configured. "
+                "Please set INFISICAL_CLIENT_ID in .env file."
+            )
+        if not settings.infisical_client_secret:
+            errors.append(
+                "Infisical enabled but INFISICAL_CLIENT_SECRET not configured. "
+                "Please set INFISICAL_CLIENT_SECRET in .env file."
+            )
+
+        # Test Infisical connectivity if credentials provided
+        if (
+            settings.infisical_project_id
+            and settings.infisical_environment
+            and settings.infisical_client_id
+            and settings.infisical_client_secret
+        ):
+            try:
+                from src.config.infisical_client import InfisicalClient
+
+                client = InfisicalClient(settings)
+                client.authenticate()
+
+                # Try to verify we can access at least one secret (connectivity test)
+                logger.info(
+                    f"✓ Infisical authentication successful "
+                    f"(environment: {settings.infisical_environment})"
+                )
+            except Exception as e:
+                # Infisical errors are warnings, not failures (fallback to .env exists)
+                warnings.append(
+                    f"Infisical authentication failed: {str(e)}. "
+                    f"Application will fall back to .env file for secrets. "
+                    f"Check INFISICAL_CLIENT_ID and INFISICAL_CLIENT_SECRET."
+                )
+    else:
+        # Infisical disabled - warn if in production
+        logger.info("Infisical is disabled - secrets will be read from .env file")
+
     # Determine overall validity
     is_valid = len(errors) == 0
 

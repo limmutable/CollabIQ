@@ -53,6 +53,7 @@ See [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) for d
 - UV package manager ([installation](https://github.com/astral-sh/uv))
 - Gemini API key
 - Notion API token and database IDs
+- (Optional) Infisical account for centralized secret management
 
 ### Installation
 
@@ -71,10 +72,46 @@ cp .env.example .env
 
 ### Configuration
 
-Edit `.env` with your credentials:
+#### Option 1: Infisical (Recommended for Teams)
+
+CollabIQ supports [Infisical](https://infisical.com) for centralized secret management, eliminating the need to share API keys via email/Slack.
+
+**Benefits**:
+- ✅ No credentials in .env files (secure)
+- ✅ Environment isolation (development/production)
+- ✅ Centralized secret rotation
+- ✅ Team member onboarding without manual secret sharing
+
+**Setup** (10 minutes):
+```bash
+# 1. Get machine identity credentials from team lead
+# 2. Add to .env file
+cp .env.example .env
+# Edit .env with Infisical credentials:
+#   INFISICAL_ENABLED=true
+#   INFISICAL_PROJECT_ID=your-project-id
+#   INFISICAL_ENVIRONMENT=development
+#   INFISICAL_CLIENT_ID=machine-identity-abc123
+#   INFISICAL_CLIENT_SECRET=secret-xyz789
+
+# 3. Verify connection
+uv run collabiq verify-infisical
+
+# 4. Start application (secrets auto-loaded)
+uv run collabiq fetch
+```
+
+**📖 Full Infisical Setup Guide**: [specs/003-infisical-secrets/quickstart.md](specs/003-infisical-secrets/quickstart.md)
+
+#### Option 2: Local .env File
+
+Edit `.env` with your credentials directly:
 
 ```bash
-# Required
+# Infisical (optional - set to false to use local .env)
+INFISICAL_ENABLED=false
+
+# Required API Keys
 GEMINI_API_KEY=your_gemini_api_key_here
 NOTION_API_KEY=your_notion_integration_token_here
 NOTION_DATABASE_ID_COLLABIQ=your_collabiq_database_id_here
