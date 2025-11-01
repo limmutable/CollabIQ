@@ -111,6 +111,28 @@ class Settings(BaseSettings):
         description="Base delay in seconds for exponential backoff",
     )
 
+    # Gemini API Configuration (Phase 1b - Entity Extraction)
+    gemini_api_key: Optional[str] = Field(
+        default=None,
+        description="Gemini API key (from Infisical or .env)",
+    )
+    gemini_model: str = Field(
+        default="gemini-2.0-flash-exp",
+        description="Gemini model name (gemini-2.0-flash-exp, gemini-1.5-flash)",
+    )
+    gemini_timeout_seconds: int = Field(
+        default=10,
+        ge=5,
+        le=60,
+        description="Request timeout in seconds for Gemini API calls",
+    )
+    gemini_max_retries: int = Field(
+        default=3,
+        ge=0,
+        le=5,
+        description="Maximum retry attempts for Gemini API errors",
+    )
+
     # Infisical Secret Management Configuration
     infisical_enabled: bool = Field(
         default=False,

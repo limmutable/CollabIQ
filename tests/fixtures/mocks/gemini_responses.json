@@ -1,0 +1,30 @@
+{
+  "korean_001": {
+    "person_in_charge": {"value": "김철수", "confidence": 0.95},
+    "startup_name": {"value": "본봄", "confidence": 0.92},
+    "partner_org": {"value": "신세계인터내셔널", "confidence": 0.88},
+    "details": {"value": "파일럿 킥오프 미팅, 테이블 예약 시스템 통합 논의, 11월 1주에 PoC 시작 예정", "confidence": 0.90},
+    "date": {"value": "2025-11-01", "confidence": 0.85}
+  },
+  "korean_002": {
+    "person_in_charge": {"value": "이영희", "confidence": 0.90},
+    "startup_name": {"value": "TableManager", "confidence": 0.95},
+    "partner_org": {"value": "신세계푸드", "confidence": 0.92},
+    "details": {"value": "레스토랑 예약 시스템 도입 협의, 10월 27일 미팅에서 시범 운영 논의, 11월부터 3개월간 파일럿 테스트 진행 예정", "confidence": 0.88},
+    "date": {"value": "2025-10-27", "confidence": 0.95}
+  },
+  "english_001": {
+    "person_in_charge": {"value": "John Kim", "confidence": 0.92},
+    "startup_name": {"value": "TableManager", "confidence": 0.95},
+    "partner_org": {"value": "Shinsegae Food", "confidence": 0.90},
+    "details": {"value": "pilot program kickoff, restaurant reservation system integration, 3-month trial period beginning next Monday", "confidence": 0.88},
+    "date": {"value": "2025-10-31", "confidence": 0.85}
+  },
+  "english_002": {
+    "person_in_charge": {"value": null, "confidence": 0.0},
+    "startup_name": {"value": "BonBom", "confidence": 0.92},
+    "partner_org": {"value": "Shinsegae International", "confidence": 0.90},
+    "details": {"value": "kickoff meeting, PoC scheduled to start in the first week of November, table reservation system integration", "confidence": 0.88},
+    "date": {"value": "2025-11-01", "confidence": 0.85}
+  }
+}

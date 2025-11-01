@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "dateparser>=1.2.0",
     "email-validator>=2.3.0",
     "google-api-python-client>=2.185.0",
     "google-auth>=2.41.1",
