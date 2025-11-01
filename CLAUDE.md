@@ -26,10 +26,10 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Python 3.12 (established in project): Follow standard conventions
 
 ## Recent Changes
+- 005-gmail-setup: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 - 004-gemini-extraction: Added Python 3.12+ (established in project)
 - 003-infisical-secrets: Added Python 3.12 (established in project)
 
-- 002-structure-standards: Added Python 3.12 (established in project) + Git (for file operations and history preservation), markdown (for documentation)
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

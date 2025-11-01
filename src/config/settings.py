@@ -42,9 +42,15 @@ class Settings(BaseSettings):
     )
 
     # Gmail API Configuration
+    # Support both GOOGLE_CREDENTIALS_PATH and GMAIL_CREDENTIALS_PATH for backward compatibility
+    google_credentials_path: Optional[Path] = Field(
+        default=None,
+        description="Path to Google OAuth2 credentials file (preferred name)",
+        alias="GOOGLE_CREDENTIALS_PATH",
+    )
     gmail_credentials_path: Path = Field(
         default=Path("credentials.json"),
-        description="Path to Gmail API OAuth2 credentials file",
+        description="Path to Gmail API OAuth2 credentials file (legacy name)",
     )
     gmail_token_path: Path = Field(
         default=Path("token.json"),
@@ -293,13 +299,26 @@ class Settings(BaseSettings):
         year_month_raw.mkdir(parents=True, exist_ok=True)
         year_month_cleaned.mkdir(parents=True, exist_ok=True)
 
+    def get_gmail_credentials_path(self) -> Path:
+        """Get the effective Gmail credentials path.
+
+        Prefers GOOGLE_CREDENTIALS_PATH over GMAIL_CREDENTIALS_PATH for consistency
+        with research.md Decision 5 and quickstart.md documentation.
+
+        Returns:
+            Path to Gmail OAuth2 credentials file
+        """
+        if self.google_credentials_path is not None:
+            return self.google_credentials_path
+        return self.gmail_credentials_path
+
     def validate_gmail_credentials(self) -> bool:
         """Check if Gmail credentials file exists.
 
         Returns:
             True if credentials file exists, False otherwise
         """
-        return self.gmail_credentials_path.exists()
+        return self.get_gmail_credentials_path().exists()
 
 
 @lru_cache
