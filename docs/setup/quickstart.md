@@ -260,13 +260,13 @@ source .venv/bin/activate  # Linux/Mac
 .venv\Scripts\activate     # Windows
 ```
 
-### "API key not found" errors
+### "Configuration errors"
 ```bash
 # Check .env file exists
 ls -la .env
 
-# Check settings are loading
-uv run python -c "from config.settings import settings; print(settings.gemini_api_key[:10])"
+# Check settings are loading correctly
+uv run python -c "from src.config.settings import get_settings; settings = get_settings(); print(f'Log level: {settings.log_level}'); print(f'Infisical: {settings.infisical_enabled}')"
 ```
 
 ### "Notion API errors"
