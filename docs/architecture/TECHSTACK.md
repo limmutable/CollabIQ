@@ -1,9 +1,9 @@
 # Technology Stack & Implementation Guide
 
 **Status**: ✅ ACTIVE - Living document tracking implementation decisions
-**Version**: 1.0.0
+**Version**: 1.1.0
 **Date**: 2025-11-01
-**Last Updated**: Phase 1a Complete
+**Last Updated**: Phase 1b Complete (Gemini Entity Extraction)
 
 ---
 
@@ -41,6 +41,7 @@
 | `google-auth-oauthlib` | ≥1.2.2 | OAuth2 token management | Phase 1a |
 | `google-cloud-pubsub` | ≥2.32.0 | Pub/Sub for webhooks (future) | Phase 1a |
 | `google-generativeai` | ≥0.8.5 | Gemini API client | Phase 1b |
+| `dateparser` | ≥1.2.0 | Multi-language date parsing | Phase 1b |
 | `notion-client` | ≥2.6.0 | Notion API client | Phase 2a |
 | `email-validator` | ≥2.3.0 | Email address validation | Phase 1a |
 | `rapidfuzz` | ≥3.14.1 | Fuzzy string matching (fallback) | Phase 1a |
@@ -351,6 +352,18 @@ async def process_batch(emails: list[RawEmail]) -> list[CleanedEmail]:
 | Test coverage 45% | Insufficient coverage of edge cases | Medium | Increase to ≥80% (Phase 1b) |
 | No Gmail API quota monitoring | May hit rate limits unexpectedly | Low | Add quota tracking and alerting (Phase 2e) |
 | Cleaned emails stored as files | No structured storage for search/analysis | Low | Store in database (Phase 3a) |
+
+### Phase 1b Technical Debt (Gemini Entity Extraction)
+
+| Issue | Impact | Priority | Status |
+|-------|--------|----------|--------|
+| Batch processing not implemented | Cannot process 20+ emails efficiently | Medium | **DEFERRED** - MVP focuses on single email extraction (T029-T034) |
+| Confidence review UI not implemented | No manual review queue for low-confidence extractions | Low | **DEFERRED** - Manual Notion workflow sufficient for MVP (T035-T038) |
+| Limited test dataset (4 emails) | Cannot validate comprehensive accuracy | Medium | **ACCEPTABLE** - 4 test emails achieve 100% accuracy on SC-001/SC-002, sufficient for MVP validation (T043) |
+| No automatic Notion integration | Manual copy-paste from JSON to Notion | High | **PLANNED** - Phase 2a (Notion Read/Write) |
+| Korean date parsing limitations | dateparser doesn't support all Korean formats (e.g., "11월 1일") | Low | **ACCEPTABLE** - Gemini LLM handles date parsing in most cases |
+| Pydantic v2 Config deprecation warnings | Using `Config` instead of `ConfigDict` | Low | **PLANNED** - Update in Phase 6 polish |
+| No CLI progress bars for extraction | User has no visibility into extraction progress | Low | **PLANNED** - Add Rich progress bars in Phase 6 |
 
 ### Architecture Technical Debt
 
@@ -794,10 +807,11 @@ class Settings(BaseSettings):
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | 2025-11-01 | Phase 1b completion - Added Gemini entity extraction, CLI tool, accuracy validation |
 | 1.0.0 | 2025-11-01 | Initial version after Phase 1a completion |
 
 ---
 
-**Document Version**: 1.0.0
+**Document Version**: 1.1.0
 **Last Updated**: 2025-11-01
-**Next Review**: After Phase 1b completion
+**Next Review**: After Phase 2a completion (Notion integration)

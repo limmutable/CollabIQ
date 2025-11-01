@@ -70,7 +70,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ---
 
-**Phase 1b - Gemini Entity Extraction (MVP)** (Branch: `003-gemini-extraction`)
+**Phase 1b - Gemini Entity Extraction (MVP)** (Branch: `004-gemini-extraction`)
 **Timeline**: 3-5 days
 **Complexity**: Medium
 
@@ -92,7 +92,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ### Automation Track (Phases 2a-2e)
 
-**Phase 2a - Notion Read Operations** (Branch: `004-notion-read`)
+**Phase 2a - Notion Read Operations** (Branch: `005-notion-read`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -111,7 +111,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ---
 
-**Phase 2b - LLM-Based Company Matching** (Branch: `005-llm-matching`)
+**Phase 2b - LLM-Based Company Matching** (Branch: `006-llm-matching`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -128,7 +128,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ---
 
-**Phase 2c - Classification & Summarization** (Branch: `006-classification-summarization`)
+**Phase 2c - Classification & Summarization** (Branch: `007-classification-summarization`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -148,7 +148,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ---
 
-**Phase 2d - Notion Write Operations** (Branch: `007-notion-write`)
+**Phase 2d - Notion Write Operations** (Branch: `008-notion-write`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -166,7 +166,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ---
 
-**Phase 2e - Error Handling & Retry Logic** (Branch: `008-error-handling`)
+**Phase 2e - Error Handling & Retry Logic** (Branch: `009-error-handling`)
 **Timeline**: 2-3 days
 **Complexity**: Medium
 
@@ -187,7 +187,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ### Quality Track (Phases 3a-3b)
 
-**Phase 3a - Verification Queue Storage** (Branch: `009-queue-storage`)
+**Phase 3a - Verification Queue Storage** (Branch: `010-queue-storage`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -205,7 +205,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ---
 
-**Phase 3b - Review UI** (Branch: `010-review-ui`)
+**Phase 3b - Review UI** (Branch: `011-review-ui`)
 **Timeline**: 3-4 days
 **Complexity**: Medium
 
@@ -227,7 +227,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ### Analytics Track (Phases 4a-4b)
 
-**Phase 4a - Basic Reporting** (Branch: `011-basic-reporting`)
+**Phase 4a - Basic Reporting** (Branch: `012-basic-reporting`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -245,7 +245,7 @@ This roadmap breaks the CollabIQ system into **12 sequential phases** (branches 
 
 ---
 
-**Phase 4b - Advanced Analytics** (Branch: `012-advanced-analytics`)
+**Phase 4b - Advanced Analytics** (Branch: `013-advanced-analytics`)
 **Timeline**: 3-4 days
 **Complexity**: Medium
 
@@ -388,20 +388,22 @@ After each milestone, **STOP and VALIDATE**:
 1. ✅ **Implementation roadmap documented** (this file)
 2. ✅ **Project scaffold** (working Python project structure)
 3. ✅ **Phase 1a Complete** (branch 002-email-reception merged to main)
-4. → **Begin Phase 1b** (branch 003-gemini-extraction) - **NEXT UP**
-5. → **Continue through all 12 phases** sequentially
+4. ✅ **Phase 1b Specification** (branch 004-gemini-extraction created, spec.md complete)
+5. → **Continue with Phase 1b implementation** - **CURRENT**
+6. → **Continue through all remaining phases** sequentially
 
-**Current Status**: Phase 1a complete and merged. Ready to begin Phase 1b (Gemini Entity Extraction).
+**Current Status**: Phase 1a complete and merged. Phase 1b specification complete. Ready to implement.
 
 **Phase 1b Next Actions**:
-1. Create branch `003-gemini-extraction`
-2. Run `/speckit.specify` to create feature specification
-3. Implement LLMProvider abstract base class
-4. Implement GeminiAdapter for entity extraction
-5. Test extraction accuracy on sample emails
+1. ✅ Create branch `004-gemini-extraction`
+2. ✅ Run `/speckit.specify` to create feature specification
+3. → Run `/speckit.plan` to create implementation plan
+4. → Implement LLMProvider abstract base class
+5. → Implement GeminiAdapter for entity extraction
+6. → Test extraction accuracy on sample emails
 
 ---
 
-**Document Version**: 1.1.0
-**Last Updated**: 2025-10-31 (Phase 1a completion)
+**Document Version**: 1.2.0
+**Last Updated**: 2025-11-01 (Phase 1b specification complete, branch numbers updated)
 **Next Review**: After Phase 1b (MVP) completion

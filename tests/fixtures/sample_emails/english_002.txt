@@ -1,0 +1,4 @@
+Yesterday we had a kickoff meeting with Shinsegae International for the BonBom pilot.
+
+The PoC is scheduled to start in the first week of November, focusing on table
+reservation system integration.
