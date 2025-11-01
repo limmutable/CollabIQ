@@ -8,9 +8,10 @@ Before starting, ensure you have:
 
 1. **Python 3.12 or higher** installed
 2. **UV package manager** ([install here](https://github.com/astral-sh/uv))
-3. **Gemini API key** from [Google AI Studio](https://makersuite.google.com/app/apikey)
-4. **Notion integration token** and database IDs
-5. **(Optional)** [Infisical](https://infisical.com) account for centralized secret management (recommended for teams)
+3. **(Optional)** [Infisical](https://infisical.com) account for centralized secret management (recommended for teams)
+4. **(Future)** Gmail API credentials (Phase 1a - when implementing email reception)
+5. **(Future)** Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey) (Phase 1b)
+6. **(Future)** Notion integration token and database IDs (Phase 1c)
 
 ## Step 1: Clone and Setup
 
@@ -31,37 +32,27 @@ This will:
 - Install all Python dependencies
 - Set up development tools (pytest, ruff, mypy)
 
-## Step 2: Get Your API Keys
+## Step 2: Verify Installation
 
-### Gemini API Key
+Verify your Python and UV installation:
 
-1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Sign in with your Google account
-3. Click "Create API Key"
-4. Copy the key (starts with `AIza...`)
+```bash
+# Check Python version (should be 3.12+)
+python --version
 
-### Notion API Token
+# Check UV installation
+uv --version
 
-1. Go to [Notion Integrations](https://www.notion.so/my-integrations)
-2. Click "+ New integration"
-3. Give it a name (e.g., "CollabIQ")
-4. Select the workspace
-5. Copy the "Internal Integration Token" (starts with `secret_...`)
+# Verify virtual environment
+ls .venv/
+```
 
-### Notion Database IDs
+**Note**: API keys (Gemini, Notion, Gmail) are not required for initial setup. They will be needed when implementing specific phases:
+- **Phase 1a**: Gmail API credentials for email reception
+- **Phase 1b**: Gemini API key for LLM processing
+- **Phase 1c**: Notion API tokens for database integration
 
-You need the IDs for two databases:
-- **CollabIQ** - Main collaboration tracking database
-- **Company Database** - Unified database containing all companies: startups, portfolio companies, and Shinsegate affiliates (this consolidates what were previously separate startup and affiliate databases)
-
-To get a database ID:
-1. Open the database in Notion
-2. Click "..." → "Copy link"
-3. Extract the ID from the URL:
-   ```
-   https://www.notion.so/workspace/<DATABASE_ID>?v=...
-                                   ^^^ This 32-character string
-   ```
+See [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md) for implementation timeline.
 
 ## Step 3: Configure Environment
 
@@ -115,29 +106,28 @@ nano .env  # or vim, code, etc.
 Fill in the required values:
 
 ```bash
-# Disable Infisical
+# Disable Infisical (for local development)
 INFISICAL_ENABLED=false
 
-# Required: Gemini API
-GEMINI_API_KEY=AIzaSy...your_actual_key_here
-GEMINI_MODEL=gemini-2.5-flash
-
-# Required: Notion API
-NOTION_API_KEY=secret_...your_actual_token_here
-NOTION_DATABASE_ID_COLLABIQ=32_character_database_id_here
-NOTION_DATABASE_ID_CORP=32_character_database_id_here
-
-# Optional: Email Infrastructure (set up later)
-# For now, you can leave these as placeholder values
-
-# Processing Configuration (defaults are fine)
-FUZZY_MATCH_THRESHOLD=0.85
-CONFIDENCE_THRESHOLD=0.85
-MAX_RETRIES=3
-RETRY_DELAY_SECONDS=5
+# Gmail API Configuration (Currently Implemented - Phase 1a)
+GMAIL_CREDENTIALS_PATH=credentials.json
+GMAIL_TOKEN_PATH=token.json
 
 # Logging
 LOG_LEVEL=INFO
+
+# Future: Gemini API (Phase 1b - Not Yet Implemented)
+# GEMINI_API_KEY=AIzaSy...your_actual_key_here
+# GEMINI_MODEL=gemini-2.5-flash
+
+# Future: Notion API (Phase 1c - Not Yet Implemented)
+# NOTION_API_KEY=secret_...your_actual_token_here
+# NOTION_DATABASE_ID_COLLABIQ=32_character_database_id_here
+# NOTION_DATABASE_ID_CORP=32_character_database_id_here
+
+# Future: Processing Configuration (Phase 2+ - Not Yet Implemented)
+# FUZZY_MATCH_THRESHOLD=0.85
+# CONFIDENCE_THRESHOLD=0.85
 ```
 
 ## Step 4: Verify Configuration
@@ -145,13 +135,14 @@ LOG_LEVEL=INFO
 Test that your configuration is valid:
 
 ```bash
-uv run python -c "from config.settings import settings; print(f'Gemini: {settings.gemini_model}'); print(f'Notion: {settings.notion_api_key[:20]}...')"
+uv run python -c "from src.config.settings import get_settings; settings = get_settings(); print(f'Gmail batch size: {settings.gmail_batch_size}'); print(f'Log level: {settings.log_level}'); print(f'Infisical enabled: {settings.infisical_enabled}')"
 ```
 
 Expected output:
 ```
-Gemini: gemini-2.5-flash
-Notion: secret_abc123...
+Gmail batch size: 50
+Log level: INFO
+Infisical enabled: False  # or True if you configured Infisical
 ```
 
 ## Step 5: Run Tests
