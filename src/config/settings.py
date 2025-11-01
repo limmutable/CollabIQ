@@ -11,10 +11,13 @@ Usage:
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+if TYPE_CHECKING:
+    from config.infisical_client import InfisicalClient
 
 
 class Settings(BaseSettings):
@@ -108,6 +111,50 @@ class Settings(BaseSettings):
         description="Base delay in seconds for exponential backoff",
     )
 
+    # Infisical Secret Management Configuration
+    infisical_enabled: bool = Field(
+        default=False,
+        description="Enable Infisical secret management integration",
+    )
+    infisical_host: str = Field(
+        default="https://app.infisical.com",
+        description="Infisical API endpoint URL",
+    )
+    infisical_project_id: Optional[str] = Field(
+        default=None,
+        description="Infisical project identifier",
+    )
+    infisical_environment: Optional[str] = Field(
+        default=None,
+        description="Environment slug (dev, staging, prod)",
+    )
+    infisical_client_id: Optional[str] = Field(
+        default=None,
+        description="Universal Auth machine identity client ID",
+    )
+    infisical_client_secret: Optional[str] = Field(
+        default=None,
+        description="Universal Auth machine identity client secret",
+    )
+    infisical_cache_ttl: int = Field(
+        default=60,
+        ge=0,
+        le=3600,
+        description="Secret cache TTL in seconds (0=disabled, 60=default)",
+    )
+
+    @field_validator("infisical_environment")
+    @classmethod
+    def validate_infisical_environment(cls, v: Optional[str]) -> Optional[str]:
+        """Validate Infisical environment slug."""
+        if v is not None:
+            valid_envs = {"development", "production"}
+            if v not in valid_envs:
+                raise ValueError(
+                    f"Invalid environment: {v}. Must be one of {valid_envs}"
+                )
+        return v
+
     @field_validator("log_level")
     @classmethod
     def validate_log_level(cls, v: str) -> str:
@@ -133,6 +180,67 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return Path(v)
         return v
+
+    def __init__(self, **data):
+        """Initialize Settings with Infisical client."""
+        super().__init__(**data)
+        self._infisical_client: Optional["InfisicalClient"] = None
+
+    @property
+    def infisical_client(self) -> Optional["InfisicalClient"]:
+        """Get or create Infisical client instance (lazy initialization).
+
+        Returns:
+            InfisicalClient instance if enabled, None otherwise
+        """
+        if not self.infisical_enabled:
+            return None
+
+        if self._infisical_client is None:
+            from config.infisical_client import InfisicalClient
+
+            self._infisical_client = InfisicalClient(self)
+            if self.infisical_enabled:
+                try:
+                    self._infisical_client.authenticate()
+                except Exception:
+                    # Authentication failed, client will fall back to .env
+                    pass
+
+        return self._infisical_client
+
+    def get_secret_or_env(self, key: str, default: Optional[str] = None) -> Optional[str]:
+        """Retrieve secret from Infisical with fallback to environment variable.
+
+        Three-tier fallback:
+        1. Infisical API (if enabled and authenticated)
+        2. SDK cache (if available)
+        3. .env file / environment variable
+
+        Args:
+            key: Secret key to retrieve (e.g., "GEMINI_API_KEY")
+            default: Default value if secret not found anywhere (default: None)
+
+        Returns:
+            Secret value as string, or default if not found
+
+        Example:
+            >>> settings = get_settings()
+            >>> api_key = settings.get_secret_or_env("GEMINI_API_KEY")
+            >>> print(api_key)
+            'mock-gemini-api-key-AIzaSyD1234567890'
+        """
+        if self.infisical_client:
+            try:
+                return self.infisical_client.get_secret(key)
+            except Exception:
+                # Fall through to environment variable
+                pass
+
+        # Fallback to environment variable
+        import os
+
+        return os.getenv(key, default)
 
     def create_directories(self) -> None:
         """Create all required directories if they don't exist.

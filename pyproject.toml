@@ -15,6 +15,7 @@ dependencies = [
     "google-auth-oauthlib>=1.2.2",
     "google-cloud-pubsub>=2.32.0",
     "google-generativeai>=0.8.5",
+    "infisicalsdk>=1.0.12",
     "notion-client>=2.6.0",
     "pydantic>=2.12.3",
     "pydantic-settings>=2.11.0",
