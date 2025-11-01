@@ -4,15 +4,24 @@ Email-based collaboration tracking system that automatically extracts collaborat
 
 ## Project Status
 
-**Current Phase**: Foundation Work Complete ✅ (Branch 001-feasibility-architecture)
-- ✅ Architecture Design Complete
-- ✅ Implementation Roadmap Defined
-- ✅ Project Scaffold Complete
-- ✅ **Feasibility Testing Complete**
-  - ✅ Gemini API Validation (T001-T004): 94% accuracy, exceeds 85% target
-  - ✅ Notion API Validation (T005-T007): All CRUD operations confirmed
+**Current Phase**: Phase 1b Complete ✅ (Branch 004-gemini-extraction)
 
-**Next Phase**: Phase 1a - Email Reception (Branch 002-email-reception)
+### Completed Phases
+- ✅ **Phase 0**: Foundation Work (001-feasibility-architecture)
+  - Architecture Design, Implementation Roadmap, Project Scaffold
+  - Gemini API Validation: 94% accuracy, exceeds 85% target
+  - Notion API Validation: All CRUD operations confirmed
+- ✅ **Phase 1a**: Email Reception (002-email-reception)
+  - Gmail API integration with OAuth 2.0
+  - Email cleaning pipeline (signatures, disclaimers, quoted threads)
+  - Duplicate detection and DLQ error handling
+- ✅ **Phase 1b**: Gemini Entity Extraction (004-gemini-extraction)
+  - GeminiAdapter with structured JSON output
+  - CLI tool for manual entity extraction
+  - **Accuracy**: 100% on test dataset (exceeds 85% target for SC-001, SC-002)
+  - See [ACCURACY_REPORT.md](tests/fixtures/ground_truth/ACCURACY_REPORT.md)
+
+**Next Phase**: Phase 2a - Notion Integration (005-notion-integration)
 
 ## Overview
 

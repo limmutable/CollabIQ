@@ -2,7 +2,7 @@
 
 **Feature Branch**: `004-gemini-extraction`
 **Created**: 2025-11-01
-**Status**: Draft
+**Status**: ✅ Complete (2025-11-01)
 **Input**: User description: "Phase 1b - Gemini Entity Extraction (MVP): Implement LLM-based entity extraction from Korean/English emails to extract key collaboration information (담당자, 스타트업명, 협업기관, 협업내용, 날짜)"
 
 ## User Scenarios & Testing *(mandatory)*

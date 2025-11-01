@@ -1,9 +1,9 @@
 # Technology Stack & Implementation Guide
 
 **Status**: ✅ ACTIVE - Living document tracking implementation decisions
-**Version**: 1.0.0
+**Version**: 1.1.0
 **Date**: 2025-11-01
-**Last Updated**: Phase 1a Complete
+**Last Updated**: Phase 1b Complete (Gemini Entity Extraction)
 
 ---
 
@@ -41,6 +41,7 @@
 | `google-auth-oauthlib` | ≥1.2.2 | OAuth2 token management | Phase 1a |
 | `google-cloud-pubsub` | ≥2.32.0 | Pub/Sub for webhooks (future) | Phase 1a |
 | `google-generativeai` | ≥0.8.5 | Gemini API client | Phase 1b |
+| `dateparser` | ≥1.2.0 | Multi-language date parsing | Phase 1b |
 | `notion-client` | ≥2.6.0 | Notion API client | Phase 2a |
 | `email-validator` | ≥2.3.0 | Email address validation | Phase 1a |
 | `rapidfuzz` | ≥3.14.1 | Fuzzy string matching (fallback) | Phase 1a |
@@ -806,10 +807,11 @@ class Settings(BaseSettings):
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | 2025-11-01 | Phase 1b completion - Added Gemini entity extraction, CLI tool, accuracy validation |
 | 1.0.0 | 2025-11-01 | Initial version after Phase 1a completion |
 
 ---
 
-**Document Version**: 1.0.0
+**Document Version**: 1.1.0
 **Last Updated**: 2025-11-01
-**Next Review**: After Phase 1b completion
+**Next Review**: After Phase 2a completion (Notion integration)
