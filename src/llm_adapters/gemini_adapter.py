@@ -109,6 +109,11 @@ class GeminiAdapter(LLMProvider):
         if not email_text or not email_text.strip():
             raise LLMValidationError("email_text cannot be empty")
 
+        if len(email_text) > 10000:
+            raise LLMValidationError(
+                f"email_text too long ({len(email_text)} chars). Maximum length is 10,000 characters."
+            )
+
         # Call Gemini API with retry
         response_data = self._call_with_retry(email_text)
 

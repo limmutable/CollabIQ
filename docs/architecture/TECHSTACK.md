@@ -352,6 +352,18 @@ async def process_batch(emails: list[RawEmail]) -> list[CleanedEmail]:
 | No Gmail API quota monitoring | May hit rate limits unexpectedly | Low | Add quota tracking and alerting (Phase 2e) |
 | Cleaned emails stored as files | No structured storage for search/analysis | Low | Store in database (Phase 3a) |
 
+### Phase 1b Technical Debt (Gemini Entity Extraction)
+
+| Issue | Impact | Priority | Status |
+|-------|--------|----------|--------|
+| Batch processing not implemented | Cannot process 20+ emails efficiently | Medium | **DEFERRED** - MVP focuses on single email extraction (T029-T034) |
+| Confidence review UI not implemented | No manual review queue for low-confidence extractions | Low | **DEFERRED** - Manual Notion workflow sufficient for MVP (T035-T038) |
+| CLI integration incomplete | No command-line tool for extraction | Medium | **PLANNED** - Required for MVP completion (T026-T028) |
+| No automatic Notion integration | Manual copy-paste from JSON to Notion | High | **PLANNED** - Phase 2a (Notion Read/Write) |
+| Korean date parsing limitations | dateparser doesn't support all Korean formats (e.g., "11월 1일") | Low | **ACCEPTABLE** - Gemini LLM handles date parsing in most cases |
+| Pydantic v2 Config deprecation warnings | Using `Config` instead of `ConfigDict` | Low | **PLANNED** - Update in Phase 6 polish |
+| No CLI progress bars for extraction | User has no visibility into extraction progress | Low | **PLANNED** - Add Rich progress bars in Phase 6 |
+
 ### Architecture Technical Debt
 
 | Issue | Impact | Priority | Planned Fix |
