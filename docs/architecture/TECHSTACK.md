@@ -358,7 +358,7 @@ async def process_batch(emails: list[RawEmail]) -> list[CleanedEmail]:
 |-------|--------|----------|--------|
 | Batch processing not implemented | Cannot process 20+ emails efficiently | Medium | **DEFERRED** - MVP focuses on single email extraction (T029-T034) |
 | Confidence review UI not implemented | No manual review queue for low-confidence extractions | Low | **DEFERRED** - Manual Notion workflow sufficient for MVP (T035-T038) |
-| CLI integration incomplete | No command-line tool for extraction | Medium | ✅ **RESOLVED** - CLI tool complete with logging and E2E tests (T026-T028) |
+| Limited test dataset (4 emails) | Cannot validate comprehensive accuracy | Medium | **ACCEPTABLE** - 4 test emails achieve 100% accuracy on SC-001/SC-002, sufficient for MVP validation (T043) |
 | No automatic Notion integration | Manual copy-paste from JSON to Notion | High | **PLANNED** - Phase 2a (Notion Read/Write) |
 | Korean date parsing limitations | dateparser doesn't support all Korean formats (e.g., "11월 1일") | Low | **ACCEPTABLE** - Gemini LLM handles date parsing in most cases |
 | Pydantic v2 Config deprecation warnings | Using `Config` instead of `ConfigDict` | Low | **PLANNED** - Update in Phase 6 polish |

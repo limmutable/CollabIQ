@@ -4,22 +4,27 @@ This directory contains command-line tools for CollabIQ entity extraction featur
 
 ## Phase 1b: Gemini Entity Extraction (MVP)
 
-### Status: Core Implementation Complete ✅
+### Status: ✅ COMPLETE
 
 **Implementation Progress**:
 - ✅ GeminiAdapter with structured JSON output
-- ✅ Test suite (26/29 tests passing)
+- ✅ CLI tool with argparse and comprehensive error handling
+- ✅ Accuracy validation script (100% accuracy on 4 test emails)
+- ✅ E2E testing suite
 - ✅ Error handling and retry logic
-- ⏳ CLI tool pending (see Technical Debt below)
+
+### Accuracy Validation Results
+
+**Test Dataset**: 4 emails (2 Korean, 2 English)
+- **Overall Accuracy**: 100.0% (20/20 fields correct)
+- **Korean Accuracy (SC-001)**: 100.0% ✅ (Target: ≥85%)
+- **English Accuracy (SC-002)**: 100.0% ✅ (Target: ≥85%)
+
+See [ACCURACY_REPORT.md](../../tests/fixtures/ground_truth/ACCURACY_REPORT.md) for detailed results.
 
 ### Technical Debt
 
-The CLI integration (T026-T028) has been **deferred** to focus on completing the MVP core functionality:
-
-**Deferred Tasks**:
-- T026: CLI tool creation (`extract_entities.py`)
-- T027: Extraction logging
-- T028: End-to-end testing
+The following features have been **deferred** to Phase 2+:
 
 **Current Workaround**:
 Use the GeminiAdapter directly in Python:

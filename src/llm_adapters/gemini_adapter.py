@@ -154,40 +154,40 @@ class GeminiAdapter(LLMProvider):
                 "person_in_charge": {
                     "type": "object",
                     "properties": {
-                        "value": {"type": ["string", "null"]},
-                        "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                        "value": {"type": "string", "nullable": True},
+                        "confidence": {"type": "number"},
                     },
                     "required": ["value", "confidence"],
                 },
                 "startup_name": {
                     "type": "object",
                     "properties": {
-                        "value": {"type": ["string", "null"]},
-                        "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                        "value": {"type": "string", "nullable": True},
+                        "confidence": {"type": "number"},
                     },
                     "required": ["value", "confidence"],
                 },
                 "partner_org": {
                     "type": "object",
                     "properties": {
-                        "value": {"type": ["string", "null"]},
-                        "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                        "value": {"type": "string", "nullable": True},
+                        "confidence": {"type": "number"},
                     },
                     "required": ["value", "confidence"],
                 },
                 "details": {
                     "type": "object",
                     "properties": {
-                        "value": {"type": ["string", "null"]},
-                        "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                        "value": {"type": "string", "nullable": True},
+                        "confidence": {"type": "number"},
                     },
                     "required": ["value", "confidence"],
                 },
                 "date": {
                     "type": "object",
                     "properties": {
-                        "value": {"type": ["string", "null"]},
-                        "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+                        "value": {"type": "string", "nullable": True},
+                        "confidence": {"type": "number"},
                     },
                     "required": ["value", "confidence"],
                 },
