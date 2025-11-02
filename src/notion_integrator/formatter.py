@@ -330,25 +330,25 @@ def generate_markdown_summary(
 
     if both:
         lines.append("## Both SSG & Portfolio Companies\n")
-        for name, _ in sorted(both):
+        for name, _ in sorted(both, key=lambda x: x[0]):
             lines.append(f"- {name}")
         lines.append("")
 
     if ssg_only:
         lines.append("## Shinsegae Affiliates\n")
-        for name, _ in sorted(ssg_only):
+        for name, _ in sorted(ssg_only, key=lambda x: x[0]):
             lines.append(f"- {name}")
         lines.append("")
 
     if portfolio_only:
         lines.append("## Portfolio Companies\n")
-        for name, _ in sorted(portfolio_only):
+        for name, _ in sorted(portfolio_only, key=lambda x: x[0]):
             lines.append(f"- {name}")
         lines.append("")
 
     if neither:
         lines.append("## Other Companies\n")
-        for name, _ in sorted(neither):
+        for name, _ in sorted(neither, key=lambda x: x[0]):
             lines.append(f"- {name}")
         lines.append("")
 
