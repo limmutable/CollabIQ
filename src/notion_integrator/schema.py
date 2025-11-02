@@ -71,7 +71,21 @@ async def discover_schema(
         if use_cache and cache_manager:
             # We need database name for cache lookup, so do a quick fetch first
             db_response = await client.retrieve_database(database_id)
-            notion_db = parse_database_response(db_response)
+
+            # Get data source for properties (Notion API 2025-09-03)
+            data_sources = db_response.get("data_sources", [])
+            if not data_sources:
+                raise SchemaValidationError(
+                    database_id=database_id,
+                    message="Database has no data sources",
+                    validation_errors=["No data sources found"],
+                )
+
+            # Retrieve the first data source to get properties
+            data_source_id = data_sources[0]["id"]
+            data_source_response = await client.retrieve_data_source(data_source_id)
+
+            notion_db = parse_database_response(db_response, data_source_response)
             database_name = notion_db.title
 
             cached_schema = cache_manager.get_schema_cache(database_id, database_name)
@@ -93,7 +107,21 @@ async def discover_schema(
         else:
             # No caching - fetch fresh
             db_response = await client.retrieve_database(database_id)
-            notion_db = parse_database_response(db_response)
+
+            # Get data source for properties (Notion API 2025-09-03)
+            data_sources = db_response.get("data_sources", [])
+            if not data_sources:
+                raise SchemaValidationError(
+                    database_id=database_id,
+                    message="Database has no data sources",
+                    validation_errors=["No data sources found"],
+                )
+
+            # Retrieve the first data source to get properties
+            data_source_id = data_sources[0]["id"]
+            data_source_response = await client.retrieve_data_source(data_source_id)
+
+            notion_db = parse_database_response(db_response, data_source_response)
             schema = create_database_schema(notion_db)
             validate_schema(schema)
 
@@ -118,12 +146,19 @@ async def discover_schema(
 # ==============================================================================
 
 
-def parse_database_response(response: Dict[str, Any]) -> NotionDatabase:
+def parse_database_response(
+    db_response: Dict[str, Any],
+    data_source_response: Optional[Dict[str, Any]] = None,
+) -> NotionDatabase:
     """
-    Parse Notion API database response to NotionDatabase model.
+    Parse Notion API database and data source responses to NotionDatabase model.
+
+    Note: Migrated to Notion API 2025-09-03. Databases no longer have properties;
+    properties are now on data sources. This function requires both responses.
 
     Args:
-        response: Raw response from databases.retrieve
+        db_response: Raw response from databases.retrieve
+        data_source_response: Raw response from data_sources.retrieve (optional for backward compat)
 
     Returns:
         NotionDatabase instance
@@ -133,28 +168,33 @@ def parse_database_response(response: Dict[str, Any]) -> NotionDatabase:
     """
     try:
         # Extract database ID
-        db_id = response["id"]
+        db_id = db_response["id"]
 
         # Extract title
-        title_array = response.get("title", [])
+        title_array = db_response.get("title", [])
         if title_array and len(title_array) > 0:
             title = title_array[0].get("text", {}).get("content", "Untitled")
         else:
             title = "Untitled"
 
         # Extract URL
-        url = response.get("url", "")
+        url = db_response.get("url", "")
 
         # Parse timestamps
         created_time = datetime.fromisoformat(
-            response["created_time"].replace("Z", "+00:00")
+            db_response["created_time"].replace("Z", "+00:00")
         )
         last_edited_time = datetime.fromisoformat(
-            response["last_edited_time"].replace("Z", "+00:00")
+            db_response["last_edited_time"].replace("Z", "+00:00")
         )
 
-        # Parse properties
-        properties_dict = response.get("properties", {})
+        # Parse properties from data source (new API 2025-09-03)
+        if data_source_response:
+            properties_dict = data_source_response.get("properties", {})
+        else:
+            # Fallback: try to get from database response (old API, will be empty in new API)
+            properties_dict = db_response.get("properties", {})
+
         if not properties_dict:
             raise SchemaValidationError(
                 database_id=db_id,
@@ -179,14 +219,14 @@ def parse_database_response(response: Dict[str, Any]) -> NotionDatabase:
 
     except KeyError as e:
         raise SchemaValidationError(
-            database_id=response.get("id", "unknown"),
+            database_id=db_response.get("id", "unknown"),
             message=f"Missing required field in database response: {e}",
             validation_errors=[str(e)],
             original_error=e,
         )
     except Exception as e:
         raise SchemaValidationError(
-            database_id=response.get("id", "unknown"),
+            database_id=db_response.get("id", "unknown"),
             message=f"Failed to parse database response: {e}",
             original_error=e,
         )

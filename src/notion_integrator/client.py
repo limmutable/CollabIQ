@@ -8,6 +8,14 @@ Wraps the official Notion Python SDK with:
 - Retry logic for transient failures
 
 This is the main entry point for all Notion API interactions.
+
+MIGRATION NOTE (2024-11-02):
+Migrated to Notion API version 2025-09-03 which introduced data sources.
+- Databases no longer have properties directly
+- Properties are now on data sources (databases can have multiple data sources)
+- query_database() now retrieves database -> data source -> queries data source
+- retrieve_data_source() added for accessing data source metadata
+See: https://developers.notion.com/docs/upgrade-guide-2025-09-03
 """
 
 import os
@@ -138,6 +146,9 @@ class NotionClient:
         """
         Query database for records.
 
+        Note: Migrated to Notion API 2025-09-03 data sources model.
+        This method retrieves the database's data source(s) and queries the first one.
+
         Args:
             database_id: Notion database ID
             filter_conditions: Filter conditions (optional)
@@ -157,7 +168,7 @@ class NotionClient:
         """
         log_api_call(
             logger,
-            "databases.query",
+            "data_sources.query",
             database_id=database_id,
             page_size=page_size,
             has_cursor=start_cursor is not None,
@@ -165,8 +176,24 @@ class NotionClient:
 
         async with self.rate_limiter:
             try:
-                response = await self._query_database_with_retry(
-                    database_id=database_id,
+                # First, get the database to retrieve data source IDs
+                db = await self._retrieve_database_with_retry(database_id)
+                data_sources = db.get("data_sources", [])
+
+                if not data_sources:
+                    raise NotionAPIError(
+                        message=f"Database has no data sources (database_id={database_id})",
+                        status_code=None,
+                        response_body="No data sources found in database",
+                        details={"database_id": database_id},
+                    )
+
+                # Query the first data source
+                # TODO: In the future, we might need to query all data sources for multi-source databases
+                data_source_id = data_sources[0]["id"]
+
+                response = await self._query_data_source_with_retry(
+                    data_source_id=data_source_id,
                     filter_conditions=filter_conditions,
                     sorts=sorts,
                     start_cursor=start_cursor,
@@ -182,17 +209,17 @@ class NotionClient:
         wait=wait_exponential(multiplier=1, min=1, max=10),
         reraise=True,
     )
-    async def _query_database_with_retry(
+    async def _query_data_source_with_retry(
         self,
-        database_id: str,
+        data_source_id: str,
         filter_conditions: Optional[Dict[str, Any]],
         sorts: Optional[list],
         start_cursor: Optional[str],
         page_size: int,
     ) -> Dict[str, Any]:
-        """Query database with retry logic."""
+        """Query data source with retry logic (Notion API 2025-09-03)."""
         query_params = {
-            "database_id": database_id,
+            "data_source_id": data_source_id,
             "page_size": page_size,
         }
 
@@ -203,7 +230,54 @@ class NotionClient:
         if start_cursor:
             query_params["start_cursor"] = start_cursor
 
-        return await self.client.databases.query(**query_params)
+        return await self.client.data_sources.query(**query_params)
+
+    async def retrieve_data_source(self, data_source_id: str) -> Dict[str, Any]:
+        """
+        Retrieve data source metadata and schema (Notion API 2025-09-03).
+
+        Args:
+            data_source_id: Notion data source ID
+
+        Returns:
+            Data source object from Notion API
+
+        Raises:
+            NotionAuthenticationError: Invalid API key
+            NotionObjectNotFoundError: Data source not found or not shared
+            NotionPermissionError: Insufficient permissions
+            NotionRateLimitError: Rate limit exceeded
+            NotionAPIError: Other API errors
+        """
+        log_api_call(logger, "data_sources.retrieve", data_source_id=data_source_id)
+
+        async with self.rate_limiter:
+            try:
+                response = await self._retrieve_data_source_with_retry(data_source_id)
+                return response
+            except APIResponseError as e:
+                raise self._translate_api_error(e)
+
+    @retry(
+        retry=retry_if_exception_type(APIResponseError),
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        reraise=True,
+    )
+    async def _retrieve_data_source_with_retry(self, data_source_id: str) -> Dict[str, Any]:
+        """
+        Retrieve data source with retry logic for transient failures.
+
+        Args:
+            data_source_id: Notion data source ID
+
+        Returns:
+            Data source object from Notion API
+
+        Raises:
+            APIResponseError: If all retries exhausted
+        """
+        return await self.client.data_sources.retrieve(data_source_id=data_source_id)
 
     async def retrieve_page(self, page_id: str) -> Dict[str, Any]:
         """
