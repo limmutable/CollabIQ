@@ -233,10 +233,10 @@ Test Notion data fetching and formatting:
 uv run collabiq notion fetch
 
 # View database schema
-uv run collabiq notion schema --database-id YOUR_COMPANIES_DB_ID
+uv run collabiq notion schema YOUR_COMPANIES_DB_ID
 
 # Refresh cached data
-uv run collabiq notion refresh --database-id YOUR_COMPANIES_DB_ID
+uv run collabiq notion refresh YOUR_COMPANIES_DB_ID
 
 # Export to JSON file
 uv run collabiq notion export --output companies.json
@@ -407,8 +407,8 @@ uv run collabiq version
 
 # Notion commands (Phase 2a)
 uv run collabiq notion fetch              # Fetch data from Notion databases
-uv run collabiq notion schema --database-id <ID>  # View database schema
-uv run collabiq notion refresh --database-id <ID> # Refresh cached data
+uv run collabiq notion schema <DATABASE_ID>  # View database schema
+uv run collabiq notion refresh <DATABASE_ID> # Refresh cached data
 uv run collabiq notion export --output <file>     # Export to JSON file
 ```
 
