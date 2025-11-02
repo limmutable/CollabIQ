@@ -179,32 +179,60 @@ CollabIQ/
 
 **Required Environment Variables** (`.env`):
 ```bash
-# Infisical Secret Management (Phase 3+)
-INFISICAL_ENABLED=true                          # Enable Infisical integration
-INFISICAL_HOST=https://app.infisical.com        # Infisical API endpoint
-INFISICAL_PROJECT_ID=your-project-id-here       # Infisical project identifier
-INFISICAL_ENVIRONMENT=development               # Environment: development or production
-INFISICAL_CLIENT_ID=machine-identity-abc123     # Universal Auth client ID
-INFISICAL_CLIENT_SECRET=secret-xyz789           # Universal Auth client secret
-INFISICAL_CACHE_TTL=60                          # Cache TTL in seconds (0-3600)
+# Gemini API Configuration
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-flash
 
-# Gmail API (retrieved from Infisical if enabled, otherwise from .env)
-GMAIL_CREDENTIALS_PATH=credentials.json
+# Notion API Configuration
+NOTION_API_KEY=your_notion_integration_token_here
+NOTION_DATABASE_ID_COLLABIQ=your_collabiq_database_id_here
+NOTION_DATABASE_ID_COMPANIES=your_companies_database_id_here
+
+# Optional Notion Configuration (with defaults)
+NOTION_CACHE_DIR=data/notion_cache
+NOTION_SCHEMA_CACHE_TTL_HOURS=24
+NOTION_DATA_CACHE_TTL_HOURS=6
+NOTION_RATE_LIMIT_PER_SEC=3
+NOTION_MAX_RELATIONSHIP_DEPTH=1
+
+# Gmail API Credentials
+# GOOGLE_CREDENTIALS_PATH is the preferred variable name
+# Legacy GMAIL_CREDENTIALS_PATH also supported for backward compatibility
+GOOGLE_CREDENTIALS_PATH=credentials.json
 GMAIL_TOKEN_PATH=token.json
-GMAIL_BATCH_SIZE=50
+GMAIL_SCOPES=https://www.googleapis.com/auth/gmail.readonly
 
-# Notion API (Phase 2a+, retrieved from Infisical if enabled)
-NOTION_API_KEY=secret_xxx
-NOTION_DATABASE_RADAR_ID=xxx
-NOTION_DATABASE_STARTUP_ID=xxx
-NOTION_DATABASE_PARTNER_ID=xxx
+# Email Configuration
+EMAIL_ADDRESS=collab@signite.co
 
-# Gemini API (Phase 1b+, retrieved from Infisical if enabled)
-GEMINI_API_KEY=xxx
+# Storage Paths
+RAW_EMAIL_DIR=data/raw
+CLEANED_EMAIL_DIR=data/cleaned
+METADATA_DIR=data/metadata
+
+# Processing Configuration
+MAX_RETRY_ATTEMPTS=3
+RETRY_BACKOFF_MULTIPLIER=2
+PROCESSING_BATCH_SIZE=50
+FUZZY_MATCH_THRESHOLD=0.85
+CONFIDENCE_THRESHOLD=0.85
 
 # Logging
 LOG_LEVEL=INFO
-LOG_FILE=data/logs/collabiq.log
+LOG_FILE=logs/email_processor.log
+
+# Infisical Secret Management (Optional - disabled by default)
+# Set INFISICAL_ENABLED=false to use .env file directly (simpler for local dev)
+# Set INFISICAL_ENABLED=true to use centralized Infisical (recommended for teams/production)
+INFISICAL_ENABLED=false
+
+# Required only if INFISICAL_ENABLED=true:
+INFISICAL_HOST=https://app.infisical.com
+INFISICAL_PROJECT_ID=your-project-id-here
+INFISICAL_ENVIRONMENT=development               # development or production
+INFISICAL_CLIENT_ID=your-client-id-here
+INFISICAL_CLIENT_SECRET=your-client-secret-here
+INFISICAL_CACHE_TTL=60
 ```
 
 **Installation**:
