@@ -65,6 +65,9 @@ def verify_infisical() -> None:
         secret_checks = [
             ("GMAIL_CREDENTIALS_PATH", str(settings.gmail_credentials_path) if settings.gmail_credentials_path else None),
             ("GEMINI_API_KEY", settings.gemini_api_key),
+            ("NOTION_API_KEY", settings.get_notion_api_key()),
+            ("NOTION_DATABASE_ID_COMPANIES", settings.get_notion_companies_db_id()),
+            ("NOTION_DATABASE_ID_COLLABIQ", settings.get_notion_collabiq_db_id()),
         ]
 
         for secret_name, secret_value in secret_checks:
