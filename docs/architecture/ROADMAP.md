@@ -144,6 +144,12 @@ This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 
 - Schema discovery working (✅ Dynamic property detection)
 - Relationship resolution working (✅ 1-level depth, circular ref detection)
 
+**Post-Merge Fix** (Branch: `fix-notion-api-2025-migration`) ✅ **COMPLETE**
+- **Issue**: Notion API 2025-09-03 breaking changes (databases → data sources)
+- **Fix Date**: 2025-11-02
+- **Changes**: Migrated to data sources API, updated schema discovery, added diagnostic tool
+- **Status**: Fixed and merged - all Notion operations now working correctly
+
 ---
 
 **Phase 2b - LLM-Based Company Matching** (Branch: `007-llm-matching`)

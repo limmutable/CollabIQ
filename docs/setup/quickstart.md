@@ -10,8 +10,8 @@ Before starting, ensure you have:
 2. **UV package manager** ([install here](https://github.com/astral-sh/uv))
 3. **Gmail API credentials** (Phase 1a complete - email reception) - See [Gmail OAuth Setup Guide](gmail-oauth-setup.md)
 4. **Gemini API key** from [Google AI Studio](https://makersuite.google.com/app/apikey) (Phase 1b complete - entity extraction)
-5. **(Optional)** [Infisical](https://infisical.com) account for centralized secret management (recommended for teams) - See [Infisical Setup Guide](infisical-setup.md)
-6. **(Future)** Notion integration token and database IDs (Phase 2 - not yet implemented)
+5. **Notion API integration token and database IDs** (Phase 2a complete - Notion read operations)
+6. **(Optional)** [Infisical](https://infisical.com) account for centralized secret management (recommended for teams) - See [Infisical Setup Guide](infisical-setup.md)
 
 ## Step 1: Clone and Setup
 
