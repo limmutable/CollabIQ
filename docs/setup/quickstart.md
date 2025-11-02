@@ -8,10 +8,10 @@ Before starting, ensure you have:
 
 1. **Python 3.12 or higher** installed
 2. **UV package manager** ([install here](https://github.com/astral-sh/uv))
-3. **(Optional)** [Infisical](https://infisical.com) account for centralized secret management (recommended for teams)
-4. **(Future)** Gmail API credentials (Phase 1a - when implementing email reception)
-5. **(Future)** Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey) (Phase 1b)
-6. **(Future)** Notion integration token and database IDs (Phase 1c)
+3. **Gmail API credentials** (Phase 1a complete - email reception) - See [Gmail OAuth Setup Guide](gmail-oauth-setup.md)
+4. **Gemini API key** from [Google AI Studio](https://makersuite.google.com/app/apikey) (Phase 1b complete - entity extraction)
+5. **(Optional)** [Infisical](https://infisical.com) account for centralized secret management (recommended for teams) - See [Infisical Setup Guide](infisical-setup.md)
+6. **(Future)** Notion integration token and database IDs (Phase 2 - not yet implemented)
 
 ## Step 1: Clone and Setup
 
@@ -45,14 +45,18 @@ uv --version
 
 # Verify virtual environment
 ls .venv/
+
+# Verify CLI is working
+uv run collabiq --help
 ```
 
-**Note**: API keys (Gemini, Notion, Gmail) are not required for initial setup. They will be needed when implementing specific phases:
-- **Phase 1a**: Gmail API credentials for email reception
-- **Phase 1b**: Gemini API key for LLM processing
-- **Phase 1c**: Notion API tokens for database integration
+**Current Status**:
+- ✅ **Phase 1a Complete**: Email reception with Gmail API OAuth2
+- ✅ **Phase 1b Complete**: Gemini entity extraction
+- ✅ **Phase 005 Complete**: Gmail OAuth2 setup with group alias support
+- 🚧 **Phase 2**: Notion integration (not yet implemented)
 
-See [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md) for implementation timeline.
+See [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md) for full implementation timeline.
 
 ## Step 3: Configure Environment
 
@@ -109,18 +113,21 @@ Fill in the required values:
 # Disable Infisical (for local development)
 INFISICAL_ENABLED=false
 
-# Gmail API Configuration (Currently Implemented - Phase 1a)
+# Gmail API Configuration (✅ Implemented - Phase 1a + 005)
 GMAIL_CREDENTIALS_PATH=credentials.json
 GMAIL_TOKEN_PATH=token.json
+GMAIL_BATCH_SIZE=50
+
+# Gemini API Configuration (✅ Implemented - Phase 1b)
+GEMINI_API_KEY=AIzaSy...your_actual_key_here
+GEMINI_MODEL=gemini-2.0-flash-exp
+GEMINI_TIMEOUT_SECONDS=10
+GEMINI_MAX_RETRIES=3
 
 # Logging
 LOG_LEVEL=INFO
 
-# Future: Gemini API (Phase 1b - Not Yet Implemented)
-# GEMINI_API_KEY=AIzaSy...your_actual_key_here
-# GEMINI_MODEL=gemini-2.5-flash
-
-# Future: Notion API (Phase 1c - Not Yet Implemented)
+# Future: Notion API (Phase 2 - Not Yet Implemented)
 # NOTION_API_KEY=secret_...your_actual_token_here
 # NOTION_DATABASE_ID_COLLABIQ=32_character_database_id_here
 # NOTION_DATABASE_ID_CORP=32_character_database_id_here
@@ -145,7 +152,35 @@ Log level: INFO
 Infisical enabled: False  # or True if you configured Infisical
 ```
 
-## Step 5: Run Tests
+## Step 5: Setup Gmail OAuth2 (Required)
+
+Follow the Gmail OAuth2 setup guide to configure email access:
+
+```bash
+# See detailed setup instructions
+cat docs/setup/gmail-oauth-setup.md
+```
+
+**Quick Steps**:
+1. Create OAuth2 credentials in Google Cloud Console
+2. Download `credentials.json` to project root
+3. Run authentication flow: `uv run collabiq fetch`
+4. Verify: `token.json` should be created after successful authentication
+
+**Full Guide**: [docs/setup/gmail-oauth-setup.md](gmail-oauth-setup.md)
+
+## Step 6: Setup Gemini API (Required)
+
+Get your Gemini API key and add it to `.env`:
+
+```bash
+# Get API key from: https://makersuite.google.com/app/apikey
+echo "GEMINI_API_KEY=AIzaSy...your_actual_key_here" >> .env
+```
+
+**Note**: If using Infisical, add the key to your Infisical project instead.
+
+## Step 7: Run Tests
 
 Ensure everything is working:
 
@@ -160,79 +195,57 @@ uv run pytest --cov=src --cov-report=html
 open htmlcov/index.html
 ```
 
-## Step 6: Validate Notion Connection (Phase 1 Feasibility)
+**Expected Results**:
+- ✅ All unit tests should pass (90+ tests)
+- ✅ Integration tests for Gmail and Gemini APIs
+- ✅ End-to-end extraction pipeline tests
 
-Before proceeding with implementation, validate your Notion setup:
+## Step 8: Test the System
 
-```bash
-# TODO: This script will be created in Phase 1b
-uv run python scripts/validate_notion.py
-```
-
-This script should:
-- ✅ Connect to Notion API
-- ✅ Find all three databases
-- ✅ Read sample entries from each database
-- ✅ Verify database schema matches expectations
-
-## Step 7: Validate Gemini API (Phase 1 Feasibility)
-
-Test the Gemini API with a sample email:
+Test the complete email extraction pipeline:
 
 ```bash
-# TODO: This script will be created in Phase 1a
-uv run python scripts/validate_gemini.py
+# Fetch and extract entities from emails
+uv run collabiq fetch
+
+# Or use the old CLI (also available)
+uv run python src/cli.py fetch --max-results 10
 ```
 
-This script should:
-- ✅ Connect to Gemini API
-- ✅ Extract entities from a sample Korean email
-- ✅ Return confidence scores above threshold
-- ✅ Handle edge cases (English, mixed language, forwarded emails)
+**What happens**:
+1. Connects to Gmail API via OAuth2
+2. Fetches emails from `collab@signite.co`
+3. Cleans email content (removes signatures, quotes)
+4. Extracts entities using Gemini API
+5. Saves results to `data/extractions/*.json`
 
-## Step 8: Choose Email Infrastructure (Phase 1c)
-
-You'll need to choose one of three approaches:
-
-### Option 1: Gmail API (Recommended for Development)
-- **Pros**: Official API, rich metadata, easy local testing
-- **Cons**: OAuth2 setup required
-- **Setup**: See `specs/001-feasibility-architecture/email-infrastructure-comparison.md`
-
-### Option 2: IMAP
-- **Pros**: Simple, works with any email provider
-- **Cons**: Polling-based, may miss emails
-- **Setup**: Use app-specific password for `portfolioupdates@signite.co`
-
-### Option 3: Webhook (Recommended for Production)
-- **Pros**: Real-time, scalable, no polling
-- **Cons**: Requires public endpoint, provider-specific setup
-- **Setup**: Configure in Gmail/Google Workspace admin
-
-For now, you can skip this step - it's needed for Phase 1c.
+**Output Location**:
+- Raw emails: `data/raw/YYYY/MM/*.json`
+- Cleaned emails: `data/cleaned/YYYY/MM/*.json`
+- Extracted entities: `data/extractions/*.json`
 
 ## Next Steps
 
-### If You're Following the Implementation Roadmap:
+### Current Status (Completed Phases)
 
-1. **Complete Phase 0 Feasibility** (Manual):
-   - Follow `specs/001-feasibility-architecture/research-template.md`
-   - Test Gemini API with real Korean emails
-   - Validate Notion database structure
-   - Choose email infrastructure approach
-   - Document findings
+✅ **Phase 1a Complete**: Email reception with Gmail API OAuth2
+✅ **Phase 1b Complete**: Gemini entity extraction
+✅ **Phase 005 Complete**: Gmail OAuth2 setup with group alias support
+🎯 **MVP Complete**: Email ingestion + entity extraction + JSON output
 
-2. **Start Phase 1a: LLM Provider Core** (Branch 002-llm-provider):
-   ```bash
-   git checkout -b 002-llm-provider
-   /speckit.specify "Implement LLMProvider abstraction layer and GeminiAdapter"
-   ```
+### Next Implementation Phase
 
-3. **Continue with Phase 1b: Notion Integrator** (Branch 003-notion-integrator)
+**Phase 2: Notion Integration** (Not Yet Started)
 
-4. **Build Phase 1c: Email Receiver Prototype** (Branch 004-email-receiver)
+This phase will add automatic Notion database creation from extracted entities.
 
-### If You're Exploring the Codebase:
+```bash
+# When ready to start Phase 2
+git checkout -b 006-notion-integration
+/speckit.specify "Implement Notion integration for automatic entity creation"
+```
+
+### Explore the System
 
 ```bash
 # View system architecture
@@ -241,11 +254,27 @@ cat docs/architecture/ARCHITECTURE.md
 # View implementation roadmap
 cat docs/architecture/ROADMAP.md
 
-# View API contracts
-cat docs/architecture/API_CONTRACTS.md
+# View test data and extraction results
+ls data/extractions/
 
-# Explore project structure
+# View cleaned email data
+ls data/cleaned/
+
+# Explore source code structure
 tree src/
+```
+
+### Validate Current Setup
+
+```bash
+# Verify Infisical integration (if enabled)
+uv run collabiq verify-infisical
+
+# Check CLI version
+uv run collabiq version
+
+# Run full test suite
+make test
 ```
 
 ## Troubleshooting
@@ -260,6 +289,16 @@ source .venv/bin/activate  # Linux/Mac
 .venv\Scripts\activate     # Windows
 ```
 
+### Virtual environment warnings
+```bash
+# If you see: warning: `VIRTUAL_ENV=venv` does not match...
+# Either remove the old venv directory:
+rm -rf venv
+unset VIRTUAL_ENV
+
+# Or ignore the warning (UV will use .venv correctly anyway)
+```
+
 ### "Configuration errors"
 ```bash
 # Check .env file exists
@@ -269,10 +308,26 @@ ls -la .env
 uv run python -c "from src.config.settings import get_settings; settings = get_settings(); print(f'Log level: {settings.log_level}'); print(f'Infisical: {settings.infisical_enabled}')"
 ```
 
-### "Notion API errors"
-- Ensure your integration has access to the databases
-- In Notion, click "..." on each database → "Connections" → Add your integration
-- Verify database IDs are correct (32 characters, no spaces)
+### Gmail API Authentication Errors
+
+See the detailed troubleshooting guide: [docs/setup/troubleshooting-gmail-api.md](troubleshooting-gmail-api.md)
+
+**Common Issues**:
+- OAuth redirect URI mismatch
+- Invalid or expired credentials
+- Missing Gmail API scope permissions
+
+### Gemini API Errors
+
+```bash
+# Test Gemini API connection
+uv run python -c "from src.llm_provider.gemini_adapter import GeminiAdapter; adapter = GeminiAdapter(); print('✅ Gemini API configured')"
+```
+
+**Common Issues**:
+- Invalid API key
+- Rate limit exceeded (wait and retry)
+- Model not available (check model name in .env)
 
 ### "Tests failing"
 ```bash
@@ -283,37 +338,70 @@ make install
 
 # Run tests with verbose output
 uv run pytest -v
+
+# Run specific test file
+uv run pytest tests/unit/test_gemini_adapter.py -v
 ```
 
 ## Getting Help
 
+- **Gmail Setup Issues**: See [docs/setup/gmail-oauth-setup.md](gmail-oauth-setup.md) and [docs/setup/troubleshooting-gmail-api.md](troubleshooting-gmail-api.md)
+- **Infisical Setup**: See [docs/setup/infisical-setup.md](infisical-setup.md)
 - **Architecture Questions**: See [docs/architecture/ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 - **Implementation Plan**: See [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md)
-- **API Contracts**: See [docs/architecture/API_CONTRACTS.md](../architecture/API_CONTRACTS.md)
 - **SpecKit Commands**: Run `ls .claude/commands/` to see available workflows
 
 ## Development Workflow
 
 ```bash
 # Daily workflow
-make format    # Format code
+make format    # Format code with ruff
 make lint      # Check for issues
 make test      # Run tests
 git add .
 git commit     # Pre-commit hooks will run automatically
 ```
 
+## Available CLI Commands
+
+```bash
+# Verify Infisical integration
+uv run collabiq verify-infisical
+
+# Show CLI version
+uv run collabiq version
+
+# Fetch and process emails (not yet implemented in main CLI)
+uv run python src/cli.py fetch --max-results 10
+
+# Clean existing raw emails
+uv run python src/cli.py clean-emails --input-dir data/raw
+
+# Verify setup
+uv run python src/cli.py verify
+```
+
 ## What's Next?
 
 After completing this quick start, you should:
 1. ✅ Have a working Python environment with UV
-2. ✅ Have valid Gemini and Notion API keys configured
-3. ✅ Understand the project structure
-4. ✅ Be able to run tests
+2. ✅ Have valid Gmail OAuth2 credentials configured
+3. ✅ Have valid Gemini API key configured
+4. ✅ Be able to fetch and extract entities from emails
+5. ✅ Understand the project structure
 
-Now you're ready to either:
-- **Complete Phase 0 Feasibility Testing** using the research template
-- **Start implementing Phase 1a** (LLM Provider Core)
-- **Explore the codebase** and documentation
+Now you're ready to:
+- **Use the MVP**: Fetch emails and extract entities to JSON
+- **Start Phase 2**: Implement Notion integration
+- **Explore the codebase**: Review existing implementations
+- **Add more features**: Follow the implementation roadmap
 
 Welcome to CollabIQ! 🚀
+
+---
+
+**Quick Reference**:
+- Setup Guides: [docs/setup/](.)
+- Architecture Docs: [docs/architecture/](../architecture/)
+- Data Output: `data/extractions/*.json`
+- Test Suite: `make test`

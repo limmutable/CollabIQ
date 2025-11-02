@@ -153,7 +153,7 @@ Examples:
         print(f"Error: {e}")
         print()
         print("For troubleshooting help, see:")
-        print("  docs/troubleshooting-gmail-api.md")
+        print("  docs/setup/troubleshooting-gmail-api.md")
         print()
         sys.exit(1)
 

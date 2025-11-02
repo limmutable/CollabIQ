@@ -144,7 +144,7 @@ To retrieve emails from Gmail, you need to configure OAuth2 credentials:
 
 **Quick Setup** (10-15 minutes):
 1. **Create OAuth2 credentials** in Google Cloud Console:
-   - Follow the step-by-step guide: [docs/gmail-oauth-setup.md](docs/gmail-oauth-setup.md)
+   - Follow the step-by-step guide: [docs/setup/gmail-oauth-setup.md](docs/setup/gmail-oauth-setup.md)
    - Download `credentials.json` to your project root
 
 2. **Authenticate with Gmail**:
@@ -163,10 +163,10 @@ To retrieve emails from Gmail, you need to configure OAuth2 credentials:
 **For Group Aliases** (e.g., collab@signite.co):
 - Authenticate with any Google Workspace account that is a **member** of the group
 - The system automatically filters emails using `to:collab@signite.co`
-- See [docs/gmail-oauth-setup.md](docs/gmail-oauth-setup.md) for detailed instructions
+- See [docs/setup/gmail-oauth-setup.md](docs/setup/gmail-oauth-setup.md) for detailed instructions
 
 **Troubleshooting**:
-- If authentication fails, see [docs/troubleshooting-gmail-api.md](docs/troubleshooting-gmail-api.md)
+- If authentication fails, see [docs/setup/troubleshooting-gmail-api.md](docs/setup/troubleshooting-gmail-api.md)
 - Common issues: redirect URI mismatch, invalid credentials, expired tokens
 
 ## Documentation

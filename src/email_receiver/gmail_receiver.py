@@ -138,7 +138,7 @@ class GmailReceiver(EmailReceiver):
                 code="AUTHENTICATION_FAILED",
                 message=(
                     f"Gmail API credentials file not found at {self.credentials_path}. "
-                    f"Please follow the setup guide at docs/gmail-oauth-setup.md to: "
+                    f"Please follow the setup guide at docs/setup/gmail-oauth-setup.md to: "
                     f"1) Create OAuth2 credentials in Google Cloud Console, "
                     f"2) Download credentials.json, "
                     f"3) Place it at the path specified in GOOGLE_CREDENTIALS_PATH or GMAIL_CREDENTIALS_PATH environment variable."
@@ -152,7 +152,7 @@ class GmailReceiver(EmailReceiver):
                 message = (
                     f"OAuth2 redirect URI mismatch. "
                     f"Ensure your Google Cloud Console OAuth2 client has 'http://127.0.0.1:8080' "
-                    f"in the authorized redirect URIs list. See docs/troubleshooting-gmail-api.md for details."
+                    f"in the authorized redirect URIs list. See docs/setup/troubleshooting-gmail-api.md for details."
                 )
             elif "invalid_grant" in error_str or "token" in error_str:
                 message = (
@@ -172,7 +172,7 @@ class GmailReceiver(EmailReceiver):
                     f"Check that: 1) credentials.json is valid, "
                     f"2) OAuth2 consent screen is configured, "
                     f"3) Gmail API is enabled in Google Cloud Console. "
-                    f"See docs/troubleshooting-gmail-api.md for common solutions."
+                    f"See docs/setup/troubleshooting-gmail-api.md for common solutions."
                 )
 
             logger.error(f"OAuth2 authentication failed: {message}")

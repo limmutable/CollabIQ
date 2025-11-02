@@ -41,7 +41,7 @@ def main():
         print(f"Expected location: {credentials_path}")
         print()
         print("Please follow the setup guide:")
-        print("  1. Open docs/gmail-oauth-setup.md")
+        print("  1. Open docs/setup/gmail-oauth-setup.md")
         print("  2. Complete Part 1: Google Cloud Console Setup")
         print("  3. Download credentials.json to your project root")
         print()
@@ -83,7 +83,7 @@ def main():
         print(f"Error: {e}")
         print()
         print("For troubleshooting help, see:")
-        print("  docs/troubleshooting-gmail-api.md")
+        print("  docs/setup/troubleshooting-gmail-api.md")
         print()
         sys.exit(1)
 
