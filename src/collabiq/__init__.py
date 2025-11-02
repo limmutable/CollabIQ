@@ -127,13 +127,13 @@ def notion_fetch(
         None,
         "--companies-db",
         "-c",
-        help="Companies database ID (defaults to NOTION_COMPANIES_DB_ID from env)",
+        help="Companies database ID (defaults to NOTION_DATABASE_ID_COMPANIES from env)",
     ),
     collabiq_db_id: Optional[str] = typer.Option(
         None,
         "--collabiq-db",
         "-q",
-        help="CollabIQ database ID (defaults to NOTION_COLLABIQ_DB_ID from env)",
+        help="CollabIQ database ID (defaults to NOTION_DATABASE_ID_COLLABIQ from env)",
     ),
     max_depth: int = typer.Option(
         1,
@@ -158,12 +158,12 @@ def notion_fetch(
 
     try:
         # Get database IDs from env if not provided
-        companies_db = companies_db_id or os.getenv("NOTION_COMPANIES_DB_ID")
-        collabiq_db = collabiq_db_id or os.getenv("NOTION_COLLABIQ_DB_ID")
+        companies_db = companies_db_id or os.getenv("NOTION_DATABASE_ID_COMPANIES")
+        collabiq_db = collabiq_db_id or os.getenv("NOTION_DATABASE_ID_COLLABIQ")
 
         if not companies_db:
             console.print("[red]✗ Companies database ID not provided[/red]")
-            console.print("[yellow]Provide via --companies-db or NOTION_COMPANIES_DB_ID env var[/yellow]\n")
+            console.print("[yellow]Provide via --companies-db or NOTION_DATABASE_ID_COMPANIES env var[/yellow]\n")
             sys.exit(1)
 
         # Get API key from env
@@ -355,13 +355,13 @@ def notion_export(
         None,
         "--companies-db",
         "-c",
-        help="Companies database ID (defaults to NOTION_COMPANIES_DB_ID from env)",
+        help="Companies database ID (defaults to NOTION_DATABASE_ID_COMPANIES from env)",
     ),
     collabiq_db_id: Optional[str] = typer.Option(
         None,
         "--collabiq-db",
         "-q",
-        help="CollabIQ database ID (defaults to NOTION_COLLABIQ_DB_ID from env)",
+        help="CollabIQ database ID (defaults to NOTION_DATABASE_ID_COLLABIQ from env)",
     ),
     output: Path = typer.Option(
         "data/notion_export.json",
@@ -386,12 +386,12 @@ def notion_export(
 
     try:
         # Get database IDs from env if not provided
-        companies_db = companies_db_id or os.getenv("NOTION_COMPANIES_DB_ID")
-        collabiq_db = collabiq_db_id or os.getenv("NOTION_COLLABIQ_DB_ID")
+        companies_db = companies_db_id or os.getenv("NOTION_DATABASE_ID_COMPANIES")
+        collabiq_db = collabiq_db_id or os.getenv("NOTION_DATABASE_ID_COLLABIQ")
 
         if not companies_db:
             console.print("[red]✗ Companies database ID not provided[/red]")
-            console.print("[yellow]Provide via --companies-db or NOTION_COMPANIES_DB_ID env var[/yellow]\n")
+            console.print("[yellow]Provide via --companies-db or NOTION_DATABASE_ID_COMPANIES env var[/yellow]\n")
             sys.exit(1)
 
         # Get API key from env
