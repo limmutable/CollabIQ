@@ -79,17 +79,17 @@
 
 ### Tests for User Story 2 (TDD - Write FIRST)
 
-- [ ] T016 [P] [US2] Contract test for data fetching with pagination in tests/contract/test_notion_data_fetch.py (test pagination, relationship resolution)
-- [ ] T017 [P] [US2] Integration test for relationship resolution in tests/integration/test_notion_relationships.py (test circular reference detection, depth limiting)
+- [X] T016 [P] [US2] Contract test for data fetching with pagination in tests/contract/test_notion_data_fetch.py (test pagination, relationship resolution)
+- [X] T017 [P] [US2] Integration test for relationship resolution in tests/integration/test_notion_relationships.py (test circular reference detection, depth limiting)
 
 ### Implementation for User Story 2
 
-- [ ] T018 [US2] Implement pagination handler in src/notion_integrator/fetcher.py (async generator pattern, handle start_cursor)
-- [ ] T019 [US2] Implement record fetcher in src/notion_integrator/fetcher.py (fetch all pages from database, map properties to NotionRecord model)
-- [ ] T020 [US2] Implement relationship resolver in src/notion_integrator/fetcher.py (resolve relation properties, track visited pages for circular reference detection, respect max depth)
-- [ ] T021 [US2] Add data caching logic in src/notion_integrator/cache.py (cache operations for record data, separate from schema cache)
-- [ ] T022 [US2] Integrate schema discovery with data fetching (use cached schema to parse records correctly)
-- [ ] T023 [US2] Add logging for data fetch operations (INFO: records fetched, WARNING: circular relationship detected)
+- [X] T018 [US2] Implement pagination handler in src/notion_integrator/fetcher.py (async generator pattern, handle start_cursor)
+- [X] T019 [US2] Implement record fetcher in src/notion_integrator/fetcher.py (fetch all pages from database, map properties to NotionRecord model)
+- [X] T020 [US2] Implement relationship resolver in src/notion_integrator/fetcher.py (resolve relation properties, track visited pages for circular reference detection, respect max depth)
+- [X] T021 [US2] Add data caching logic in src/notion_integrator/cache.py (cache operations for record data, separate from schema cache)
+- [X] T022 [US2] Integrate schema discovery with data fetching (use cached schema to parse records correctly)
+- [X] T023 [US2] Add logging for data fetch operations (INFO: records fetched, WARNING: circular relationship detected)
 
 **Checkpoint**: At this point, both schema discovery AND data retrieval work - MVP complete (can fetch complete data from Notion)
 
