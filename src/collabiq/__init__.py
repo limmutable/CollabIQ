@@ -8,8 +8,12 @@ from pathlib import Path
 from typing import Optional
 
 import typer
+from dotenv import load_dotenv
 from rich.console import Console
 from rich.table import Table
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -127,13 +131,13 @@ def notion_fetch(
         None,
         "--companies-db",
         "-c",
-        help="Companies database ID (defaults to NOTION_DATABASE_ID_COMPANIES from env)",
+        help="Companies database ID (defaults to NOTION_DATABASE_ID_COMPANIES from Infisical or env)",
     ),
     collabiq_db_id: Optional[str] = typer.Option(
         None,
         "--collabiq-db",
         "-q",
-        help="CollabIQ database ID (defaults to NOTION_DATABASE_ID_COLLABIQ from env)",
+        help="CollabIQ database ID (defaults to NOTION_DATABASE_ID_COLLABIQ from Infisical or env)",
     ),
     max_depth: int = typer.Option(
         1,
@@ -157,20 +161,23 @@ def notion_fetch(
     console.print("\n[bold cyan]Fetching Notion data...[/bold cyan]\n")
 
     try:
-        # Get database IDs from env if not provided
-        companies_db = companies_db_id or os.getenv("NOTION_DATABASE_ID_COMPANIES")
-        collabiq_db = collabiq_db_id or os.getenv("NOTION_DATABASE_ID_COLLABIQ")
+        # Get settings (loads from Infisical first, then .env)
+        settings = get_settings()
+
+        # Get database IDs from CLI args, then settings (which tries Infisical, then .env)
+        companies_db = companies_db_id or settings.get_notion_companies_db_id()
+        collabiq_db = collabiq_db_id or settings.get_notion_collabiq_db_id()
 
         if not companies_db:
             console.print("[red]✗ Companies database ID not provided[/red]")
-            console.print("[yellow]Provide via --companies-db or NOTION_DATABASE_ID_COMPANIES env var[/yellow]\n")
+            console.print("[yellow]Provide via --companies-db or NOTION_DATABASE_ID_COMPANIES in Infisical/.env[/yellow]\n")
             sys.exit(1)
 
-        # Get API key from env
-        api_key = os.getenv("NOTION_API_KEY")
+        # Get API key from settings (tries Infisical first, then .env)
+        api_key = settings.get_notion_api_key()
         if not api_key:
-            console.print("[red]✗ NOTION_API_KEY not set in environment[/red]")
-            console.print("[yellow]Set NOTION_API_KEY in .env or environment[/yellow]\n")
+            console.print("[red]✗ NOTION_API_KEY not set[/red]")
+            console.print("[yellow]Set NOTION_API_KEY in Infisical or .env[/yellow]\n")
             sys.exit(1)
 
         # Fetch data
@@ -240,11 +247,14 @@ def notion_refresh(
     console.print("\n[bold cyan]Refreshing Notion cache...[/bold cyan]\n")
 
     try:
-        # Get API key from env
-        api_key = os.getenv("NOTION_API_KEY")
+        # Get settings (loads from Infisical first, then .env)
+        settings = get_settings()
+
+        # Get API key from settings (tries Infisical first, then .env)
+        api_key = settings.get_notion_api_key()
         if not api_key:
-            console.print("[red]✗ NOTION_API_KEY not set in environment[/red]")
-            console.print("[yellow]Set NOTION_API_KEY in .env or environment[/yellow]\n")
+            console.print("[red]✗ NOTION_API_KEY not set[/red]")
+            console.print("[yellow]Set NOTION_API_KEY in Infisical or .env[/yellow]\n")
             sys.exit(1)
 
         # Refresh cache
@@ -283,11 +293,14 @@ def notion_schema(
     console.print("\n[bold cyan]Fetching database schema...[/bold cyan]\n")
 
     try:
-        # Get API key from env
-        api_key = os.getenv("NOTION_API_KEY")
+        # Get settings (loads from Infisical first, then .env)
+        settings = get_settings()
+
+        # Get API key from settings (tries Infisical first, then .env)
+        api_key = settings.get_notion_api_key()
         if not api_key:
-            console.print("[red]✗ NOTION_API_KEY not set in environment[/red]")
-            console.print("[yellow]Set NOTION_API_KEY in .env or environment[/yellow]\n")
+            console.print("[red]✗ NOTION_API_KEY not set[/red]")
+            console.print("[yellow]Set NOTION_API_KEY in Infisical or .env[/yellow]\n")
             sys.exit(1)
 
         # Fetch schema
@@ -355,13 +368,13 @@ def notion_export(
         None,
         "--companies-db",
         "-c",
-        help="Companies database ID (defaults to NOTION_DATABASE_ID_COMPANIES from env)",
+        help="Companies database ID (defaults to NOTION_DATABASE_ID_COMPANIES from Infisical or env)",
     ),
     collabiq_db_id: Optional[str] = typer.Option(
         None,
         "--collabiq-db",
         "-q",
-        help="CollabIQ database ID (defaults to NOTION_DATABASE_ID_COLLABIQ from env)",
+        help="CollabIQ database ID (defaults to NOTION_DATABASE_ID_COLLABIQ from Infisical or env)",
     ),
     output: Path = typer.Option(
         "data/notion_export.json",
@@ -385,20 +398,23 @@ def notion_export(
     console.print("\n[bold cyan]Exporting Notion data...[/bold cyan]\n")
 
     try:
-        # Get database IDs from env if not provided
-        companies_db = companies_db_id or os.getenv("NOTION_DATABASE_ID_COMPANIES")
-        collabiq_db = collabiq_db_id or os.getenv("NOTION_DATABASE_ID_COLLABIQ")
+        # Get settings (loads from Infisical first, then .env)
+        settings = get_settings()
+
+        # Get database IDs from CLI args, then settings (which tries Infisical, then .env)
+        companies_db = companies_db_id or settings.get_notion_companies_db_id()
+        collabiq_db = collabiq_db_id or settings.get_notion_collabiq_db_id()
 
         if not companies_db:
             console.print("[red]✗ Companies database ID not provided[/red]")
-            console.print("[yellow]Provide via --companies-db or NOTION_DATABASE_ID_COMPANIES env var[/yellow]\n")
+            console.print("[yellow]Provide via --companies-db or NOTION_DATABASE_ID_COMPANIES in Infisical/.env[/yellow]\n")
             sys.exit(1)
 
-        # Get API key from env
-        api_key = os.getenv("NOTION_API_KEY")
+        # Get API key from settings (tries Infisical first, then .env)
+        api_key = settings.get_notion_api_key()
         if not api_key:
-            console.print("[red]✗ NOTION_API_KEY not set in environment[/red]")
-            console.print("[yellow]Set NOTION_API_KEY in .env or environment[/yellow]\n")
+            console.print("[red]✗ NOTION_API_KEY not set[/red]")
+            console.print("[yellow]Set NOTION_API_KEY in Infisical or .env[/yellow]\n")
             sys.exit(1)
 
         # Fetch data

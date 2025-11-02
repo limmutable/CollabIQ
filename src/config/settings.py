@@ -171,6 +171,20 @@ class Settings(BaseSettings):
         description="Secret cache TTL in seconds (0=disabled, 60=default)",
     )
 
+    # Notion API Configuration (Phase 006 - Notion Read Operations)
+    notion_api_key: Optional[str] = Field(
+        default=None,
+        description="Notion API key (from Infisical or .env)",
+    )
+    notion_database_id_companies: Optional[str] = Field(
+        default=None,
+        description="Notion Companies database ID",
+    )
+    notion_database_id_collabiq: Optional[str] = Field(
+        default=None,
+        description="Notion CollabIQ database ID",
+    )
+
     @field_validator("infisical_environment")
     @classmethod
     def validate_infisical_environment(cls, v: Optional[str]) -> Optional[str]:
@@ -319,6 +333,34 @@ class Settings(BaseSettings):
             True if credentials file exists, False otherwise
         """
         return self.get_gmail_credentials_path().exists()
+
+    def get_notion_api_key(self) -> Optional[str]:
+        """Get Notion API key from Infisical or environment.
+
+        Returns:
+            Notion API key or None if not found
+        """
+        return self.get_secret_or_env("NOTION_API_KEY", self.notion_api_key)
+
+    def get_notion_companies_db_id(self) -> Optional[str]:
+        """Get Notion Companies database ID from Infisical or environment.
+
+        Returns:
+            Companies database ID or None if not found
+        """
+        return self.get_secret_or_env(
+            "NOTION_DATABASE_ID_COMPANIES", self.notion_database_id_companies
+        )
+
+    def get_notion_collabiq_db_id(self) -> Optional[str]:
+        """Get Notion CollabIQ database ID from Infisical or environment.
+
+        Returns:
+            CollabIQ database ID or None if not found
+        """
+        return self.get_secret_or_env(
+            "NOTION_DATABASE_ID_COLLABIQ", self.notion_database_id_collabiq
+        )
 
 
 @lru_cache
