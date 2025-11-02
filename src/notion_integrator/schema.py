@@ -15,8 +15,9 @@ Key Functions:
 """
 
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
+from src.notion_integrator.cache import CacheManager
 from src.notion_integrator.client import NotionClient
 from src.notion_integrator.exceptions import SchemaValidationError
 from src.notion_integrator.logging_config import get_logger, PerformanceLogger
@@ -40,13 +41,17 @@ logger = get_logger(__name__)
 async def discover_schema(
     client: NotionClient,
     database_id: str,
+    cache_manager: Optional[CacheManager] = None,
+    use_cache: bool = True,
 ) -> DatabaseSchema:
     """
-    Discover complete schema from a Notion database.
+    Discover complete schema from a Notion database with optional caching.
 
     Args:
         client: NotionClient instance
         database_id: Database ID to discover
+        cache_manager: Optional CacheManager for caching (defaults to new instance)
+        use_cache: Whether to use cache (default: True)
 
     Returns:
         DatabaseSchema with complete structure
@@ -58,17 +63,39 @@ async def discover_schema(
         SchemaValidationError: Invalid schema structure
     """
     with PerformanceLogger(logger, "schema_discovery", database_id=database_id):
-        # Retrieve database from API
-        db_response = await client.retrieve_database(database_id)
+        # Initialize cache manager if not provided
+        if cache_manager is None and use_cache:
+            cache_manager = CacheManager()
 
-        # Parse response to NotionDatabase
-        notion_db = parse_database_response(db_response)
+        # Try to get from cache first
+        if use_cache and cache_manager:
+            # We need database name for cache lookup, so do a quick fetch first
+            db_response = await client.retrieve_database(database_id)
+            notion_db = parse_database_response(db_response)
+            database_name = notion_db.title
 
-        # Create DatabaseSchema with analysis
-        schema = create_database_schema(notion_db)
+            cached_schema = cache_manager.get_schema_cache(database_id, database_name)
+            if cached_schema:
+                logger.info(
+                    "Schema loaded from cache",
+                    extra={
+                        "database_id": database_id,
+                        "database_name": database_name,
+                    },
+                )
+                return cached_schema
 
-        # Validate schema
-        validate_schema(schema)
+            # Cache miss - create schema and cache it
+            schema = create_database_schema(notion_db)
+            validate_schema(schema)
+            cache_manager.set_schema_cache(schema)
+
+        else:
+            # No caching - fetch fresh
+            db_response = await client.retrieve_database(database_id)
+            notion_db = parse_database_response(db_response)
+            schema = create_database_schema(notion_db)
+            validate_schema(schema)
 
         logger.info(
             "Schema discovery completed",
@@ -79,6 +106,7 @@ async def discover_schema(
                 "has_relations": schema.has_relations,
                 "relation_count": len(schema.relation_properties),
                 "has_classification": len(schema.classification_fields) > 0,
+                "cached": use_cache and cache_manager is not None,
             },
         )
 

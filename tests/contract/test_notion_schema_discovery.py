@@ -121,10 +121,11 @@ async def test_discover_schema_success(mock_notion_client, mock_notion_api_respo
     # Import after mock setup to avoid import errors
     from src.notion_integrator.schema import discover_schema
 
-    # Execute schema discovery
+    # Execute schema discovery (without caching for test)
     schema = await discover_schema(
         client=mock_notion_client,
         database_id="abc123-def456-ghi789",
+        use_cache=False,
     )
 
     # Verify schema structure
@@ -180,6 +181,7 @@ async def test_discover_schema_authentication_error(mock_notion_client):
         await discover_schema(
             client=mock_notion_client,
             database_id="abc123-def456-ghi789",
+            use_cache=False,
         )
 
     assert "authentication failed" in str(exc_info.value).lower()
@@ -202,6 +204,7 @@ async def test_discover_schema_object_not_found(mock_notion_client):
         await discover_schema(
             client=mock_notion_client,
             database_id="invalid-id",
+            use_cache=False,
         )
 
     assert exc_info.value.details["object_type"] == "database"
@@ -224,6 +227,7 @@ async def test_discover_schema_permission_error(mock_notion_client):
         await discover_schema(
             client=mock_notion_client,
             database_id="abc123-def456-ghi789",
+            use_cache=False,
         )
 
     assert "insufficient permissions" in str(exc_info.value).lower()
@@ -251,6 +255,7 @@ async def test_discover_schema_no_properties(mock_notion_client):
         await discover_schema(
             client=mock_notion_client,
             database_id="abc123",
+            use_cache=False,
         )
 
     assert "no properties" in str(exc_info.value).lower()
@@ -294,6 +299,7 @@ async def test_discover_schema_missing_classification_fields(mock_notion_client)
     schema = await discover_schema(
         client=mock_notion_client,
         database_id="abc123",
+        use_cache=False,
     )
 
     # Verify schema valid but no classification fields

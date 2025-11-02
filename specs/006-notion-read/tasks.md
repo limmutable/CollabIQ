@@ -56,16 +56,16 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T009 [P] [US1] Contract test for schema discovery in tests/contract/test_notion_schema_discovery.py (test against real Notion API or comprehensive fixtures)
-- [ ] T010 [P] [US1] Unit test for schema parser in tests/unit/test_notion_schema_parser.py (test property type identification, relationship detection)
+- [X] T009 [P] [US1] Contract test for schema discovery in tests/contract/test_notion_schema_discovery.py (test against real Notion API or comprehensive fixtures)
+- [X] T010 [P] [US1] Unit test for schema parser in tests/unit/test_notion_schema_parser.py (test property type identification, relationship detection)
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Implement NotionClient wrapper with authentication in src/notion_integrator/client.py (integrate rate limiter, handle API errors)
-- [ ] T012 [US1] Implement schema discovery in src/notion_integrator/schema.py (fetch database metadata, parse properties, identify relational fields)
-- [ ] T013 [US1] Add schema caching logic in src/notion_integrator/cache.py (cache operations for DatabaseSchema, TTL validation)
-- [ ] T014 [US1] Implement schema validation and relationship graph building in src/notion_integrator/schema.py
-- [ ] T015 [US1] Add logging for schema discovery operations (INFO: schema fetched, WARNING: schema cache expired)
+- [X] T011 [US1] Implement NotionClient wrapper with authentication in src/notion_integrator/client.py (integrate rate limiter, handle API errors)
+- [X] T012 [US1] Implement schema discovery in src/notion_integrator/schema.py (fetch database metadata, parse properties, identify relational fields)
+- [X] T013 [US1] Add schema caching logic in src/notion_integrator/cache.py (cache operations for DatabaseSchema, TTL validation)
+- [X] T014 [US1] Implement schema validation and relationship graph building in src/notion_integrator/schema.py
+- [X] T015 [US1] Add logging for schema discovery operations (INFO: schema fetched, WARNING: schema cache expired)
 
 **Checkpoint**: At this point, schema discovery should work independently - can fetch and cache schemas from both databases
 
