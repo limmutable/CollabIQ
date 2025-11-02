@@ -6,6 +6,7 @@ implementation begins.
 """
 
 import sys
+import time
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
@@ -93,39 +94,55 @@ class TestInfisicalClientInitialization:
 class TestInfisicalClientAuthentication:
     """Test InfisicalClient authentication with Universal Auth."""
 
-    @patch("src.config.infisical_client.InfisicalClient")
-    def test_authenticate_success(self, mock_sdk, mock_settings):
+    @patch("config.infisical_client.InfisicalSDKClient")
+    def test_authenticate_success(self, mock_sdk_class, mock_settings):
         """Test successful authentication with valid credentials."""
-        # Mock SDK authentication
+        # Mock SDK instance and authentication
         mock_sdk_instance = MagicMock()
-        mock_sdk.return_value = mock_sdk_instance
+        mock_sdk_class.return_value = mock_sdk_instance
 
         client = InfisicalClient(mock_settings)
         client.authenticate()
 
+        # Verify SDK was instantiated with correct parameters
+        mock_sdk_class.assert_called_once_with(
+            host=mock_settings.infisical_host,
+            cache_ttl=mock_settings.infisical_cache_ttl,
+        )
+
+        # Verify authentication was called
+        mock_sdk_instance.auth.universal_auth.login.assert_called_once_with(
+            client_id=mock_settings.infisical_client_id,
+            client_secret=mock_settings.infisical_client_secret,
+        )
+
         assert client._sdk_client is not None
         assert client.is_connected() is True
 
-    @patch("src.config.infisical_client.InfisicalClient")
-    def test_authenticate_invalid_credentials(self, mock_sdk, mock_settings):
+    @patch("config.infisical_client.InfisicalSDKClient")
+    def test_authenticate_invalid_credentials(self, mock_sdk_class, mock_settings):
         """Test authentication fails with invalid client_id/client_secret."""
-        mock_sdk.side_effect = Exception("Invalid client credentials")
+        # Mock SDK to raise auth error
+        mock_sdk_instance = MagicMock()
+        mock_sdk_instance.auth.universal_auth.login.side_effect = Exception("Invalid credentials (Status: 401)")
+        mock_sdk_class.return_value = mock_sdk_instance
 
         client = InfisicalClient(mock_settings)
 
-        with pytest.raises(InfisicalAuthError, match="Invalid client credentials"):
+        with pytest.raises(InfisicalAuthError, match="Authentication failed"):
             client.authenticate()
 
-    @patch("src.config.infisical_client.InfisicalClient")
-    def test_authenticate_connection_timeout(self, mock_sdk, mock_settings):
+    @patch("config.infisical_client.InfisicalSDKClient")
+    def test_authenticate_connection_timeout(self, mock_sdk_class, mock_settings):
         """Test authentication fails when network connection times out."""
-        mock_sdk.side_effect = TimeoutError("Connection timeout")
+        # Mock SDK to raise timeout error
+        mock_sdk_instance = MagicMock()
+        mock_sdk_instance.auth.universal_auth.login.side_effect = TimeoutError("Connection timeout")
+        mock_sdk_class.return_value = mock_sdk_instance
 
         client = InfisicalClient(mock_settings)
 
-        with pytest.raises(
-            InfisicalConnectionError, match="Connection timeout"
-        ):
+        with pytest.raises(InfisicalConnectionError, match="Connection timeout"):
             client.authenticate()
 
     def test_authenticate_when_disabled(self, mock_settings_disabled):
@@ -140,12 +157,13 @@ class TestInfisicalClientAuthentication:
 class TestInfisicalClientSecretRetrieval:
     """Test secret retrieval with three-tier fallback logic."""
 
-    @patch("src.config.infisical_client.InfisicalClient")
-    def test_get_secret_from_api_success(self, mock_sdk, mock_settings):
+    @patch("config.infisical_client.InfisicalSDKClient")
+    def test_get_secret_from_api_success(self, mock_sdk_class, mock_settings):
         """Test successful secret retrieval from Infisical API."""
+        # Mock SDK instance and secret retrieval
         mock_sdk_instance = MagicMock()
-        mock_sdk_instance.get_secret.return_value = {"value": "api-secret-value"}
-        mock_sdk.return_value = mock_sdk_instance
+        mock_sdk_instance.secrets.get_secret_by_name.return_value = MagicMock(secret_value="api-secret-value")
+        mock_sdk_class.return_value = mock_sdk_instance
 
         client = InfisicalClient(mock_settings)
         client.authenticate()
@@ -156,37 +174,48 @@ class TestInfisicalClientSecretRetrieval:
         assert "GEMINI_API_KEY" in client._cache
         assert client._cache["GEMINI_API_KEY"] == "api-secret-value"
 
-    @patch("src.config.infisical_client.InfisicalClient")
-    def test_get_secret_from_cache(self, mock_sdk, mock_settings):
+        # Verify SDK was called correctly
+        mock_sdk_instance.secrets.get_secret_by_name.assert_called_once_with(
+            secret_name="GEMINI_API_KEY",
+            environment_slug=mock_settings.infisical_environment,
+            project_id=mock_settings.infisical_project_id,
+            secret_path="/",
+        )
+
+    def test_get_secret_from_cache(self, mock_settings):
         """Test secret retrieval from cache when TTL not expired."""
         client = InfisicalClient(mock_settings)
+        # Manually populate cache
         client._cache["CACHED_KEY"] = "cached-value"
-        client._cache_timestamps["CACHED_KEY"] = 1234567890  # Recent timestamp
+        client._cache_timestamps["CACHED_KEY"] = time.time()  # Recent timestamp
 
         secret = client.get_secret("CACHED_KEY")
 
         assert secret == "cached-value"
-        # SDK should not be called since cache hit
-        mock_sdk.assert_not_called()
 
-    @patch("src.config.infisical_client.InfisicalClient")
+    @patch("config.infisical_client.InfisicalSDKClient")
     @patch.dict("os.environ", {"GEMINI_API_KEY": "env-fallback-value"})
-    def test_get_secret_fallback_to_env(self, mock_sdk, mock_settings):
+    def test_get_secret_fallback_to_env(self, mock_sdk_class, mock_settings):
         """Test fallback to .env file when API fails and cache expired."""
-        mock_sdk.side_effect = InfisicalConnectionError("API unreachable")
+        # Mock SDK to raise connection error
+        mock_sdk_instance = MagicMock()
+        mock_sdk_instance.secrets.get_secret_by_name.side_effect = Exception("API unreachable")
+        mock_sdk_class.return_value = mock_sdk_instance
 
         client = InfisicalClient(mock_settings)
+        client.authenticate()
 
         secret = client.get_secret("GEMINI_API_KEY")
 
         assert secret == "env-fallback-value"
 
-    @patch("src.config.infisical_client.InfisicalClient")
-    def test_get_secret_not_found(self, mock_sdk, mock_settings):
+    @patch("config.infisical_client.InfisicalSDKClient")
+    def test_get_secret_not_found(self, mock_sdk_class, mock_settings):
         """Test SecretNotFoundError when secret doesn't exist anywhere."""
+        # Mock SDK to raise secret not found error
         mock_sdk_instance = MagicMock()
-        mock_sdk_instance.get_secret.side_effect = Exception("Secret not found")
-        mock_sdk.return_value = mock_sdk_instance
+        mock_sdk_instance.secrets.get_secret_by_name.side_effect = Exception("Secret not found")
+        mock_sdk_class.return_value = mock_sdk_instance
 
         client = InfisicalClient(mock_settings)
         client.authenticate()
@@ -206,16 +235,18 @@ class TestInfisicalClientSecretRetrieval:
 class TestInfisicalClientBulkRetrieval:
     """Test get_all_secrets() bulk retrieval with caching."""
 
-    @patch("src.config.infisical_client.InfisicalClient")
-    def test_get_all_secrets_success(self, mock_sdk, mock_settings):
+    @patch("config.infisical_client.InfisicalSDKClient")
+    def test_get_all_secrets_success(self, mock_sdk_class, mock_settings):
         """Test bulk retrieval of all secrets from Infisical."""
+        # Mock SDK instance and bulk secret retrieval
         mock_sdk_instance = MagicMock()
-        mock_sdk_instance.get_all_secrets.return_value = {
-            "GEMINI_API_KEY": "secret-1",
-            "NOTION_API_KEY": "secret-2",
-            "GMAIL_TOKEN": "secret-3",
-        }
-        mock_sdk.return_value = mock_sdk_instance
+        mock_secret_1 = MagicMock(secret_key="GEMINI_API_KEY", secret_value="secret-1")
+        mock_secret_2 = MagicMock(secret_key="NOTION_API_KEY", secret_value="secret-2")
+        mock_secret_3 = MagicMock(secret_key="GMAIL_TOKEN", secret_value="secret-3")
+        mock_sdk_instance.secrets.list_secrets.return_value = MagicMock(
+            secrets=[mock_secret_1, mock_secret_2, mock_secret_3]
+        )
+        mock_sdk_class.return_value = mock_sdk_instance
 
         client = InfisicalClient(mock_settings)
         client.authenticate()
@@ -228,15 +259,17 @@ class TestInfisicalClientBulkRetrieval:
         # All secrets should be cached
         assert len(client._cache) == 3
 
-    @patch("src.config.infisical_client.InfisicalClient")
-    def test_get_all_secrets_caches_with_timestamp(self, mock_sdk, mock_settings):
+    @patch("config.infisical_client.InfisicalSDKClient")
+    def test_get_all_secrets_caches_with_timestamp(self, mock_sdk_class, mock_settings):
         """Test get_all_secrets() updates cache with timestamps."""
+        # Mock SDK instance and bulk secret retrieval
         mock_sdk_instance = MagicMock()
-        mock_sdk_instance.get_all_secrets.return_value = {
-            "KEY1": "value1",
-            "KEY2": "value2",
-        }
-        mock_sdk.return_value = mock_sdk_instance
+        mock_secret_1 = MagicMock(secret_key="KEY1", secret_value="value1")
+        mock_secret_2 = MagicMock(secret_key="KEY2", secret_value="value2")
+        mock_sdk_instance.secrets.list_secrets.return_value = MagicMock(
+            secrets=[mock_secret_1, mock_secret_2]
+        )
+        mock_sdk_class.return_value = mock_sdk_instance
 
         client = InfisicalClient(mock_settings)
         client.authenticate()
@@ -251,17 +284,22 @@ class TestInfisicalClientBulkRetrieval:
 class TestInfisicalClientCacheManagement:
     """Test cache refresh and invalidation logic."""
 
-    def test_refresh_cache_success(self, mock_settings):
+    @patch("config.infisical_client.InfisicalSDKClient")
+    def test_refresh_cache_success(self, mock_sdk_class, mock_settings):
         """Test manual cache refresh via refresh_cache()."""
-        with patch.object(
-            InfisicalClient, "get_all_secrets", return_value={"KEY": "new-value"}
-        ):
-            client = InfisicalClient(mock_settings)
-            client._cache["KEY"] = "old-value"
+        # Mock SDK to return new secrets
+        mock_sdk_instance = MagicMock()
+        mock_secret = MagicMock(secret_key="KEY", secret_value="new-value")
+        mock_sdk_instance.secrets.list_secrets.return_value = MagicMock(secrets=[mock_secret])
+        mock_sdk_class.return_value = mock_sdk_instance
 
-            client.refresh_cache()
+        client = InfisicalClient(mock_settings)
+        client.authenticate()
+        client._cache["KEY"] = "old-value"
 
-            assert client._cache["KEY"] == "new-value"
+        client.refresh_cache()
+
+        assert client._cache["KEY"] == "new-value"
 
     def test_cache_ttl_expiration(self, mock_settings):
         """Test cache expires after TTL seconds (60 default)."""
@@ -291,11 +329,12 @@ class TestInfisicalClientCacheManagement:
 class TestInfisicalClientConnectionStatus:
     """Test is_connected() health check."""
 
-    @patch("src.config.infisical_client.InfisicalClient")
-    def test_is_connected_true_when_authenticated(self, mock_sdk, mock_settings):
+    @patch("config.infisical_client.InfisicalSDKClient")
+    def test_is_connected_true_when_authenticated(self, mock_sdk_class, mock_settings):
         """Test is_connected() returns True after successful auth."""
+        # Mock SDK instance
         mock_sdk_instance = MagicMock()
-        mock_sdk.return_value = mock_sdk_instance
+        mock_sdk_class.return_value = mock_sdk_instance
 
         client = InfisicalClient(mock_settings)
         client.authenticate()

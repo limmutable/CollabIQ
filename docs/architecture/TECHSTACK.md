@@ -382,6 +382,7 @@ async def process_batch(emails: list[RawEmail]) -> list[CleanedEmail]:
 | API keys in .env file | Risk of accidental commit | High | ✅ **RESOLVED** (Phase 3: Infisical integration) |
 | No OAuth token rotation | Tokens never expire | Medium | Planned for Phase 1b |
 | No rate limit quotas enforced | May exceed API quotas | Low | Planned for Phase 2e |
+| No Infisical integration tests | Cannot verify real Infisical connectivity | Medium | **PLANNED** - Add integration tests with real API calls (skipped by default) |
 
 ---
 
@@ -668,7 +669,20 @@ uv run pytest tests/integration/ --ignore=test_gmail_receiver.py -v
 - Mock Gmail API responses (`pytest-mock`)
 - Mock LLM API responses (Phase 1b)
 - Mock Notion API responses (Phase 2a)
+- Mock Infisical SDK responses (Phase 3)
 - Real tests only for critical paths (with `@pytest.mark.integration`)
+
+**Unit vs Integration Tests**:
+- **Unit tests** (`tests/unit/`): Fast, use mocks, run on every commit
+  - Mock external APIs (Gmail, Gemini, Notion, Infisical)
+  - Test business logic, error handling, caching
+  - Example: `test_infisical_client.py` - All 21 tests use mocked SDK
+- **Integration tests** (`tests/integration/`): Slow, use real APIs, skip by default
+  - Require real credentials and network access
+  - Test end-to-end workflows with actual services
+  - Skipped unless environment variable set (e.g., `GMAIL_INTEGRATION_TEST=1`)
+  - Example: `test_gmail_receiver.py` - Real Gmail API calls (skipped by default)
+  - **TODO**: Add `test_infisical_real.py` for real Infisical connection testing
 
 ---
 
