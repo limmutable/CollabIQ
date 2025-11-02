@@ -46,7 +46,7 @@ __version__ = "0.1.0"
 def __getattr__(name):
     """Lazy import to avoid circular dependencies."""
     if name == "NotionIntegrator":
-        from src.notion_integrator.client import NotionIntegrator
+        from src.notion_integrator.integrator import NotionIntegrator
 
         return NotionIntegrator
     if name == "CompanyClassification":
