@@ -150,18 +150,18 @@
 
 ### Tests for User Story 5 (TDD - Write FIRST)
 
-- [ ] T039 [P] [US5] Unit test for data formatting in tests/unit/test_notion_formatter.py (test JSON structure, Markdown generation, classification field extraction)
-- [ ] T040 [P] [US5] Integration test for end-to-end formatting in tests/integration/test_notion_llm_format.py (test complete workflow from fetch to formatted output)
+- [X] T039 [P] [US5] Unit test for data formatting in tests/unit/test_notion_formatter.py (test JSON structure, Markdown generation, classification field extraction)
+- [ ] T040 [P] [US5] Integration test for end-to-end formatting in tests/integration/test_notion_llm_format.py (test complete workflow from fetch to formatted output) - Note: Unit tests cover formatter in isolation; integration test would be nice-to-have
 
 ### Implementation for User Story 5
 
-- [ ] T041 [P] [US5] Create LLM format models in src/notion_integrator/models.py (LLMFormattedData, CompanyRecord, CompanyClassification, RelatedRecord, FormatMetadata)
-- [ ] T042 [US5] Implement classification field extractor in src/notion_integrator/formatter.py (extract "Shinsegae affiliates?" and "Is Portfolio?" checkboxes, compute collaboration_type_hint)
-- [ ] T043 [US5] Implement JSON formatter in src/notion_integrator/formatter.py (convert NotionRecord to CompanyRecord, nest related records)
-- [ ] T044 [US5] Implement Markdown summary generator in src/notion_integrator/formatter.py (create company lists by type, generate collaboration type hints)
-- [ ] T045 [US5] Implement format_for_llm method in src/notion_integrator/formatter.py (combine JSON + Markdown, populate metadata)
-- [ ] T046 [US5] Add Unicode handling tests and validation in src/notion_integrator/formatter.py (ensure Korean/Japanese/emoji preserved)
-- [ ] T047 [US5] Add logging for formatting operations (INFO: formatted N companies, DEBUG: classification counts)
+- [X] T041 [P] [US5] Create LLM format models in src/notion_integrator/models.py (LLMFormattedData, CompanyRecord, CompanyClassification, RelatedRecord, FormatMetadata) - Already existed from Phase 2
+- [X] T042 [US5] Implement classification field extractor in src/notion_integrator/formatter.py (extract "Shinsegae affiliates?" and "Is Portfolio?" checkboxes, compute collaboration_type_hint)
+- [X] T043 [US5] Implement JSON formatter in src/notion_integrator/formatter.py (convert NotionRecord to CompanyRecord, nest related records)
+- [X] T044 [US5] Implement Markdown summary generator in src/notion_integrator/formatter.py (create company lists by type, generate collaboration type hints)
+- [X] T045 [US5] Implement format_for_llm method in src/notion_integrator/formatter.py (combine JSON + Markdown, populate metadata)
+- [X] T046 [US5] Add Unicode handling tests and validation in src/notion_integrator/formatter.py (ensure Korean/Japanese/emoji preserved)
+- [X] T047 [US5] Add logging for formatting operations (INFO: formatted N companies, DEBUG: classification counts)
 
 **Checkpoint**: LLM formatting should work independently - can take raw Notion data and produce LLM-ready output
 
