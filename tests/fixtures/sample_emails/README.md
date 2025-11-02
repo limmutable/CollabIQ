@@ -25,7 +25,8 @@ These samples are used to:
 
 ### Ground Truth Labels
 
-- **GROUND_TRUTH.md**: Expected extraction results for all samples with confidence thresholds
+- **../ground_truth/GROUND_TRUTH.md**: Expected extraction results for all test emails with confidence thresholds
+- **../ground_truth/ACCURACY_REPORT.md**: Actual extraction accuracy results from Phase 1b testing
 
 ## Test Coverage
 
@@ -79,7 +80,7 @@ These samples are used to:
 cat tests/fixtures/sample_emails/sample-001.txt
 
 # Check expected results
-cat tests/fixtures/sample_emails/GROUND_TRUTH.md
+cat tests/fixtures/ground_truth/GROUND_TRUTH.md
 ```
 
 ### Automated Testing (Future)
@@ -107,9 +108,10 @@ uv run pytest tests/integration/test_gemini_extraction.py
 
 When updating samples:
 1. Update the sample .txt file
-2. Update corresponding ground truth labels in GROUND_TRUTH.md
+2. Update corresponding ground truth labels in ../ground_truth/GROUND_TRUTH.md
 3. Re-run extraction tests to verify accuracy
-4. Update this README if adding new samples or test scenarios
+4. Update ACCURACY_REPORT.md with new results
+5. Update this README if adding new samples or test scenarios
 
 ---
 

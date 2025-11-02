@@ -4,7 +4,7 @@ Email-based collaboration tracking system that automatically extracts collaborat
 
 ## Project Status
 
-**Current Phase**: Phase 1b Complete ✅ (Branch 004-gemini-extraction)
+**Current Phase**: Phase 2a Complete ✅ (Branch 006-notion-read)
 
 ### Completed Phases
 - ✅ **Phase 0**: Foundation Work (001-feasibility-architecture)
@@ -20,22 +20,36 @@ Email-based collaboration tracking system that automatically extracts collaborat
   - CLI tool for manual entity extraction
   - **Accuracy**: 100% on test dataset (exceeds 85% target for SC-001, SC-002)
   - See [ACCURACY_REPORT.md](tests/fixtures/ground_truth/ACCURACY_REPORT.md)
+- ✅ **Phase 005**: Gmail OAuth2 Setup (005-gmail-setup)
+  - OAuth2 Desktop Application flow for Gmail API
+  - Group alias email access (collab@signite.co)
+  - Token management with auto-refresh
+- ✅ **Phase 2a**: Notion Read Operations (006-notion-read)
+  - NotionIntegrator module with schema discovery
+  - Data fetching with pagination and relationship resolution
+  - LLM-ready formatting (JSON + Markdown)
+  - 63/63 tests passing
+  - Infisical integration for secret management
 
-**Next Phase**: Phase 2a - Notion Integration (005-notion-integration)
+**Next Phase**: Phase 2b - LLM-Based Company Matching (007-llm-matching)
 
 ## Overview
 
 CollabIQ automates the tedious process of tracking collaboration activities by:
-1. **Receiving** emails from `portfolioupdates@signite.co`
-2. **Extracting** key information using Gemini API:
+1. **Receiving** emails from `portfolioupdates@signite.co` via Gmail API (✅ Phase 1a + 005)
+2. **Extracting** key information using Gemini API (✅ Phase 1b):
    - 담당자 (Person in charge)
    - 스타트업명 (Startup name)
    - 협업기관 (Partner organization)
    - 협업내용 (Collaboration details)
    - 날짜 (Date)
-3. **Matching** companies against existing Notion databases using fuzzy matching
-4. **Creating** entries in Notion's "CollabIQ" database
-5. **Queuing** ambiguous cases for manual verification
+3. **Fetching** company data from Notion databases (✅ Phase 2a):
+   - Schema discovery with caching
+   - Pagination and relationship resolution
+   - LLM-ready formatting
+4. **Matching** companies against existing Notion databases using LLM (🚧 Phase 2b)
+5. **Creating** entries in Notion's "CollabIQ" database (🚧 Phase 2d)
+6. **Queuing** ambiguous cases for manual verification (🚧 Phase 3a-3b)
 
 ## System Architecture
 
@@ -103,11 +117,11 @@ cp .env.example .env
 #   INFISICAL_CLIENT_ID=machine-identity-abc123
 #   INFISICAL_CLIENT_SECRET=secret-xyz789
 
-# 3. Verify connection
+# 3. Verify connection (checks Gmail, Gemini, and Notion secrets)
 uv run collabiq verify-infisical
 
 # 4. Start application (secrets auto-loaded)
-uv run collabiq fetch
+uv run collabiq notion fetch
 ```
 
 **📖 Full Infisical Setup Guide**: [docs/setup/infisical-setup.md](docs/setup/infisical-setup.md)
@@ -123,15 +137,14 @@ INFISICAL_ENABLED=false
 # Required API Keys
 GEMINI_API_KEY=your_gemini_api_key_here
 NOTION_API_KEY=your_notion_integration_token_here
+NOTION_DATABASE_ID_COMPANIES=your_companies_database_id_here
 NOTION_DATABASE_ID_COLLABIQ=your_collabiq_database_id_here
-NOTION_DATABASE_ID_CORP=your_corp_database_id_here
 
-# Optional - Email infrastructure (choose one approach)
-GMAIL_CREDENTIALS_PATH=path/to/credentials.json  # Gmail API
-IMAP_HOST=imap.gmail.com                         # IMAP
-WEBHOOK_SECRET=your_webhook_secret_here          # Webhook
+# Gmail API
+GMAIL_CREDENTIALS_PATH=credentials.json
+GMAIL_TOKEN_PATH=token.json
 
-# Processing
+# Processing (future phases)
 FUZZY_MATCH_THRESHOLD=0.85
 CONFIDENCE_THRESHOLD=0.85
 ```
@@ -238,21 +251,37 @@ make clean
 ```
 CollabIQ/
 ├── src/
+│   ├── collabiq/              # CLI application
+│   ├── config/                # Configuration management (Infisical integration)
 │   ├── llm_provider/          # LLM abstraction layer
-│   ├── llm_adapters/          # Gemini/GPT/Claude adapters
-│   ├── email_receiver/        # Email ingestion (Gmail API/IMAP/Webhook)
-│   ├── notion_integrator/     # Notion API client
-│   ├── verification_queue/    # Manual verification workflow
-│   └── reporting/             # Activity reports
+│   ├── llm_adapters/          # Gemini adapter implementation
+│   ├── email_receiver/        # Email ingestion (Gmail API)
+│   ├── content_normalizer/    # Email cleaning pipeline
+│   ├── notion_integrator/     # Notion API client (✅ Phase 2a complete)
+│   │   ├── integrator.py      # High-level API
+│   │   ├── client.py          # Rate-limited Notion API wrapper
+│   │   ├── schema.py          # Schema discovery
+│   │   ├── fetcher.py         # Data fetching with pagination
+│   │   ├── formatter.py       # LLM-ready formatting
+│   │   ├── cache.py           # File-based caching with TTL
+│   │   └── models.py          # Pydantic data models
+│   ├── verification_queue/    # Manual verification workflow (future)
+│   └── reporting/             # Activity reports (future)
 ├── tests/
 │   ├── unit/                  # Unit tests
 │   ├── integration/           # Integration tests
-│   └── contract/              # Contract tests for LLMProvider
-├── config/
-│   └── settings.py            # Pydantic settings
-├── specs/
-│   └── 001-feasibility-architecture/  # Foundation work specs
-└── docs/                      # Documentation
+│   ├── contract/              # Contract tests for LLMProvider
+│   └── fixtures/              # Test data and ground truth
+├── docs/
+│   ├── setup/                 # Setup guides
+│   ├── architecture/          # System design documents
+│   └── validation/            # API validation reports
+├── data/
+│   ├── raw/                   # Raw email data
+│   ├── cleaned/               # Cleaned email data
+│   ├── extractions/           # Extracted entities (JSON)
+│   └── cache/                 # Notion schema and data cache
+└── .claude/                   # SpecKit commands
 
 ```
 

@@ -54,7 +54,8 @@ uv run collabiq --help
 - ✅ **Phase 1a Complete**: Email reception with Gmail API OAuth2
 - ✅ **Phase 1b Complete**: Gemini entity extraction
 - ✅ **Phase 005 Complete**: Gmail OAuth2 setup with group alias support
-- 🚧 **Phase 2**: Notion integration (not yet implemented)
+- ✅ **Phase 2a Complete**: Notion Read Operations (schema discovery, data fetching, LLM formatting)
+- 🚧 **Phase 2b**: LLM-based company matching (next phase)
 
 See [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md) for full implementation timeline.
 
@@ -124,15 +125,15 @@ GEMINI_MODEL=gemini-2.0-flash-exp
 GEMINI_TIMEOUT_SECONDS=10
 GEMINI_MAX_RETRIES=3
 
+# Notion API Configuration (✅ Implemented - Phase 2a)
+NOTION_API_KEY=secret_...your_actual_token_here
+NOTION_DATABASE_ID_COMPANIES=32_character_database_id_here
+NOTION_DATABASE_ID_COLLABIQ=32_character_database_id_here
+
 # Logging
 LOG_LEVEL=INFO
 
-# Future: Notion API (Phase 2 - Not Yet Implemented)
-# NOTION_API_KEY=secret_...your_actual_token_here
-# NOTION_DATABASE_ID_COLLABIQ=32_character_database_id_here
-# NOTION_DATABASE_ID_CORP=32_character_database_id_here
-
-# Future: Processing Configuration (Phase 2+ - Not Yet Implemented)
+# Future: Processing Configuration (Phase 2b+ - Not Yet Implemented)
 # FUZZY_MATCH_THRESHOLD=0.85
 # CONFIDENCE_THRESHOLD=0.85
 ```
@@ -202,6 +203,8 @@ open htmlcov/index.html
 
 ## Step 8: Test the System
 
+### Test Email Extraction (Phase 1a + 1b)
+
 Test the complete email extraction pipeline:
 
 ```bash
@@ -224,6 +227,37 @@ uv run python src/cli.py fetch --max-results 10
 - Cleaned emails: `data/cleaned/YYYY/MM/*.json`
 - Extracted entities: `data/extractions/*.json`
 
+### Test Notion Integration (Phase 2a)
+
+Test Notion data fetching and formatting:
+
+```bash
+# Fetch data from Notion databases
+uv run collabiq notion fetch
+
+# View database schema
+uv run collabiq notion schema --database-id YOUR_COMPANIES_DB_ID
+
+# Refresh cached data
+uv run collabiq notion refresh --database-id YOUR_COMPANIES_DB_ID
+
+# Export to JSON file
+uv run collabiq notion export --output companies.json
+```
+
+**What happens**:
+1. Connects to Notion API via integration token
+2. Discovers database schema dynamically
+3. Fetches all records with pagination
+4. Resolves relationships (1-level depth)
+5. Formats data for LLM consumption (JSON + Markdown)
+6. Caches results (24h schema, 6h data)
+
+**Output**:
+- JSON format: Structured company records with all properties
+- Markdown format: Human-readable summary with company classifications
+- Cache location: `data/cache/*.json`
+
 ## Next Steps
 
 ### Current Status (Completed Phases)
@@ -231,18 +265,19 @@ uv run python src/cli.py fetch --max-results 10
 ✅ **Phase 1a Complete**: Email reception with Gmail API OAuth2
 ✅ **Phase 1b Complete**: Gemini entity extraction
 ✅ **Phase 005 Complete**: Gmail OAuth2 setup with group alias support
+✅ **Phase 2a Complete**: Notion Read Operations (schema discovery, data fetching, LLM formatting)
 🎯 **MVP Complete**: Email ingestion + entity extraction + JSON output
 
 ### Next Implementation Phase
 
-**Phase 2: Notion Integration** (Not Yet Started)
+**Phase 2b: LLM-Based Company Matching**
 
-This phase will add automatic Notion database creation from extracted entities.
+This phase will add intelligent company matching using Gemini with Notion company data.
 
 ```bash
-# When ready to start Phase 2
-git checkout -b 006-notion-integration
-/speckit.specify "Implement Notion integration for automatic entity creation"
+# When ready to start Phase 2b
+git checkout -b 007-llm-matching
+/speckit.specify "Implement LLM-based company matching with confidence scores"
 ```
 
 ### Explore the System
@@ -364,14 +399,26 @@ git commit     # Pre-commit hooks will run automatically
 
 ## Available CLI Commands
 
+### Main CLI (collabiq)
+
 ```bash
-# Verify Infisical integration
+# Verify Infisical integration (checks Gmail, Gemini, Notion secrets)
 uv run collabiq verify-infisical
 
 # Show CLI version
 uv run collabiq version
 
-# Fetch and process emails (not yet implemented in main CLI)
+# Notion commands (Phase 2a)
+uv run collabiq notion fetch              # Fetch data from Notion databases
+uv run collabiq notion schema --database-id <ID>  # View database schema
+uv run collabiq notion refresh --database-id <ID> # Refresh cached data
+uv run collabiq notion export --output <file>     # Export to JSON file
+```
+
+### Legacy CLI (src/cli.py)
+
+```bash
+# Fetch and process emails
 uv run python src/cli.py fetch --max-results 10
 
 # Clean existing raw emails
@@ -387,12 +434,15 @@ After completing this quick start, you should:
 1. ✅ Have a working Python environment with UV
 2. ✅ Have valid Gmail OAuth2 credentials configured
 3. ✅ Have valid Gemini API key configured
-4. ✅ Be able to fetch and extract entities from emails
-5. ✅ Understand the project structure
+4. ✅ Have valid Notion API credentials configured
+5. ✅ Be able to fetch and extract entities from emails
+6. ✅ Be able to fetch and format Notion data for LLM consumption
+7. ✅ Understand the project structure
 
 Now you're ready to:
 - **Use the MVP**: Fetch emails and extract entities to JSON
-- **Start Phase 2**: Implement Notion integration
+- **Fetch Notion Data**: Retrieve company data with LLM-ready formatting
+- **Start Phase 2b**: Implement LLM-based company matching
 - **Explore the codebase**: Review existing implementations
 - **Add more features**: Follow the implementation roadmap
 

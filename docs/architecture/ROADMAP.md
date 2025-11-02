@@ -13,7 +13,7 @@ This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 
 
 **Total Effort**: 32-45 days across 13 phases (including Gmail OAuth2 setup)
 **MVP Target**: Phases 1a+1b (6-9 days) deliver extraction → JSON output for manual review ✅ **COMPLETE**
-**Current Progress**: 3/13 phases complete (Phases 1a, 1b, 005)
+**Current Progress**: 4/13 phases complete (Phases 1a, 1b, 005, 2a)
 
 ---
 
@@ -119,22 +119,30 @@ This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 
 
 ### Automation Track (Phases 2a-2e)
 
-**Phase 2a - Notion Read Operations** (Branch: `006-notion-read`)
-**Timeline**: 2-3 days
+**Phase 2a - Notion Read Operations** (Branch: `006-notion-read`) ✅ **COMPLETE**
+**Timeline**: 2-3 days (Actual: Completed 2025-11-02)
 **Complexity**: Low
+**Status**: Merged to main, specs directory cleaned up
 
-**Deliverables**:
+**Deliverables**: ✅
 - NotionIntegrator component (read-only operations)
-- Fetch company lists from 스타트업 and 계열사 databases
-- Cache company lists locally (refresh every N hours)
-- Format company lists for LLM prompt context
+- Schema discovery with caching (24h TTL)
+- Data fetching with pagination and relationship resolution
+- LLM-ready formatting (JSON + Markdown)
+- CLI commands: fetch, refresh, schema, export
+- Infisical integration for secret management
 
-**Tests**: Integration tests for Notion API (list databases, query pages, handle pagination)
+**Tests**: ✅ 63/63 tests passing (100% pass rate)
+- 9 contract tests for NotionIntegrator interface
+- 29 integration tests for Notion API operations
+- 25 unit tests for schema, fetcher, formatter, cache
 
-**Success Criteria**:
-- Successfully fetch all companies from both databases
-- Cache invalidation working correctly
-- API rate limits respected (3 req/s)
+**Success Criteria**: ✅
+- Successfully fetch all companies from both databases (✅ Validated with real data)
+- Cache invalidation working correctly (✅ TTL-based: 24h schema, 6h data)
+- API rate limits respected (✅ Token bucket: 3 req/s)
+- Schema discovery working (✅ Dynamic property detection)
+- Relationship resolution working (✅ 1-level depth, circular ref detection)
 
 ---
 
@@ -301,7 +309,7 @@ This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 
     ↓
 ✅ Phase 005 (005-gmail-setup) - COMPLETE
     ↓
-Phase 2a (006-notion-read)
+✅ Phase 2a (006-notion-read) - COMPLETE
     ↓
 Phase 2b (007-llm-matching) ← depends on 2a
     ↓
@@ -419,20 +427,21 @@ After each milestone, **STOP and VALIDATE**:
 3. ✅ **Phase 1a Complete** (branch 002-email-reception merged to main)
 4. ✅ **Phase 1b Complete** (branch 004-gemini-extraction merged to main) → **🎯 MVP COMPLETE**
 5. ✅ **Phase 005 Complete** (branch 005-gmail-setup merged to main)
-6. → **Ready for Phase 2a** (006-notion-read) - **NEXT**
+6. ✅ **Phase 2a Complete** (branch 006-notion-read merged to main)
+7. → **Ready for Phase 2b** (007-llm-matching) - **NEXT**
 
-**Current Status**: MVP complete (Phases 1a + 1b). Gmail OAuth2 setup complete (Phase 005). Ready to begin automation track with Notion integration.
+**Current Status**: MVP complete (Phases 1a + 1b). Gmail OAuth2 setup complete (Phase 005). Notion Read Operations complete (Phase 2a). Ready for LLM-based company matching.
 
-**Phase 2a (006-notion-read) Next Actions**:
-1. → Create branch `006-notion-read`
+**Phase 2b (007-llm-matching) Next Actions**:
+1. → Create branch `007-llm-matching`
 2. → Run `/speckit.specify` to create feature specification
 3. → Run `/speckit.plan` to create implementation plan
-4. → Implement NotionIntegrator (read operations)
-5. → Fetch company lists from Notion databases
-6. → Test integration with real Notion API
+4. → Update GeminiAdapter to include company lists in prompt
+5. → Implement company matching logic with confidence scores
+6. → Test matching accuracy against ground truth dataset
 
 ---
 
-**Document Version**: 1.3.0
-**Last Updated**: 2025-11-01 (Phase 1b and 005 complete, branch numbers renumbered)
-**Next Review**: After Phase 2a (Notion Read) completion
+**Document Version**: 1.4.0
+**Last Updated**: 2025-11-02 (Phase 2a complete - Notion Read Operations)
+**Next Review**: After Phase 2b (LLM-Based Company Matching) completion
