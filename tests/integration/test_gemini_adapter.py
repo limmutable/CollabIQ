@@ -106,17 +106,17 @@ def test_gemini_adapter_missing_person(gemini_adapter):
 
 def test_gemini_adapter_rate_limit_error(gemini_adapter, korean_email_001):
     """Test rate limit error handling (429)."""
-    mock_error = Mock()
+    # Create a mock error with status_code attribute (simulates HTTP 429)
+    mock_error = Exception("Rate limit exceeded")
     mock_error.status_code = 429
 
     with patch.object(
         gemini_adapter,
         "_call_gemini_api",
-        side_effect=Exception("Rate limit exceeded"),
+        side_effect=mock_error,
     ):
-        with patch.object(gemini_adapter, "_handle_api_error", side_effect=LLMRateLimitError()):
-            with pytest.raises(LLMRateLimitError):
-                gemini_adapter.extract_entities(korean_email_001)
+        with pytest.raises(LLMRateLimitError):
+            gemini_adapter.extract_entities(korean_email_001)
 
 
 def test_gemini_adapter_timeout_error(gemini_adapter, korean_email_001):
@@ -133,19 +133,17 @@ def test_gemini_adapter_timeout_error(gemini_adapter, korean_email_001):
 
 def test_gemini_adapter_authentication_error(gemini_adapter, korean_email_001):
     """Test authentication error handling (401/403)."""
-    mock_error = Mock()
+    # Create a mock error with status_code attribute (simulates HTTP 401)
+    mock_error = Exception("Invalid API key")
     mock_error.status_code = 401
 
     with patch.object(
         gemini_adapter,
         "_call_gemini_api",
-        side_effect=Exception("Invalid API key"),
+        side_effect=mock_error,
     ):
-        with patch.object(
-            gemini_adapter, "_handle_api_error", side_effect=LLMAuthenticationError()
-        ):
-            with pytest.raises(LLMAuthenticationError):
-                gemini_adapter.extract_entities(korean_email_001)
+        with pytest.raises(LLMAuthenticationError):
+            gemini_adapter.extract_entities(korean_email_001)
 
 
 def test_gemini_adapter_validates_email_text(gemini_adapter):
