@@ -13,8 +13,7 @@ These tests use mocked NotionClient to avoid real API calls.
 """
 
 import pytest
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 from src.notion_integrator.integrator import NotionIntegrator
 from src.notion_integrator.models import DatabaseSchema, LLMFormattedData
@@ -73,7 +72,9 @@ def mock_query_response():
                 "properties": {
                     "Name": {
                         "type": "title",
-                        "title": [{"type": "text", "text": {"content": "Test Company"}}],
+                        "title": [
+                            {"type": "text", "text": {"content": "Test Company"}}
+                        ],
                     },
                     "Shinsegae affiliates?": {
                         "type": "checkbox",
@@ -112,10 +113,11 @@ def test_integrator_initialization():
 
 def test_integrator_initialization_env_var():
     """Test initialization with environment variable."""
-    with patch("src.notion_integrator.integrator.NotionClient"), patch.dict(
-        "os.environ", {"NOTION_API_KEY": "env-key"}
+    with (
+        patch("src.notion_integrator.integrator.NotionClient"),
+        patch.dict("os.environ", {"NOTION_API_KEY": "env-key"}),
     ):
-        integrator = NotionIntegrator()
+        NotionIntegrator()
         # Should not raise - uses env var
 
 

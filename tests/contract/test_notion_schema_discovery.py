@@ -13,8 +13,7 @@ or use comprehensive fixtures for offline testing.
 """
 
 import os
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -24,7 +23,7 @@ from src.notion_integrator.exceptions import (
     NotionPermissionError,
     SchemaValidationError,
 )
-from src.notion_integrator.models import DatabaseSchema, NotionDatabase, NotionProperty
+from src.notion_integrator.models import DatabaseSchema
 
 
 # ==============================================================================
@@ -158,7 +157,10 @@ async def test_discover_schema_success(mock_notion_client, mock_notion_api_respo
     # Verify relationship properties identified
     assert len(schema.relation_properties) == 1
     assert schema.relation_properties[0].name == "Related CollabIQ"
-    assert schema.relation_properties[0].config["relation"]["database_id"] == "xyz789-uvw012-abc345"
+    assert (
+        schema.relation_properties[0].config["relation"]["database_id"]
+        == "xyz789-uvw012-abc345"
+    )
 
     # Verify computed fields
     assert schema.has_relations is True
@@ -355,5 +357,9 @@ async def test_discover_schema_real_api():
 
     # Check for expected classification fields (if Companies database)
     if schema.database.title == "Companies":
-        assert "is_shinsegae_affiliate" in schema.classification_fields or True  # May not exist yet
-        assert "is_portfolio_company" in schema.classification_fields or True  # May not exist yet
+        assert (
+            "is_shinsegae_affiliate" in schema.classification_fields or True
+        )  # May not exist yet
+        assert (
+            "is_portfolio_company" in schema.classification_fields or True
+        )  # May not exist yet

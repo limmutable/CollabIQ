@@ -15,15 +15,11 @@ to verify the complete relationship resolution flow.
 
 import pytest
 from datetime import datetime
-from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock
 
 from src.notion_integrator.models import (
-    DatabaseSchema,
     NotionDatabase,
     NotionProperty,
-    Relationship,
-    RelationshipGraph,
 )
 from src.notion_integrator.exceptions import NotionObjectNotFoundError
 
@@ -528,7 +524,7 @@ async def test_visited_pages_prevents_infinite_loops(
     mock_notion_client.retrieve_page.side_effect = mock_retrieve_page
 
     # Resolve with visited_pages tracking
-    resolved = await resolve_relationships(
+    await resolve_relationships(
         client=mock_notion_client,
         record=company_record,
         schema=companies_schema,

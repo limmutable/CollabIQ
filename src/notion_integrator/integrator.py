@@ -22,7 +22,6 @@ Example Usage:
     >>> await integrator.refresh_cache(companies_db_id="abc123")
 """
 
-import os
 from typing import Any, Dict, List, Optional
 
 from src.notion_integrator.cache import CacheManager
@@ -392,11 +391,15 @@ class NotionIntegrator:
         # Invalidate caches
         if refresh_schema:
             self.cache_manager.invalidate_schema_cache(database_name)
-            logger.info("Schema cache invalidated", extra={"database_name": database_name})
+            logger.info(
+                "Schema cache invalidated", extra={"database_name": database_name}
+            )
 
         if refresh_data:
             self.cache_manager.invalidate_data_cache(database_name)
-            logger.info("Data cache invalidated", extra={"database_name": database_name})
+            logger.info(
+                "Data cache invalidated", extra={"database_name": database_name}
+            )
 
     async def close(self):
         """Close the Notion client and clean up resources."""

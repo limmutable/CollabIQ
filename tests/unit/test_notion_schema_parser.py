@@ -21,7 +21,6 @@ from src.notion_integrator.models import (
     Relationship,
     RelationshipGraph,
 )
-from src.notion_integrator.exceptions import SchemaValidationError
 
 
 # ==============================================================================
@@ -187,7 +186,9 @@ def test_identify_relation_properties_none():
 
     properties = {
         "Name": NotionProperty(id="title", name="Name", type="title", config={}),
-        "Description": NotionProperty(id="desc", name="Description", type="rich_text", config={}),
+        "Description": NotionProperty(
+            id="desc", name="Description", type="rich_text", config={}
+        ),
     }
 
     relations = identify_relation_properties(properties)
@@ -260,7 +261,9 @@ def test_identify_classification_fields_none():
 
     properties = {
         "Name": NotionProperty(id="title", name="Name", type="title", config={}),
-        "Active": NotionProperty(id="active", name="Active", type="checkbox", config={}),
+        "Active": NotionProperty(
+            id="active", name="Active", type="checkbox", config={}
+        ),
     }
 
     classification = identify_classification_fields(properties)
@@ -344,7 +347,10 @@ def test_create_database_schema_no_relations():
 
 def test_build_relationship_graph_single_relation():
     """Test building relationship graph with one relation."""
-    from src.notion_integrator.schema import build_relationship_graph, create_database_schema
+    from src.notion_integrator.schema import (
+        build_relationship_graph,
+        create_database_schema,
+    )
 
     companies_db = NotionDatabase(
         id="companies-id",
@@ -358,7 +364,9 @@ def test_build_relationship_graph_single_relation():
                 id="rel1",
                 name="Related CollabIQ",
                 type="relation",
-                config={"relation": {"database_id": "collabiq-id", "type": "dual_property"}},
+                config={
+                    "relation": {"database_id": "collabiq-id", "type": "dual_property"}
+                },
             ),
         },
     )
@@ -459,7 +467,9 @@ def test_relationship_graph_no_circular():
         url="https://notion.so/db1",
         created_time=datetime.now(),
         last_edited_time=datetime.now(),
-        properties={"Name": NotionProperty(id="title", name="Name", type="title", config={})},
+        properties={
+            "Name": NotionProperty(id="title", name="Name", type="title", config={})
+        },
     )
 
     db2 = NotionDatabase(
@@ -517,7 +527,7 @@ def test_validate_schema_empty_properties():
 
     # Should raise due to Pydantic validation when creating NotionDatabase
     with pytest.raises(ValidationError) as exc_info:
-        db = NotionDatabase(
+        NotionDatabase(
             id="abc123",
             title="Empty DB",
             url="https://notion.so/abc123",

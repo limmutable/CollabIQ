@@ -71,7 +71,9 @@ class RateLimiter:
             ValueError: If tokens requested exceeds capacity
         """
         if tokens > self.capacity:
-            raise ValueError(f"Cannot acquire {tokens} tokens (capacity: {self.capacity})")
+            raise ValueError(
+                f"Cannot acquire {tokens} tokens (capacity: {self.capacity})"
+            )
 
         async with self._lock:
             self._waiting_count += 1
@@ -177,7 +179,9 @@ class AdaptiveRateLimiter(RateLimiter):
         self.recovery_factor = recovery_factor
         self._consecutive_successes = 0
 
-    async def handle_rate_limit_error(self, retry_after: Optional[float] = None) -> None:
+    async def handle_rate_limit_error(
+        self, retry_after: Optional[float] = None
+    ) -> None:
         """
         Handle rate limit error by reducing rate.
 
@@ -188,10 +192,14 @@ class AdaptiveRateLimiter(RateLimiter):
             if retry_after:
                 # Use suggested wait time to calculate new rate
                 new_rate = 1.0 / retry_after
-                self.rate_per_second = max(self.min_rate, min(new_rate, self.rate_per_second))
+                self.rate_per_second = max(
+                    self.min_rate, min(new_rate, self.rate_per_second)
+                )
             else:
                 # Reduce rate by backoff factor
-                self.rate_per_second = max(self.min_rate, self.rate_per_second * self.backoff_factor)
+                self.rate_per_second = max(
+                    self.min_rate, self.rate_per_second * self.backoff_factor
+                )
 
             # Reset tokens to prevent burst after rate reduction
             self.tokens = float(self.capacity)
@@ -210,5 +218,7 @@ class AdaptiveRateLimiter(RateLimiter):
 
             # Only increase rate after sustained success (e.g., 10 requests)
             if self._consecutive_successes >= 10:
-                self.rate_per_second = min(self.max_rate, self.rate_per_second * self.recovery_factor)
+                self.rate_per_second = min(
+                    self.max_rate, self.rate_per_second * self.recovery_factor
+                )
                 self._consecutive_successes = 0

@@ -100,7 +100,9 @@ class NotionAPIError(NotionIntegratorError):
         if response_body:
             details["response_body"] = response_body[:200]  # Truncate for readability
 
-        super().__init__(message, details=details, original_error=kwargs.get("original_error"))
+        super().__init__(
+            message, details=details, original_error=kwargs.get("original_error")
+        )
 
 
 class NotionAuthenticationError(NotionAPIError):
@@ -189,7 +191,9 @@ class NotionPermissionError(NotionAPIError):
     - Workspace permissions changed
     """
 
-    def __init__(self, message: str = "Insufficient permissions for Notion operation", **kwargs):
+    def __init__(
+        self, message: str = "Insufficient permissions for Notion operation", **kwargs
+    ):
         super().__init__(message, **kwargs)
 
 
@@ -233,7 +237,9 @@ class CacheReadError(CacheError):
         details = kwargs.get("details", {})
         details["cache_path"] = cache_path
 
-        super().__init__(message, details=details, original_error=kwargs.get("original_error"))
+        super().__init__(
+            message, details=details, original_error=kwargs.get("original_error")
+        )
 
 
 class CacheWriteError(CacheError):
@@ -263,7 +269,9 @@ class CacheWriteError(CacheError):
         details = kwargs.get("details", {})
         details["cache_path"] = cache_path
 
-        super().__init__(message, details=details, original_error=kwargs.get("original_error"))
+        super().__init__(
+            message, details=details, original_error=kwargs.get("original_error")
+        )
 
 
 class CacheCorruptedError(CacheError):
@@ -293,7 +301,9 @@ class CacheCorruptedError(CacheError):
         details = kwargs.get("details", {})
         details["cache_path"] = cache_path
 
-        super().__init__(message, details=details, original_error=kwargs.get("original_error"))
+        super().__init__(
+            message, details=details, original_error=kwargs.get("original_error")
+        )
 
 
 # ==============================================================================
@@ -336,7 +346,9 @@ class CircularReferenceError(RelationshipError):
         details = kwargs.get("details", {})
         details.update({"page_id": page_id, "circular_path": " -> ".join(path)})
 
-        super().__init__(message, details=details, original_error=kwargs.get("original_error"))
+        super().__init__(
+            message, details=details, original_error=kwargs.get("original_error")
+        )
 
 
 class RelationshipDepthExceededError(RelationshipError):
@@ -366,7 +378,9 @@ class RelationshipDepthExceededError(RelationshipError):
         details = kwargs.get("details", {})
         details.update({"current_depth": current_depth, "max_depth": max_depth})
 
-        super().__init__(message, details=details, original_error=kwargs.get("original_error"))
+        super().__init__(
+            message, details=details, original_error=kwargs.get("original_error")
+        )
 
 
 # ==============================================================================
@@ -413,7 +427,9 @@ class SchemaValidationError(DataError):
         if validation_errors:
             details["validation_errors"] = validation_errors
 
-        super().__init__(message, details=details, original_error=kwargs.get("original_error"))
+        super().__init__(
+            message, details=details, original_error=kwargs.get("original_error")
+        )
 
 
 class RecordValidationError(DataError):
@@ -447,7 +463,9 @@ class RecordValidationError(DataError):
         if field_errors:
             details["field_errors"] = field_errors
 
-        super().__init__(message, details=details, original_error=kwargs.get("original_error"))
+        super().__init__(
+            message, details=details, original_error=kwargs.get("original_error")
+        )
 
 
 class DataFormattingError(DataError):
@@ -472,4 +490,8 @@ class DataFormattingError(DataError):
             message: Error message
             **kwargs: Additional details
         """
-        super().__init__(message, details=kwargs.get("details"), original_error=kwargs.get("original_error"))
+        super().__init__(
+            message,
+            details=kwargs.get("details"),
+            original_error=kwargs.get("original_error"),
+        )

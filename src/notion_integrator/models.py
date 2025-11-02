@@ -76,7 +76,9 @@ class NotionDatabase(BaseModel):
 
     @field_validator("properties")
     @classmethod
-    def properties_must_not_be_empty(cls, v: Dict[str, NotionProperty]) -> Dict[str, NotionProperty]:
+    def properties_must_not_be_empty(
+        cls, v: Dict[str, NotionProperty]
+    ) -> Dict[str, NotionProperty]:
         """Validate that database has at least one property."""
         if not v:
             raise ValueError("Database must have at least one property")
@@ -218,7 +220,9 @@ class RelationshipGraph(BaseModel):
             visited.add(node)
             max_child_depth = 0
             for neighbor in self.adjacency_list.get(node, []):
-                max_child_depth = max(max_child_depth, dfs_depth(neighbor, visited.copy()))
+                max_child_depth = max(
+                    max_child_depth, dfs_depth(neighbor, visited.copy())
+                )
             return 1 + max_child_depth
 
         depths = []
@@ -275,7 +279,9 @@ class DataCache(BaseModel):
 
     @field_validator("content")
     @classmethod
-    def content_must_not_be_empty(cls, v: Dict[str, Any] | List[Any]) -> Dict[str, Any] | List[Any]:
+    def content_must_not_be_empty(
+        cls, v: Dict[str, Any] | List[Any]
+    ) -> Dict[str, Any] | List[Any]:
         """Validate content is not empty."""
         if not v:
             raise ValueError("Cache content must not be empty")
@@ -351,7 +357,9 @@ class CompanyClassification(BaseModel):
         return v
 
     @classmethod
-    def from_checkboxes(cls, is_ssg: bool, is_portfolio: bool) -> "CompanyClassification":
+    def from_checkboxes(
+        cls, is_ssg: bool, is_portfolio: bool
+    ) -> "CompanyClassification":
         """
         Factory method to create classification from checkbox values.
 

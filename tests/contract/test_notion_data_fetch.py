@@ -14,16 +14,13 @@ These tests use mocked NotionClient to verify contract without API calls.
 
 import pytest
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock
 
 from src.notion_integrator.exceptions import (
-    NotionAPIError,
     NotionAuthenticationError,
     NotionObjectNotFoundError,
-    NotionPermissionError,
 )
-from src.notion_integrator.models import DatabaseSchema
 
 
 # ==============================================================================
@@ -445,7 +442,7 @@ async def test_resolve_relationships_circular_detection(mock_notion_client):
     mock_notion_client.retrieve_page.return_value = record
 
     # Resolve relationships
-    resolved_record = await resolve_relationships(
+    await resolve_relationships(
         client=mock_notion_client,
         record=record,
         schema=schema,

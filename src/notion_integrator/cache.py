@@ -14,7 +14,6 @@ Cache Structure:
 
 import json
 import os
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -54,7 +53,9 @@ class CacheManager:
             schema_ttl_hours: Schema cache TTL in hours (default: 24)
             data_ttl_hours: Data cache TTL in hours (default: 6)
         """
-        self.cache_dir = Path(cache_dir or os.getenv("NOTION_CACHE_DIR", "data/notion_cache"))
+        self.cache_dir = Path(
+            cache_dir or os.getenv("NOTION_CACHE_DIR", "data/notion_cache")
+        )
         self.schema_ttl_hours = schema_ttl_hours
         self.data_ttl_hours = data_ttl_hours
 
@@ -302,7 +303,9 @@ class CacheManager:
                 database_name=database_name,
                 hit=True,
                 age_hours=cache.age_hours,
-                record_count=len(cache.content) if isinstance(cache.content, list) else 0,
+                record_count=len(cache.content)
+                if isinstance(cache.content, list)
+                else 0,
             )
 
             return cache.content if isinstance(cache.content, list) else []
@@ -466,7 +469,9 @@ class CacheManager:
             Path to cache file
         """
         # Sanitize database name for filename
-        safe_name = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in database_name)
+        safe_name = "".join(
+            c if c.isalnum() or c in ("-", "_") else "_" for c in database_name
+        )
         filename = f"{cache_type}_{safe_name}.json"
         return self.cache_dir / filename
 

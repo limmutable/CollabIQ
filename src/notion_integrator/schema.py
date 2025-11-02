@@ -146,8 +146,12 @@ def parse_database_response(response: Dict[str, Any]) -> NotionDatabase:
         url = response.get("url", "")
 
         # Parse timestamps
-        created_time = datetime.fromisoformat(response["created_time"].replace("Z", "+00:00"))
-        last_edited_time = datetime.fromisoformat(response["last_edited_time"].replace("Z", "+00:00"))
+        created_time = datetime.fromisoformat(
+            response["created_time"].replace("Z", "+00:00")
+        )
+        last_edited_time = datetime.fromisoformat(
+            response["last_edited_time"].replace("Z", "+00:00")
+        )
 
         # Parse properties
         properties_dict = response.get("properties", {})
@@ -247,7 +251,9 @@ def create_database_schema(database: NotionDatabase) -> DatabaseSchema:
     )
 
 
-def group_properties_by_type(properties: Dict[str, NotionProperty]) -> Dict[str, List[NotionProperty]]:
+def group_properties_by_type(
+    properties: Dict[str, NotionProperty],
+) -> Dict[str, List[NotionProperty]]:
     """
     Group properties by their type.
 
@@ -267,7 +273,9 @@ def group_properties_by_type(properties: Dict[str, NotionProperty]) -> Dict[str,
     return grouped
 
 
-def identify_relation_properties(properties: Dict[str, NotionProperty]) -> List[NotionProperty]:
+def identify_relation_properties(
+    properties: Dict[str, NotionProperty],
+) -> List[NotionProperty]:
     """
     Identify all relation properties in database.
 
@@ -280,7 +288,9 @@ def identify_relation_properties(properties: Dict[str, NotionProperty]) -> List[
     return [prop for prop in properties.values() if prop.type == "relation"]
 
 
-def identify_classification_fields(properties: Dict[str, NotionProperty]) -> Dict[str, str]:
+def identify_classification_fields(
+    properties: Dict[str, NotionProperty],
+) -> Dict[str, str]:
     """
     Identify classification fields (Shinsegae affiliates?, Is Portfolio?).
 
@@ -395,7 +405,9 @@ def validate_schema(schema: DatabaseSchema) -> None:
     for rel_prop in schema.relation_properties:
         rel_config = rel_prop.config.get("relation", {})
         if "database_id" not in rel_config:
-            errors.append(f"Relation property '{rel_prop.name}' missing target database_id")
+            errors.append(
+                f"Relation property '{rel_prop.name}' missing target database_id"
+            )
 
     # Validate classification fields are checkboxes
     checkbox_props = {

@@ -14,13 +14,10 @@ These tests use minimal fixtures and don't require API calls.
 
 import pytest
 from datetime import datetime
-from typing import Any, Dict, List
 
 from src.notion_integrator.models import (
     CompanyClassification,
     CompanyRecord,
-    DatabaseSchema,
-    FormatMetadata,
     LLMFormattedData,
     NotionDatabase,
     NotionProperty,
@@ -82,7 +79,10 @@ def sample_company_page():
                             "Name": {
                                 "type": "title",
                                 "title": [
-                                    {"type": "text", "text": {"content": "Project Alpha"}}
+                                    {
+                                        "type": "text",
+                                        "text": {"content": "Project Alpha"},
+                                    }
                                 ],
                             },
                         },
@@ -112,7 +112,10 @@ def sample_korean_company_page():
                 "id": "desc",
                 "type": "rich_text",
                 "rich_text": [
-                    {"type": "text", "text": {"content": "대한민국의 대표적인 유통 기업 🛒"}}
+                    {
+                        "type": "text",
+                        "text": {"content": "대한민국의 대표적인 유통 기업 🛒"},
+                    }
                 ],
             },
             "Founded Year": {"id": "year", "type": "number", "number": 1955},
