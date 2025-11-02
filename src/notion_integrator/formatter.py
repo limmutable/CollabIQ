@@ -18,8 +18,8 @@ Key Functions:
 from datetime import datetime
 from typing import Any, Dict, List
 
-from src.notion_integrator.logging_config import get_logger, PerformanceLogger
-from src.notion_integrator.models import (
+from .logging_config import get_logger, PerformanceLogger
+from .models import (
     CompanyClassification,
     CompanyRecord,
     DatabaseSchema,

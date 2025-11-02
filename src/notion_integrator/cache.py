@@ -17,13 +17,13 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from src.notion_integrator.exceptions import (
+from .exceptions import (
     CacheCorruptedError,
     CacheReadError,
     CacheWriteError,
 )
-from src.notion_integrator.logging_config import get_logger, log_cache_operation
-from src.notion_integrator.models import DataCache, DatabaseSchema
+from .logging_config import get_logger, log_cache_operation
+from .models import DataCache, DatabaseSchema
 
 
 logger = get_logger(__name__)

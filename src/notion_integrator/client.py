@@ -22,15 +22,15 @@ from tenacity import (
     wait_exponential,
 )
 
-from src.notion_integrator.exceptions import (
+from .exceptions import (
     NotionAPIError,
     NotionAuthenticationError,
     NotionObjectNotFoundError,
     NotionPermissionError,
     NotionRateLimitError,
 )
-from src.notion_integrator.logging_config import get_logger, log_api_call
-from src.notion_integrator.rate_limiter import RateLimiter
+from .logging_config import get_logger, log_api_call
+from .rate_limiter import RateLimiter
 
 
 logger = get_logger(__name__)

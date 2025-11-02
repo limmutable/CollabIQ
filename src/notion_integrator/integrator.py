@@ -24,16 +24,16 @@ Example Usage:
 
 from typing import Any, Dict, List, Optional
 
-from src.notion_integrator.cache import CacheManager
-from src.notion_integrator.client import NotionClient
-from src.notion_integrator.fetcher import (
+from .cache import CacheManager
+from .client import NotionClient
+from .fetcher import (
     fetch_database_with_relationships,
     fetch_multiple_databases,
 )
-from src.notion_integrator.formatter import format_for_llm, format_multiple_databases
-from src.notion_integrator.logging_config import get_logger, PerformanceLogger
-from src.notion_integrator.models import DatabaseSchema, LLMFormattedData
-from src.notion_integrator.schema import discover_schema
+from .formatter import format_for_llm, format_multiple_databases
+from .logging_config import get_logger, PerformanceLogger
+from .models import DatabaseSchema, LLMFormattedData
+from .schema import discover_schema
 
 
 logger = get_logger(__name__)

@@ -22,7 +22,7 @@ Main Components:
 - models: Pydantic data models
 
 Usage:
-    >>> from src.notion_integrator import NotionIntegrator
+    >>> from notion_integrator import NotionIntegrator
     >>> integrator = NotionIntegrator(api_key="secret_...")
     >>> data = await integrator.get_data(
     ...     companies_db_id="abc123",
@@ -46,23 +46,23 @@ __version__ = "0.1.0"
 def __getattr__(name):
     """Lazy import to avoid circular dependencies."""
     if name == "NotionIntegrator":
-        from src.notion_integrator.integrator import NotionIntegrator
+        from .integrator import NotionIntegrator
 
         return NotionIntegrator
     if name == "CompanyClassification":
-        from src.notion_integrator.models import CompanyClassification
+        from .models import CompanyClassification
 
         return CompanyClassification
     if name == "CompanyRecord":
-        from src.notion_integrator.models import CompanyRecord
+        from .models import CompanyRecord
 
         return CompanyRecord
     if name == "FormatMetadata":
-        from src.notion_integrator.models import FormatMetadata
+        from .models import FormatMetadata
 
         return FormatMetadata
     if name == "LLMFormattedData":
-        from src.notion_integrator.models import LLMFormattedData
+        from .models import LLMFormattedData
 
         return LLMFormattedData
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -9,7 +9,7 @@ Configures structured logging for the Notion integration module with:
 - Error context capture
 
 Usage:
-    >>> from src.notion_integrator.logging_config import get_logger
+    >>> from notion_integrator.logging_config import get_logger
     >>> logger = get_logger(__name__)
     >>> logger.info("Schema discovery started", extra={"database_id": "abc123"})
 """
@@ -68,7 +68,7 @@ def configure_logging(
         )
 
     # Get root logger for notion_integrator module
-    logger = logging.getLogger("src.notion_integrator")
+    logger = logging.getLogger("notion_integrator")
     logger.setLevel(getattr(logging, log_level))
 
     # Remove existing handlers to avoid duplicates
@@ -306,7 +306,7 @@ def log_data_formatting(
 
 # Initialize module logger with default configuration
 # Users can call configure_logging() to customize
-_default_logger = logging.getLogger("src.notion_integrator")
+_default_logger = logging.getLogger("notion_integrator")
 if not _default_logger.handlers:
     # Only configure if not already configured
     configure_logging()

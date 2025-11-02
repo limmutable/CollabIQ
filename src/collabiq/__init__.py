@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Optional
@@ -14,6 +15,7 @@ from rich.table import Table
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.settings import get_settings
+from notion_integrator import NotionIntegrator
 
 app = typer.Typer(
     name="collabiq",
@@ -152,9 +154,6 @@ def notion_fetch(
     ),
 ) -> None:
     """Fetch and format data from Notion databases."""
-    import os
-    from src.notion_integrator import NotionIntegrator
-
     console.print("\n[bold cyan]Fetching Notion data...[/bold cyan]\n")
 
     try:
@@ -238,9 +237,6 @@ def notion_refresh(
     ),
 ) -> None:
     """Manually refresh cached data for a Notion database."""
-    import os
-    from src.notion_integrator import NotionIntegrator
-
     console.print("\n[bold cyan]Refreshing Notion cache...[/bold cyan]\n")
 
     try:
@@ -284,9 +280,6 @@ def notion_schema(
     ),
 ) -> None:
     """Display schema information for a Notion database."""
-    import os
-    from src.notion_integrator import NotionIntegrator
-
     console.print("\n[bold cyan]Fetching database schema...[/bold cyan]\n")
 
     try:
@@ -389,9 +382,6 @@ def notion_export(
     ),
 ) -> None:
     """Export formatted Notion data to a JSON file."""
-    import os
-    from src.notion_integrator import NotionIntegrator
-
     console.print("\n[bold cyan]Exporting Notion data...[/bold cyan]\n")
 
     try:
