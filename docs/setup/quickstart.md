@@ -209,9 +209,6 @@ Test the complete email extraction pipeline:
 
 ```bash
 # Fetch and extract entities from emails
-uv run collabiq fetch
-
-# Or use the old CLI (also available)
 uv run python src/cli.py fetch --max-results 10
 ```
 
