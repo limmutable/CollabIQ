@@ -56,7 +56,24 @@ def parse_date(date_str: str, reference_date: Optional[datetime] = None) -> Opti
         week_num = int(week_match.group(2))
         return _parse_korean_week(month, week_num, reference_date.year)
 
-    # Use dateparser for all other formats
+    # Handle Korean date formats with regex (dateparser doesn't support these)
+    # Format: "YYYY년 M월 D일" (e.g., "2025년 1월 15일")
+    korean_full_match = re.match(r"(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일", date_str)
+    if korean_full_match:
+        year = int(korean_full_match.group(1))
+        month = int(korean_full_match.group(2))
+        day = int(korean_full_match.group(3))
+        return datetime(year, month, day)
+
+    # Format: "M월 D일" (e.g., "10월 27일") - assume current year
+    korean_partial_match = re.match(r"(\d{1,2})월\s*(\d{1,2})일", date_str)
+    if korean_partial_match:
+        month = int(korean_partial_match.group(1))
+        day = int(korean_partial_match.group(2))
+        year = reference_date.year
+        return datetime(year, month, day)
+
+    # Use dateparser for all other formats (English dates, relative dates)
     parsed = dateparser.parse(
         date_str,
         settings={
