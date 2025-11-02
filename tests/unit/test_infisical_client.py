@@ -31,7 +31,7 @@ def mock_settings():
     settings.infisical_enabled = True
     settings.infisical_host = "https://app.infisical.com"
     settings.infisical_project_id = "test-project-123"
-    settings.infisical_environment = "dev"
+    settings.infisical_environment = "development"
     settings.infisical_client_id = "test-client-id"
     settings.infisical_client_secret = "test-client-secret"
     settings.infisical_cache_ttl = 60
@@ -76,14 +76,16 @@ class TestInfisicalClientInitialization:
             InfisicalClient(settings)
 
     def test_init_validates_environment_slug(self):
-        """Test initialization validates environment is one of: dev, staging, prod."""
+        """Test initialization validates environment is one of: development, production."""
         settings = Mock(spec=Settings)
         settings.infisical_enabled = True
         settings.infisical_project_id = "test-project"
         settings.infisical_environment = "invalid-env"
+        settings.infisical_client_id = "test-client-id"
+        settings.infisical_client_secret = "test-client-secret"
 
         with pytest.raises(
-            ValueError, match="environment must be one of: dev, staging, prod"
+            ValueError, match="Invalid environment slug"
         ):
             InfisicalClient(settings)
 
