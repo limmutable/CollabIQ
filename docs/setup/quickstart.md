@@ -9,8 +9,8 @@ Before starting, ensure you have:
 1. **Python 3.12 or higher** installed
 2. **UV package manager** ([install here](https://github.com/astral-sh/uv))
 3. **Gmail API credentials** (Phase 1a complete - email reception) - See [Gmail OAuth Setup Guide](gmail-oauth-setup.md)
-4. **Gemini API key** from [Google AI Studio](https://makersuite.google.com/app/apikey) (Phase 1b complete - entity extraction)
-5. **Notion API integration token and database IDs** (Phase 2a complete - Notion read operations)
+4. **Gemini API key** from [Google AI Studio](https://makersuite.google.com/app/apikey) (Phase 1b complete - entity extraction + Phase 2c classification)
+5. **Notion API integration token and database IDs** (Phase 2a complete - Notion read operations + Phase 2c schema fetching)
 6. **(Optional)** [Infisical](https://infisical.com) account for centralized secret management (recommended for teams) - See [Infisical Setup Guide](infisical-setup.md)
 
 ## Step 1: Clone and Setup
@@ -87,7 +87,8 @@ deactivate
 - ✅ **Phase 005 Complete**: Gmail OAuth2 setup with group alias support
 - ✅ **Phase 2a Complete**: Notion Read Operations (schema discovery, data fetching, LLM formatting)
 - ✅ **Phase 2b Complete**: LLM-based company matching with confidence scores
-- 🚧 **Phase 2c (Next)**: Classification & Summarization
+- ✅ **Phase 2c Complete**: Classification & Summarization (type, intensity, summary generation)
+- 🚧 **Phase 2d (Next)**: Notion Write Operations
 
 See [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md) for full implementation timeline.
 
@@ -280,6 +281,55 @@ uv run python tests/manual/test_e2e_phase2b.py --limit 3
 6. Compares Phase 1b vs Phase 2b results
 7. Saves results to `data/test_results/phase2b_real_emails_*.json`
 
+### Test Phase 2c (Classification & Summarization)
+
+Test the full classification workflow with type, intensity, and summary generation:
+
+```bash
+# Run Phase 2c classification demo
+uv run python tests/manual/test_phase2c_classification.py
+```
+
+**What happens**:
+1. Loads sample email (sample-001.txt from test fixtures)
+2. Fetches collaboration types dynamically from Notion "협업형태" property
+3. Extracts entities using Gemini API
+4. Classifies collaboration type deterministically based on company relationships:
+   - Portfolio + SSG Affiliate → [A]PortCoXSSG (95% confidence)
+   - Portfolio + Portfolio → [C]PortCoXPortCo (95% confidence)
+   - Portfolio + External → [B]Non-PortCoXSSG (90% confidence)
+   - Non-Portfolio → [D]Other (80% confidence)
+5. Classifies intensity using LLM Korean semantic analysis (이해/협력/투자/인수)
+6. Generates 3-5 sentence summary preserving all 5 key entities
+7. Displays confidence scores and manual review routing decision
+8. Shows JSON serialization of complete result
+
+**Example Output**:
+```json
+{
+  "person_in_charge": "안동훈",
+  "startup_name": "브레이크앤컴퍼니",
+  "partner_org": "신세계푸드",
+  "details": "PoC 킥오프",
+  "date": "2025-10-28T00:00:00",
+  "collaboration_type": "[A]PortCoXSSG",
+  "type_confidence": 0.95,
+  "collaboration_intensity": "협력",
+  "intensity_confidence": 0.92,
+  "intensity_reasoning": "PoC 킥오프 미팅과 파일럿 테스트 계획이 논의되어 협력 단계로 분류",
+  "collaboration_summary": "브레이크앤컴퍼니(안동훈 팀장)와 신세계푸드가 2025년 10월 28일 PoC 킥오프 미팅 진행 완료...",
+  "summary_word_count": 85,
+  "key_entities_preserved": {
+    "person_in_charge": true,
+    "startup_name": true,
+    "partner_org": true,
+    "details": true,
+    "date": true
+  },
+  "needs_manual_review": false
+}
+```
+
 ### Test Notion Integration (Phase 2a)
 
 Test Notion data fetching and formatting:
@@ -320,15 +370,21 @@ uv run collabiq notion export --output companies.json
 ✅ **Phase 005 Complete**: Gmail OAuth2 setup with group alias support
 ✅ **Phase 2a Complete**: Notion Read Operations (schema discovery, data fetching, LLM formatting)
 ✅ **Phase 2b Complete**: LLM-based company matching with confidence scores (100% accuracy)
-🎯 **MVP Complete**: Email ingestion + entity extraction + company matching + JSON output
+✅ **Phase 2c Complete**: Classification & Summarization
+  - Dynamic type classification (Portfolio+SSG → [A]PortCoXSSG)
+  - LLM-based intensity classification (이해/협력/투자/인수)
+  - Summary generation (3-5 sentences, preserves 5 key entities)
+  - Confidence scoring with 0.85 threshold for manual review routing
+  - **Tests**: 45/45 Phase 2c tests passing (100%), 213/217 total (98.2%)
+🎯 **MVP Complete**: Email ingestion + entity extraction + company matching + classification + summarization
 
 ### Next Implementation Phase
 
-**Phase 2c: Classification & Summarization**
+**Phase 2d: Notion Write Operations**
 
-This phase will add automated email classification and collaborative content summarization.
+This phase will add the ability to write extracted and classified collaboration data to Notion databases.
 
-See [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md) for Phase 2c details.
+See [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md) for Phase 2d details and full implementation timeline.
 
 ### Explore the System
 
@@ -487,14 +543,16 @@ After completing this quick start, you should:
 4. ✅ Have valid Notion API credentials configured
 5. ✅ Be able to fetch and extract entities from emails
 6. ✅ Be able to fetch and format Notion data for LLM consumption
-7. ✅ Understand the project structure
+7. ✅ Be able to classify collaboration types and intensity
+8. ✅ Be able to generate summaries preserving key entities
+9. ✅ Understand the project structure
 
 Now you're ready to:
-- **Use the MVP**: Fetch emails and extract entities with company matching
-- **Test real emails**: Run Phase 2b tests with actual collab@signite.co emails
-- **Fetch Notion Data**: Retrieve company data with LLM-ready formatting
-- **Explore Phase 2b**: Review company matching implementation
-- **Start Phase 2c**: Implement classification and summarization
+- **Use the Full Pipeline**: Fetch emails → extract entities → match companies → classify type/intensity → generate summaries
+- **Test Classification**: Run Phase 2c tests to see dynamic classification in action
+- **Review Confidence Scores**: Understand auto-acceptance vs manual review routing
+- **Explore Phase 2c**: Review classification and summarization implementation
+- **Start Phase 2d**: Implement Notion write operations to persist results
 - **Add more features**: Follow the implementation roadmap
 
 Welcome to CollabIQ! 🚀
