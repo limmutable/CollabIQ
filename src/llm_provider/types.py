@@ -79,8 +79,13 @@ class ExtractedEntities(BaseModel):
         confidence: Confidence scores (0.0-1.0) for each extracted field
         email_id: Unique email identifier
         extracted_at: UTC timestamp when extraction occurred
+        matched_company_id: Notion page ID for matched startup (Phase 2b)
+        matched_partner_id: Notion page ID for matched partner (Phase 2b)
+        startup_match_confidence: Confidence score for startup match (Phase 2b)
+        partner_match_confidence: Confidence score for partner match (Phase 2b)
     """
 
+    # Phase 1b fields (existing)
     person_in_charge: Optional[str] = Field(
         None,
         max_length=100,
@@ -119,11 +124,56 @@ class ExtractedEntities(BaseModel):
         description="UTC timestamp when extraction occurred",
     )
 
+    # Phase 2b fields (new - optional, backward compatible)
+    matched_company_id: Optional[str] = Field(
+        None,
+        min_length=32,
+        max_length=36,
+        description="Notion page ID for matched startup (32 or 36 chars)",
+    )
+    matched_partner_id: Optional[str] = Field(
+        None,
+        min_length=32,
+        max_length=36,
+        description="Notion page ID for matched partner organization (32 or 36 chars)",
+    )
+    startup_match_confidence: Optional[float] = Field(
+        None,
+        ge=0.0,
+        le=1.0,
+        description="Confidence score (0.0-1.0) for startup company match",
+    )
+    partner_match_confidence: Optional[float] = Field(
+        None,
+        ge=0.0,
+        le=1.0,
+        description="Confidence score (0.0-1.0) for partner organization match",
+    )
+
     @field_validator("confidence")
     @classmethod
     def validate_confidence_scores(cls, v: ConfidenceScores) -> ConfidenceScores:
         """Ensure all confidence scores are 0.0-1.0."""
         # Validation handled by ConfidenceScores model
+        return v
+
+    @field_validator("startup_match_confidence", "partner_match_confidence")
+    @classmethod
+    def validate_match_confidence_range(cls, v: Optional[float]) -> Optional[float]:
+        """Ensure match confidence scores are 0.0-1.0 if provided."""
+        if v is not None and not (0.0 <= v <= 1.0):
+            raise ValueError(f"Match confidence must be between 0.0 and 1.0, got {v}")
+        return v
+
+    @field_validator("matched_company_id", "matched_partner_id")
+    @classmethod
+    def validate_notion_page_id_format(cls, v: Optional[str]) -> Optional[str]:
+        """Ensure Notion page IDs are 32 or 36 characters (UUID format)."""
+        if v is not None:
+            if len(v) not in (32, 36):
+                raise ValueError(
+                    f"Notion page ID must be 32 or 36 characters (UUID format), got {len(v)} characters"
+                )
         return v
 
     class Config:
@@ -145,6 +195,10 @@ class ExtractedEntities(BaseModel):
                 },
                 "email_id": "msg_abc123",
                 "extracted_at": "2025-11-01T10:30:00Z",
+                "matched_company_id": "abc123def456ghi789jkl012mno345pq",
+                "matched_partner_id": "stu901vwx234yz056abc123def456ghi",
+                "startup_match_confidence": 0.95,
+                "partner_match_confidence": 0.92,
             }
         }
 

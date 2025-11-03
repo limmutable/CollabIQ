@@ -89,14 +89,22 @@ class GeminiAdapter(LLMProvider):
 
         logger.info(f"Initialized GeminiAdapter with model={model}, timeout={timeout}s")
 
-    def extract_entities(self, email_text: str) -> ExtractedEntities:
-        """Extract 5 key entities from email text with confidence scores.
+    def extract_entities(
+        self, email_text: str, company_context: Optional[str] = None
+    ) -> ExtractedEntities:
+        """Extract 5 key entities from email text with optional company matching.
 
         Args:
             email_text: Cleaned email body (Korean/English/mixed)
+            company_context: Optional markdown-formatted company list from
+                           NotionIntegrator.format_for_llm(). If provided,
+                           enables company matching and populates matched_*
+                           fields in return value. If None, behaves as Phase 1b
+                           (extraction only, matched fields = None).
 
         Returns:
             ExtractedEntities: Pydantic model with 5 entities + confidence scores
+                             + matched fields (if company_context provided)
 
         Raises:
             LLMAPIError: Base exception for all LLM API errors
@@ -115,29 +123,83 @@ class GeminiAdapter(LLMProvider):
             )
 
         # Call Gemini API with retry
-        response_data = self._call_with_retry(email_text)
+        response_data = self._call_with_retry(email_text, company_context)
 
         # Parse response to ExtractedEntities
-        entities = self._parse_response(response_data, email_text)
+        entities = self._parse_response(response_data, email_text, company_context)
 
         return entities
 
-    def _build_prompt(self, email_text: str) -> str:
-        """Build prompt with system instructions + few-shot examples + email.
+    def _build_prompt(self, email_text: str, company_context: Optional[str] = None) -> str:
+        """Build prompt with system instructions + few-shot examples + company context + email.
 
         Args:
             email_text: Email text to extract entities from
+            company_context: Optional markdown-formatted company list for matching
 
         Returns:
-            str: Complete prompt with examples and email text
+            str: Complete prompt with examples, company context (if provided), and email text
         """
-        return f"{self.prompt_template}\n\n{email_text}"
+        # Start with base prompt template
+        prompt = self.prompt_template
 
-    def _call_gemini_api(self, email_text: str) -> Dict[str, Any]:
+        # Add company context section if provided (Phase 2b)
+        if company_context:
+            prompt += "\n\n# Company Database for Matching\n\n"
+            prompt += company_context
+            prompt += "\n\n"
+            prompt += "# Company Matching Instructions\n\n"
+            prompt += "For startup_name and partner_org extracted above:\n"
+            prompt += "- Match each to entries in the company database above\n"
+            prompt += "- Return matched_company_id and matched_partner_id (Notion page IDs)\n"
+            prompt += "- Return startup_match_confidence and partner_match_confidence (0.0-1.0)\n\n"
+            prompt += "Confidence Scoring Rules (calibrate carefully):\n\n"
+
+            prompt += "**Exact Match (0.95-1.00)**:\n"
+            prompt += "- Character-for-character identical match\n"
+            prompt += "- Example: '브레이크앤컴퍼니' in email exactly matches '브레이크앤컴퍼니' in database\n\n"
+
+            prompt += "**Normalized Match (0.90-0.94)**:\n"
+            prompt += "- Exact match after normalization (spacing, punctuation, capitalization)\n"
+            prompt += "- Example: 'Break&Company' matches 'Break & Company'\n"
+            prompt += "- Example: '신세계 인터내셔널' matches '신세계인터내셔널'\n\n"
+
+            prompt += "**Semantic Match (0.75-0.89)**:\n"
+            prompt += "- Clear abbreviation or well-known alternate name\n"
+            prompt += "- Example: 'SSG푸드' matches '신세계푸드' (common abbreviation)\n"
+            prompt += "- Example: 'Shinsegae' matches '신세계' (English/Korean equivalent)\n"
+            prompt += "- Example: '신세계' matches '신세계인터내셔널' (parent/subsidiary relationship)\n\n"
+
+            prompt += "**Fuzzy Match (0.70-0.74)**:\n"
+            prompt += "- Minor typo (1-2 character difference) or partial name\n"
+            prompt += "- Example: '브레이크언컴퍼니' matches '브레이크앤컴퍼니' (typo: 언→앤)\n"
+            prompt += "- Example: '스마트푸드' matches '스마트푸드네트워크' (partial name)\n"
+            prompt += "- Requires contextual inference to resolve ambiguity\n\n"
+
+            prompt += "**No Match (<0.70)**:\n"
+            prompt += "- Company not found in database\n"
+            prompt += "- Too ambiguous or multiple possible matches\n"
+            prompt += "- Significant spelling difference (>2 characters)\n"
+            prompt += "- IMPORTANT: Return null for matched_company_id/matched_partner_id if confidence <0.70\n\n"
+
+            prompt += "**Special Cases**:\n"
+            prompt += "- If you correct a typo in the extracted name, use Fuzzy Match confidence (0.70-0.74)\n"
+            prompt += "- If multiple companies partially match, choose the most contextually appropriate\n"
+            prompt += "- When in doubt, prefer lower confidence scores to indicate uncertainty\n"
+
+        # Add email text
+        prompt += f"\n\n# Now extract from the following email:\n\n{email_text}"
+
+        return prompt
+
+    def _call_gemini_api(
+        self, email_text: str, company_context: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Call Gemini API with structured output.
 
         Args:
             email_text: Email text to extract entities from
+            company_context: Optional company list for matching
 
         Returns:
             dict: Parsed JSON response from Gemini
@@ -145,7 +207,7 @@ class GeminiAdapter(LLMProvider):
         Raises:
             Exception: Any API error (will be handled by _handle_api_error)
         """
-        prompt = self._build_prompt(email_text)
+        prompt = self._build_prompt(email_text, company_context)
 
         # Define response schema for structured output
         response_schema = {
@@ -201,6 +263,25 @@ class GeminiAdapter(LLMProvider):
             ],
         }
 
+        # Add matching fields to schema if company_context provided (Phase 2b)
+        if company_context:
+            response_schema["properties"]["matched_company_id"] = {
+                "type": "string",
+                "nullable": True,
+            }
+            response_schema["properties"]["matched_partner_id"] = {
+                "type": "string",
+                "nullable": True,
+            }
+            response_schema["properties"]["startup_match_confidence"] = {
+                "type": "number",
+                "nullable": True,
+            }
+            response_schema["properties"]["partner_match_confidence"] = {
+                "type": "number",
+                "nullable": True,
+            }
+
         # Call Gemini API
         response = self.client.generate_content(
             prompt,
@@ -217,12 +298,15 @@ class GeminiAdapter(LLMProvider):
         except json.JSONDecodeError as e:
             raise LLMValidationError(f"Failed to parse JSON response: {e}") from e
 
-    def _parse_response(self, response_data: Dict[str, Any], email_text: str) -> ExtractedEntities:
+    def _parse_response(
+        self, response_data: Dict[str, Any], email_text: str, company_context: Optional[str] = None
+    ) -> ExtractedEntities:
         """Parse Gemini API response to ExtractedEntities.
 
         Args:
             response_data: Parsed JSON response from Gemini
             email_text: Original email text (used for generating email_id)
+            company_context: Optional company context (affects matching fields)
 
         Returns:
             ExtractedEntities: Pydantic model with extracted entities
@@ -231,7 +315,7 @@ class GeminiAdapter(LLMProvider):
             LLMValidationError: If response format is invalid
         """
         try:
-            # Extract values and confidence scores
+            # Extract values and confidence scores (Phase 1b fields)
             person_data = response_data.get("person_in_charge", {})
             startup_data = response_data.get("startup_name", {})
             partner_data = response_data.get("partner_org", {})
@@ -244,6 +328,34 @@ class GeminiAdapter(LLMProvider):
 
             # Generate email_id from email text hash
             email_id = f"email_{hash(email_text) % 1000000:06d}"
+
+            # Extract matching fields (Phase 2b) - only if company_context was provided
+            matched_company_id = None
+            matched_partner_id = None
+            startup_match_confidence = None
+            partner_match_confidence = None
+
+            if company_context:
+                # Get matching data from response
+                matched_company_id = response_data.get("matched_company_id")
+                matched_partner_id = response_data.get("matched_partner_id")
+                startup_match_confidence = response_data.get("startup_match_confidence")
+                partner_match_confidence = response_data.get("partner_match_confidence")
+
+                # Apply confidence threshold (T012): <0.70 = null ID
+                if startup_match_confidence is not None and startup_match_confidence < 0.70:
+                    matched_company_id = None
+                    logger.info(
+                        f"Low startup match confidence ({startup_match_confidence:.2f}), "
+                        "setting matched_company_id to null"
+                    )
+
+                if partner_match_confidence is not None and partner_match_confidence < 0.70:
+                    matched_partner_id = None
+                    logger.info(
+                        f"Low partner match confidence ({partner_match_confidence:.2f}), "
+                        "setting matched_partner_id to null"
+                    )
 
             # Build ExtractedEntities
             entities = ExtractedEntities(
@@ -260,6 +372,11 @@ class GeminiAdapter(LLMProvider):
                     date=date_data.get("confidence", 0.0),
                 ),
                 email_id=email_id,
+                # Phase 2b matching fields
+                matched_company_id=matched_company_id,
+                matched_partner_id=matched_partner_id,
+                startup_match_confidence=startup_match_confidence,
+                partner_match_confidence=partner_match_confidence,
             )
 
             return entities
@@ -267,11 +384,14 @@ class GeminiAdapter(LLMProvider):
         except (KeyError, TypeError, ValueError) as e:
             raise LLMValidationError(f"Invalid response format: {e}") from e
 
-    def _call_with_retry(self, email_text: str) -> Dict[str, Any]:
+    def _call_with_retry(
+        self, email_text: str, company_context: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Call Gemini API with exponential backoff retry.
 
         Args:
             email_text: Email text to extract entities from
+            company_context: Optional company list for matching
 
         Returns:
             dict: Parsed JSON response from Gemini
@@ -281,7 +401,7 @@ class GeminiAdapter(LLMProvider):
         """
         for attempt in range(self.max_retries):
             try:
-                return self._call_gemini_api(email_text)
+                return self._call_gemini_api(email_text, company_context)
 
             except Exception as e:
                 # Check if this is the last attempt

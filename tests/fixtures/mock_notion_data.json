@@ -1,0 +1,88 @@
+{
+  "database_name": "Companies",
+  "companies": [
+    {
+      "id": "abc123def456ghi789jkl012mno345pq",
+      "name": "브레이크앤컴퍼니",
+      "english_name": "Break & Company",
+      "classification": "Portfolio",
+      "description": "AI 재고 최적화 솔루션"
+    },
+    {
+      "id": "def456ghi789jkl012mno345pqr678st",
+      "name": "웨이크",
+      "english_name": "Wake",
+      "classification": "Portfolio",
+      "description": "Z세대 뷰티 플랫폼"
+    },
+    {
+      "id": "ghi789jkl012mno345pqr678stu901vw",
+      "name": "스위트스팟",
+      "english_name": "Sweet Spot",
+      "classification": "Portfolio",
+      "description": "골프 데이터 분석"
+    },
+    {
+      "id": "jkl012mno345pqr678stu901vwx234yz",
+      "name": "블룸에이아이",
+      "english_name": "Bloom AI",
+      "classification": "Portfolio",
+      "description": "생성형 AI 컨텐츠 플랫폼"
+    },
+    {
+      "id": "mno345pqr678stu901vwx234yz056abc",
+      "name": "파지티브호텔",
+      "english_name": "Positive Hotel",
+      "classification": "Portfolio",
+      "description": "호텔 운영 최적화"
+    },
+    {
+      "id": "pqr678stu901vwx234yz056abc123def",
+      "name": "스마트푸드네트워크",
+      "english_name": "Smart Food Network",
+      "classification": "Portfolio",
+      "description": "식자재 유통 플랫폼"
+    },
+    {
+      "id": "789jkl012mno345pqr678stu901vwx23",
+      "name": "플록스",
+      "english_name": "Phlox",
+      "classification": "Portfolio",
+      "description": "위시버킷 앱 개발 및 서비스"
+    },
+    {
+      "id": "stu901vwx234yz056abc123def456ghi",
+      "name": "신세계",
+      "english_name": "Shinsegae",
+      "classification": "SSG Affiliate",
+      "description": "백화점 및 유통"
+    },
+    {
+      "id": "vwx234yz056abc123def456ghi789jkl",
+      "name": "신세계인터내셔널",
+      "english_name": "Shinsegae International",
+      "classification": "SSG Affiliate",
+      "description": "패션 및 라이프스타일"
+    },
+    {
+      "id": "yz056abc123def456ghi789jkl012mno",
+      "name": "신세계푸드",
+      "english_name": "Shinsegae Food",
+      "classification": "SSG Affiliate",
+      "description": "식자재 유통"
+    },
+    {
+      "id": "056abc123def456ghi789jkl012mno345",
+      "name": "신세계라이브쇼핑",
+      "english_name": "Shinsegae Live Shopping",
+      "classification": "SSG Affiliate",
+      "description": "라이브 커머스"
+    }
+  ],
+  "metadata": {
+    "total_companies": 11,
+    "portfolio_count": 7,
+    "ssg_affiliate_count": 4,
+    "created_at": "2025-11-03T00:00:00Z"
+  }
+}
