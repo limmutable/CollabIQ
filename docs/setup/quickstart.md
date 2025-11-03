@@ -50,12 +50,44 @@ ls .venv/
 uv run collabiq --help
 ```
 
+### Running Commands: Two Options
+
+**Option 1: Use `uv run` (Recommended)**
+```bash
+# UV automatically activates the virtual environment
+uv run python scripts/authenticate_gmail.py
+uv run collabiq --help
+uv run pytest
+```
+
+**Option 2: Activate Virtual Environment Manually**
+```bash
+# Activate the virtual environment
+source .venv/bin/activate  # macOS/Linux
+# OR
+.venv\Scripts\activate     # Windows
+
+# Now you can run commands directly
+python scripts/authenticate_gmail.py
+collabiq --help
+pytest
+
+# Deactivate when done
+deactivate
+```
+
+**💡 Tip**: `uv run` is recommended because it:
+- Automatically uses the correct Python version
+- No need to manually activate/deactivate
+- Works consistently across all platforms
+
 **Current Status**:
 - ✅ **Phase 1a Complete**: Email reception with Gmail API OAuth2
-- ✅ **Phase 1b Complete**: Gemini entity extraction
+- ✅ **Phase 1b Complete**: Gemini entity extraction (100% accuracy on test dataset)
 - ✅ **Phase 005 Complete**: Gmail OAuth2 setup with group alias support
 - ✅ **Phase 2a Complete**: Notion Read Operations (schema discovery, data fetching, LLM formatting)
-- 🚧 **Phase 2b**: LLM-based company matching (next phase)
+- ✅ **Phase 2b Complete**: LLM-based company matching with confidence scores
+- 🚧 **Phase 2c (Next)**: Classification & Summarization
 
 See [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md) for full implementation timeline.
 
@@ -119,23 +151,22 @@ GMAIL_CREDENTIALS_PATH=credentials.json
 GMAIL_TOKEN_PATH=token.json
 GMAIL_BATCH_SIZE=50
 
-# Gemini API Configuration (✅ Implemented - Phase 1b)
+# Gemini API Configuration (✅ Implemented - Phase 1b + 2b)
 GEMINI_API_KEY=AIzaSy...your_actual_key_here
-GEMINI_MODEL=gemini-2.0-flash-exp
+GEMINI_MODEL=gemini-2.5-flash  # Updated model for Phase 2b
 GEMINI_TIMEOUT_SECONDS=10
 GEMINI_MAX_RETRIES=3
 
 # Notion API Configuration (✅ Implemented - Phase 2a)
-NOTION_API_KEY=secret_...your_actual_token_here
+NOTION_API_TOKEN=secret_...your_actual_token_here
 NOTION_DATABASE_ID_COMPANIES=32_character_database_id_here
 NOTION_DATABASE_ID_COLLABIQ=32_character_database_id_here
 
 # Logging
 LOG_LEVEL=INFO
 
-# Future: Processing Configuration (Phase 2b+ - Not Yet Implemented)
-# FUZZY_MATCH_THRESHOLD=0.85
-# CONFIDENCE_THRESHOLD=0.85
+# Processing Configuration (✅ Implemented - Phase 2b)
+CONFIDENCE_THRESHOLD=0.70  # Min confidence for company matching
 ```
 
 ## Step 4: Verify Configuration
@@ -165,8 +196,11 @@ cat docs/setup/gmail-oauth-setup.md
 **Quick Steps**:
 1. Create OAuth2 credentials in Google Cloud Console
 2. Download `credentials.json` to project root
-3. Run authentication flow: `uv run collabiq fetch`
-4. Verify: `token.json` should be created after successful authentication
+3. Run authentication flow: `uv run python scripts/authenticate_gmail.py`
+4. Authenticate as a **group member** (e.g., jeffreylim@signite.co), NOT as collab@signite.co
+5. Verify: `token.json` should be created after successful authentication
+
+**⚠️ IMPORTANT**: collab@signite.co is a Google Group, not a mailbox. You must authenticate as a group member.
 
 **Full Guide**: [docs/setup/gmail-oauth-setup.md](gmail-oauth-setup.md)
 
@@ -203,26 +237,48 @@ open htmlcov/index.html
 
 ## Step 8: Test the System
 
-### Test Email Extraction (Phase 1a + 1b)
+### Test Gmail Retrieval
 
-Test the complete email extraction pipeline:
+Test Gmail API connection and email retrieval:
 
 ```bash
-# Fetch and extract entities from emails
-uv run python src/cli.py fetch --max-results 10
+# Test Gmail retrieval from collab@signite.co
+uv run python tests/manual/test_gmail_retrieval.py --max-results 5
+```
+
+### Test Phase 1b (Entity Extraction)
+
+Test entity extraction without company matching:
+
+```bash
+# Run end-to-end Phase 1b test
+uv run python tests/manual/test_e2e_phase1b.py --max-emails 2
 ```
 
 **What happens**:
 1. Connects to Gmail API via OAuth2
-2. Fetches emails from `collab@signite.co`
+2. Fetches emails from `collab@signite.co` using `to:collab@signite.co` filter
 3. Cleans email content (removes signatures, quotes)
 4. Extracts entities using Gemini API
-5. Saves results to `data/extractions/*.json`
+5. Displays results with extracted entities (담당자, 스타트업명, 협업기관, 날짜)
 
-**Output Location**:
-- Raw emails: `data/raw/YYYY/MM/*.json`
-- Cleaned emails: `data/cleaned/YYYY/MM/*.json`
-- Extracted entities: `data/extractions/*.json`
+### Test Phase 2b (Company Matching)
+
+Test entity extraction WITH company matching:
+
+```bash
+# Run end-to-end Phase 2b test with real emails
+uv run python tests/manual/test_e2e_phase2b.py --limit 3
+```
+
+**What happens**:
+1. Fetches recent emails from collab@signite.co
+2. Fetches company data from Notion (portfolio + SSG affiliates)
+3. Cleans and normalizes email content
+4. Extracts entities WITH company matching using Gemini
+5. Shows matched company IDs with confidence scores
+6. Compares Phase 1b vs Phase 2b results
+7. Saves results to `data/test_results/phase2b_real_emails_*.json`
 
 ### Test Notion Integration (Phase 2a)
 
@@ -260,22 +316,19 @@ uv run collabiq notion export --output companies.json
 ### Current Status (Completed Phases)
 
 ✅ **Phase 1a Complete**: Email reception with Gmail API OAuth2
-✅ **Phase 1b Complete**: Gemini entity extraction
+✅ **Phase 1b Complete**: Gemini entity extraction (100% accuracy)
 ✅ **Phase 005 Complete**: Gmail OAuth2 setup with group alias support
 ✅ **Phase 2a Complete**: Notion Read Operations (schema discovery, data fetching, LLM formatting)
-🎯 **MVP Complete**: Email ingestion + entity extraction + JSON output
+✅ **Phase 2b Complete**: LLM-based company matching with confidence scores (100% accuracy)
+🎯 **MVP Complete**: Email ingestion + entity extraction + company matching + JSON output
 
 ### Next Implementation Phase
 
-**Phase 2b: LLM-Based Company Matching**
+**Phase 2c: Classification & Summarization**
 
-This phase will add intelligent company matching using Gemini with Notion company data.
+This phase will add automated email classification and collaborative content summarization.
 
-```bash
-# When ready to start Phase 2b
-git checkout -b 007-llm-matching
-/speckit.specify "Implement LLM-based company matching with confidence scores"
-```
+See [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md) for Phase 2c details.
 
 ### Explore the System
 
@@ -437,10 +490,11 @@ After completing this quick start, you should:
 7. ✅ Understand the project structure
 
 Now you're ready to:
-- **Use the MVP**: Fetch emails and extract entities to JSON
+- **Use the MVP**: Fetch emails and extract entities with company matching
+- **Test real emails**: Run Phase 2b tests with actual collab@signite.co emails
 - **Fetch Notion Data**: Retrieve company data with LLM-ready formatting
-- **Start Phase 2b**: Implement LLM-based company matching
-- **Explore the codebase**: Review existing implementations
+- **Explore Phase 2b**: Review company matching implementation
+- **Start Phase 2c**: Implement classification and summarization
 - **Add more features**: Follow the implementation roadmap
 
 Welcome to CollabIQ! 🚀

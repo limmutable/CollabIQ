@@ -43,7 +43,7 @@ Email-based collaboration tracking system that automatically extracts collaborat
 ## Overview
 
 CollabIQ automates the tedious process of tracking collaboration activities by:
-1. **Receiving** emails from `portfolioupdates@signite.co` via Gmail API (✅ Phase 1a + 005)
+1. **Receiving** emails from `collab@signite.co` via Gmail API (✅ Phase 1a + 005)
 2. **Extracting** key information using Gemini API (✅ Phase 1b):
    - 담당자 (Person in charge)
    - 스타트업명 (Startup name)
@@ -54,9 +54,13 @@ CollabIQ automates the tedious process of tracking collaboration activities by:
    - Schema discovery with caching
    - Pagination and relationship resolution
    - LLM-ready formatting
-4. **Matching** companies against existing Notion databases using LLM (✅ Phase 2b)
-5. **Creating** entries in Notion's "CollabIQ" database (🚧 Phase 2d)
-6. **Queuing** ambiguous cases for manual verification (🚧 Phase 3a-3b)
+4. **Matching** companies against existing Notion databases using LLM (✅ Phase 2b):
+   - Company matching with confidence scores
+   - Handles abbreviations, typos, semantic matches
+   - Threshold-based filtering (≥0.70 confidence)
+5. **Classifying** and summarizing collaboration content (🚧 Phase 2c)
+6. **Creating** entries in Notion's "CollabIQ" database (🚧 Phase 2d)
+7. **Queuing** ambiguous cases for manual verification (🚧 Phase 3a-3b)
 
 ## System Architecture
 
@@ -143,7 +147,8 @@ INFISICAL_ENABLED=false
 
 # Required API Keys
 GEMINI_API_KEY=your_gemini_api_key_here
-NOTION_API_KEY=your_notion_integration_token_here
+GEMINI_MODEL=gemini-2.5-flash
+NOTION_API_TOKEN=your_notion_integration_token_here
 NOTION_DATABASE_ID_COMPANIES=your_companies_database_id_here
 NOTION_DATABASE_ID_COLLABIQ=your_collabiq_database_id_here
 
@@ -151,9 +156,8 @@ NOTION_DATABASE_ID_COLLABIQ=your_collabiq_database_id_here
 GMAIL_CREDENTIALS_PATH=credentials.json
 GMAIL_TOKEN_PATH=token.json
 
-# Processing (future phases)
-FUZZY_MATCH_THRESHOLD=0.85
-CONFIDENCE_THRESHOLD=0.85
+# Processing (Phase 2b complete)
+CONFIDENCE_THRESHOLD=0.70  # Min confidence for company matching
 ```
 
 See [docs/setup/quickstart.md](docs/setup/quickstart.md) for detailed setup instructions.
@@ -172,15 +176,22 @@ To retrieve emails from Gmail, you need to configure OAuth2 credentials:
    uv run python scripts/authenticate_gmail.py
    ```
    - A browser window will open for you to sign in
+   - **IMPORTANT**: Authenticate as a **group member** (e.g., jeffreylim@signite.co), NOT as collab@signite.co
    - Grant read-only access to your Gmail
    - Token is automatically saved and refreshed
 
-3. **Start retrieving emails**:
+3. **Test Gmail retrieval**:
    ```bash
-   uv run python src/cli/extract_entities.py
+   uv run python tests/manual/test_gmail_retrieval.py --max-results 5
    ```
 
-**For Group Aliases** (e.g., collab@signite.co):
+4. **Test Phase 2b (with company matching)**:
+   ```bash
+   uv run python tests/manual/test_e2e_phase2b.py --limit 3
+   ```
+
+**⚠️ CRITICAL: collab@signite.co is a Google Group**
+- You CANNOT authenticate as collab@signite.co directly
 - Authenticate with any Google Workspace account that is a **member** of the group
 - The system automatically filters emails using `to:collab@signite.co`
 - See [docs/setup/gmail-oauth-setup.md](docs/setup/gmail-oauth-setup.md) for detailed instructions
@@ -276,8 +287,11 @@ CollabIQ/
 │   └── reporting/             # Activity reports (future)
 ├── tests/
 │   ├── unit/                  # Unit tests
-│   ├── integration/           # Integration tests
+│   ├── integration/           # Integration tests (pytest-runnable)
 │   ├── contract/              # Contract tests for LLMProvider
+│   ├── e2e/                   # Automated end-to-end tests (mocked)
+│   ├── manual/                # Manual tests (real APIs, not automated)
+│   ├── validation/            # Validation scripts (ground truth)
 │   └── fixtures/              # Test data and ground truth
 ├── docs/
 │   ├── setup/                 # Setup guides
