@@ -4,7 +4,7 @@ Email-based collaboration tracking system that automatically extracts collaborat
 
 ## Project Status
 
-**Current Phase**: Phase 2b Complete ✅ (Branch 007-llm-matching)
+**Current Phase**: Phase 2c Complete ✅ (Branch 008-classification-summarization)
 
 ### Completed Phases
 - ✅ **Phase 0**: Foundation Work (001-feasibility-architecture)
@@ -37,8 +37,15 @@ Email-based collaboration tracking system that automatically extracts collaborat
   - **Accuracy**: 100% on test dataset (12/12 tests passing)
   - Handles abbreviations, typos, semantic matches, and no-match scenarios
   - See [VALIDATION_RESULTS.md](specs/007-llm-matching/VALIDATION_RESULTS.md)
+- ✅ **Phase 2c**: Classification & Summarization (008-classification-summarization)
+  - Dynamic type classification (Portfolio+SSG → [A]PortCoXSSG)
+  - LLM-based intensity classification (이해/협력/투자/인수)
+  - Summary generation (3-5 sentences, preserves 5 key entities)
+  - Confidence scoring with 0.85 threshold for manual review routing
+  - **Tests**: 45/45 Phase 2c tests passing (100%), 213/217 total (98.2%)
+  - See [COMPLETION_REPORT.md](specs/008-classification-summarization/COMPLETION_REPORT.md)
 
-**Next Phase**: Phase 2c - Classification & Summarization (008-classification-summarization)
+**Next Phase**: Phase 2d - Notion Write Operations (009-notion-write)
 
 ## Overview
 
@@ -58,7 +65,11 @@ CollabIQ automates the tedious process of tracking collaboration activities by:
    - Company matching with confidence scores
    - Handles abbreviations, typos, semantic matches
    - Threshold-based filtering (≥0.70 confidence)
-5. **Classifying** and summarizing collaboration content (🚧 Phase 2c)
+5. **Classifying** and summarizing collaboration content (✅ Phase 2c):
+   - Dynamic type classification from Notion schema
+   - LLM-based intensity analysis (Korean semantic understanding)
+   - Summary generation preserving key entities
+   - Confidence-based manual review routing
 6. **Creating** entries in Notion's "CollabIQ" database (🚧 Phase 2d)
 7. **Queuing** ambiguous cases for manual verification (🚧 Phase 3a-3b)
 

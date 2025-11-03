@@ -9,6 +9,8 @@ Auto-generated from all feature plans. Last updated: 2025-10-30
 - Python 3.12 (established in project) + `notion-client` (official Notion Python SDK), `pydantic` (data validation), `tenacity` (retry logic with exponential backoff) (006-notion-read)
 - File-based JSON cache in `data/notion_cache/` directory (schema cache + data cache with separate TTLs) (006-notion-read)
 - Python 3.12+ (established in project, using UV package manager) (007-llm-matching)
+- Python 3.12 (established in project, using UV package manager) (008-classification-summarization)
+- File-based JSON output (`data/extractions/{email_id}.json`) - no schema changes (008-classification-summarization)
 
 - Python 3.12 (established in project) + Git (for file operations and history preservation), markdown (for documentation) (002-structure-standards)
 - Python 3.12 (002-email-reception)
@@ -29,9 +31,9 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Python 3.12 (established in project): Follow standard conventions
 
 ## Recent Changes
+- 008-classification-summarization: Added Python 3.12 (established in project, using UV package manager)
 - 007-llm-matching: Added Python 3.12+ (established in project, using UV package manager)
 - 006-notion-read: Added Python 3.12 (established in project) + `notion-client` (official Notion Python SDK), `pydantic` (data validation), `tenacity` (retry logic with exponential backoff)
-- 005-gmail-setup: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 
 
 <!-- MANUAL ADDITIONS START -->

@@ -77,3 +77,4 @@ specs/001-feasibility-architecture/samples/emails/*.txt
 
 # Email Reception Feature - Raw and cleaned email data
 data/
+token.*.json
