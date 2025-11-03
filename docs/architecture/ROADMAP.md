@@ -13,7 +13,7 @@ This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 
 
 **Total Effort**: 32-45 days across 13 phases (including Gmail OAuth2 setup)
 **MVP Target**: Phases 1a+1b (6-9 days) deliver extraction → JSON output for manual review ✅ **COMPLETE**
-**Current Progress**: 4/13 phases complete (Phases 1a, 1b, 005, 2a)
+**Current Progress**: 5/13 phases complete (Phases 1a, 1b, 005, 2a, 2b)
 
 ---
 
@@ -152,20 +152,30 @@ This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 
 
 ---
 
-**Phase 2b - LLM-Based Company Matching** (Branch: `007-llm-matching`)
-**Timeline**: 2-3 days
+**Phase 2b - LLM-Based Company Matching** (Branch: `007-llm-matching`) ✅ **COMPLETE**
+**Timeline**: 2-3 days (Actual: Completed 2025-11-03)
 **Complexity**: Low
+**Status**: Merged to main, specs directory populated
 
-**Deliverables**:
-- Update GeminiAdapter to include company lists in prompt
-- Return matched company IDs with confidence scores
-- Handle no-match scenarios (return null + low confidence)
+**Deliverables**: ✅
+- Extended GeminiAdapter with optional company_context parameter
+- Company matching with confidence scores (matched_company_id, matched_partner_id)
+- Enhanced prompt with detailed confidence scoring rules
+- Backward compatible with Phase 1b (all new fields optional)
+- Handle no-match scenarios (return null + low confidence <0.70)
 
-**Tests**: Accuracy tests for matching (abbreviations, typos, semantic matches)
+**Tests**: ✅ 12/12 tests passing (100% pass rate)
+- 4 contract tests for API compliance
+- 8 integration tests covering US1-US4
+  * US1: Primary startup matching (exact Korean names)
+  * US2: Beneficiary matching (SSG affiliates + Portfolio×Portfolio)
+  * US3: Name variations (abbreviations, typos)
+  * US4: No-match scenarios (unknown companies, ambiguity)
 
-**Success Criteria**:
-- ≥85% correct company matches on test dataset
-- Confidence scores accurately reflect match quality
+**Success Criteria**: ✅
+- ≥85% correct company matches on test dataset (✅ Achieved 100% accuracy)
+- Confidence scores accurately reflect match quality (✅ Excellent calibration)
+- Confidence ranges validated: Exact (0.95-1.00), Normalized (0.90-0.94), Semantic (0.75-0.89), Fuzzy (0.70-0.74), No-match (<0.70)
 
 ---
 
@@ -317,7 +327,7 @@ This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 
     ↓
 ✅ Phase 2a (006-notion-read) - COMPLETE
     ↓
-Phase 2b (007-llm-matching) ← depends on 2a
+✅ Phase 2b (007-llm-matching) - COMPLETE
     ↓
 Phase 2c (008-classification-summarization) ← depends on 2b
     ↓
@@ -434,20 +444,23 @@ After each milestone, **STOP and VALIDATE**:
 4. ✅ **Phase 1b Complete** (branch 004-gemini-extraction merged to main) → **🎯 MVP COMPLETE**
 5. ✅ **Phase 005 Complete** (branch 005-gmail-setup merged to main)
 6. ✅ **Phase 2a Complete** (branch 006-notion-read merged to main)
-7. → **Ready for Phase 2b** (007-llm-matching) - **NEXT**
+7. ✅ **Phase 2b Complete** (branch 007-llm-matching merged to main)
+8. → **Ready for Phase 2c** (008-classification-summarization) - **NEXT**
 
-**Current Status**: MVP complete (Phases 1a + 1b). Gmail OAuth2 setup complete (Phase 005). Notion Read Operations complete (Phase 2a). Ready for LLM-based company matching.
+**Current Status**: MVP complete (Phases 1a + 1b). Gmail OAuth2 setup complete (Phase 005). Notion Read Operations complete (Phase 2a). LLM-Based Company Matching complete (Phase 2b). Ready for Classification & Summarization.
 
-**Phase 2b (007-llm-matching) Next Actions**:
-1. → Create branch `007-llm-matching`
+**Phase 2c (008-classification-summarization) Next Actions**:
+1. → Create branch `008-classification-summarization`
 2. → Run `/speckit.specify` to create feature specification
 3. → Run `/speckit.plan` to create implementation plan
-4. → Update GeminiAdapter to include company lists in prompt
-5. → Implement company matching logic with confidence scores
-6. → Test matching accuracy against ground truth dataset
+4. → Update GeminiAdapter prompt with classification rules
+5. → Implement 협업형태 classification ([A]/[B]/[C]/[D])
+6. → Implement 협업강도 classification (이해/협력/투자/인수)
+7. → Add summarization method (3-5 sentence summaries)
+8. → Test classification accuracy against human-labeled dataset
 
 ---
 
-**Document Version**: 1.4.0
-**Last Updated**: 2025-11-02 (Phase 2a complete - Notion Read Operations)
-**Next Review**: After Phase 2b (LLM-Based Company Matching) completion
+**Document Version**: 1.5.0
+**Last Updated**: 2025-11-03 (Phase 2b complete - LLM-Based Company Matching)
+**Next Review**: After Phase 2c (Classification & Summarization) completion

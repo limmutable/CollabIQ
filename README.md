@@ -4,7 +4,7 @@ Email-based collaboration tracking system that automatically extracts collaborat
 
 ## Project Status
 
-**Current Phase**: Phase 2a Complete ✅ (Branch 006-notion-read)
+**Current Phase**: Phase 2b Complete ✅ (Branch 007-llm-matching)
 
 ### Completed Phases
 - ✅ **Phase 0**: Foundation Work (001-feasibility-architecture)
@@ -30,8 +30,15 @@ Email-based collaboration tracking system that automatically extracts collaborat
   - LLM-ready formatting (JSON + Markdown)
   - 63/63 tests passing
   - Infisical integration for secret management
+- ✅ **Phase 2b**: LLM-Based Company Matching (007-llm-matching)
+  - Extended GeminiAdapter with company_context parameter
+  - Company matching with confidence scores (matched_company_id, matched_partner_id)
+  - Enhanced prompt with detailed confidence scoring rules
+  - **Accuracy**: 100% on test dataset (12/12 tests passing)
+  - Handles abbreviations, typos, semantic matches, and no-match scenarios
+  - See [VALIDATION_RESULTS.md](specs/007-llm-matching/VALIDATION_RESULTS.md)
 
-**Next Phase**: Phase 2b - LLM-Based Company Matching (007-llm-matching)
+**Next Phase**: Phase 2c - Classification & Summarization (008-classification-summarization)
 
 ## Overview
 
@@ -47,7 +54,7 @@ CollabIQ automates the tedious process of tracking collaboration activities by:
    - Schema discovery with caching
    - Pagination and relationship resolution
    - LLM-ready formatting
-4. **Matching** companies against existing Notion databases using LLM (🚧 Phase 2b)
+4. **Matching** companies against existing Notion databases using LLM (✅ Phase 2b)
 5. **Creating** entries in Notion's "CollabIQ" database (🚧 Phase 2d)
 6. **Queuing** ambiguous cases for manual verification (🚧 Phase 3a-3b)
 
