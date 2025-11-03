@@ -12,11 +12,18 @@ This guide walks you through setting up Gmail API access for the collab@signite.
 
 CollabIQ needs to access emails sent to **collab@signite.co** (a Google Workspace group alias) to extract entity information. Since group aliases are not standalone accounts, you'll authenticate as a group member and use API queries to filter group emails.
 
+**⚠️ CRITICAL: collab@signite.co is a Google Group, NOT a regular mailbox**
+- **You CANNOT authenticate as collab@signite.co directly**
+- **You MUST authenticate as a member account** (e.g., jeffreylim@signite.co, gloriakim@signite.co)
+- **Use Gmail query `to:collab@signite.co`** to retrieve emails sent to the group
+- The authenticated member account must be a member of the collab@signite.co Google Group
+- Do NOT try to "login as collab@signite.co" - it will fail
+
 **What you'll do**:
 1. Create OAuth2 credentials in Google Cloud Console
 2. Configure credentials locally
-3. Complete first-time authentication
-4. Verify email retrieval
+3. Complete first-time authentication **as a group member account**
+4. Verify email retrieval using `to:collab@signite.co` query
 
 ---
 
@@ -239,10 +246,20 @@ uv run python scripts/test_gmail_retrieval.py --query 'to:collab@signite.co subj
 - List of recent emails sent to collab@signite.co (shows message ID, sender, subject, date)
 - No authentication errors
 
-**Query Operator Notes**:
-- Use `to:collab@signite.co` to find emails sent to the group alias
-- Do NOT use `deliveredto:` operator - it doesn't work reliably with Gmail API
-- Do NOT use `in:inbox` filter - group-forwarded emails may not retain inbox label
+**⚠️ CRITICAL: Always Use `to:collab@signite.co` Query Filter**
+
+**Why this matters**:
+- The authenticated account (e.g., jeffreylim@signite.co) receives ALL personal emails
+- Without filtering, you'll retrieve personal inbox emails instead of group emails
+- The `to:collab@signite.co` filter ensures you only get emails sent to the group
+
+**Query Operator Best Practices**:
+- ✅ **ALWAYS use**: `to:collab@signite.co` to find emails sent to the group alias
+- ✅ **Combine with date filters**: `to:collab@signite.co after:2025/11/01`
+- ✅ **Combine with subject filters**: `to:collab@signite.co subject:"협업"`
+- ❌ **Do NOT use**: `deliveredto:` operator - it doesn't work reliably with Gmail API
+- ❌ **Do NOT use**: `in:inbox` filter alone - group-forwarded emails may not retain inbox label
+- ❌ **Do NOT query without `to:collab@signite.co`** - will return personal emails!
 
 ---
 

@@ -393,6 +393,12 @@ async def process_batch(emails: list[RawEmail]) -> list[CleanedEmail]:
 | Pydantic v2 Config deprecation warnings | Using `Config` instead of `ConfigDict` | Low | **PLANNED** - Update in Phase 6 polish |
 | No CLI progress bars for extraction | User has no visibility into extraction progress | Low | **PLANNED** - Add Rich progress bars in Phase 6 |
 
+### Phase 2b Technical Debt (LLM-Based Company Matching)
+
+| Issue | Impact | Priority | Status |
+|-------|--------|----------|--------|
+| Gemini returns company names instead of UUIDs | LLM occasionally returns Korean company names instead of Notion database UUIDs, causing Pydantic validation errors (string_too_short: expected 32 chars) | Medium | **IDENTIFIED** - Observed in real email test (2025-11-03): "웨이크" and "신세계푸드" returned instead of UUIDs. Root cause: Prompt engineering issue - LLM not consistently following UUID extraction instructions. Fix: Improve system prompt to enforce UUID format with examples, add retry logic with format correction. |
+
 ### Architecture Technical Debt
 
 | Issue | Impact | Priority | Planned Fix |
