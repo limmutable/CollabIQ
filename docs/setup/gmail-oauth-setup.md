@@ -236,10 +236,10 @@ Run the Gmail receiver to verify it can access collab@signite.co emails:
 
 ```bash
 # Default query: to:collab@signite.co
-uv run python scripts/test_gmail_retrieval.py --max-results 5
+uv run python tests/manual/test_gmail_retrieval.py --max-results 5
 
 # Custom query (e.g., with subject filter)
-uv run python scripts/test_gmail_retrieval.py --query 'to:collab@signite.co subject:"Test"' --max-results 5
+uv run python tests/manual/test_gmail_retrieval.py --query 'to:collab@signite.co subject:"Test"' --max-results 5
 ```
 
 **Expected Output**:
@@ -291,7 +291,7 @@ Send a test email to collab@signite.co and verify retrieval:
 
 3. Run retrieval:
    ```bash
-   uv run python scripts/test_gmail_retrieval.py --query 'deliveredto:"collab@signite.co" subject:"Test CollabIQ Setup"'
+   uv run python tests/manual/test_gmail_retrieval.py --query 'deliveredto:"collab@signite.co" subject:"Test CollabIQ Setup"'
    ```
 
 **Expected Result**: Test email appears in results, showing sender, subject, date, and recipients
@@ -373,7 +373,7 @@ Send a test email to collab@signite.co and verify retrieval:
 2. Wait longer for Gmail indexing (can take up to 24 hours in rare cases)
 3. Check if emails are in spam/trash folders:
    ```bash
-   uv run python scripts/test_gmail_retrieval.py --query 'deliveredto:"collab@signite.co" in:anywhere'
+   uv run python tests/manual/test_gmail_retrieval.py --query 'deliveredto:"collab@signite.co" in:anywhere'
    ```
 4. Verify email was actually delivered to member inbox (check Gmail web interface)
 
@@ -415,6 +415,111 @@ Send a test email to collab@signite.co and verify retrieval:
 5. **Use Infisical for production**:
    - .env files are acceptable for local development
    - Production deployments should use Infisical secret management
+
+---
+
+## Part 5: Common Mistakes & Troubleshooting
+
+### Common Mistakes to Avoid
+
+#### ❌ Mistake 1: Trying to authenticate as collab@signite.co
+```bash
+# WRONG - This will fail
+# User tries to login as collab@signite.co during OAuth flow
+# Result: Authentication error or personal account login
+```
+
+**Fix**: Always authenticate as a group member (jeffreylim@signite.co, gloriakim@signite.co, etc.)
+
+---
+
+#### ❌ Mistake 2: Retrieving emails without filtering
+```python
+# WRONG - Returns personal inbox emails
+messages = gmail_receiver.fetch_emails(query="after:2025/11/01", max_emails=10)
+
+# Result: Gets jeffreylim@signite.co's personal emails, NOT group emails
+```
+
+**Fix**: Always include `to:collab@signite.co` in query
+```python
+# CORRECT - Returns emails sent to the group
+messages = gmail_receiver.fetch_emails(
+    query="to:collab@signite.co after:2025/11/01",
+    max_emails=10
+)
+```
+
+---
+
+#### ❌ Mistake 3: Using deliveredto: operator
+```bash
+# WRONG - Unreliable with Gmail API
+query="deliveredto:collab@signite.co"
+```
+
+**Fix**: Use `to:` operator instead
+```bash
+# CORRECT - Reliable with Gmail API
+query="to:collab@signite.co"
+```
+
+---
+
+### Additional Troubleshooting Scenarios
+
+#### Issue: No emails found despite correct query
+**Symptom**: Query returns empty results even with `to:collab@signite.co`
+
+**Possible Causes**:
+1. Authenticated user is not a group member
+2. No emails sent to collab@signite.co in date range
+3. Gmail indexing delay (wait 1-2 minutes)
+4. Query missing `to:collab@signite.co` filter
+
+**Fix**:
+```bash
+# Verify group membership
+# Google Workspace Admin → Groups → collab@signite.co → Members
+
+# Wait for Gmail indexing
+sleep 120
+
+# Retry with broader date range
+uv run python tests/manual/test_gmail_retrieval.py \
+  --query 'to:collab@signite.co after:2025/01/01' \
+  --max-results 100
+```
+
+---
+
+#### Issue: Getting personal emails instead of group emails
+**Symptom**: Retrieved emails are from jeffreylim@signite.co's personal inbox
+
+**Cause**: Missing `to:collab@signite.co` filter in query
+
+**Fix**: Always include `to:collab@signite.co` in all Gmail queries
+```python
+# BEFORE (wrong)
+query = f"after:{since_date.strftime('%Y/%m/%d')}"
+
+# AFTER (correct)
+query = f"to:collab@signite.co after:{since_date.strftime('%Y/%m/%d')}"
+```
+
+---
+
+### Quick Reference Card
+
+| Question | Answer |
+|----------|--------|
+| Can I login as collab@signite.co? | ❌ No - it's a group, not an account |
+| Which account should I authenticate with? | ✅ A group member (jeffreylim@signite.co) |
+| What query should I use? | ✅ `to:collab@signite.co` |
+| Can I skip the `to:` filter? | ❌ No - you'll get personal emails |
+| Does `deliveredto:` work? | ❌ No - unreliable with Gmail API |
+| Where is token.json stored? | `/Users/jlim/Projects/CollabIQ/token.json` |
+| Which account does token.json represent? | The member account that authenticated |
 
 ---
 
