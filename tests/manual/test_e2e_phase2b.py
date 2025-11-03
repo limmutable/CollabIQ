@@ -90,7 +90,7 @@ async def main():
 
     except Exception as e:
         print(f"✗ Error fetching Notion data: {e}")
-        print("  Make sure NOTION_API_TOKEN and NOTION_COMPANIES_DB_ID are set")
+        print("  Make sure NOTION_API_KEY and NOTION_COMPANIES_DB_ID are set")
         return 1
 
     # Step 3: Retrieve recent emails

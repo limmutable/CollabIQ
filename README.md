@@ -148,7 +148,7 @@ INFISICAL_ENABLED=false
 # Required API Keys
 GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-2.5-flash
-NOTION_API_TOKEN=your_notion_integration_token_here
+NOTION_API_KEY=your_notion_integration_token_here
 NOTION_DATABASE_ID_COMPANIES=your_companies_database_id_here
 NOTION_DATABASE_ID_COLLABIQ=your_collabiq_database_id_here
 

@@ -158,7 +158,7 @@ GEMINI_TIMEOUT_SECONDS=10
 GEMINI_MAX_RETRIES=3
 
 # Notion API Configuration (✅ Implemented - Phase 2a)
-NOTION_API_TOKEN=secret_...your_actual_token_here
+NOTION_API_KEY=secret_...your_actual_token_here
 NOTION_DATABASE_ID_COMPANIES=32_character_database_id_here
 NOTION_DATABASE_ID_COLLABIQ=32_character_database_id_here
 

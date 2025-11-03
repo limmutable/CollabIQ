@@ -78,7 +78,7 @@ uv run python tests/manual/test_e2e_phase2b.py --limit 10
 **Prerequisites**:
 - Gmail OAuth2 credentials and token
 - Gemini API key (GEMINI_API_KEY in .env)
-- Notion API token (NOTION_API_TOKEN in .env)
+- Notion API key (NOTION_API_KEY in .env)
 - Notion companies database ID (NOTION_DATABASE_ID_COMPANIES in .env)
 - Network access to Gmail API, Gemini API, and Notion API
 
@@ -149,8 +149,8 @@ When creating new manual test scripts:
 ### Error: "GEMINI_API_KEY not set"
 **Solution**: Add `GEMINI_API_KEY=your_key_here` to `.env` file
 
-### Error: "NOTION_API_TOKEN not set"
-**Solution**: Add `NOTION_API_TOKEN=your_token_here` to `.env` file
+### Error: "NOTION_API_KEY not set"
+**Solution**: Add `NOTION_API_KEY=your_token_here` to `.env` file
 
 ### Error: "Infisical authentication failed"
 **Solution**: Verify Infisical configuration in `.env` file
