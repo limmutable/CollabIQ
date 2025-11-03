@@ -293,6 +293,142 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
             )
             return (None, None, None)
 
+    async def generate_summary(
+        self,
+        email_content: str,
+        extracted_entities: "ExtractedEntities",
+    ) -> tuple[Optional[str], Optional[int], Optional[dict]]:
+        """Generate collaboration summary using Gemini LLM.
+
+        Creates a concise 3-5 sentence summary (50-150 words) that:
+        - Preserves all 5 key entities (person, startup, partner, details, date)
+        - Omits email signatures and legal disclaimers
+        - Focuses on collaboration business context
+
+        Args:
+            email_content: Full email text for context
+            extracted_entities: Previously extracted entities to preserve
+
+        Returns:
+            Tuple of (summary, word_count, key_entities_preserved):
+            - summary: Concise summary text (50-750 characters) or None
+            - word_count: Word count (50-150 range) or None
+            - key_entities_preserved: Dict of 5 boolean flags or None
+        """
+        import json
+        import asyncio
+
+        # Prepare entity context for prompt
+        entity_context = f"""
+Extracted Entities to Preserve:
+- Person in charge: {extracted_entities.person_in_charge or 'N/A'}
+- Startup/Company: {extracted_entities.startup_name or 'N/A'}
+- Partner Organization: {extracted_entities.partner_org or 'N/A'}
+- Collaboration Details: {extracted_entities.details or 'N/A'}
+- Date: {extracted_entities.date.strftime('%Y-%m-%d') if extracted_entities.date else 'N/A'}
+"""
+
+        # LLM prompt for summary generation
+        prompt = f"""Analyze this Korean business collaboration email and generate a concise summary.
+
+Requirements:
+1. Summary must be 3-5 sentences (approximately 50-150 words)
+2. Preserve ALL 5 key entities in the summary (person, startup, partner, details, date)
+3. Omit email signatures, legal disclaimers, and contact information
+4. Focus on business collaboration context and next steps
+5. Write in professional Korean business tone
+
+{entity_context}
+
+Email Content:
+{email_content}
+
+Return ONLY a JSON object with this exact structure (no markdown, no explanation):
+{{
+  "summary": "3-5 sentence summary in Korean preserving all key entities",
+  "word_count": <integer between 50-150>,
+  "key_entities_preserved": {{
+    "person_in_charge": true/false,
+    "startup_name": true/false,
+    "partner_org": true/false,
+    "details": true/false,
+    "date": true/false
+  }}
+}}"""
+
+        try:
+            logger.info("Calling Gemini for summary generation")
+
+            # Call Gemini API (using internal method)
+            response_text = await asyncio.to_thread(
+                self.gemini._call_with_retry,
+                lambda: self.gemini._call_gemini_api(
+                    prompt=prompt,
+                    temperature=0.3,  # Moderate temperature for creative yet consistent summaries
+                )
+            )
+
+            response_text = response_text.strip()
+            # Remove markdown code blocks if present
+            if response_text.startswith("```"):
+                response_text = response_text.split("```")[1]
+                if response_text.startswith("json"):
+                    response_text = response_text[4:]
+                response_text = response_text.strip()
+
+            result = json.loads(response_text)
+
+            summary = result.get("summary")
+            word_count = result.get("word_count")
+            key_entities_preserved = result.get("key_entities_preserved")
+
+            # Validate summary length
+            if summary:
+                if len(summary) < 50:
+                    logger.warning(f"Summary too short ({len(summary)} chars), should be ≥50")
+                elif len(summary) > 750:
+                    logger.warning(f"Summary too long ({len(summary)} chars), truncating to 750")
+                    summary = summary[:750]
+
+            # Validate word count range
+            if word_count is not None and (word_count < 50 or word_count > 150):
+                logger.warning(
+                    f"Word count out of range: {word_count}, expected [50, 150]"
+                )
+
+            # Validate key_entities_preserved structure
+            if key_entities_preserved:
+                required_keys = {"person_in_charge", "startup_name", "partner_org", "details", "date"}
+                if set(key_entities_preserved.keys()) != required_keys:
+                    logger.error(
+                        f"Invalid key_entities_preserved structure: {key_entities_preserved.keys()}"
+                    )
+                    key_entities_preserved = None
+
+            logger.info(
+                "Summary generation completed",
+                extra={
+                    "summary_length": len(summary) if summary else 0,
+                    "word_count": word_count,
+                    "entities_preserved_count": sum(key_entities_preserved.values()) if key_entities_preserved else 0,
+                },
+            )
+
+            return (summary, word_count, key_entities_preserved)
+
+        except json.JSONDecodeError as e:
+            logger.error(
+                "Failed to parse Gemini response as JSON",
+                extra={"error": str(e), "response": response_text[:200]},
+            )
+            return (None, None, None)
+        except Exception as e:
+            logger.error(
+                "Error during summary generation",
+                extra={"error": str(e), "error_type": type(e).__name__},
+            )
+            return (None, None, None)
+
     async def extract_with_classification(
         self,
         email_content: str,
@@ -366,7 +502,13 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
             details=entities.details,
         )
 
-        # Step 5: Create ExtractedEntitiesWithClassification with all fields
+        # Step 5: Generate collaboration summary
+        collaboration_summary, summary_word_count, key_entities_preserved = await self.generate_summary(
+            email_content=email_content,
+            extracted_entities=entities,
+        )
+
+        # Step 6: Create ExtractedEntitiesWithClassification with all fields
         result = ExtractedEntitiesWithClassification(
             # Phase 1b fields
             person_in_charge=entities.person_in_charge,
@@ -390,10 +532,10 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
             collaboration_intensity=collaboration_intensity,
             intensity_confidence=intensity_confidence,
             intensity_reasoning=intensity_reasoning,
-            # Phase 2c summary fields (not yet implemented in Phase 5)
-            collaboration_summary=None,
-            summary_word_count=None,
-            key_entities_preserved=None,
+            # Phase 2c summary fields
+            collaboration_summary=collaboration_summary,
+            summary_word_count=summary_word_count,
+            key_entities_preserved=key_entities_preserved,
         )
 
         logger.info(
@@ -404,6 +546,8 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
                 "type_confidence": type_confidence,
                 "collaboration_intensity": collaboration_intensity,
                 "intensity_confidence": intensity_confidence,
+                "has_summary": collaboration_summary is not None,
+                "summary_word_count": summary_word_count,
                 "needs_manual_review": result.needs_manual_review(),
             },
         )
