@@ -218,7 +218,7 @@ This task list implements Phase 2c classification and summarization in priority 
 - [ ] [T-073] [P2] [Polish] Update [quickstart.md](quickstart.md) with classification usage examples
 - [ ] [T-074] [P2] [Polish] Update [data-model.md](data-model.md) with field descriptions and validation rules
 - [ ] [T-075] [P2] [Polish] Update [contracts/gemini_adapter_extension.md](contracts/gemini_adapter_extension.md) with final API contract
-- [ ] [T-076] [P2] [Polish] Create example script: `scripts/test_phase2c_classification.py` demonstrating full workflow
+- [x] [T-076] [P2] [Polish] Create example script: `tests/manual/test_phase2c_classification.py` demonstrating full workflow
 
 ### Final Validation
 

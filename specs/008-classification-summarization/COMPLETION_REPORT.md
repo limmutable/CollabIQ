@@ -69,7 +69,7 @@ All success criteria have been met, and the feature is backward compatible with 
 - All Phase 2c fields optional (backward compatible)
 - `classification_timestamp` added (ISO 8601 format)
 - Schema caching implemented (fetch once per session)
-- Example script created ([test_phase2c_classification.py](../../scripts/test_phase2c_classification.py))
+- Example script created ([test_phase2c_classification.py](../../tests/manual/test_phase2c_classification.py))
 
 ---
 
@@ -161,7 +161,7 @@ Phase 2c Components:
    - `tests/integration/test_classification_e2e.py` (278 lines)
    - `tests/integration/test_summary_generation_e2e.py` (320 lines)
 
-3. `scripts/test_phase2c_classification.py` (250 lines)
+3. `tests/manual/test_phase2c_classification.py` (250 lines)
    - Example script demonstrating full workflow
 
 ### Files Modified
@@ -333,7 +333,7 @@ def needs_manual_review(self, threshold: float = 0.85) -> bool:
   "collaboration_intensity": "협력",
   "intensity_confidence": 0.92,
   "intensity_reasoning": "PoC 킥오프 미팅과 파일럿 테스트 계획이 논의되어 협력 단계로 분류",
-  "collaboration_summary": "브레이크앤컴퍼니(안동훈 팀장)와 신세계푸드가 2025년 10월 28일 PoC 킥오프 미팅을 진행했습니다. 이번 협업에서는 간편식 제품 라인업 확대를 위한 파일럿 테스트를 계획하고 있으며, 향후 본격적인 협력 방안을 논의할 예정입니다.",
+  "collaboration_summary": "브레이크앤컴퍼니(안동훈 팀장)와 신세계푸드가 2025년 10월 28일 PoC 킥오프 미팅 진행 완료. 이번 협업에서는 간편식 제품 라인업 확대를 위한 파일럿 테스트를 계획하고 있으며, 향후 본격적인 협력 방안을 논의할 예정.",
   "summary_word_count": 85,
   "key_entities_preserved": {
     "person_in_charge": true,

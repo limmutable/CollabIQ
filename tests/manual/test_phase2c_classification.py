@@ -9,7 +9,7 @@ This script demonstrates:
 5. Confidence scoring and manual review routing
 
 Usage:
-    uv run python scripts/test_phase2c_classification.py
+    uv run python tests/manual/test_phase2c_classification.py
 
 Requirements:
     - GEMINI_API_KEY in environment
