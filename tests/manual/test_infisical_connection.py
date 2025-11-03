@@ -9,10 +9,10 @@ This script tests the Infisical integration by:
 
 Usage:
     # Test connection and list all secrets
-    uv run python scripts/validate_infisical.py
+    uv run python tests/manual/test_infisical_connection.py
 
     # Test with custom environment
-    INFISICAL_ENVIRONMENT=production uv run python scripts/validate_infisical.py
+    INFISICAL_ENVIRONMENT=production uv run python tests/manual/test_infisical_connection.py
 
 Prerequisites:
     - Set INFISICAL_ENABLED=true in .env

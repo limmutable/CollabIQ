@@ -9,9 +9,9 @@ This script:
 5. Generates accuracy report
 
 Usage:
-    uv run python scripts/validate_extraction_accuracy.py
-    uv run python scripts/validate_extraction_accuracy.py --verbose
-    uv run python scripts/validate_extraction_accuracy.py --output report.md
+    uv run python tests/validation/validate_accuracy.py
+    uv run python tests/validation/validate_accuracy.py --verbose
+    uv run python tests/validation/validate_accuracy.py --output report.md
 """
 
 import argparse

@@ -8,7 +8,7 @@ This script demonstrates the full MVP pipeline:
 4. Display results
 
 Usage:
-    uv run python scripts/test_e2e_extraction.py --max-emails 2
+    uv run python tests/manual/test_e2e_phase1b.py --max-emails 2
 """
 
 import argparse

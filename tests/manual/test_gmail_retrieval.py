@@ -6,9 +6,9 @@ This script tests Gmail API email retrieval with optional query filters.
 Useful for verifying group alias filtering and OAuth authentication.
 
 Usage:
-    python scripts/test_gmail_retrieval.py
-    python scripts/test_gmail_retrieval.py --query 'deliveredto:"collab@signite.co" subject:"test"'
-    python scripts/test_gmail_retrieval.py --max-results 5
+    uv run python tests/manual/test_gmail_retrieval.py
+    uv run python tests/manual/test_gmail_retrieval.py --query 'to:"collab@signite.co" subject:"test"'
+    uv run python tests/manual/test_gmail_retrieval.py --max-results 5
 """
 
 import argparse
@@ -31,13 +31,13 @@ def main():
         epilog="""
 Examples:
   # Retrieve latest 10 emails from collab@signite.co
-  python scripts/test_gmail_retrieval.py
+  uv run python tests/manual/test_gmail_retrieval.py
 
   # Search for specific subject
-  python scripts/test_gmail_retrieval.py --query 'deliveredto:"collab@signite.co" subject:"Test"'
+  uv run python tests/manual/test_gmail_retrieval.py --query 'to:"collab@signite.co" subject:"Test"'
 
   # Limit to 5 results
-  python scripts/test_gmail_retrieval.py --max-results 5
+  uv run python tests/manual/test_gmail_retrieval.py --max-results 5
         """
     )
     parser.add_argument(

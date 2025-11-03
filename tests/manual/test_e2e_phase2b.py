@@ -9,7 +9,7 @@ This script demonstrates end-to-end Phase 2b functionality:
 5. Display matched results with confidence scores
 
 Usage:
-    uv run python scripts/test_phase2b_real_emails.py [--limit N]
+    uv run python tests/manual/test_e2e_phase2b.py [--limit N]
 
 Options:
     --limit N    Number of emails to process (default: 5)

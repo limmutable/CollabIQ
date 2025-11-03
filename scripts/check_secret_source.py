@@ -104,7 +104,7 @@ def main():
             print()
             print("  To use Infisical:")
             print("    1. Set correct INFISICAL_CLIENT_ID and INFISICAL_CLIENT_SECRET")
-            print("    2. Run: uv run python scripts/validate_infisical.py")
+            print("    2. Run: uv run python tests/manual/test_infisical_connection.py")
     else:
         print("  Your application is using .ENV FILE for secret management.")
         print("  All secrets are read directly from .env file.")
@@ -112,7 +112,7 @@ def main():
         print("  To enable Infisical:")
         print("    1. Set INFISICAL_ENABLED=true in .env")
         print("    2. Configure Infisical credentials (see docs/setup/INFISICAL_SETUP.md)")
-        print("    3. Run: uv run python scripts/validate_infisical.py")
+        print("    3. Run: uv run python tests/manual/test_infisical_connection.py")
 
     print()
     print("=" * 70)
