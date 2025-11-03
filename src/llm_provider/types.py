@@ -7,6 +7,7 @@ This module defines the data models used for entity extraction:
 - BatchSummary: Processing metadata and statistics
 """
 
+import re
 from datetime import datetime
 from typing import List, Optional
 from uuid import uuid4
@@ -199,6 +200,163 @@ class ExtractedEntities(BaseModel):
                 "matched_partner_id": "stu901vwx234yz056abc123def456ghi",
                 "startup_match_confidence": 0.95,
                 "partner_match_confidence": 0.92,
+            }
+        }
+
+
+class ExtractedEntitiesWithClassification(ExtractedEntities):
+    """Extended model with Phase 2c classification and summarization.
+
+    Extends ExtractedEntities with:
+    - Collaboration type classification (dynamically fetched from Notion)
+    - Collaboration intensity classification (LLM-based Korean semantic analysis)
+    - Collaboration summary (3-5 sentences preserving 5 key entities)
+    - Confidence scores for auto-acceptance vs manual review
+
+    All Phase 2c fields are optional for backward compatibility.
+
+    Attributes:
+        collaboration_type: Exact Notion field value from 협업형태 property
+        collaboration_intensity: Intensity level (이해/협력/투자/인수)
+        type_confidence: Type classification confidence (0.0-1.0)
+        intensity_confidence: Intensity classification confidence (0.0-1.0)
+        collaboration_summary: 3-5 sentence summary (50-150 words)
+        summary_word_count: Summary word count for validation
+        key_entities_preserved: Which key entities are in summary
+        classification_timestamp: ISO 8601 timestamp of classification
+    """
+
+    # Phase 2c classification fields
+    collaboration_type: Optional[str] = Field(
+        None,
+        description="Exact Notion field value from 협업형태 property (e.g., '[A]PortCoXSSG')",
+    )
+
+    collaboration_intensity: Optional[str] = Field(
+        None,
+        description="Intensity level: 이해, 협력, 투자, 인수",
+        pattern=r"^(이해|협력|투자|인수)$",
+    )
+
+    type_confidence: Optional[float] = Field(
+        None,
+        ge=0.0,
+        le=1.0,
+        description="Type classification confidence (0.0-1.0)",
+    )
+
+    intensity_confidence: Optional[float] = Field(
+        None,
+        ge=0.0,
+        le=1.0,
+        description="Intensity classification confidence (0.0-1.0)",
+    )
+
+    intensity_reasoning: Optional[str] = Field(
+        None,
+        max_length=500,
+        description="1-2 sentence explanation for intensity classification",
+    )
+
+    # Phase 2c summary fields
+    collaboration_summary: Optional[str] = Field(
+        None,
+        min_length=50,
+        max_length=750,  # ~150 words * 5 chars/word
+        description="3-5 sentence summary (50-150 words)",
+    )
+
+    summary_word_count: Optional[int] = Field(
+        None,
+        ge=50,
+        le=150,
+        description="Summary word count for validation",
+    )
+
+    key_entities_preserved: Optional[dict] = Field(
+        None,
+        description="Boolean flags for which key entities are in summary",
+    )
+
+    classification_timestamp: Optional[str] = Field(
+        None,
+        description="ISO 8601 timestamp of classification",
+    )
+
+    @field_validator("collaboration_type")
+    @classmethod
+    def validate_type_format(cls, v: Optional[str]) -> Optional[str]:
+        """Ensure type follows [X]* pattern."""
+        if v is not None:
+            if not re.match(r'^\[([A-Z0-9]+)\]', v):
+                raise ValueError(f"Invalid collaboration_type format: {v}")
+        return v
+
+    @field_validator("collaboration_intensity")
+    @classmethod
+    def validate_intensity(cls, v: Optional[str]) -> Optional[str]:
+        """Ensure intensity is one of 4 valid values."""
+        if v is not None:
+            valid = ['이해', '협력', '투자', '인수']
+            if v not in valid:
+                raise ValueError(f"Invalid collaboration_intensity: {v}, must be one of {valid}")
+        return v
+
+    def needs_manual_review(self, threshold: float = 0.85) -> bool:
+        """Check if classification needs manual review based on confidence threshold.
+
+        Args:
+            threshold: Minimum confidence threshold (default: 0.85)
+
+        Returns:
+            True if any classification confidence is below threshold, False otherwise
+        """
+        if self.type_confidence is not None and self.type_confidence < threshold:
+            return True
+        if self.intensity_confidence is not None and self.intensity_confidence < threshold:
+            return True
+        return False
+
+    class Config:
+        """Pydantic configuration."""
+
+        json_schema_extra = {
+            "example": {
+                # Phase 1b fields
+                "person_in_charge": "김주영",
+                "startup_name": "브레이크앤컴퍼니",
+                "partner_org": "신세계푸드",
+                "details": "AI 기반 재고 최적화 솔루션 PoC 킥오프 미팅",
+                "date": "2025-10-28T00:00:00Z",
+                "confidence": {
+                    "person": 0.95,
+                    "startup": 0.92,
+                    "partner": 0.88,
+                    "details": 0.90,
+                    "date": 0.85,
+                },
+                "email_id": "msg_abc123",
+                "extracted_at": "2025-11-03T10:30:00Z",
+                # Phase 2b fields
+                "matched_company_id": "abc123def456ghi789jkl012mno345pq",
+                "matched_partner_id": "stu901vwx234yz056abc123def456ghi",
+                "startup_match_confidence": 0.95,
+                "partner_match_confidence": 0.98,
+                # Phase 2c fields
+                "collaboration_type": "[A]PortCoXSSG",
+                "collaboration_intensity": "협력",
+                "type_confidence": 0.95,
+                "intensity_confidence": 0.88,
+                "collaboration_summary": "브레이크앤컴퍼니와 신세계푸드가 AI 기반 재고 최적화 솔루션 PoC 킥오프 미팅을 진행했습니다. 11월 첫째 주부터 2개월간 파일럿 테스트 예정입니다. 김주영 담당자가 프로젝트를 주도합니다.",
+                "summary_word_count": 42,
+                "key_entities_preserved": {
+                    "startup": True,
+                    "partner": True,
+                    "activity": True,
+                    "date": True,
+                    "person": True,
+                },
+                "classification_timestamp": "2025-11-03T10:30:00Z",
             }
         }
 
