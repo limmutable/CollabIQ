@@ -184,6 +184,28 @@ class Settings(BaseSettings):
         default=None,
         description="Notion CollabIQ database ID",
     )
+    duplicate_behavior: str = Field(
+        default="skip",
+        description="Behavior when duplicate entry detected: 'skip' (default) or 'update'",
+    )
+
+    @field_validator("duplicate_behavior")
+    @classmethod
+    def validate_duplicate_behavior(cls, v: str) -> str:
+        """Validate duplicate behavior setting.
+
+        Valid values: 'skip', 'update'
+        Enforces FR-008 (duplicate detection behavior)
+        """
+        valid_behaviors = {"skip", "update"}
+        v_lower = v.lower()
+        if v_lower not in valid_behaviors:
+            raise ValueError(
+                f"Invalid duplicate behavior '{v}'. "
+                f"Must be one of: {', '.join(sorted(valid_behaviors))}. "
+                f"Please set DUPLICATE_BEHAVIOR to 'skip' or 'update'."
+            )
+        return v_lower
 
     @field_validator("infisical_environment")
     @classmethod

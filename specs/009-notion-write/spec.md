@@ -104,6 +104,7 @@ Different Notion field types (text, select, multi-select, relation, date, number
 - **FR-002**: System MUST map `ExtractedEntitiesWithClassification` Pydantic model fields to corresponding Notion database properties based on dynamic schema discovery (from Phase 2a).
 
 - **FR-003**: System MUST correctly format field values according to Notion field types:
+  - Title fields: `{"title": [{"text": {"content": "value"}}]}`
   - Text fields: `{"rich_text": [{"text": {"content": "value"}}]}`
   - Select fields: `{"select": {"name": "value"}}`
   - Date fields: `{"date": {"start": "YYYY-MM-DD"}}`
@@ -214,7 +215,7 @@ Different Notion field types (text, select, multi-select, relation, date, number
 
 2. **Company IDs Availability**: Phase 2b company matching provides company IDs for both startup and partner organization in >85% of cases. When IDs are missing, the entry can still be created with text names only.
 
-3. **Notion API Stability**: Notion API is generally reliable with >99% uptime. Basic retry logic (3 attempts with exponential backoff) will be implemented in Phase 2d, with comprehensive error handling deferred to Phase 2e.
+3. **Notion API Stability**: Notion API is generally reliable with >99% uptime. Basic retry logic (3 immediate retry attempts, no exponential backoff) will be implemented in Phase 2d, with comprehensive error handling deferred to Phase 2e.
 
 4. **Single CollabIQ Database**: There is one primary CollabIQ database for all collaboration entries. Multi-database writes are not required in Phase 2d.
 
@@ -237,7 +238,7 @@ Different Notion field types (text, select, multi-select, relation, date, number
 ## Out of Scope
 
 - **Comprehensive Retry Logic**: Basic retry (3 attempts) is included, but exponential backoff, rate limit handling, and DLQ processing are deferred to Phase 2e.
-- **Update Existing Entries**: Phase 2d focuses on creating new entries. Updating existing entries (e.g., when classification improves) may be added later if needed.
+- **Update Existing Entries**: Phase 2d focuses on creating new entries. General entry updates (e.g., manual edits to Notion entries) are out of scope. **Exception**: FR-008 duplicate handling includes limited update capability (refreshing classification/confidence metadata when duplicate detected and config set to 'update').
 - **Bulk Write Operations**: Writing multiple emails in a single batch operation is out of scope. Each email is written individually.
 - **Write Permissions Management**: Assumes the configured Notion integration has write permissions to the CollabIQ database. Permission troubleshooting is out of scope.
 - **Rollback on Partial Failure**: If some fields are written but others fail, the entry remains in a partial state. Atomic writes or rollback are not implemented in Phase 2d.
