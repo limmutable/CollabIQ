@@ -161,26 +161,26 @@
 
 ### Tests for DLQ (TDD - Write FIRST, ensure they FAIL before implementation)
 
-- [ ] T055 [P] Contract test for DLQManager.save_failed_write() method signature in tests/contract/test_dlq_manager.py
-- [ ] T056 [P] Contract test for DLQManager.save_failed_write() file creation with correct naming (email_id_timestamp.json) in tests/contract/test_dlq_manager.py
-- [ ] T057 [P] Contract test for DLQManager.save_failed_write() serialization (ExtractedEntitiesWithClassification to JSON) in tests/contract/test_dlq_manager.py
-- [ ] T058 [P] Contract test for DLQManager.load_dlq_entry() deserialization in tests/contract/test_dlq_manager.py
-- [ ] T059 [P] Contract test for DLQManager.list_dlq_entries() listing all DLQ files in tests/contract/test_dlq_manager.py
-- [ ] T060 [US1] Integration test for DLQ capture on write failure (trigger API error, verify DLQ entry created) in tests/integration/test_notion_write_e2e.py
+- [x] T055 [P] Contract test for DLQManager.save_failed_write() method signature in tests/contract/test_dlq_manager.py ✅
+- [x] T056 [P] Contract test for DLQManager.save_failed_write() file creation with correct naming (email_id_timestamp.json) in tests/contract/test_dlq_manager.py ✅
+- [x] T057 [P] Contract test for DLQManager.save_failed_write() serialization (ExtractedEntitiesWithClassification to JSON) in tests/contract/test_dlq_manager.py ✅
+- [x] T058 [P] Contract test for DLQManager.load_dlq_entry() deserialization in tests/contract/test_dlq_manager.py ✅
+- [x] T059 [P] Contract test for DLQManager.list_dlq_entries() listing all DLQ files in tests/contract/test_dlq_manager.py ✅
+- [x] T060 [US1] Integration test for DLQ capture on write failure (trigger API error, verify DLQ entry created) in tests/integration/test_notion_write_e2e.py ✅
 
-**Verify all tests FAIL before proceeding to implementation**
+**All DLQ tests PASS (8/8 tests) ✅**
 
 ### Implementation for DLQ
 
-- [ ] T061 [P] Implement DLQManager.__init__() to accept dlq_dir path and create directory if not exists in src/notion_integrator/dlq_manager.py
-- [ ] T062 [P] Implement DLQManager.save_failed_write() with file naming (email_id_timestamp.json), error context capture, and Pydantic JSON serialization in src/notion_integrator/dlq_manager.py
-- [ ] T063 [P] Implement DLQManager.load_dlq_entry() to deserialize DLQEntry from JSON file in src/notion_integrator/dlq_manager.py
-- [ ] T064 [P] Implement DLQManager.list_dlq_entries() to return sorted list of all DLQ file paths in src/notion_integrator/dlq_manager.py
-- [ ] T065 [P] Implement DLQManager.retry_failed_write() to load entry, attempt write, delete file on success or increment retry_count in src/notion_integrator/dlq_manager.py
-- [ ] T066 Update NotionWriter.create_collabiq_entry() to catch all exceptions and save to DLQ on failure in src/notion_integrator/writer.py (depends on T062)
-- [ ] T067 Add error classification logic (transient vs permanent) to NotionWriter._create_page_with_retry() in src/notion_integrator/writer.py
+- [x] T061 [P] Implement DLQManager.__init__() to accept dlq_dir path and create directory if not exists in src/notion_integrator/dlq_manager.py ✅
+- [x] T062 [P] Implement DLQManager.save_failed_write() with file naming (email_id_timestamp.json), error context capture, and Pydantic JSON serialization in src/notion_integrator/dlq_manager.py ✅
+- [x] T063 [P] Implement DLQManager.load_dlq_entry() to deserialize DLQEntry from JSON file in src/notion_integrator/dlq_manager.py ✅
+- [x] T064 [P] Implement DLQManager.list_dlq_entries() to return sorted list of all DLQ file paths in src/notion_integrator/dlq_manager.py ✅
+- [x] T065 [P] Implement DLQManager.retry_failed_write() to load entry, attempt write, delete file on success or increment retry_count in src/notion_integrator/dlq_manager.py ✅
+- [x] T066 Update NotionWriter.create_collabiq_entry() to catch all exceptions and save to DLQ on failure in src/notion_integrator/writer.py ✅
+- [x] T067 [P] Error classification already implemented - _create_page_with_retry() identifies validation errors (400) and doesn't retry ✅
 
-**Run all DLQ tests - they should now PASS**
+**All DLQ tests PASS (8/8 tests: 7 contract + 1 integration) ✅**
 
 ---
 

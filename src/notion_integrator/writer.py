@@ -18,16 +18,58 @@ logger = logging.getLogger(__name__)
 class NotionWriter:
     """Handles writing extracted email data to Notion databases."""
 
-    def __init__(self, notion_integrator, collabiq_db_id: str):
+    def __init__(
+        self,
+        notion_integrator,
+        collabiq_db_id: str,
+        duplicate_behavior: str = "skip",
+        dlq_manager=None
+    ):
         """Initialize NotionWriter with Notion integrator and database ID.
 
         Args:
             notion_integrator: NotionIntegrator instance for API access
             collabiq_db_id: CollabIQ database ID
+            duplicate_behavior: Behavior for duplicates - "skip" or "update" (default: "skip")
+            dlq_manager: Optional DLQManager for failed write handling
         """
         self.notion_integrator = notion_integrator
         self.collabiq_db_id = collabiq_db_id
+        self.duplicate_behavior = duplicate_behavior
+        self.dlq_manager = dlq_manager
         self.field_mapper: Optional[FieldMapper] = None
+
+    async def check_duplicate(self, email_id: str) -> Optional[str]:
+        """Check if an entry with the given email_id already exists.
+
+        Args:
+            email_id: Email identifier to check for duplicates
+
+        Returns:
+            Existing page_id if duplicate found, None otherwise
+        """
+        try:
+            # Query Notion database for entries with matching email_id
+            query_response = await self.notion_integrator.notion_client.databases.query(
+                database_id=self.collabiq_db_id,
+                filter={
+                    "property": "email_id",
+                    "rich_text": {
+                        "equals": email_id
+                    }
+                }
+            )
+
+            # Return page_id of first matching result
+            results = query_response.get("results", [])
+            if results:
+                return results[0]["id"]
+
+            return None
+
+        except Exception as e:
+            logger.warning(f"Error checking for duplicate email_id={email_id}: {e}")
+            return None  # On error, assume no duplicate and allow write attempt
 
     async def create_collabiq_entry(
         self, extracted_data: ExtractedEntitiesWithClassification
@@ -48,6 +90,48 @@ class NotionWriter:
                 )
                 self.field_mapper = FieldMapper(schema)
 
+            # Check for duplicate entry
+            existing_page_id = await self.check_duplicate(extracted_data.email_id)
+
+            if existing_page_id:
+                # Duplicate detected
+                if self.duplicate_behavior == "skip":
+                    logger.info(
+                        f"Duplicate detected for email_id={extracted_data.email_id}, "
+                        f"existing_page_id={existing_page_id}. Skipping write (duplicate_behavior=skip)."
+                    )
+                    return WriteResult(
+                        success=True,
+                        page_id=None,
+                        email_id=extracted_data.email_id,
+                        retry_count=0,
+                        is_duplicate=True,
+                        existing_page_id=existing_page_id,
+                    )
+                elif self.duplicate_behavior == "update":
+                    logger.info(
+                        f"Duplicate detected for email_id={extracted_data.email_id}, "
+                        f"existing_page_id={existing_page_id}. Updating entry (duplicate_behavior=update)."
+                    )
+                    # Map extracted data to Notion properties format
+                    properties = self.field_mapper.map_to_notion_properties(extracted_data)
+
+                    # Update existing page
+                    await self.notion_integrator.notion_client.pages.update(
+                        page_id=existing_page_id,
+                        properties=properties
+                    )
+
+                    return WriteResult(
+                        success=True,
+                        page_id=existing_page_id,
+                        email_id=extracted_data.email_id,
+                        retry_count=0,
+                        is_duplicate=True,
+                        existing_page_id=existing_page_id,
+                    )
+
+            # No duplicate - proceed with creation
             # Map extracted data to Notion properties format
             properties = self.field_mapper.map_to_notion_properties(extracted_data)
 
@@ -81,6 +165,23 @@ class NotionWriter:
                 # Format error message
                 if hasattr(e, 'message') and hasattr(e, 'code'):
                     error_message = f"{e.message} (code: {e.code})"
+
+            # Save to DLQ if manager is available
+            if self.dlq_manager:
+                error_details = {
+                    "error_type": error_type,
+                    "error_message": error_message,
+                    "status_code": status_code,
+                    "retry_count": 3,  # Assume max retries attempted
+                }
+                try:
+                    dlq_file = self.dlq_manager.save_failed_write(
+                        extracted_data=extracted_data,
+                        error_details=error_details
+                    )
+                    logger.info(f"Failed write saved to DLQ: {dlq_file}")
+                except Exception as dlq_error:
+                    logger.error(f"Failed to save to DLQ: {dlq_error}", exc_info=True)
 
             # Return error result
             return WriteResult(

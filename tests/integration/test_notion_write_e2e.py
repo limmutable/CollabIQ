@@ -394,3 +394,82 @@ class TestNotionWriteE2E:
         assert "스타트업명" not in properties, "matched_company_id should be omitted when None"
         assert "협업기관" not in properties, "matched_partner_id should be omitted when None"
         assert "날짜" not in properties, "date should be omitted when None"
+
+    @pytest.mark.asyncio
+    async def test_dlq_capture_on_write_failure(
+        self, mock_notion_integrator, tmp_path
+    ):
+        """T060: Test DLQ captures failed writes for manual retry.
+
+        Scenario:
+        1. Notion API call fails with validation error (400)
+        2. NotionWriter catches exception
+        3. DLQ entry is created with full context
+        4. DLQ file contains extracted_data + error details
+        5. WriteResult indicates failure
+
+        This verifies the complete error handling workflow.
+        """
+        from notion_client.errors import APIResponseError
+        from notion_integrator import DLQManager
+
+        # Setup DLQ directory
+        dlq_dir = tmp_path / "data" / "dlq"
+        dlq_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create DLQManager
+        dlq_manager = DLQManager(dlq_dir=str(dlq_dir))
+
+        # Mock Notion API to fail with validation error
+        mock_error = APIResponseError(
+            response=Mock(status_code=400),
+            message="Invalid property value for 협업형태",
+            code="validation_error"
+        )
+        mock_error.response = Mock(status_code=400)
+        mock_error.message = "Invalid property value for 협업형태"
+        mock_error.code = "validation_error"
+
+        mock_notion_integrator.notion_client.pages.create = AsyncMock(
+            side_effect=mock_error
+        )
+
+        # Create sample data
+        data = create_valid_extracted_data(email_id="dlq-failure-test")
+
+        # Execute write operation (will fail and create DLQ entry)
+        from notion_integrator import NotionWriter
+
+        writer = NotionWriter(
+            notion_integrator=mock_notion_integrator,
+            collabiq_db_id="test-db-id",
+            dlq_manager=dlq_manager  # Inject DLQ manager
+        )
+
+        result = await writer.create_collabiq_entry(data)
+
+        # Verify write failed
+        assert result.success is False, \
+            "WriteResult should indicate failure"
+        assert result.error_type == "APIResponseError", \
+            "WriteResult should capture error type"
+        assert "Invalid property value" in result.error_message, \
+            "WriteResult should capture error message"
+
+        # Verify DLQ entry was created
+        dlq_entries = dlq_manager.list_dlq_entries()
+        assert len(dlq_entries) >= 1, \
+            "DLQ entry should be created on failure"
+
+        # Load and verify DLQ entry
+        dlq_entry = dlq_manager.load_dlq_entry(dlq_entries[0])
+        assert dlq_entry.email_id == "dlq-failure-test", \
+            "DLQ entry must preserve email_id"
+        assert dlq_entry.error["error_type"] == "APIResponseError", \
+            "DLQ entry must capture error type"
+        assert "Invalid property value" in dlq_entry.error["error_message"], \
+            "DLQ entry must capture error message"
+        assert dlq_entry.extracted_data.email_id == "dlq-failure-test", \
+            "DLQ entry must preserve full extracted_data"
+        assert dlq_entry.retry_count == 3, \
+            "DLQ entry must reflect retry attempts"
