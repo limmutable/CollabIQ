@@ -23,7 +23,7 @@ class NotionWriter:
         notion_integrator,
         collabiq_db_id: str,
         duplicate_behavior: str = "skip",
-        dlq_manager=None
+        dlq_manager=None,
     ):
         """Initialize NotionWriter with Notion integrator and database ID.
 
@@ -52,12 +52,7 @@ class NotionWriter:
             # Query Notion database for entries with matching email_id
             query_response = await self.notion_integrator.notion_client.databases.query(
                 database_id=self.collabiq_db_id,
-                filter={
-                    "property": "email_id",
-                    "rich_text": {
-                        "equals": email_id
-                    }
-                }
+                filter={"property": "email_id", "rich_text": {"equals": email_id}},
             )
 
             # Return page_id of first matching result
@@ -114,12 +109,13 @@ class NotionWriter:
                         f"existing_page_id={existing_page_id}. Updating entry (duplicate_behavior=update)."
                     )
                     # Map extracted data to Notion properties format
-                    properties = self.field_mapper.map_to_notion_properties(extracted_data)
+                    properties = self.field_mapper.map_to_notion_properties(
+                        extracted_data
+                    )
 
                     # Update existing page
                     await self.notion_integrator.notion_client.pages.update(
-                        page_id=existing_page_id,
-                        properties=properties
+                        page_id=existing_page_id, properties=properties
                     )
 
                     return WriteResult(
@@ -150,7 +146,7 @@ class NotionWriter:
         except Exception as e:
             logger.error(
                 f"Failed to create Notion entry for email_id={extracted_data.email_id}: {e}",
-                exc_info=True
+                exc_info=True,
             )
 
             # Extract error details
@@ -160,10 +156,10 @@ class NotionWriter:
 
             if isinstance(e, APIResponseError):
                 # Safely extract status code
-                if hasattr(e, 'response') and hasattr(e.response, 'status_code'):
+                if hasattr(e, "response") and hasattr(e.response, "status_code"):
                     status_code = e.response.status_code
                 # Format error message
-                if hasattr(e, 'message') and hasattr(e, 'code'):
+                if hasattr(e, "message") and hasattr(e, "code"):
                     error_message = f"{e.message} (code: {e.code})"
 
             # Save to DLQ if manager is available
@@ -176,8 +172,7 @@ class NotionWriter:
                 }
                 try:
                     dlq_file = self.dlq_manager.save_failed_write(
-                        extracted_data=extracted_data,
-                        error_details=error_details
+                        extracted_data=extracted_data, error_details=error_details
                     )
                     logger.info(f"Failed write saved to DLQ: {dlq_file}")
                 except Exception as dlq_error:
@@ -229,14 +224,16 @@ class NotionWriter:
 
                 # Don't retry on validation errors (400)
                 if isinstance(e, APIResponseError):
-                    if hasattr(e, 'response') and hasattr(e.response, 'status_code'):
+                    if hasattr(e, "response") and hasattr(e.response, "status_code"):
                         if e.response.status_code == 400:
                             logger.error(f"Validation error, will not retry: {e}")
                             raise e
 
                 # Continue to next retry for transient errors
                 if attempt < max_retries - 1:
-                    logger.info(f"Retrying immediately (attempt {attempt + 2}/{max_retries})")
+                    logger.info(
+                        f"Retrying immediately (attempt {attempt + 2}/{max_retries})"
+                    )
 
         # All retries exhausted
         logger.error(f"All {max_retries} retry attempts failed")

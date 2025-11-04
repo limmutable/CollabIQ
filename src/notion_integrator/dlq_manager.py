@@ -28,7 +28,9 @@ class DLQManager:
         self.dlq_dir.mkdir(parents=True, exist_ok=True)
 
     def save_failed_write(
-        self, extracted_data: ExtractedEntitiesWithClassification, error_details: Dict[str, Any]
+        self,
+        extracted_data: ExtractedEntitiesWithClassification,
+        error_details: Dict[str, Any],
     ) -> str:
         """Save failed write operation to DLQ for manual retry or debugging.
 
@@ -55,7 +57,9 @@ class DLQManager:
 
         # Serialize to JSON
         with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(dlq_entry.model_dump(), f, indent=2, ensure_ascii=False, default=str)
+            json.dump(
+                dlq_entry.model_dump(), f, indent=2, ensure_ascii=False, default=str
+            )
 
         logger.info(f"DLQ entry created: {file_path}")
 
@@ -104,7 +108,9 @@ class DLQManager:
         # Load DLQ entry
         dlq_entry = self.load_dlq_entry(file_path)
 
-        logger.info(f"Retrying DLQ entry: {dlq_entry.email_id} (retry #{dlq_entry.retry_count + 1})")
+        logger.info(
+            f"Retrying DLQ entry: {dlq_entry.email_id} (retry #{dlq_entry.retry_count + 1})"
+        )
 
         # Attempt write
         result = await notion_writer.create_collabiq_entry(dlq_entry.extracted_data)
@@ -129,7 +135,9 @@ class DLQManager:
 
             # Overwrite file with updated entry
             with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(dlq_entry.model_dump(), f, indent=2, ensure_ascii=False, default=str)
+                json.dump(
+                    dlq_entry.model_dump(), f, indent=2, ensure_ascii=False, default=str
+                )
 
             logger.warning(
                 f"DLQ retry failed: {dlq_entry.email_id} (retry #{dlq_entry.retry_count}) - {result.error_message}"

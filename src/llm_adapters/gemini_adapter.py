@@ -8,23 +8,22 @@ import json
 import logging
 import random
 import time
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 from google import generativeai as genai
 from google.api_core import exceptions as google_exceptions
 
-from src.llm_provider.base import LLMProvider
-from src.llm_provider.types import ConfidenceScores, ExtractedEntities
-from src.llm_provider.exceptions import (
+from llm_provider.base import LLMProvider
+from llm_provider.types import ConfidenceScores, ExtractedEntities
+from llm_provider.exceptions import (
     LLMAPIError,
     LLMAuthenticationError,
     LLMRateLimitError,
     LLMTimeoutError,
     LLMValidationError,
 )
-from src.llm_provider.date_utils import parse_date
+from llm_provider.date_utils import parse_date
 
 
 logger = logging.getLogger(__name__)
@@ -130,7 +129,9 @@ class GeminiAdapter(LLMProvider):
 
         return entities
 
-    def _build_prompt(self, email_text: str, company_context: Optional[str] = None) -> str:
+    def _build_prompt(
+        self, email_text: str, company_context: Optional[str] = None
+    ) -> str:
         """Build prompt with system instructions + few-shot examples + company context + email.
 
         Args:
@@ -151,7 +152,9 @@ class GeminiAdapter(LLMProvider):
             prompt += "# Company Matching Instructions\n\n"
             prompt += "For startup_name and partner_org extracted above:\n"
             prompt += "- Match each to entries in the company database above\n"
-            prompt += "- Return matched_company_id and matched_partner_id (Notion page IDs)\n"
+            prompt += (
+                "- Return matched_company_id and matched_partner_id (Notion page IDs)\n"
+            )
             prompt += "- Return startup_match_confidence and partner_match_confidence (0.0-1.0)\n\n"
             prompt += "Confidence Scoring Rules (calibrate carefully):\n\n"
 
@@ -166,14 +169,20 @@ class GeminiAdapter(LLMProvider):
 
             prompt += "**Semantic Match (0.75-0.89)**:\n"
             prompt += "- Clear abbreviation or well-known alternate name\n"
-            prompt += "- Example: 'SSG푸드' matches '신세계푸드' (common abbreviation)\n"
-            prompt += "- Example: 'Shinsegae' matches '신세계' (English/Korean equivalent)\n"
+            prompt += (
+                "- Example: 'SSG푸드' matches '신세계푸드' (common abbreviation)\n"
+            )
+            prompt += (
+                "- Example: 'Shinsegae' matches '신세계' (English/Korean equivalent)\n"
+            )
             prompt += "- Example: '신세계' matches '신세계인터내셔널' (parent/subsidiary relationship)\n\n"
 
             prompt += "**Fuzzy Match (0.70-0.74)**:\n"
             prompt += "- Minor typo (1-2 character difference) or partial name\n"
             prompt += "- Example: '브레이크언컴퍼니' matches '브레이크앤컴퍼니' (typo: 언→앤)\n"
-            prompt += "- Example: '스마트푸드' matches '스마트푸드네트워크' (partial name)\n"
+            prompt += (
+                "- Example: '스마트푸드' matches '스마트푸드네트워크' (partial name)\n"
+            )
             prompt += "- Requires contextual inference to resolve ambiguity\n\n"
 
             prompt += "**No Match (<0.70)**:\n"
@@ -299,7 +308,10 @@ class GeminiAdapter(LLMProvider):
             raise LLMValidationError(f"Failed to parse JSON response: {e}") from e
 
     def _parse_response(
-        self, response_data: Dict[str, Any], email_text: str, company_context: Optional[str] = None
+        self,
+        response_data: Dict[str, Any],
+        email_text: str,
+        company_context: Optional[str] = None,
     ) -> ExtractedEntities:
         """Parse Gemini API response to ExtractedEntities.
 
@@ -343,14 +355,20 @@ class GeminiAdapter(LLMProvider):
                 partner_match_confidence = response_data.get("partner_match_confidence")
 
                 # Apply confidence threshold (T012): <0.70 = null ID
-                if startup_match_confidence is not None and startup_match_confidence < 0.70:
+                if (
+                    startup_match_confidence is not None
+                    and startup_match_confidence < 0.70
+                ):
                     matched_company_id = None
                     logger.info(
                         f"Low startup match confidence ({startup_match_confidence:.2f}), "
                         "setting matched_company_id to null"
                     )
 
-                if partner_match_confidence is not None and partner_match_confidence < 0.70:
+                if (
+                    partner_match_confidence is not None
+                    and partner_match_confidence < 0.70
+                ):
                     matched_partner_id = None
                     logger.info(
                         f"Low partner match confidence ({partner_match_confidence:.2f}), "
@@ -416,7 +434,7 @@ class GeminiAdapter(LLMProvider):
                     # Exponential backoff with jitter
                     delay = min(60, (2**attempt) + random.uniform(0, 1))
                     logger.warning(
-                        f"Rate limit hit, retrying in {delay:.1f}s (attempt {attempt+1}/{self.max_retries})"
+                        f"Rate limit hit, retrying in {delay:.1f}s (attempt {attempt + 1}/{self.max_retries})"
                     )
                     time.sleep(delay)
 
@@ -437,7 +455,9 @@ class GeminiAdapter(LLMProvider):
                 else:
                     # Generic API error
                     if is_last_attempt:
-                        raise LLMAPIError(f"API error after {self.max_retries} retries: {e}") from e
+                        raise LLMAPIError(
+                            f"API error after {self.max_retries} retries: {e}"
+                        ) from e
                     delay = min(60, 2**attempt)
                     logger.warning(f"API error, retrying in {delay}s: {e}")
                     time.sleep(delay)
@@ -460,7 +480,9 @@ class GeminiAdapter(LLMProvider):
         if self._is_rate_limit_error(error):
             raise LLMRateLimitError("Rate limit exceeded") from error
         elif self._is_timeout_error(error):
-            raise LLMTimeoutError("Request timeout", timeout_seconds=self.timeout) from error
+            raise LLMTimeoutError(
+                "Request timeout", timeout_seconds=self.timeout
+            ) from error
         elif self._is_auth_error(error):
             raise LLMAuthenticationError("Authentication failed") from error
         else:
@@ -479,5 +501,6 @@ class GeminiAdapter(LLMProvider):
     def _is_auth_error(self, error: Exception) -> bool:
         """Check if error is an authentication error (401/403)."""
         return isinstance(
-            error, (google_exceptions.Unauthenticated, google_exceptions.PermissionDenied)
+            error,
+            (google_exceptions.Unauthenticated, google_exceptions.PermissionDenied),
         ) or (hasattr(error, "status_code") and error.status_code in (401, 403))

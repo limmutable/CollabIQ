@@ -183,3 +183,86 @@ class TestNotionWriterContract:
             "WriteResult.retry_count must reflect retry attempts"
         assert result.is_duplicate is False, \
             "WriteResult.is_duplicate must be False (error != duplicate)"
+
+    @pytest.mark.asyncio
+    async def test_check_duplicate_method_signature(self, notion_writer):
+        """T032: Verify check_duplicate() method exists with correct signature.
+
+        Contract:
+        - Method name: check_duplicate
+        - Parameter: email_id (str)
+        - Returns: Optional[str] (existing page_id or None)
+        - Async: Yes (coroutine)
+        """
+        # Verify method exists
+        assert hasattr(notion_writer, "check_duplicate"), \
+            "NotionWriter must have check_duplicate method"
+
+        # Verify method is callable
+        method = getattr(notion_writer, "check_duplicate")
+        assert callable(method), "check_duplicate must be callable"
+
+        # Verify method is async (coroutine)
+        import inspect
+        assert inspect.iscoroutinefunction(method), \
+            "check_duplicate must be an async method (coroutine)"
+
+    @pytest.mark.asyncio
+    async def test_check_duplicate_when_duplicate_exists(
+        self, notion_writer, mock_notion_integrator
+    ):
+        """T033: Verify check_duplicate() returns existing page_id when duplicate found.
+
+        Contract:
+        - Returns existing page_id (str) when email_id matches
+        - Queries Notion database by email_id field
+        - Returns first matching result
+        """
+        # Mock query response with existing entry
+        mock_notion_integrator.notion_client.databases.query = AsyncMock(
+            return_value={
+                "results": [
+                    {
+                        "id": "existing-page-id-abc123",
+                        "properties": {
+                            "email_id": {
+                                "rich_text": [{"text": {"content": "test-email-001"}}]
+                            }
+                        }
+                    }
+                ]
+            }
+        )
+
+        result = await notion_writer.check_duplicate("test-email-001")
+
+        assert isinstance(result, str), \
+            "check_duplicate must return str when duplicate exists"
+        assert result == "existing-page-id-abc123", \
+            "check_duplicate must return existing page_id"
+
+        # Verify query was called with correct filter
+        mock_notion_integrator.notion_client.databases.query.assert_called_once()
+        call_kwargs = mock_notion_integrator.notion_client.databases.query.call_args.kwargs
+        assert "database_id" in call_kwargs
+        assert "filter" in call_kwargs
+
+    @pytest.mark.asyncio
+    async def test_check_duplicate_when_no_duplicate(
+        self, notion_writer, mock_notion_integrator
+    ):
+        """T034: Verify check_duplicate() returns None when no duplicate found.
+
+        Contract:
+        - Returns None when no matching email_id found
+        - Handles empty results gracefully
+        """
+        # Mock query response with no results
+        mock_notion_integrator.notion_client.databases.query = AsyncMock(
+            return_value={"results": []}
+        )
+
+        result = await notion_writer.check_duplicate("non-existent-email")
+
+        assert result is None, \
+            "check_duplicate must return None when no duplicate exists"
