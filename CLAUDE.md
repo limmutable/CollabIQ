@@ -31,9 +31,9 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Python 3.12 (established in project): Follow standard conventions
 
 ## Recent Changes
+- 009-notion-write: Added Python 3.12+ (established in project)
 - 008-classification-summarization: Added Python 3.12 (established in project, using UV package manager)
 - 007-llm-matching: Added Python 3.12+ (established in project, using UV package manager)
-- 006-notion-read: Added Python 3.12 (established in project) + `notion-client` (official Notion Python SDK), `pydantic` (data validation), `tenacity` (retry logic with exponential backoff)
 
 
 <!-- MANUAL ADDITIONS START -->

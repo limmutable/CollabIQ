@@ -9,7 +9,7 @@ This module defines the data models used for entity extraction:
 
 import re
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, field_validator
@@ -457,3 +457,56 @@ class ExtractionBatch(BaseModel):
                 },
             }
         }
+
+
+class WriteResult(BaseModel):
+    """Result of a Notion write operation.
+
+    Attributes:
+        success: Whether the write operation succeeded
+        page_id: Notion page ID if created successfully
+        email_id: Email identifier for tracking
+        error_type: Exception class name if failed
+        error_message: Human-readable error message if failed
+        status_code: HTTP status code from Notion API if failed
+        retry_count: Number of retry attempts made
+        is_duplicate: Whether write was skipped due to duplicate
+        existing_page_id: Page ID of existing duplicate entry
+    """
+
+    success: bool = Field(..., description="Whether write operation succeeded")
+    page_id: Optional[str] = Field(None, description="Notion page ID if created")
+    email_id: str = Field(..., description="Email identifier for tracking")
+    error_type: Optional[str] = Field(None, description="Exception class name if failed")
+    error_message: Optional[str] = Field(None, description="Error message if failed")
+    status_code: Optional[int] = Field(None, description="HTTP status code if failed")
+    retry_count: int = Field(0, ge=0, le=3, description="Number of retry attempts")
+    is_duplicate: bool = Field(False, description="Whether duplicate was detected")
+    existing_page_id: Optional[str] = Field(None, description="Existing duplicate page ID")
+
+
+class DLQEntry(BaseModel):
+    """Dead letter queue entry for failed Notion writes.
+
+    Attributes:
+        email_id: Email identifier for reference
+        failed_at: When the write operation failed (UTC)
+        retry_count: Number of automatic retries attempted
+        error: Error details (type, message, status, response)
+        extracted_data: Full extracted entity data
+        original_email_content: Optional original email text
+        dlq_file_path: Path to DLQ JSON file
+    """
+
+    email_id: str = Field(..., description="Email identifier")
+    failed_at: datetime = Field(default_factory=datetime.utcnow, description="Failure timestamp")
+    retry_count: int = Field(0, ge=0, description="Number of retries attempted")
+    error: Dict[str, Any] = Field(..., description="Error details")
+    extracted_data: "ExtractedEntitiesWithClassification" = Field(..., description="Full extracted data")
+    original_email_content: Optional[str] = Field(None, description="Original email text")
+    dlq_file_path: Optional[str] = Field(None, description="DLQ file path")
+
+    class Config:
+        """Pydantic configuration."""
+
+        json_encoders = {datetime: lambda v: v.isoformat()}

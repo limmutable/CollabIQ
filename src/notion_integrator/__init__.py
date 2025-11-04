@@ -37,6 +37,9 @@ __all__ = [
     "CompanyRecord",
     "FormatMetadata",
     "LLMFormattedData",
+    "NotionWriter",
+    "FieldMapper",
+    "DLQManager",
 ]
 
 __version__ = "0.1.0"
@@ -65,4 +68,16 @@ def __getattr__(name):
         from .models import LLMFormattedData
 
         return LLMFormattedData
+    if name == "NotionWriter":
+        from .writer import NotionWriter
+
+        return NotionWriter
+    if name == "FieldMapper":
+        from .field_mapper import FieldMapper
+
+        return FieldMapper
+    if name == "DLQManager":
+        from .dlq_manager import DLQManager
+
+        return DLQManager
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

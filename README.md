@@ -4,7 +4,7 @@ Email-based collaboration tracking system that automatically extracts collaborat
 
 ## Project Status
 
-**Current Phase**: Phase 2c Complete ✅ (Branch 008-classification-summarization)
+**Current Phase**: Phase 2d Complete ✅ (Branch 009-notion-write)
 
 ### Completed Phases
 - ✅ **Phase 0**: Foundation Work (001-feasibility-architecture)
@@ -44,8 +44,15 @@ Email-based collaboration tracking system that automatically extracts collaborat
   - Confidence scoring with 0.85 threshold for manual review routing
   - **Tests**: 45/45 Phase 2c tests passing (100%), 213/217 total (98.2%)
   - See [COMPLETION_REPORT.md](specs/008-classification-summarization/COMPLETION_REPORT.md)
+- ✅ **Phase 2d**: Notion Write Operations (009-notion-write)
+  - NotionWriter with duplicate detection (skip/update modes)
+  - FieldMapper for schema-aware property mapping
+  - DLQManager for failed write handling and manual retry
+  - **Tests**: 35+ Phase 2d tests passing (100%)
+  - Retry script: `scripts/retry_dlq.py`
+  - See specs/009-notion-write/ for implementation details
 
-**Next Phase**: Phase 2d - Notion Write Operations (009-notion-write)
+**Next Phase**: Phase 3 - Verification Queue & Manual Review
 
 ## Overview
 
@@ -70,7 +77,10 @@ CollabIQ automates the tedious process of tracking collaboration activities by:
    - LLM-based intensity analysis (Korean semantic understanding)
    - Summary generation preserving key entities
    - Confidence-based manual review routing
-6. **Creating** entries in Notion's "CollabIQ" database (🚧 Phase 2d)
+6. **Writing** classified data to Notion's "CollabIQ" database (✅ Phase 2d):
+   - Duplicate detection and handling
+   - Schema-aware field mapping
+   - Failed write queue with manual retry
 7. **Queuing** ambiguous cases for manual verification (🚧 Phase 3a-3b)
 
 ## System Architecture

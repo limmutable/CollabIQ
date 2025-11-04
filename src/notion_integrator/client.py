@@ -264,7 +264,9 @@ class NotionClient:
         wait=wait_exponential(multiplier=1, min=1, max=10),
         reraise=True,
     )
-    async def _retrieve_data_source_with_retry(self, data_source_id: str) -> Dict[str, Any]:
+    async def _retrieve_data_source_with_retry(
+        self, data_source_id: str
+    ) -> Dict[str, Any]:
         """
         Retrieve data source with retry logic for transient failures.
 
