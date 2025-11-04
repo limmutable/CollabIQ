@@ -259,3 +259,138 @@ class TestNotionWriteE2E:
             "WriteResult must reflect 1 retry attempt"
         assert result.error_type is None, \
             "Successful retry should clear error_type"
+
+    @pytest.mark.asyncio
+    async def test_all_notion_property_types_formatted_correctly(
+        self, mock_notion_integrator
+    ):
+        """T047: Test that all Notion property types are formatted correctly.
+
+        Property Types Tested:
+        - title: 협력주체 (auto-generated)
+        - rich_text: 담당자, 협업내용, 요약, email_id
+        - relation: 스타트업명, 협업기관
+        - select: 협업형태, 협업강도
+        - date: 날짜, classification_timestamp
+        - number: type_confidence, intensity_confidence
+
+        This test verifies ALL field mappings work together in one complete write.
+        """
+        # Create data with ALL fields populated
+        data = create_valid_extracted_data(
+            email_id="complete-fields-test",
+            startup_name="완전한스타트업",
+            partner_org="완전한파트너",
+            person_in_charge="김완전",
+            details="완전한 협업 내용 설명",
+            collaboration_summary="완전한스타트업과 완전한파트너의 투자 협력 관계가 성사되었습니다. 김완전 담당자가 주도하고 있습니다.",  # 50+ chars
+            matched_company_id="co123456789012345678901234567890",  # 33 chars (valid UUID length)
+            matched_partner_id="pa123456789012345678901234567890",  # 33 chars (valid UUID length)
+            collaboration_type="[A]완전한협업",
+            collaboration_intensity="투자",
+            date="2025-10-29",
+            type_confidence=0.98,
+            intensity_confidence=0.97,
+            classification_timestamp="2025-10-29T12:00:00Z",
+        )
+
+        # Mock successful Notion API response
+        mock_notion_integrator.notion_client.pages.create = AsyncMock(
+            return_value={"id": "all-fields-page-id", "object": "page", "properties": {}}
+        )
+
+        # Execute write
+        writer = NotionWriter(
+            notion_integrator=mock_notion_integrator,
+            collabiq_db_id="test-db-id"
+        )
+        result = await writer.create_collabiq_entry(data)
+
+        # Verify success
+        assert result.success is True
+        assert result.page_id == "all-fields-page-id"
+
+        # Extract properties from API call
+        properties = mock_notion_integrator.notion_client.pages.create.call_args.kwargs["properties"]
+
+        # Verify title field
+        assert properties["협력주체"]["title"][0]["text"]["content"] == "완전한스타트업-완전한파트너"
+
+        # Verify rich_text fields
+        assert properties["담당자"]["rich_text"][0]["text"]["content"] == "김완전"
+        assert properties["협업내용"]["rich_text"][0]["text"]["content"] == "완전한 협업 내용 설명"
+        assert properties["요약"]["rich_text"][0]["text"]["content"] == "완전한스타트업과 완전한파트너의 투자 협력 관계가 성사되었습니다. 김완전 담당자가 주도하고 있습니다."
+        assert properties["email_id"]["rich_text"][0]["text"]["content"] == "complete-fields-test"
+
+        # Verify relation fields
+        assert properties["스타트업명"]["relation"][0]["id"] == "co123456789012345678901234567890"
+        assert properties["협업기관"]["relation"][0]["id"] == "pa123456789012345678901234567890"
+
+        # Verify select fields
+        assert properties["협업형태"]["select"]["name"] == "[A]완전한협업"
+        assert properties["협업강도"]["select"]["name"] == "투자"
+
+        # Verify date fields (YYYY-MM-DD format)
+        assert properties["날짜"]["date"]["start"] == "2025-10-29"
+        assert properties["classification_timestamp"]["date"]["start"] == "2025-10-29"
+
+        # Verify number fields
+        assert properties["type_confidence"]["number"] == 0.98
+        assert properties["intensity_confidence"]["number"] == 0.97
+
+    @pytest.mark.asyncio
+    async def test_graceful_degradation_missing_optional_fields(
+        self, mock_notion_integrator
+    ):
+        """T048: Test graceful degradation when optional fields are missing.
+
+        Scenario:
+        - Missing relation IDs (no company match found)
+        - Missing person_in_charge
+        - Missing collaboration_summary
+        - Entry should still be created successfully
+        - Only required fields + available optional fields are included
+        """
+        # Create data with missing optional fields
+        data = create_valid_extracted_data(
+            email_id="missing-optionals-test",
+            person_in_charge=None,  # Missing
+            collaboration_summary=None,  # Missing
+            matched_company_id=None,  # Company matching failed
+            matched_partner_id=None,  # Partner matching failed
+            date=None,  # Missing
+        )
+
+        # Mock successful Notion API response
+        mock_notion_integrator.notion_client.pages.create = AsyncMock(
+            return_value={"id": "partial-fields-page-id", "object": "page", "properties": {}}
+        )
+
+        # Execute write
+        writer = NotionWriter(
+            notion_integrator=mock_notion_integrator,
+            collabiq_db_id="test-db-id"
+        )
+        result = await writer.create_collabiq_entry(data)
+
+        # Verify success despite missing optionals
+        assert result.success is True, \
+            "Entry creation should succeed even with missing optional fields"
+        assert result.page_id == "partial-fields-page-id"
+
+        # Extract properties from API call
+        properties = mock_notion_integrator.notion_client.pages.create.call_args.kwargs["properties"]
+
+        # Required fields should be present
+        assert "협력주체" in properties, "Title field is required"
+        assert "email_id" in properties, "email_id is required"
+        assert "협업내용" in properties, "details is required"
+        assert "협업형태" in properties, "collaboration_type is required"
+        assert "협업강도" in properties, "collaboration_intensity is required"
+
+        # Missing optional fields should be omitted
+        assert "담당자" not in properties, "person_in_charge should be omitted when None"
+        assert "요약" not in properties, "collaboration_summary should be omitted when None"
+        assert "스타트업명" not in properties, "matched_company_id should be omitted when None"
+        assert "협업기관" not in properties, "matched_partner_id should be omitted when None"
+        assert "날짜" not in properties, "date should be omitted when None"
