@@ -50,7 +50,6 @@ Email-based collaboration tracking system that automatically extracts collaborat
   - DLQManager for failed write handling and manual retry
   - **Tests**: 35+ Phase 2d tests passing (100%)
   - Retry script: `scripts/retry_dlq.py`
-  - See specs/009-notion-write/ for implementation details
 
 **Next Phase**: Phase 3 - Verification Queue & Manual Review
 
