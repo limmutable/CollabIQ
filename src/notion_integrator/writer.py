@@ -50,7 +50,7 @@ class NotionWriter:
         """
         try:
             # Query Notion database for entries with matching email_id
-            query_response = await self.notion_integrator.notion_client.databases.query(
+            query_response = await self.notion_integrator.client.databases.query(
                 database_id=self.collabiq_db_id,
                 filter={"property": "email_id", "rich_text": {"equals": email_id}},
             )
@@ -114,7 +114,7 @@ class NotionWriter:
                     )
 
                     # Update existing page
-                    await self.notion_integrator.notion_client.pages.update(
+                    await self.notion_integrator.client.pages.update(
                         page_id=existing_page_id, properties=properties
                     )
 
@@ -210,7 +210,7 @@ class NotionWriter:
         for attempt in range(max_retries):
             try:
                 # Call Notion API to create page
-                response = await self.notion_integrator.notion_client.pages.create(
+                response = await self.notion_integrator.client.pages.create(
                     parent={"database_id": self.collabiq_db_id},
                     properties=properties,
                 )
