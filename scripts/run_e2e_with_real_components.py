@@ -180,6 +180,11 @@ Examples:
         action="store_true",
         help="Generate detailed error report",
     )
+    parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Skip interactive confirmation prompt (use with caution)",
+    )
 
     args = parser.parse_args()
 
@@ -202,10 +207,13 @@ Examples:
         print("=" * 70)
         print()
 
-        response = input("Type 'YES' to continue: ").strip()
-        if response != "YES":
-            print("Cancelled.")
-            sys.exit(0)
+        if not args.yes:
+            response = input("Type 'YES' to continue: ").strip()
+            if response != "YES":
+                print("Cancelled.")
+                sys.exit(0)
+        else:
+            print("⚠️  Skipping confirmation prompt (--yes flag provided)")
         print()
 
     # Initialize components

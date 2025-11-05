@@ -9,6 +9,7 @@ Responsibilities:
 - Provide progress reporting during execution
 """
 
+import asyncio
 import json
 import logging
 from datetime import datetime
@@ -18,6 +19,7 @@ from typing import List, Optional
 from src.e2e_test.error_collector import ErrorCollector
 from src.e2e_test.models import PipelineStage, TestRun
 from src.e2e_test.validators import Validator
+from src.llm_provider.types import ExtractedEntitiesWithClassification
 
 logger = logging.getLogger(__name__)
 
@@ -485,11 +487,52 @@ class E2ERunner:
                     },
                 }
 
-            # Write using NotionWriter
-            # This would require async implementation in practice
-            notion_entry = {}  # Placeholder
+            # Write using NotionWriter (real implementation)
+            logger.info(f"Writing to Notion using NotionWriter for email {email_id}")
 
-            return notion_entry
+            # Convert classified_entities dict to ExtractedEntitiesWithClassification model
+            extracted_data = ExtractedEntitiesWithClassification(**classified_entities)
+
+            # Call async writer method using asyncio.run()
+            write_result = asyncio.run(
+                self.notion_writer.create_collabiq_entry(extracted_data)
+            )
+
+            if not write_result.success:
+                logger.error(
+                    f"Notion write failed for email {email_id}: {write_result.error_message}"
+                )
+                error = self.error_collector.collect_error(
+                    run_id=run_id,
+                    email_id=email_id,
+                    stage=PipelineStage.WRITE,
+                    error_type="NotionWriteError",
+                    error_message=write_result.error_message or "Unknown error",
+                )
+                self.error_collector.persist_error(error)
+                return None
+
+            # Fetch the created page to get full properties for validation
+            page_id = write_result.page_id or write_result.existing_page_id
+            if page_id:
+                page_data = asyncio.run(
+                    self.notion_writer.notion_integrator.notion_client.pages.retrieve(
+                        page_id=page_id
+                    )
+                )
+                logger.info(f"Successfully wrote to Notion, page_id={page_id}")
+                return page_data
+            else:
+                logger.warning(
+                    f"Write succeeded but no page_id returned (duplicate skipped?) for email {email_id}"
+                )
+                # Return a minimal structure for validation
+                return {
+                    "id": "duplicate_skipped",
+                    "properties": {},
+                    "duplicate": True,
+                }
+
 
         except Exception as e:
             error = self.error_collector.collect_error(
