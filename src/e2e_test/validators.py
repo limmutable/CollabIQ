@@ -49,15 +49,14 @@ class Validator:
     - Company IDs follow expected format
     """
 
-    # Required fields in Notion entry
+    # Required fields in Notion entry (names match actual Notion DB properties)
     REQUIRED_FIELDS = [
-        "Email ID",
-        "담당자",
-        "스타트업명",
-        "협력기관",
-        "협력유형",
-        "Date",
-        "Company ID",
+        "Email ID",  # Added as text field for duplicate detection
+        "담당자",     # people
+        "스타트업명",  # relation
+        "협력기관",    # relation
+        "협력유형",    # select
+        "날짜",       # date (Korean name in actual DB, not "Date")
     ]
 
     def validate_notion_entry(self, notion_entry: dict) -> ValidationResult:
@@ -81,8 +80,8 @@ class Validator:
                 continue
 
             # Check field value is not empty
-            # Special handling for Date field
-            if field_name == "Date":
+            # Special handling for 날짜 (date) field
+            if field_name == "날짜":
                 field_value = self._extract_date_value(properties[field_name])
             else:
                 field_value = self._extract_field_value(properties[field_name])
@@ -90,9 +89,9 @@ class Validator:
             if not field_value or (isinstance(field_value, str) and field_value.strip() == ""):
                 result.add_error(f"Required field is empty: {field_name}")
 
-        # Validate Date field format if present
-        if "Date" in properties:
-            date_value = self._extract_date_value(properties["Date"])
+        # Validate 날짜 (date) field format if present
+        if "날짜" in properties:
+            date_value = self._extract_date_value(properties["날짜"])
             if date_value:
                 date_result = self.validate_date_format(date_value)
                 if not date_result.is_valid:

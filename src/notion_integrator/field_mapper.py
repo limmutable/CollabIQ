@@ -83,9 +83,9 @@ class FieldMapper:
                 extracted_data.collaboration_intensity
             )
 
-        # Date field
+        # Date field (using Korean name as it appears in Notion DB)
         if extracted_data.date:
-            properties["Date"] = self._format_date(extracted_data.date)
+            properties["날짜"] = self._format_date(extracted_data.date)
 
         # Number fields (confidence scores)
         if extracted_data.type_confidence is not None:
@@ -100,16 +100,6 @@ class FieldMapper:
 
         # Metadata fields
         properties["Email ID"] = self._format_rich_text(extracted_data.email_id)
-
-        # Company ID field (required) - use matched_company_id if available
-        if extracted_data.matched_company_id:
-            properties["Company ID"] = self._format_rich_text(extracted_data.matched_company_id)
-        else:
-            # Fallback: generate from startup name if no match found
-            startup_name = extracted_data.startup_name or "unknown"
-            properties["Company ID"] = self._format_rich_text(
-                f"unmatched_{startup_name[:20]}"
-            )
 
         if extracted_data.classification_timestamp:
             properties["classification_timestamp"] = self._format_date(

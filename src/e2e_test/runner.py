@@ -476,13 +476,10 @@ class E2ERunner:
                                 )
                             }
                         },
-                        "Date": {
+                        "날짜": {
                             "date": {
                                 "start": classified_entities.get("date", "2025-01-01")
                             }
-                        },
-                        "Company ID": {
-                            "rich_text": [{"text": {"content": "comp_mock"}}]
                         },
                     },
                 }
