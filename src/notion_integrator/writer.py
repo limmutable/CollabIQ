@@ -49,10 +49,10 @@ class NotionWriter:
             Existing page_id if duplicate found, None otherwise
         """
         try:
-            # Query Notion database for entries with matching email_id
+            # Query Notion database for entries with matching Email ID
             query_response = await self.notion_integrator.client.client.databases.query(
                 database_id=self.collabiq_db_id,
-                filter={"property": "email_id", "rich_text": {"equals": email_id}},
+                filter={"property": "Email ID", "rich_text": {"equals": email_id}},
             )
 
             # Return page_id of first matching result
