@@ -19,8 +19,15 @@ class FieldMapper:
         """
         self.schema = schema
         # Build property type map for quick lookups
+        # DatabaseSchema.database.properties contains the actual property definitions
+        properties_dict = (
+            schema.database.properties
+            if hasattr(schema, "database")
+            else schema.properties if hasattr(schema, "properties") else {}
+        )
         self.property_types = {
-            name: prop["type"] for name, prop in schema.properties.items()
+            name: prop.type if hasattr(prop, "type") else prop.get("type")
+            for name, prop in properties_dict.items()
         }
 
     def map_to_notion_properties(self, extracted_data) -> Dict[str, Any]:
