@@ -102,9 +102,9 @@ def initialize_components():
 
     # 4. Classification Service
     print("  - ClassificationService...")
-    collabiq_db_id = settings.get_secret_or_env("COLLABIQ_DB_ID")
+    collabiq_db_id = settings.get_notion_collabiq_db_id()
     if not collabiq_db_id:
-        print("ERROR: COLLABIQ_DB_ID not found")
+        print("ERROR: NOTION_DATABASE_ID_COLLABIQ not found in environment")
         sys.exit(1)
 
     classification_service = ClassificationService(
