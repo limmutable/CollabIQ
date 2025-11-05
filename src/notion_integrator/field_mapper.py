@@ -106,8 +106,9 @@ class FieldMapper:
             properties["Company ID"] = self._format_rich_text(extracted_data.matched_company_id)
         else:
             # Fallback: generate from startup name if no match found
+            startup_name = extracted_data.startup_name or "unknown"
             properties["Company ID"] = self._format_rich_text(
-                f"unmatched_{extracted_data.startup_name[:20]}"
+                f"unmatched_{startup_name[:20]}"
             )
 
         if extracted_data.classification_timestamp:
