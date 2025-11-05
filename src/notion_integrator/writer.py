@@ -49,10 +49,29 @@ class NotionWriter:
             Existing page_id if duplicate found, None otherwise
         """
         try:
-            # TODO: Fix duplicate check - databases.query() method not available
-            # For now, skip duplicate checking to unblock E2E testing
-            logger.warning(f"Duplicate checking temporarily disabled for email_id={email_id}")
-            return None  # Always allow write (no duplicate found)
+            # Query for existing entry with this email_id (Notion API 2025-09-03)
+            # Uses data_sources.query() via NotionClient.query_database()
+            filter_conditions = {
+                "property": "Email ID",
+                "rich_text": {"equals": email_id},
+            }
+
+            response = await self.notion_integrator.client.query_database(
+                database_id=self.collabiq_db_id,
+                filter_conditions=filter_conditions,
+                page_size=1,  # Only need to check if at least one exists
+            )
+
+            results = response.get("results", [])
+            if results:
+                page_id = results[0]["id"]
+                logger.info(
+                    f"Duplicate found for email_id={email_id}, page_id={page_id}"
+                )
+                return page_id
+
+            logger.debug(f"No duplicate found for email_id={email_id}")
+            return None
 
         except Exception as e:
             logger.warning(f"Error checking for duplicate email_id={email_id}: {e}")

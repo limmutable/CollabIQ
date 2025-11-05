@@ -100,7 +100,7 @@ async def discover_schema(
                 return cached_schema
 
             # Cache miss - create schema and cache it
-            schema = create_database_schema(notion_db)
+            schema = create_database_schema(notion_db, data_source_id)
             validate_schema(schema)
             cache_manager.set_schema_cache(schema)
 
@@ -122,7 +122,7 @@ async def discover_schema(
             data_source_response = await client.retrieve_data_source(data_source_id)
 
             notion_db = parse_database_response(db_response, data_source_response)
-            schema = create_database_schema(notion_db)
+            schema = create_database_schema(notion_db, data_source_id)
             validate_schema(schema)
 
         logger.info(
@@ -264,12 +264,15 @@ def parse_property(name: str, prop_data: Dict[str, Any]) -> NotionProperty:
 # ==============================================================================
 
 
-def create_database_schema(database: NotionDatabase) -> DatabaseSchema:
+def create_database_schema(
+    database: NotionDatabase, data_source_id: Optional[str] = None
+) -> DatabaseSchema:
     """
     Create DatabaseSchema from NotionDatabase with analysis.
 
     Args:
         database: NotionDatabase instance
+        data_source_id: Data source ID for querying (Notion API 2025-09-03)
 
     Returns:
         DatabaseSchema with analyzed structure
@@ -285,6 +288,7 @@ def create_database_schema(database: NotionDatabase) -> DatabaseSchema:
 
     return DatabaseSchema(
         database=database,
+        data_source_id=data_source_id,
         properties_by_type=properties_by_type,
         relation_properties=relation_properties,
         classification_fields=classification_fields,

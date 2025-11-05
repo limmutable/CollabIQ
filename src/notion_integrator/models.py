@@ -117,12 +117,14 @@ class DatabaseSchema(BaseModel):
 
     Attributes:
         database: Database metadata
+        data_source_id: First data source ID (for querying, Notion API 2025-09-03)
         properties_by_type: Properties grouped by type
         relation_properties: Subset of properties that are relations
         classification_fields: Maps classification field names to property IDs
     """
 
     database: NotionDatabase
+    data_source_id: Optional[str] = None  # For Notion API 2025-09-03
     properties_by_type: Dict[str, List[NotionProperty]]
     relation_properties: List[NotionProperty]
     classification_fields: Dict[str, str] = Field(default_factory=dict)
