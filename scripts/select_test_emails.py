@@ -10,6 +10,7 @@ Usage:
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -47,12 +48,27 @@ def main():
     print("Fetching emails from collab@signite.co inbox...")
 
     try:
+        # Get credentials paths from environment or defaults
+        credentials_path = Path(os.getenv("GOOGLE_CREDENTIALS_PATH", "credentials.json"))
+        token_path = Path(os.getenv("GMAIL_TOKEN_PATH", "token.json"))
+
+        # Check if credentials file exists
+        if not credentials_path.exists():
+            print(f"ERROR: Gmail credentials file not found: {credentials_path}")
+            print("Please ensure GOOGLE_CREDENTIALS_PATH is set or credentials.json exists")
+            sys.exit(1)
+
         # Initialize Gmail receiver
-        receiver = GmailReceiver()
+        receiver = GmailReceiver(
+            credentials_path=credentials_path,
+            token_path=token_path,
+        )
+
+        # Connect to Gmail API
+        receiver.connect()
 
         # Fetch all emails from inbox (using existing method)
-        # Assuming GmailReceiver.fetch_emails() retrieves from configured inbox
-        emails = receiver.fetch_emails(max_results=100)  # Fetch up to 100 (we have <10)
+        emails = receiver.fetch_emails(max_emails=100, query="to:collab@signite.co")
 
         print(f"Found {len(emails)} emails in inbox")
 
@@ -65,23 +81,27 @@ def main():
         test_emails = []
         for email in emails:
             # Detect if email contains Korean text
+            # email is a RawEmail object with metadata and body attributes
+            subject_text = email.metadata.subject
+            body_text = email.body
+
             has_korean = any(
                 "\uac00" <= char <= "\ud7a3"  # Hangul syllables range
-                for char in (email.get("subject", "") + email.get("body", ""))
+                for char in (subject_text + body_text)
             )
 
             # Create metadata
             metadata = TestEmailMetadata(
-                email_id=email.get("id", "unknown"),
-                subject=email.get("subject", "No Subject"),
-                received_date=email.get("date", "unknown"),
+                email_id=email.metadata.message_id,
+                subject=subject_text,
+                received_date=email.metadata.received_at.isoformat(),
                 collaboration_type=None,  # Will be detected during processing
                 has_korean_text=has_korean,
                 selection_reason=SelectionReason.STRATIFIED_SAMPLE,
                 notes=f"Selected from inbox (all available emails)",
             )
 
-            test_emails.append(metadata.model_dump())
+            test_emails.append(metadata.model_dump(mode="json"))
 
         # Ensure output directory exists
         output_path = Path(args.output)

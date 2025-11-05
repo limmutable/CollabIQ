@@ -131,12 +131,17 @@ class E2ERunner:
             run_id=run_id,
             start_time=datetime.now(),
             end_time=None,
+            status="running",
+            email_count=len(email_ids),
             emails_processed=0,
             success_count=0,
             failure_count=0,
+            stage_success_rates={},
+            total_duration_seconds=None,
+            average_time_per_email=None,
             error_summary={"critical": 0, "high": 0, "medium": 0, "low": 0},
-            status="in_progress",
-            processed_emails=[],
+            test_email_ids=email_ids,
+            config={"test_mode": test_mode},
         )
 
         # Save initial test run state
@@ -154,7 +159,6 @@ class E2ERunner:
                 test_run.emails_processed += 1
                 if success:
                     test_run.success_count += 1
-                    test_run.processed_emails.append(email_id)
                 else:
                     test_run.failure_count += 1
 

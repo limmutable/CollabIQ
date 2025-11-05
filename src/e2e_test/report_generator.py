@@ -160,16 +160,13 @@ class ReportGenerator:
             ])
 
         # Processing details
-        if test_run.processed_emails:
+        if test_run.success_count > 0:
             lines.extend([
-                "## Successfully Processed Emails",
+                "## Processing Summary",
+                "",
+                f"Successfully processed {test_run.success_count} out of {test_run.email_count} emails.",
                 "",
             ])
-
-            for email_id in test_run.processed_emails:
-                lines.append(f"- ✅ {email_id}")
-
-            lines.append("")
 
         # Next steps
         lines.extend([
