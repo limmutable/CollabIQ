@@ -1,0 +1,232 @@
+#!/usr/bin/env python3
+"""
+Main CLI for E2E Testing
+
+Production CLI with argparse for flexible test execution. Supports running
+tests with all emails, single email, or resuming interrupted runs.
+
+Usage:
+    # Process all emails from test_email_ids.json
+    uv run python scripts/run_e2e_tests.py --all
+
+    # Process single email by ID
+    uv run python scripts/run_e2e_tests.py --email-id msg_001
+
+    # Resume interrupted test run
+    uv run python scripts/run_e2e_tests.py --resume 20251105_143000
+
+    # Generate detailed error report after test run
+    uv run python scripts/run_e2e_tests.py --all --report
+"""
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+from src.e2e_test.runner import E2ERunner
+from src.e2e_test.report_generator import ReportGenerator
+
+
+def load_test_email_ids(email_ids_file: str = "data/e2e_test/test_email_ids.json") -> list[str]:
+    """Load test email IDs from JSON file"""
+    path = Path(email_ids_file)
+
+    if not path.exists():
+        print(f"ERROR: Email IDs file not found: {email_ids_file}")
+        print("Run email selection script first:")
+        print("  uv run python scripts/select_test_emails.py --all")
+        sys.exit(1)
+
+    with path.open("r", encoding="utf-8") as f:
+        test_emails = json.load(f)
+
+    # Extract email_ids from metadata
+    email_ids = [email["email_id"] for email in test_emails]
+
+    return email_ids
+
+
+def main():
+    """Main entry point"""
+    parser = argparse.ArgumentParser(
+        description="Run E2E tests for MVP pipeline",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Process all emails
+  %(prog)s --all
+
+  # Process single email
+  %(prog)s --email-id msg_001
+
+  # Resume interrupted run
+  %(prog)s --resume 20251105_143000
+
+  # Generate detailed error report
+  %(prog)s --all --report
+        """,
+    )
+
+    # Mutually exclusive group for run mode
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "--all",
+        action="store_true",
+        help="Process all emails from test_email_ids.json",
+    )
+    group.add_argument(
+        "--email-id",
+        type=str,
+        metavar="EMAIL_ID",
+        help="Process single email by ID",
+    )
+    group.add_argument(
+        "--resume",
+        type=str,
+        metavar="RUN_ID",
+        help="Resume interrupted test run by run ID",
+    )
+
+    # Optional arguments
+    parser.add_argument(
+        "--report",
+        action="store_true",
+        help="Generate detailed error report after test run",
+    )
+
+    parser.add_argument(
+        "--email-ids-file",
+        type=str,
+        default="data/e2e_test/test_email_ids.json",
+        help="Path to test email IDs file (default: data/e2e_test/test_email_ids.json)",
+    )
+
+    parser.add_argument(
+        "--test-mode",
+        action="store_true",
+        default=True,
+        help="Run in test mode (default: True)",
+    )
+
+    parser.add_argument(
+        "--no-test-mode",
+        action="store_false",
+        dest="test_mode",
+        help="Disable test mode (use real components)",
+    )
+
+    args = parser.parse_args()
+
+    # Initialize runner
+    print("Initializing E2E runner...")
+    runner = E2ERunner(
+        gmail_receiver=None,  # Components will be initialized based on test_mode
+        gemini_adapter=None,
+        classification_service=None,
+        notion_writer=None,
+        test_mode=args.test_mode,
+    )
+
+    # Initialize report generator
+    report_gen = ReportGenerator()
+
+    # Run tests based on mode
+    test_run = None
+
+    if args.resume:
+        # Resume interrupted run
+        print(f"Resuming test run: {args.resume}")
+        try:
+            test_run = runner.resume_test_run(args.resume)
+            print(f"Resumed test run {args.resume}")
+        except FileNotFoundError as e:
+            print(f"ERROR: {e}")
+            sys.exit(1)
+
+    elif args.email_id:
+        # Single email
+        print(f"Processing single email: {args.email_id}")
+        test_run = runner.run_tests([args.email_id], test_mode=args.test_mode)
+
+    elif args.all:
+        # All emails
+        print("Loading test email IDs...")
+        email_ids = load_test_email_ids(args.email_ids_file)
+
+        if len(email_ids) == 0:
+            print("ERROR: No test email IDs found in file")
+            sys.exit(1)
+
+        print(f"Processing {len(email_ids)} emails...")
+        test_run = runner.run_tests(email_ids, test_mode=args.test_mode)
+
+    # Generate summary report
+    if test_run:
+        print("\nGenerating summary report...")
+        summary = report_gen.generate_summary(test_run)
+        summary_path = Path(f"data/e2e_test/reports/{test_run.run_id}_summary.md")
+        summary_path.write_text(summary, encoding="utf-8")
+
+        # Print summary
+        print("\n" + "=" * 70)
+        print("Test Run Summary")
+        print("=" * 70)
+        print(f"Run ID: {test_run.run_id}")
+        print(f"Status: {test_run.status}")
+        print(f"Emails Processed: {test_run.emails_processed}")
+        print(f"Success: {test_run.success_count} ({test_run.success_count / test_run.emails_processed * 100:.1f}%)")
+        print(f"Failures: {test_run.failure_count}")
+        print(f"Errors: {test_run.error_summary}")
+        print(f"\nSummary report saved to: {summary_path}")
+
+        # Generate error report if requested
+        if args.report:
+            print("\nGenerating detailed error report...")
+            error_report = report_gen.generate_error_report(test_run.run_id)
+            error_path = Path(f"data/e2e_test/reports/{test_run.run_id}_errors.md")
+            error_path.write_text(error_report, encoding="utf-8")
+            print(f"Error report saved to: {error_path}")
+
+        print("=" * 70)
+
+        # Exit with appropriate status code
+        if test_run.status == "completed":
+            success_rate = test_run.success_count / test_run.emails_processed
+            critical_errors = test_run.error_summary.get("critical", 0)
+
+            if success_rate >= 0.95 and critical_errors == 0:
+                print("\n✅ SUCCESS: All success criteria met (SC-001, SC-003)")
+                sys.exit(0)
+            else:
+                print("\n❌ FAILURE: Success criteria not met")
+                if success_rate < 0.95:
+                    print(f"   - Success rate {success_rate:.1%} < 95% (SC-001)")
+                if critical_errors > 0:
+                    print(f"   - {critical_errors} critical errors detected (SC-003)")
+                sys.exit(1)
+        elif test_run.status == "interrupted":
+            print("\n⚠️  WARNING: Test run was interrupted")
+            print(f"   Resume with: {sys.argv[0]} --resume {test_run.run_id}")
+            sys.exit(2)
+        else:
+            print("\n❌ ERROR: Test run failed")
+            sys.exit(1)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n\nInterrupted by user.")
+        sys.exit(130)
+    except Exception as e:
+        print(f"\nERROR: {e}")
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)
