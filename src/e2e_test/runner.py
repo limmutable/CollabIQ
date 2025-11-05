@@ -490,8 +490,19 @@ class E2ERunner:
             # Write using NotionWriter (real implementation)
             logger.info(f"Writing to Notion using NotionWriter for email {email_id}")
 
-            # Convert classified_entities dict to ExtractedEntitiesWithClassification model
-            extracted_data = ExtractedEntitiesWithClassification(**classified_entities)
+            # Convert classified_entities to ExtractedEntitiesWithClassification model
+            if isinstance(classified_entities, ExtractedEntitiesWithClassification):
+                extracted_data = classified_entities
+            elif isinstance(classified_entities, dict):
+                extracted_data = ExtractedEntitiesWithClassification(**classified_entities)
+            else:
+                # Handle ExtractedEntities or other types - convert via model_dump
+                data_dict = (
+                    classified_entities.model_dump()
+                    if hasattr(classified_entities, "model_dump")
+                    else classified_entities
+                )
+                extracted_data = ExtractedEntitiesWithClassification(**data_dict)
 
             # Call async writer method using asyncio.run()
             write_result = asyncio.run(
