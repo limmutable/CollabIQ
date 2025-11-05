@@ -527,7 +527,7 @@ class E2ERunner:
             page_id = write_result.page_id or write_result.existing_page_id
             if page_id:
                 page_data = asyncio.run(
-                    self.notion_writer.notion_integrator.client.pages.retrieve(
+                    self.notion_writer.notion_integrator.client.client.pages.retrieve(
                         page_id=page_id
                     )
                 )
