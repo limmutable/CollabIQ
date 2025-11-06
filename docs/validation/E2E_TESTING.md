@@ -1406,7 +1406,7 @@ See [Technical Debt](../../docs/architecture/TECHSTACK.md#phase-2d-technical-deb
 
 **Status**: ✅ Fixed and verified
 
-For complete details, see [bugfixes/2025-11-06_none-none-bug-fix.md](bugfixes/2025-11-06_none-none-bug-fix.md).
+For complete details, see [specs/008-mvp-e2e-test/bugfixes/2025-11-06_none-none-bug-fix.md](../../specs/008-mvp-e2e-test/bugfixes/2025-11-06_none-none-bug-fix.md).
 
 ### November 6, 2025: Notion "People" Field Type Error
 
