@@ -337,15 +337,26 @@ class E2ERunner:
                 logger.warning("GmailReceiver not initialized, skipping email fetch")
                 return {"id": email_id, "subject": "Mock Email", "body": "Mock body"}
 
-            # Fetch email using GmailReceiver
-            # Note: GmailReceiver.fetch_emails returns list, need to fetch specific email
-            # For E2E testing, we assume email_id is already available
+            # Fetch specific email by message ID using Gmail API
+            logger.debug(f"Fetching email from Gmail: {email_id}")
 
-            # Mock implementation for now
+            # Use Gmail API directly to fetch single message
+            msg_detail = self.gmail_receiver.service.users().messages().get(
+                userId='me',
+                id=email_id,
+                format='full'
+            ).execute()
+
+            # Parse message to RawEmail
+            raw_email = self.gmail_receiver._parse_message(msg_detail)
+
+            # Convert RawEmail to dict format expected by downstream stages
             return {
-                "id": email_id,
-                "subject": "Test Email",
-                "body": "Test email body",
+                "id": raw_email.metadata.message_id,
+                "subject": raw_email.metadata.subject,
+                "body": raw_email.body,
+                "sender": raw_email.metadata.sender,
+                "received_at": raw_email.metadata.received_at.isoformat(),
             }
 
         except Exception as e:
@@ -375,9 +386,11 @@ class E2ERunner:
                 }
 
             # Extract entities using GeminiAdapter
+            # Pass the actual Gmail message ID from the email dict
             entities = self.gemini_adapter.extract_entities(
                 email_text=email.get("body", ""),
                 company_context=None,  # Company context would be provided here
+                email_id=email.get("id"),  # Pass actual Gmail message ID
             )
 
             return entities

@@ -48,10 +48,13 @@ class FieldMapper:
         properties["협력주체"] = self._format_title(collaboration_subject)
 
         # Rich text fields
-        if extracted_data.person_in_charge:
-            properties["담당자"] = self._format_rich_text(
-                extracted_data.person_in_charge
-            )
+        # NOTE: 담당자 field is type "people" in Notion, not "rich_text"
+        # Skipping for now - requires mapping person names to Notion user IDs
+        # TODO: Implement user name→ID matching (see techstack.md technical debt)
+        # if extracted_data.person_in_charge:
+        #     properties["담당자"] = self._format_rich_text(
+        #         extracted_data.person_in_charge
+        #     )
 
         if extracted_data.details:
             properties["협업내용"] = self._format_rich_text(extracted_data.details)

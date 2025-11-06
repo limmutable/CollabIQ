@@ -399,6 +399,13 @@ async def process_batch(emails: list[RawEmail]) -> list[CleanedEmail]:
 |-------|--------|----------|--------|
 | Gemini returns company names instead of UUIDs | LLM occasionally returns Korean company names instead of Notion database UUIDs, causing Pydantic validation errors (string_too_short: expected 32 chars) | Medium | **IDENTIFIED** - Observed in real email test (2025-11-03): "웨이크" and "신세계푸드" returned instead of UUIDs. Root cause: Prompt engineering issue - LLM not consistently following UUID extraction instructions. Fix: Improve system prompt to enforce UUID format with examples, add retry logic with format correction. |
 
+### Phase 2d Technical Debt (Notion Write Operations)
+
+| Issue | Impact | Priority | Status |
+|-------|--------|----------|--------|
+| 담당자 (person_in_charge) field skipped | "담당자" field is type "people" in Notion (requires user IDs), but extracted data is just a name string. Field is currently skipped in field_mapper.py to avoid API errors. | Medium | **IDENTIFIED** (2025-11-06) - Notion "people" field requires workspace user UUIDs, not text names. Current workaround: Field left empty in all entries. Fix: Implement user name→ID matching by querying Notion workspace users API, fuzzy matching Korean names, and mapping to user UUIDs. See [field_mapper.py:51-57](../../src/notion_integrator/field_mapper.py#L51-L57) for commented-out code. |
+| Page body content missing | Currently only writing properties (title, fields), but not writing the actual email text to the Notion page body. Users cannot view full email content within Notion page. | Medium | **IDENTIFIED** (2025-11-06) - NotionWriter creates pages with empty body content. Should write formatted email text (subject, sender, date, body) to page body using Notion blocks API. Fix: Use `client.blocks.children.append()` to add paragraph blocks with email content after page creation. Consider formatting options: plain text, rich text with sections, or collapsible toggles for long emails. See Notion Blocks API documentation. |
+
 ### Architecture Technical Debt
 
 | Issue | Impact | Priority | Planned Fix |

@@ -8,6 +8,7 @@ import json
 import logging
 import random
 import time
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -58,7 +59,7 @@ class GeminiAdapter(LLMProvider):
         self,
         api_key: str,
         model: str = "gemini-2.0-flash-exp",
-        timeout: int = 10,
+        timeout: int = 60,
         max_retries: int = 3,
     ):
         """Initialize Gemini adapter.
@@ -66,7 +67,7 @@ class GeminiAdapter(LLMProvider):
         Args:
             api_key: Gemini API key from Google AI Studio
             model: Gemini model name (default: "gemini-2.0-flash-exp")
-            timeout: Request timeout in seconds (default: 10)
+            timeout: Request timeout in seconds (default: 60)
             max_retries: Maximum retry attempts (default: 3)
 
         Raises:
@@ -89,7 +90,7 @@ class GeminiAdapter(LLMProvider):
         logger.info(f"Initialized GeminiAdapter with model={model}, timeout={timeout}s")
 
     def extract_entities(
-        self, email_text: str, company_context: Optional[str] = None
+        self, email_text: str, company_context: Optional[str] = None, email_id: Optional[str] = None
     ) -> ExtractedEntities:
         """Extract 5 key entities from email text with optional company matching.
 
@@ -100,6 +101,8 @@ class GeminiAdapter(LLMProvider):
                            enables company matching and populates matched_*
                            fields in return value. If None, behaves as Phase 1b
                            (extraction only, matched fields = None).
+            email_id: Optional email message ID (Gmail message ID). If not provided,
+                    generates ID from email_text hash (for backward compatibility).
 
         Returns:
             ExtractedEntities: Pydantic model with 5 entities + confidence scores
@@ -125,7 +128,7 @@ class GeminiAdapter(LLMProvider):
         response_data = self._call_with_retry(email_text, company_context)
 
         # Parse response to ExtractedEntities
-        entities = self._parse_response(response_data, email_text, company_context)
+        entities = self._parse_response(response_data, email_text, company_context, email_id)
 
         return entities
 
@@ -291,15 +294,26 @@ class GeminiAdapter(LLMProvider):
                 "nullable": True,
             }
 
-        # Call Gemini API
-        response = self.client.generate_content(
-            prompt,
-            generation_config=genai.GenerationConfig(
-                response_mime_type="application/json",
-                response_schema=response_schema,
-                temperature=0.1,  # Low temperature for consistent extraction
-            ),
-        )
+        # Call Gemini API with timeout using ThreadPoolExecutor
+        def _call_api():
+            return self.client.generate_content(
+                prompt,
+                generation_config=genai.GenerationConfig(
+                    response_mime_type="application/json",
+                    response_schema=response_schema,
+                    temperature=0.1,  # Low temperature for consistent extraction
+                ),
+            )
+
+        try:
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(_call_api)
+                response = future.result(timeout=self.timeout)
+        except FuturesTimeoutError:
+            raise LLMTimeoutError(
+                f"Gemini API call timed out after {self.timeout} seconds",
+                timeout_seconds=self.timeout
+            )
 
         # Parse JSON response
         try:
@@ -312,13 +326,15 @@ class GeminiAdapter(LLMProvider):
         response_data: Dict[str, Any],
         email_text: str,
         company_context: Optional[str] = None,
+        email_id: Optional[str] = None,
     ) -> ExtractedEntities:
         """Parse Gemini API response to ExtractedEntities.
 
         Args:
             response_data: Parsed JSON response from Gemini
-            email_text: Original email text (used for generating email_id)
+            email_text: Original email text (used for generating email_id if not provided)
             company_context: Optional company context (affects matching fields)
+            email_id: Optional email message ID. If not provided, generates from email_text hash.
 
         Returns:
             ExtractedEntities: Pydantic model with extracted entities
@@ -338,8 +354,9 @@ class GeminiAdapter(LLMProvider):
             date_str = date_data.get("value")
             parsed_date = parse_date(date_str) if date_str else None
 
-            # Generate email_id from email text hash
-            email_id = f"email_{hash(email_text) % 1000000:06d}"
+            # Use provided email_id or generate from email text hash (backward compatibility)
+            if email_id is None:
+                email_id = f"email_{hash(email_text) % 1000000:06d}"
 
             # Extract matching fields (Phase 2b) - only if company_context was provided
             matched_company_id = None
