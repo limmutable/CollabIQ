@@ -61,6 +61,10 @@ def initialize_components():
     """Initialize all real MVP components"""
     print("Initializing real MVP components...")
 
+    # Explicitly load .env file first (pydantic_settings not always reliable in all environments)
+    from dotenv import load_dotenv
+    load_dotenv(override=True)
+
     # Load settings
     settings = get_settings()
 
@@ -95,7 +99,7 @@ def initialize_components():
     print("  - NotionIntegrator...")
     notion_api_key = settings.get_secret_or_env("NOTION_API_KEY")
     if not notion_api_key:
-        print("ERROR: NOTION_API_KEY not found")
+        print("ERROR: NOTION_API_KEY not found in .env file")
         sys.exit(1)
 
     notion_integrator = NotionIntegrator(api_key=notion_api_key)
