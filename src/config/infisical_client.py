@@ -268,7 +268,7 @@ class InfisicalClient:
                 )
 
                 # Cache the secret in our local cache
-                value = secret_response.secret_value
+                value = secret_response.secretValue
                 self._cache[key] = value
                 self._cache_timestamps[key] = time.time()
 
@@ -326,8 +326,8 @@ class InfisicalClient:
             secrets_dict = {}
             current_time = time.time()
             for secret in secrets_response.secrets:
-                key = secret.secret_key
-                value = secret.secret_value
+                key = secret.secretKey
+                value = secret.secretValue
                 secrets_dict[key] = value
                 self._cache[key] = value
                 self._cache_timestamps[key] = current_time
