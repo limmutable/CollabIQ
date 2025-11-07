@@ -20,8 +20,9 @@ class TestFieldMapperContract:
     @pytest.fixture
     def mock_schema(self):
         """Create a mock DatabaseSchema instance."""
-        mock = Mock()
-        mock.properties = {
+        # Create property mocks with both dict access and attribute access
+        properties = {}
+        property_defs = {
             "협력주체": {"type": "title", "id": "title"},
             "담당자": {"type": "rich_text", "id": "담당자_id"},
             "스타트업명": {"type": "relation", "id": "스타트업명_id"},
@@ -32,7 +33,22 @@ class TestFieldMapperContract:
             "type_confidence": {"type": "number", "id": "type_conf_id"},
             "요약": {"type": "rich_text", "id": "요약_id"},
         }
-        return mock
+
+        for name, prop_def in property_defs.items():
+            prop_mock = Mock()
+            prop_mock.type = prop_def["type"]
+            prop_mock.id = prop_def["id"]
+            # Make dict access work too
+            prop_mock.get = lambda key, default=None, d=prop_def: d.get(key, default)
+            properties[name] = prop_mock
+
+        # Create schema mock with database.properties structure
+        schema_mock = Mock()
+        database_mock = Mock()
+        database_mock.properties = properties
+        schema_mock.database = database_mock
+
+        return schema_mock
 
     @pytest.fixture
     def field_mapper(self, mock_schema):

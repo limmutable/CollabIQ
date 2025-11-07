@@ -167,10 +167,11 @@ GEMINI_MODEL=gemini-2.5-flash  # Latest model (2025)
 GEMINI_TIMEOUT_SECONDS=60
 # Note: Retry logic is handled automatically by Phase 010 error handling system
 
-# Notion API Configuration (✅ Implemented - Phase 2a)
+# Notion API Configuration (✅ Implemented - Phase 2a + 2d)
 NOTION_API_KEY=secret_...your_actual_token_here
 NOTION_DATABASE_ID_COMPANIES=32_character_database_id_here
 NOTION_DATABASE_ID_COLLABIQ=32_character_database_id_here
+NOTION_DUPLICATE_STRATEGY=skip  # or 'update' to overwrite duplicates
 
 # Logging
 LOG_LEVEL=INFO
@@ -521,6 +522,56 @@ uv run pytest -v
 uv run pytest tests/unit/test_gemini_adapter.py -v
 ```
 
+### Dead Letter Queue (DLQ) Management
+
+The DLQ stores failed write operations for later replay. Check and replay failed operations:
+
+```bash
+# Check DLQ directory for failed operations
+ls -la data/dlq/
+
+# View a specific DLQ entry (JSON format)
+cat data/dlq/notion_write_YYYYMMDD_HHMMSS_*.json
+
+# Replay ALL failed operations
+uv run python scripts/retry_dlq.py
+
+# Replay specific failed operation
+uv run python scripts/retry_dlq.py --file data/dlq/notion_write_*.json
+
+# Check DLQ replay logs
+tail -f logs/email_processor.log | grep DLQ
+```
+
+**Common DLQ Scenarios**:
+- **Notion API rate limits**: Automatic retry after rate limit window expires
+- **Temporary network issues**: Retry after connectivity restored
+- **Schema changes**: May require manual field mapping updates before retry
+- **Duplicate detection**: Entries marked as duplicates are logged but not retried
+
+**DLQ Best Practices**:
+- Monitor `data/dlq/` directory regularly (set up file count alerts)
+- Review failed entries before replaying (validate data quality)
+- Schedule periodic DLQ replay (e.g., daily cron job)
+- Clean up successfully replayed entries to avoid clutter
+
+### Circuit Breaker Issues
+
+If a service circuit breaker is stuck in OPEN state (failing fast):
+
+```bash
+# Check circuit breaker state in logs
+tail -f logs/email_processor.log | grep "Circuit breaker"
+
+# Wait for recovery timeout (60s for main services, 30s for Infisical)
+# Or restart the application to reset all circuit breakers
+```
+
+**Circuit Breaker States**:
+- **CLOSED**: Normal operation, requests pass through
+- **OPEN**: Too many failures, requests fail immediately (fail fast)
+- **HALF_OPEN**: Testing if service recovered, limited requests allowed
+
 ## Getting Help
 
 - **Gmail Setup Issues**: See [docs/setup/gmail-oauth-setup.md](gmail-oauth-setup.md) and [docs/setup/troubleshooting-gmail-api.md](troubleshooting-gmail-api.md)
@@ -569,6 +620,25 @@ uv run python src/cli.py clean-emails --input-dir data/raw
 
 # Verify setup
 uv run python src/cli.py verify
+```
+
+### Error Handling & DLQ Scripts
+
+```bash
+# Replay ALL failed operations from Dead Letter Queue
+uv run python scripts/retry_dlq.py
+
+# Replay specific DLQ entry
+uv run python scripts/retry_dlq.py --file data/dlq/notion_write_*.json
+
+# Diagnose Infisical connectivity
+uv run python scripts/diagnose_infisical.py
+
+# Check where secrets are loaded from (Infisical vs .env)
+uv run python scripts/check_secret_source.py
+
+# Clean up test entries from Notion (use with caution!)
+uv run python scripts/cleanup_test_entries.py
 ```
 
 ## What's Next?

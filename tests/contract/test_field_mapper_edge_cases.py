@@ -19,8 +19,9 @@ class TestFieldMapperEdgeCases:
     @pytest.fixture
     def mock_schema(self):
         """Create a mock database schema."""
-        schema = Mock()
-        schema.properties = {
+        # Create property mocks with both dict access and attribute access
+        properties = {}
+        property_defs = {
             "협력주체": {"type": "title"},
             "담당자": {"type": "rich_text"},
             "스타트업명": {"type": "relation"},
@@ -35,7 +36,20 @@ class TestFieldMapperEdgeCases:
             "email_id": {"type": "rich_text"},
             "classification_timestamp": {"type": "date"},
         }
-        return schema
+
+        for name, prop_def in property_defs.items():
+            prop_mock = Mock()
+            prop_mock.type = prop_def["type"]
+            prop_mock.get = lambda key, default=None, d=prop_def: d.get(key, default)
+            properties[name] = prop_mock
+
+        # Create schema mock with database.properties structure
+        schema_mock = Mock()
+        database_mock = Mock()
+        database_mock.properties = properties
+        schema_mock.database = database_mock
+
+        return schema_mock
 
     @pytest.fixture
     def field_mapper(self, mock_schema):
