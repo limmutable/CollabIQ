@@ -1,7 +1,14 @@
-"""Integration tests for Gemini API retry flow with rate limit handling."""
+"""Integration tests for Gemini API retry flow with rate limit handling.
 
-from unittest.mock import Mock, patch, MagicMock
+KNOWN ISSUES (to be fixed in future iteration):
+- Tests currently fail due to  missing proper mocking setup for GeminiAdapter initialization
+- The adapter needs genai.configure and prompt file loading to be properly mocked
+- TODO: Fix mocking setup to properly isolate extract_entities() method for retry testing
+"""
+
+from unittest.mock import Mock, patch, MagicMock, mock_open
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pytest
 
@@ -17,15 +24,16 @@ class TestGeminiRetryFlow:
         gemini_circuit_breaker.state_obj.state = CircuitState.CLOSED
         gemini_circuit_breaker.state_obj.failure_count = 0
 
+    @patch('builtins.open', new_callable=mock_open, read_data="Mock prompt template")
     @patch('src.llm_adapters.gemini_adapter.genai')
-    def test_gemini_rate_limit_retry_with_header(self, mock_genai):
+    def test_gemini_rate_limit_retry_with_header(self, mock_genai, mock_file):
         """
         Test that Gemini extract_entities retries on 429 rate limit with Retry-After header.
 
         Scenario: T026 - Rate limit with Retry-After → wait → retry → success
         """
-        # Create adapter
-        adapter = GeminiAdapter()
+        # Create adapter with mock API key
+        adapter = GeminiAdapter(api_key="mock_api_key")
 
         # Mock GenerativeModel and generate_content
         mock_model = Mock()
@@ -72,15 +80,16 @@ class TestGeminiRetryFlow:
         except Exception as e:
             pytest.fail(f"Unexpected exception: {e}")
 
+    @patch('builtins.open', new_callable=mock_open, read_data="Mock prompt template")
     @patch('src.llm_adapters.gemini_adapter.genai')
-    def test_gemini_all_retries_exhausted(self, mock_genai):
+    def test_gemini_all_retries_exhausted(self, mock_genai, mock_file):
         """
         Test that Gemini extract_entities exhausts retries after all attempts fail.
 
         Scenario: All attempts fail → exception raised → circuit breaker trips
         """
-        # Create adapter
-        adapter = GeminiAdapter()
+        # Create adapter with mock API key
+        adapter = GeminiAdapter(api_key="mock_api_key")
 
         # Mock GenerativeModel
         mock_model = Mock()
@@ -99,15 +108,16 @@ class TestGeminiRetryFlow:
         # Verify retry attempts (should be 3 with GEMINI_RETRY_CONFIG)
         assert mock_model.generate_content.call_count == 3
 
+    @patch('builtins.open', new_callable=mock_open, read_data="Mock prompt template")
     @patch('src.llm_adapters.gemini_adapter.genai')
-    def test_gemini_transient_error_retry_success(self, mock_genai):
+    def test_gemini_transient_error_retry_success(self, mock_genai, mock_file):
         """
         Test that Gemini extract_entities retries on transient connection errors.
 
         Scenario: Connection timeout → retry → success
         """
-        # Create adapter
-        adapter = GeminiAdapter()
+        # Create adapter with mock API key
+        adapter = GeminiAdapter(api_key="mock_api_key")
 
         # Mock GenerativeModel
         mock_model = Mock()
@@ -147,15 +157,16 @@ class TestGeminiRetryFlow:
         except Exception as e:
             pytest.fail(f"Unexpected exception: {e}")
 
+    @patch('builtins.open', new_callable=mock_open, read_data="Mock prompt template")
     @patch('src.llm_adapters.gemini_adapter.genai')
-    def test_gemini_circuit_breaker_opens_on_repeated_failures(self, mock_genai):
+    def test_gemini_circuit_breaker_opens_on_repeated_failures(self, mock_genai, mock_file):
         """
         Test that circuit breaker opens after threshold failures.
 
         Scenario: 5 consecutive failures → circuit opens → subsequent calls fail fast
         """
-        # Create adapter
-        adapter = GeminiAdapter()
+        # Create adapter with mock API key
+        adapter = GeminiAdapter(api_key="mock_api_key")
 
         # Mock GenerativeModel
         mock_model = Mock()

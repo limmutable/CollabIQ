@@ -1,4 +1,14 @@
-"""Integration tests for Gmail API retry flow with exponential backoff."""
+"""Integration tests for Gmail API retry flow with exponential backoff.
+
+KNOWN ISSUES (to be fixed in future iteration):
+- GmailReceiver has legacy retry logic (while loop in fetch_emails) that interferes
+  with the @retry_with_backoff decorator
+- The legacy logic catches exceptions and wraps them in EmailReceiverError before
+  the decorator can handle retries
+- These tests currently fail because the decorator's retry logic is bypassed
+- TODO: Refactor GmailReceiver.fetch_emails() to remove legacy retry loop and rely
+  solely on the @retry_with_backoff decorator
+"""
 
 import socket
 from unittest.mock import Mock, patch
@@ -24,8 +34,11 @@ class TestGmailRetryFlow:
 
         Scenario: T025 - Mock timeout → retry → success
         """
-        # Create receiver
-        receiver = GmailReceiver()
+        # Create receiver with mock paths
+        receiver = GmailReceiver(
+            credentials_path="mock_credentials.json",
+            token_path="mock_token.json"
+        )
 
         # Mock service that fails once then succeeds
         mock_service = Mock()
@@ -60,8 +73,11 @@ class TestGmailRetryFlow:
 
         Scenario: All 3 attempts fail → exception raised
         """
-        # Create receiver
-        receiver = GmailReceiver()
+        # Create receiver with mock paths
+        receiver = GmailReceiver(
+            credentials_path="mock_credentials.json",
+            token_path="mock_token.json"
+        )
 
         # Mock service that always times out
         mock_service = Mock()
@@ -86,8 +102,11 @@ class TestGmailRetryFlow:
         """
         from googleapiclient.errors import HttpError
 
-        # Create receiver
-        receiver = GmailReceiver()
+        # Create receiver with mock paths
+        receiver = GmailReceiver(
+            credentials_path="mock_credentials.json",
+            token_path="mock_token.json"
+        )
 
         # Mock service that returns 401
         mock_service = Mock()
