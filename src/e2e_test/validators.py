@@ -52,11 +52,11 @@ class Validator:
     # Required fields in Notion entry (names match actual Notion DB properties)
     REQUIRED_FIELDS = [
         "Email ID",  # Added as text field for duplicate detection
-        "담당자",     # people
+        "담당자",  # people
         "스타트업명",  # relation
-        "협력기관",    # relation
-        "협력유형",    # select
-        "날짜",       # date (Korean name in actual DB, not "Date")
+        "협력기관",  # relation
+        "협력유형",  # select
+        "날짜",  # date (Korean name in actual DB, not "Date")
     ]
 
     def validate_notion_entry(self, notion_entry: dict) -> ValidationResult:
@@ -86,7 +86,9 @@ class Validator:
             else:
                 field_value = self._extract_field_value(properties[field_name])
 
-            if not field_value or (isinstance(field_value, str) and field_value.strip() == ""):
+            if not field_value or (
+                isinstance(field_value, str) and field_value.strip() == ""
+            ):
                 result.add_error(f"Required field is empty: {field_name}")
 
         # Validate 날짜 (date) field format if present
@@ -109,7 +111,9 @@ class Validator:
 
         return result
 
-    def validate_korean_text(self, original_text: str, notion_entry: dict) -> ValidationResult:
+    def validate_korean_text(
+        self, original_text: str, notion_entry: dict
+    ) -> ValidationResult:
         """
         Validate that Korean text is preserved correctly (detect mojibake)
 
@@ -141,15 +145,21 @@ class Validator:
 
         for pattern in mojibake_patterns:
             if re.search(pattern, notion_text):
-                result.add_corruption(f"Mojibake detected: Korean text corruption pattern '{pattern}' found")
+                result.add_corruption(
+                    f"Mojibake detected: Korean text corruption pattern '{pattern}' found"
+                )
 
         # Check that Notion entry contains Korean characters (if original had them)
         # This is a basic check - if original text had Korean, Notion should too
-        original_has_korean = any("\uac00" <= char <= "\ud7a3" for char in original_text)
+        original_has_korean = any(
+            "\uac00" <= char <= "\ud7a3" for char in original_text
+        )
         notion_has_korean = any("\uac00" <= char <= "\ud7a3" for char in notion_text)
 
         if original_has_korean and not notion_has_korean:
-            result.add_corruption("Original text contains Korean characters but Notion entry has none")
+            result.add_corruption(
+                "Original text contains Korean characters but Notion entry has none"
+            )
 
         return result
 
@@ -171,7 +181,9 @@ class Validator:
         match = re.search(r"\[([ABCD])\]", collab_type)
 
         if not match:
-            result.add_error(f"Invalid collaboration type format: '{collab_type}' (expected [A], [B], [C], or [D])")
+            result.add_error(
+                f"Invalid collaboration type format: '{collab_type}' (expected [A], [B], [C], or [D])"
+            )
         else:
             extracted_type = f"[{match.group(1)}]"
             if extracted_type not in valid_types:
@@ -224,7 +236,9 @@ class Validator:
 
         # Check format: comp_xxx or similar prefix pattern
         if not company_id.startswith("comp_"):
-            result.add_warning(f"Company ID '{company_id}' doesn't follow expected format (comp_xxx)")
+            result.add_warning(
+                f"Company ID '{company_id}' doesn't follow expected format (comp_xxx)"
+            )
 
         return result
 

@@ -50,6 +50,16 @@ Email-based collaboration tracking system that automatically extracts collaborat
   - DLQManager for failed write handling and manual retry
   - **Tests**: 35+ Phase 2d tests passing (100%)
   - Retry script: `scripts/retry_dlq.py`
+- ✅ **Phase 010**: Error Handling & Retry Logic (010-error-handling)
+  - Unified retry system with exponential backoff and jitter
+  - Circuit breaker pattern for fault isolation (Gmail, Gemini, Notion, Infisical)
+  - Automatic error classification (TRANSIENT/PERMANENT/CRITICAL)
+  - Structured logging with JSON formatting
+  - Rate limit handling with `Retry-After` header support
+  - Dead Letter Queue (DLQ) with idempotent replay
+  - **Tests**: 39/46 passing (85%) - Gmail integration: 100%, Circuit breaker: 100%
+  - **Retry Logic Cleanup**: Unified all retry patterns to single decorator
+  - See [Error Handling README](src/error_handling/README.md)
 
 **Next Phase**: Phase 3 - Verification Queue & Manual Review
 

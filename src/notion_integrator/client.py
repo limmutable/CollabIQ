@@ -5,17 +5,17 @@ Wraps the official Notion Python SDK with:
 - Rate limiting (3 req/sec via token bucket)
 - Error handling and translation to custom exceptions
 - Logging for all API calls
-- Retry logic for transient failures
+- Retry logic with exponential backoff via @retry_with_backoff decorator
+- Circuit breaker integration for fault tolerance
 
 This is the main entry point for all Notion API interactions.
 
-MIGRATION NOTE (2024-11-02):
-Migrated to Notion API version 2025-09-03 which introduced data sources.
-- Databases no longer have properties directly
-- Properties are now on data sources (databases can have multiple data sources)
-- query_database() now retrieves database -> data source -> queries data source
-- retrieve_data_source() added for accessing data source metadata
-See: https://developers.notion.com/docs/upgrade-guide-2025-09-03
+MIGRATION NOTES:
+- (2024-11-02) Migrated to Notion API version 2025-09-03 which introduced data sources.
+  Databases no longer have properties directly - properties are on data sources.
+  See: https://developers.notion.com/docs/upgrade-guide-2025-09-03
+- (2025-11-08) Migrated from tenacity to unified @retry_with_backoff decorator
+  for consistency with Gmail/Gemini retry logic and circuit breaker integration.
 """
 
 import os
@@ -23,12 +23,11 @@ from typing import Any, Dict, Optional
 
 from notion_client import AsyncClient
 from notion_client.errors import APIResponseError
-from tenacity import (
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
+
+try:
+    from ..error_handling import retry_with_backoff, NOTION_RETRY_CONFIG
+except ImportError:
+    from error_handling import retry_with_backoff, NOTION_RETRY_CONFIG
 
 from .exceptions import (
     NotionAPIError,
@@ -114,15 +113,16 @@ class NotionClient:
             except APIResponseError as e:
                 raise self._translate_api_error(e, database_id=database_id)
 
-    @retry(
-        retry=retry_if_exception_type(APIResponseError),
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
-        reraise=True,
-    )
+    @retry_with_backoff(NOTION_RETRY_CONFIG)
     async def _retrieve_database_with_retry(self, database_id: str) -> Dict[str, Any]:
         """
         Retrieve database with retry logic for transient failures.
+
+        The @retry_with_backoff decorator handles:
+        - Exponential backoff with jitter (3 attempts)
+        - Circuit breaker integration
+        - Structured error logging
+        - Automatic classification of transient vs permanent errors
 
         Args:
             database_id: Notion database ID
@@ -203,12 +203,7 @@ class NotionClient:
             except APIResponseError as e:
                 raise self._translate_api_error(e, database_id=database_id)
 
-    @retry(
-        retry=retry_if_exception_type(APIResponseError),
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
-        reraise=True,
-    )
+    @retry_with_backoff(NOTION_RETRY_CONFIG)
     async def _query_data_source_with_retry(
         self,
         data_source_id: str,
@@ -217,7 +212,11 @@ class NotionClient:
         start_cursor: Optional[str],
         page_size: int,
     ) -> Dict[str, Any]:
-        """Query data source with retry logic (Notion API 2025-09-03)."""
+        """Query data source with retry logic (Notion API 2025-09-03).
+
+        The @retry_with_backoff decorator handles retry logic with
+        exponential backoff, circuit breaker integration, and error logging.
+        """
         query_params = {
             "data_source_id": data_source_id,
             "page_size": page_size,
@@ -258,17 +257,15 @@ class NotionClient:
             except APIResponseError as e:
                 raise self._translate_api_error(e)
 
-    @retry(
-        retry=retry_if_exception_type(APIResponseError),
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
-        reraise=True,
-    )
+    @retry_with_backoff(NOTION_RETRY_CONFIG)
     async def _retrieve_data_source_with_retry(
         self, data_source_id: str
     ) -> Dict[str, Any]:
         """
         Retrieve data source with retry logic for transient failures.
+
+        The @retry_with_backoff decorator handles retry logic with
+        exponential backoff, circuit breaker integration, and error logging.
 
         Args:
             data_source_id: Notion data source ID
@@ -307,14 +304,13 @@ class NotionClient:
             except APIResponseError as e:
                 raise self._translate_api_error(e, page_id=page_id)
 
-    @retry(
-        retry=retry_if_exception_type(APIResponseError),
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
-        reraise=True,
-    )
+    @retry_with_backoff(NOTION_RETRY_CONFIG)
     async def _retrieve_page_with_retry(self, page_id: str) -> Dict[str, Any]:
-        """Retrieve page with retry logic."""
+        """Retrieve page with retry logic.
+
+        The @retry_with_backoff decorator handles retry logic with
+        exponential backoff, circuit breaker integration, and error logging.
+        """
         return await self.client.pages.retrieve(page_id=page_id)
 
     def _translate_api_error(

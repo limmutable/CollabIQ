@@ -8,7 +8,6 @@ using OAuth2 and retrieves emails from portfolioupdates@signite.co inbox.
 import base64
 import json
 import logging
-import time
 from datetime import datetime
 from email.utils import parsedate_to_datetime
 from pathlib import Path
@@ -27,14 +26,18 @@ try:
     from .base import EmailReceiver
     from ..error_handling.structured_logger import logger as error_logger
     from ..error_handling.models import ErrorRecord, ErrorSeverity, ErrorCategory
-    from ..error_handling import retry_with_backoff, GMAIL_RETRY_CONFIG, gmail_circuit_breaker
+    from ..error_handling import (
+        retry_with_backoff,
+        GMAIL_RETRY_CONFIG,
+        gmail_circuit_breaker,
+    )
 except ImportError:
-    from models.raw_email import EmailAttachment, EmailMetadata, RawEmail
+    from models.raw_email import EmailMetadata, RawEmail
     from models.duplicate_tracker import DuplicateTracker
     from email_receiver.base import EmailReceiver
     from error_handling.structured_logger import logger as error_logger
     from error_handling.models import ErrorRecord, ErrorSeverity, ErrorCategory
-    from error_handling import retry_with_backoff, GMAIL_RETRY_CONFIG, gmail_circuit_breaker
+    from error_handling import retry_with_backoff, GMAIL_RETRY_CONFIG
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -66,16 +69,14 @@ class GmailReceiver(EmailReceiver):
         service: Gmail API service instance
     """
 
-    SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
-    MAX_RETRIES = 3
-    BASE_DELAY = 2  # seconds
+    SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
     def __init__(
         self,
         credentials_path: Path,
         token_path: Path,
         raw_email_dir: Optional[Path] = None,
-        metadata_dir: Optional[Path] = None
+        metadata_dir: Optional[Path] = None,
     ):
         """
         Initialize GmailReceiver.
@@ -110,8 +111,7 @@ class GmailReceiver(EmailReceiver):
             # Load existing token
             if self.token_path.exists():
                 self.creds = Credentials.from_authorized_user_file(
-                    str(self.token_path),
-                    self.SCOPES
+                    str(self.token_path), self.SCOPES
                 )
                 logger.info(f"Loaded existing token from {self.token_path}")
 
@@ -123,8 +123,7 @@ class GmailReceiver(EmailReceiver):
                 else:
                     logger.info("Running OAuth2 flow")
                     flow = InstalledAppFlow.from_client_secrets_file(
-                        str(self.credentials_path),
-                        self.SCOPES
+                        str(self.credentials_path), self.SCOPES
                     )
                     # Use port 8080 per research.md Decision 4 (http://127.0.0.1:8080)
                     # This must match the redirect URI configured in Google Cloud Console
@@ -136,7 +135,7 @@ class GmailReceiver(EmailReceiver):
                 logger.info(f"Saved token to {self.token_path}")
 
             # Build Gmail API service
-            self.service = build('gmail', 'v1', credentials=self.creds)
+            self.service = build("gmail", "v1", credentials=self.creds)
             logger.info("Successfully connected to Gmail API")
 
         except FileNotFoundError as e:
@@ -150,16 +149,16 @@ class GmailReceiver(EmailReceiver):
                     f"2) Download credentials.json, "
                     f"3) Place it at the path specified in GOOGLE_CREDENTIALS_PATH or GMAIL_CREDENTIALS_PATH environment variable."
                 ),
-                retry_count=0
+                retry_count=0,
             )
         except Exception as e:
             error_str = str(e).lower()
             # Provide specific guidance based on error type
             if "redirect_uri_mismatch" in error_str or "redirect uri" in error_str:
                 message = (
-                    f"OAuth2 redirect URI mismatch. "
-                    f"Ensure your Google Cloud Console OAuth2 client has 'http://127.0.0.1:8080' "
-                    f"in the authorized redirect URIs list. See docs/setup/troubleshooting-gmail-api.md for details."
+                    "OAuth2 redirect URI mismatch. "
+                    "Ensure your Google Cloud Console OAuth2 client has 'http://127.0.0.1:8080' "
+                    "in the authorized redirect URIs list. See docs/setup/troubleshooting-gmail-api.md for details."
                 )
             elif "invalid_grant" in error_str or "token" in error_str:
                 message = (
@@ -169,9 +168,9 @@ class GmailReceiver(EmailReceiver):
                 )
             elif "access_denied" in error_str or "insufficient" in error_str:
                 message = (
-                    f"OAuth2 access denied or insufficient permissions. "
-                    f"Ensure the OAuth2 credentials have 'gmail.readonly' scope enabled. "
-                    f"Check your Google Cloud Console OAuth consent screen configuration."
+                    "OAuth2 access denied or insufficient permissions. "
+                    "Ensure the OAuth2 credentials have 'gmail.readonly' scope enabled. "
+                    "Check your Google Cloud Console OAuth consent screen configuration."
                 )
             else:
                 message = (
@@ -184,9 +183,7 @@ class GmailReceiver(EmailReceiver):
 
             logger.error(f"OAuth2 authentication failed: {message}")
             raise EmailReceiverError(
-                code="AUTHENTICATION_FAILED",
-                message=message,
-                retry_count=0
+                code="AUTHENTICATION_FAILED", message=message, retry_count=0
             )
 
     @retry_with_backoff(GMAIL_RETRY_CONFIG)
@@ -194,170 +191,138 @@ class GmailReceiver(EmailReceiver):
         self,
         since: Optional[datetime] = None,
         max_emails: int = 100,
-        query: Optional[str] = None
+        query: Optional[str] = None,
     ) -> List[RawEmail]:
         """
         Retrieve unprocessed emails from Gmail inbox (T031).
 
         Implements exponential backoff retry logic per FR-010 via @retry_with_backoff decorator.
+        The decorator handles all retry logic, error classification, and circuit breaker integration.
 
         Args:
             since: Only retrieve emails after this timestamp
             max_emails: Maximum number of emails to retrieve (1-500)
-            query: Custom Gmail search query (T020). If None, defaults to 'deliveredto:"collab@signite.co" in:inbox'
+            query: Custom Gmail search query (T020). If None, defaults to 'to:collab@signite.co'
 
         Returns:
             List of RawEmail objects in chronological order (oldest first)
 
         Raises:
-            EmailReceiverError: With codes CONNECTION_FAILED, AUTHENTICATION_FAILED,
-                               RATE_LIMIT_EXCEEDED, or INVALID_RESPONSE
+            HttpError: Native Gmail API errors (handled by retry decorator)
+            EmailReceiverError: Application-level errors after retry exhaustion
         """
         if not self.service:
             raise EmailReceiverError(
                 code="CONNECTION_FAILED",
                 message="Gmail service not connected. Call connect() first.",
-                retry_count=0
+                retry_count=0,
             )
 
-        retry_count = 0
-        last_error = None
+        try:
+            # Build query (T020, T021, T022)
+            if query is None:
+                # Default query filters emails sent to group alias (T022)
+                # Using 'to:' operator which works reliably with Gmail API
+                # Note: 'in:inbox' filter is omitted because group-forwarded emails
+                # may not retain inbox label in the authenticated user's mailbox
+                query_str = "to:collab@signite.co"
+            else:
+                query_str = query
 
-        while retry_count <= self.MAX_RETRIES:
-            try:
-                # Build query (T020, T021, T022)
-                if query is None:
-                    # Default query filters emails sent to group alias (T022)
-                    # Using 'to:' operator which works reliably with Gmail API
-                    # Note: 'in:inbox' filter is omitted because group-forwarded emails
-                    # may not retain inbox label in the authenticated user's mailbox
-                    query_str = 'to:collab@signite.co'
-                else:
-                    query_str = query
+            # Add timestamp filter if provided
+            if since:
+                query_str += f" after:{int(since.timestamp())}"
 
-                # Add timestamp filter if provided
-                if since:
-                    query_str += f" after:{int(since.timestamp())}"
+            # Fetch message list
+            logger.info(f"Fetching emails with query: {query_str}, max: {max_emails}")
+            results = (
+                self.service.users()
+                .messages()
+                .list(userId="me", q=query_str, maxResults=max_emails)
+                .execute()
+            )
 
-                # Fetch message list
-                logger.info(f"Fetching emails with query: {query_str}, max: {max_emails}")
-                results = self.service.users().messages().list(
-                    userId='me',
-                    q=query_str,
-                    maxResults=max_emails
-                ).execute()
+            messages = results.get("messages", [])
+            logger.info(f"Found {len(messages)} messages")
 
-                messages = results.get('messages', [])
-                logger.info(f"Found {len(messages)} messages")
+            if not messages:
+                return []
 
-                if not messages:
-                    return []
-
-                # Fetch full message details
-                raw_emails = []
-                for msg in messages:
-                    try:
-                        msg_detail = self.service.users().messages().get(
-                            userId='me',
-                            id=msg['id'],
-                            format='full'
-                        ).execute()
-
-                        raw_email = self._parse_message(msg_detail)
-                        raw_emails.append(raw_email)
-
-                    except ValidationError as e:
-                        # Log validation error with field-level details and continue processing
-                        logger.warning(f"Validation error for message {msg['id']}, skipping: {e}")
-                        error_record = ErrorRecord(
-                            timestamp=datetime.utcnow(),
-                            severity=ErrorSeverity.WARNING,
-                            category=ErrorCategory.PERMANENT,
-                            message=f"Email validation failed for message {msg['id']}",
-                            error_type="ValidationError",
-                            stack_trace=str(e),
-                            context={
-                                "message_id": msg['id'],
-                                "operation": "fetch_emails",
-                                "validation_errors": e.errors() if hasattr(e, 'errors') else str(e)
-                            },
-                            retry_count=0
-                        )
-                        error_logger.log_error(error_record)
-                        continue
-
-                    except Exception as e:
-                        logger.error(f"Failed to fetch message {msg['id']}: {e}")
-                        continue
-
-                # Sort by received_at (oldest first)
-                raw_emails.sort(key=lambda e: e.metadata.received_at)
-                logger.info(f"Successfully fetched {len(raw_emails)} emails")
-                return raw_emails
-
-            except HttpError as e:
-                last_error = e
-
-                # Authentication failure - no retry
-                if e.resp.status == 401:
-                    logger.error("Authentication failed (401)")
-                    raise EmailReceiverError(
-                        code="AUTHENTICATION_FAILED",
-                        message="Gmail OAuth token expired or invalid",
-                        retry_count=retry_count
+            # Fetch full message details
+            raw_emails = []
+            for msg in messages:
+                try:
+                    msg_detail = (
+                        self.service.users()
+                        .messages()
+                        .get(userId="me", id=msg["id"], format="full")
+                        .execute()
                     )
 
-                # Rate limit - retry with longer delay
-                elif e.resp.status == 429:
-                    retry_count += 1
-                    if retry_count > self.MAX_RETRIES:
-                        break
+                    raw_email = self._parse_message(msg_detail)
+                    raw_emails.append(raw_email)
 
-                    delay = min(60 * (2 ** retry_count), 600)  # Cap at 10 minutes
+                except ValidationError as e:
+                    # Log validation error with field-level details and continue processing
                     logger.warning(
-                        f"Rate limit exceeded (429). Retry {retry_count}/{self.MAX_RETRIES} "
-                        f"after {delay}s"
+                        f"Validation error for message {msg['id']}, skipping: {e}"
                     )
-                    time.sleep(delay)
-
-                # Server error - retry with exponential backoff
-                elif e.resp.status >= 500:
-                    retry_count += 1
-                    if retry_count > self.MAX_RETRIES:
-                        break
-
-                    delay = self.BASE_DELAY * (2 ** retry_count)
-                    logger.warning(
-                        f"Server error ({e.resp.status}). Retry {retry_count}/{self.MAX_RETRIES} "
-                        f"after {delay}s"
+                    error_record = ErrorRecord(
+                        timestamp=datetime.utcnow(),
+                        severity=ErrorSeverity.WARNING,
+                        category=ErrorCategory.PERMANENT,
+                        message=f"Email validation failed for message {msg['id']}",
+                        error_type="ValidationError",
+                        stack_trace=str(e),
+                        context={
+                            "message_id": msg["id"],
+                            "operation": "fetch_emails",
+                            "validation_errors": e.errors()
+                            if hasattr(e, "errors")
+                            else str(e),
+                        },
+                        retry_count=0,
                     )
-                    time.sleep(delay)
+                    error_logger.log_error(error_record)
+                    continue
 
-                # Other errors - no retry
-                else:
-                    logger.error(f"Invalid response from Gmail API: {e}")
-                    raise EmailReceiverError(
-                        code="INVALID_RESPONSE",
-                        message=f"Gmail API returned error: {str(e)}",
-                        retry_count=retry_count
-                    )
+                except Exception as e:
+                    logger.error(f"Failed to fetch message {msg['id']}: {e}")
+                    continue
 
-            except Exception as e:
-                logger.error(f"Unexpected error fetching emails: {e}")
+            # Sort by received_at (oldest first)
+            raw_emails.sort(key=lambda e: e.metadata.received_at)
+            logger.info(f"Successfully fetched {len(raw_emails)} emails")
+            return raw_emails
+
+        except HttpError as e:
+            # Let the decorator handle retries for transient errors
+            # Only wrap in EmailReceiverError for specific non-retryable cases
+            if e.resp.status == 401:
+                logger.error("Authentication failed (401)")
                 raise EmailReceiverError(
-                    code="CONNECTION_FAILED",
-                    message=f"Failed to fetch emails: {str(e)}",
-                    retry_count=retry_count
-                )
-
-        # Max retries exceeded
-        logger.error(f"Max retries ({self.MAX_RETRIES}) exceeded")
-        raise EmailReceiverError(
-            code="CONNECTION_FAILED",
-            message=f"Failed to connect to Gmail API after {self.MAX_RETRIES} retries",
-            retry_count=self.MAX_RETRIES,
-            last_error=str(last_error)
-        )
+                    code="AUTHENTICATION_FAILED",
+                    message="Gmail OAuth token expired or invalid",
+                    retry_count=0,
+                ) from e
+            elif e.resp.status == 403:
+                logger.error("Permission denied (403)")
+                raise EmailReceiverError(
+                    code="AUTHENTICATION_FAILED",
+                    message="Insufficient permissions to access Gmail API",
+                    retry_count=0,
+                ) from e
+            elif e.resp.status == 404:
+                logger.error("Resource not found (404)")
+                raise EmailReceiverError(
+                    code="INVALID_RESPONSE",
+                    message="Gmail resource not found",
+                    retry_count=0,
+                ) from e
+            else:
+                # For retryable errors (429, 5xx), let the decorator handle it
+                # by re-raising the original exception
+                raise
 
     def _parse_message(self, msg_detail: dict) -> RawEmail:
         """
@@ -373,18 +338,20 @@ class GmailReceiver(EmailReceiver):
             EmailReceiverError: With code VALIDATION_FAILED if parsing fails
         """
         try:
-            payload = msg_detail.get('payload', {})
-            headers = {h['name']: h['value'] for h in payload.get('headers', [])}
+            payload = msg_detail.get("payload", {})
+            headers = {h["name"]: h["value"] for h in payload.get("headers", [])}
 
             # Extract metadata
-            message_id = headers.get('Message-ID', f"<{msg_detail['id']}@gmail.com>")
-            sender = headers.get('From', 'unknown@unknown.com')
-            subject = headers.get('Subject', '(No Subject)')
-            date_str = headers.get('Date', '')
+            message_id = headers.get("Message-ID", f"<{msg_detail['id']}@gmail.com>")
+            sender = headers.get("From", "unknown@unknown.com")
+            subject = headers.get("Subject", "(No Subject)")
+            date_str = headers.get("Date", "")
 
             # Parse received date
             try:
-                received_at = parsedate_to_datetime(date_str) if date_str else datetime.utcnow()
+                received_at = (
+                    parsedate_to_datetime(date_str) if date_str else datetime.utcnow()
+                )
             except Exception:
                 received_at = datetime.utcnow()
 
@@ -401,14 +368,10 @@ class GmailReceiver(EmailReceiver):
                 sender=sender,
                 subject=subject,
                 received_at=received_at,
-                has_attachments=has_attachments
+                has_attachments=has_attachments,
             )
 
-            raw_email = RawEmail(
-                metadata=metadata,
-                body=body,
-                attachments=attachments
-            )
+            raw_email = RawEmail(metadata=metadata, body=body, attachments=attachments)
 
             logger.debug(f"Parsed message: {message_id}")
             return raw_email
@@ -418,7 +381,7 @@ class GmailReceiver(EmailReceiver):
             raise EmailReceiverError(
                 code="VALIDATION_FAILED",
                 message=f"Failed to parse Gmail message: {str(e)}",
-                retry_count=0
+                retry_count=0,
             )
 
     def _extract_body(self, payload: dict) -> str:
@@ -434,26 +397,28 @@ class GmailReceiver(EmailReceiver):
             Decoded email body text
         """
         # Single-part message
-        if 'body' in payload and payload['body'].get('data'):
-            return self._decode_base64(payload['body']['data'])
+        if "body" in payload and payload["body"].get("data"):
+            return self._decode_base64(payload["body"]["data"])
 
         # Multipart message - find text/plain part
-        if 'parts' in payload:
-            for part in payload['parts']:
-                mime_type = part.get('mimeType', '')
+        if "parts" in payload:
+            for part in payload["parts"]:
+                mime_type = part.get("mimeType", "")
 
                 # Prefer text/plain
-                if mime_type == 'text/plain' and part.get('body', {}).get('data'):
-                    return self._decode_base64(part['body']['data'])
+                if mime_type == "text/plain" and part.get("body", {}).get("data"):
+                    return self._decode_base64(part["body"]["data"])
 
             # Fallback to text/html
-            for part in payload['parts']:
-                if part.get('mimeType') == 'text/html' and part.get('body', {}).get('data'):
-                    return self._decode_base64(part['body']['data'])
+            for part in payload["parts"]:
+                if part.get("mimeType") == "text/html" and part.get("body", {}).get(
+                    "data"
+                ):
+                    return self._decode_base64(part["body"]["data"])
 
             # Nested parts
-            for part in payload['parts']:
-                if 'parts' in part:
+            for part in payload["parts"]:
+                if "parts" in part:
                     body = self._extract_body(part)
                     if body:
                         return body
@@ -468,7 +433,7 @@ class GmailReceiver(EmailReceiver):
 
             # Try UTF-8 first
             try:
-                return decoded.decode('utf-8')
+                return decoded.decode("utf-8")
             except UnicodeDecodeError:
                 # Fallback to latin-1 (never fails but may not be semantically correct)
                 logger.warning("UTF-8 decode failed, falling back to latin-1")
@@ -481,12 +446,12 @@ class GmailReceiver(EmailReceiver):
                     stack_trace=None,
                     context={
                         "operation": "_decode_base64",
-                        "encoding": "latin-1 fallback"
+                        "encoding": "latin-1 fallback",
                     },
-                    retry_count=0
+                    retry_count=0,
                 )
                 error_logger.log_error(error_record)
-                return decoded.decode('latin-1', errors='replace')
+                return decoded.decode("latin-1", errors="replace")
 
         except Exception as e:
             logger.warning(f"Failed to decode base64 data: {e}")
@@ -497,21 +462,19 @@ class GmailReceiver(EmailReceiver):
                 message=f"Base64 decode failed: {str(e)}",
                 error_type=type(e).__name__,
                 stack_trace=str(e),
-                context={
-                    "operation": "_decode_base64"
-                },
-                retry_count=0
+                context={"operation": "_decode_base64"},
+                retry_count=0,
             )
             error_logger.log_error(error_record)
             return ""
 
     def _has_attachments(self, payload: dict) -> bool:
         """Check if message has attachments."""
-        if 'parts' in payload:
-            for part in payload['parts']:
-                if part.get('filename'):
+        if "parts" in payload:
+            for part in payload["parts"]:
+                if part.get("filename"):
                     return True
-                if 'parts' in part:
+                if "parts" in part:
                     if self._has_attachments(part):
                         return True
         return False
@@ -535,12 +498,20 @@ class GmailReceiver(EmailReceiver):
         try:
             # Create monthly directory structure
             received_date = email.metadata.received_at
-            monthly_dir = self.raw_email_dir / str(received_date.year) / f"{received_date.month:02d}"
+            monthly_dir = (
+                self.raw_email_dir
+                / str(received_date.year)
+                / f"{received_date.month:02d}"
+            )
             monthly_dir.mkdir(parents=True, exist_ok=True)
 
             # Generate filename: YYYYMMDD_HHMMSS_{clean_message_id}.json
             timestamp = received_date.strftime("%Y%m%d_%H%M%S")
-            clean_id = email.metadata.message_id.strip('<>').replace('@', '_').replace('.', '_')[:50]
+            clean_id = (
+                email.metadata.message_id.strip("<>")
+                .replace("@", "_")
+                .replace(".", "_")[:50]
+            )
             filename = f"{timestamp}_{clean_id}.json"
             file_path = monthly_dir / filename
 
@@ -552,7 +523,7 @@ class GmailReceiver(EmailReceiver):
                     "subject": email.metadata.subject,
                     "received_at": email.metadata.received_at.isoformat(),
                     "retrieved_at": email.metadata.retrieved_at.isoformat(),
-                    "has_attachments": email.metadata.has_attachments
+                    "has_attachments": email.metadata.has_attachments,
                 },
                 "body": email.body,
                 "attachments": [
@@ -560,10 +531,12 @@ class GmailReceiver(EmailReceiver):
                         "filename": att.filename,
                         "content_type": att.content_type,
                         "size_bytes": att.size_bytes,
-                        "storage_path": str(att.storage_path) if att.storage_path else None
+                        "storage_path": str(att.storage_path)
+                        if att.storage_path
+                        else None,
                     }
                     for att in email.attachments
-                ]
+                ],
             }
 
             # Write to file
@@ -577,7 +550,7 @@ class GmailReceiver(EmailReceiver):
             raise EmailReceiverError(
                 code="STORAGE_FAILED",
                 message=f"Failed to save email to file storage: {str(e)}",
-                retry_count=0
+                retry_count=0,
             )
 
     def is_duplicate(self, message_id: str) -> bool:
@@ -613,14 +586,14 @@ class GmailReceiver(EmailReceiver):
             raise EmailReceiverError(
                 code="TRACKER_LOAD_FAILED",
                 message=f"Failed to load duplicate tracker: {str(e)}",
-                retry_count=0
+                retry_count=0,
             )
         except Exception as e:
             logger.error(f"Unexpected error checking duplicate: {e}")
             raise EmailReceiverError(
                 code="TRACKER_LOAD_FAILED",
                 message=f"Unexpected error checking duplicate: {str(e)}",
-                retry_count=0
+                retry_count=0,
             )
 
     def mark_processed(self, message_id: str) -> None:
@@ -655,19 +628,19 @@ class GmailReceiver(EmailReceiver):
             raise EmailReceiverError(
                 code="TRACKER_SAVE_FAILED",
                 message=f"Failed to load duplicate tracker: {str(e)}",
-                retry_count=0
+                retry_count=0,
             )
         except OSError as e:
             logger.error(f"Failed to save duplicate tracker: {e}")
             raise EmailReceiverError(
                 code="TRACKER_SAVE_FAILED",
                 message=f"Failed to save duplicate tracker: {str(e)}",
-                retry_count=0
+                retry_count=0,
             )
         except Exception as e:
             logger.error(f"Unexpected error marking as processed: {e}")
             raise EmailReceiverError(
                 code="TRACKER_SAVE_FAILED",
                 message=f"Unexpected error marking as processed: {str(e)}",
-                retry_count=0
+                retry_count=0,
             )

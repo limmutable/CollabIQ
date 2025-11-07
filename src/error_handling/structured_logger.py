@@ -19,9 +19,7 @@ class JSONFormatter(logging.Formatter):
             "timestamp": self.formatTime(record),
             "severity": record.levelname,
             "message": record.getMessage(),
-            "error_type": (
-                record.exc_info[0].__name__ if record.exc_info else None
-            ),
+            "error_type": (record.exc_info[0].__name__ if record.exc_info else None),
             "stack_trace": (
                 self.formatException(record.exc_info) if record.exc_info else None
             ),
@@ -69,9 +67,7 @@ class StructuredLogger:
             severity_dir.mkdir(parents=True, exist_ok=True)
 
             # Create handler
-            handler = logging.FileHandler(
-                severity_dir / f"{severity_name.lower()}.log"
-            )
+            handler = logging.FileHandler(severity_dir / f"{severity_name.lower()}.log")
             handler.setLevel(level)
             handler.setFormatter(JSONFormatter())
 
@@ -83,9 +79,7 @@ class StructuredLogger:
         # Also add console handler for development
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
-        console_handler.setFormatter(
-            logging.Formatter("%(levelname)s: %(message)s")
-        )
+        console_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
         self.logger.addHandler(console_handler)
 
     def _sanitize_context(self, context: Dict[str, Any]) -> Dict[str, Any]:
@@ -106,8 +100,13 @@ class StructuredLogger:
                 if self.API_KEY_PATTERN.fullmatch(value):
                     sanitized[key] = "[REDACTED]"
                 # Truncate email content
-                elif key == "email_content" and len(value) > self.EMAIL_CONTENT_MAX_LENGTH:
-                    sanitized[key] = value[: self.EMAIL_CONTENT_MAX_LENGTH] + "... [truncated]"
+                elif (
+                    key == "email_content"
+                    and len(value) > self.EMAIL_CONTENT_MAX_LENGTH
+                ):
+                    sanitized[key] = (
+                        value[: self.EMAIL_CONTENT_MAX_LENGTH] + "... [truncated]"
+                    )
                 else:
                     sanitized[key] = value
             else:
@@ -196,10 +195,10 @@ class StructuredLogger:
         context = context or {}
 
         # Extract field-level validation errors if available
-        if hasattr(validation_error, 'errors'):
-            context['validation_errors'] = validation_error.errors()
+        if hasattr(validation_error, "errors"):
+            context["validation_errors"] = validation_error.errors()
         else:
-            context['validation_errors'] = str(validation_error)
+            context["validation_errors"] = str(validation_error)
 
         # Create and log error record
         error_record = ErrorRecord(
@@ -210,7 +209,7 @@ class StructuredLogger:
             error_type=type(validation_error).__name__,
             stack_trace=str(validation_error),
             context=context,
-            retry_count=0
+            retry_count=0,
         )
 
         self.log_error(error_record)

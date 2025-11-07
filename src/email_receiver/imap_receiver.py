@@ -39,7 +39,7 @@ class IMAPReceiver(EmailReceiver):
         password: str,
         use_ssl: bool = True,
         raw_email_dir: Optional[Path] = None,
-        metadata_dir: Optional[Path] = None
+        metadata_dir: Optional[Path] = None,
     ):
         """
         Initialize IMAPReceiver (PLACEHOLDER).
@@ -62,9 +62,7 @@ class IMAPReceiver(EmailReceiver):
         self.metadata_dir = Path(metadata_dir or "data/metadata")
 
     def fetch_emails(
-        self,
-        since: Optional[datetime] = None,
-        max_emails: int = 100
+        self, since: Optional[datetime] = None, max_emails: int = 100
     ) -> List[RawEmail]:
         """
         Retrieve emails via IMAP (PLACEHOLDER).

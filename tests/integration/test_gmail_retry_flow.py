@@ -1,13 +1,7 @@
 """Integration tests for Gmail API retry flow with exponential backoff.
 
-KNOWN ISSUES (to be fixed in future iteration):
-- GmailReceiver has legacy retry logic (while loop in fetch_emails) that interferes
-  with the @retry_with_backoff decorator
-- The legacy logic catches exceptions and wraps them in EmailReceiverError before
-  the decorator can handle retries
-- These tests currently fail because the decorator's retry logic is bypassed
-- TODO: Refactor GmailReceiver.fetch_emails() to remove legacy retry loop and rely
-  solely on the @retry_with_backoff decorator
+Tests verify that the @retry_with_backoff decorator correctly handles transient
+failures, respects circuit breaker state, and integrates with structured error logging.
 """
 
 import socket
@@ -43,28 +37,28 @@ class TestGmailRetryFlow:
         # Mock service that fails once then succeeds
         mock_service = Mock()
         mock_list = mock_service.users().messages().list
+        mock_get = mock_service.users().messages().get
 
         # First call: timeout
-        # Second call: success
+        # Second call: success with empty messages list
         mock_list().execute.side_effect = [
             socket.timeout("Connection timeout"),
-            {"messages": [{"id": "msg_123", "threadId": "thread_456"}]}
+            {"messages": []}
         ]
 
         receiver.service = mock_service
 
         # Execute - should retry and succeed
-        try:
-            result = receiver.fetch_emails(max_emails=10)
+        result = receiver.fetch_emails(max_emails=10)
 
-            # Verify retry happened
-            assert mock_list().execute.call_count == 2
+        # Verify retry happened
+        assert mock_list().execute.call_count == 2
 
-            # Verify success (circuit breaker should record success)
-            assert gmail_circuit_breaker.state_obj.failure_count == 0
+        # Verify success (circuit breaker should record success)
+        assert gmail_circuit_breaker.state_obj.failure_count == 0
 
-        except Exception as e:
-            pytest.fail(f"Unexpected exception: {e}")
+        # Verify empty result (no messages)
+        assert result == []
 
     @patch('src.email_receiver.gmail_receiver.build')
     def test_gmail_fetch_all_retries_exhausted(self, mock_build):
@@ -98,9 +92,10 @@ class TestGmailRetryFlow:
         """
         Test that Gmail fetch_emails does NOT retry on authentication errors.
 
-        Scenario: 401 auth error → no retry → immediate failure
+        Scenario: 401 auth error → no retry → immediate failure with EmailReceiverError
         """
         from googleapiclient.errors import HttpError
+        from src.email_receiver.gmail_receiver import EmailReceiverError
 
         # Create receiver with mock paths
         receiver = GmailReceiver(
@@ -120,11 +115,12 @@ class TestGmailRetryFlow:
         mock_list().execute.side_effect = http_error
         receiver.service = mock_service
 
-        # Execute - should fail immediately without retry
-        with pytest.raises(HttpError):
+        # Execute - should fail immediately with EmailReceiverError (wrapped)
+        with pytest.raises(EmailReceiverError) as exc_info:
             receiver.fetch_emails(max_emails=10)
 
+        # Verify it's an authentication error
+        assert exc_info.value.code == "AUTHENTICATION_FAILED"
+
         # Verify NO retry happened (only 1 attempt for non-retryable errors)
-        # Note: The actual behavior depends on the retry decorator implementation
-        # For now, just verify an exception was raised
-        assert mock_list().execute.call_count >= 1
+        assert mock_list().execute.call_count == 1

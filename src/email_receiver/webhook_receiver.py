@@ -39,7 +39,7 @@ class WebhookReceiver(EmailReceiver):
         pubsub_subscription_name: str,
         credentials_path: Path,
         raw_email_dir: Optional[Path] = None,
-        metadata_dir: Optional[Path] = None
+        metadata_dir: Optional[Path] = None,
     ):
         """
         Initialize WebhookReceiver (PLACEHOLDER).
@@ -60,9 +60,7 @@ class WebhookReceiver(EmailReceiver):
         self.metadata_dir = Path(metadata_dir or "data/metadata")
 
     def fetch_emails(
-        self,
-        since: Optional[datetime] = None,
-        max_emails: int = 100
+        self, since: Optional[datetime] = None, max_emails: int = 100
     ) -> List[RawEmail]:
         """
         Retrieve emails triggered by webhook (PLACEHOLDER).

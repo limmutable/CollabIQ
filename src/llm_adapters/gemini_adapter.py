@@ -31,7 +31,11 @@ from llm_provider.date_utils import parse_date
 try:
     from error_handling.structured_logger import logger as error_logger
     from error_handling.models import ErrorRecord, ErrorSeverity, ErrorCategory
-    from error_handling import retry_with_backoff, GEMINI_RETRY_CONFIG, gemini_circuit_breaker
+    from error_handling import (
+        retry_with_backoff,
+        GEMINI_RETRY_CONFIG,
+        gemini_circuit_breaker,
+    )
 except ImportError:
     # Graceful fallback if error_handling module not available
     error_logger = None
@@ -105,9 +109,16 @@ class GeminiAdapter(LLMProvider):
 
         logger.info(f"Initialized GeminiAdapter with model={model}, timeout={timeout}s")
 
-    @retry_with_backoff(GEMINI_RETRY_CONFIG) if retry_with_backoff and GEMINI_RETRY_CONFIG else lambda f: f
+    @(
+        retry_with_backoff(GEMINI_RETRY_CONFIG)
+        if retry_with_backoff and GEMINI_RETRY_CONFIG
+        else lambda f: f
+    )
     def extract_entities(
-        self, email_text: str, company_context: Optional[str] = None, email_id: Optional[str] = None
+        self,
+        email_text: str,
+        company_context: Optional[str] = None,
+        email_id: Optional[str] = None,
     ) -> ExtractedEntities:
         """Extract 5 key entities from email text with optional company matching (with automatic retry).
 
@@ -145,7 +156,9 @@ class GeminiAdapter(LLMProvider):
         response_data = self._call_with_retry(email_text, company_context)
 
         # Parse response to ExtractedEntities
-        entities = self._parse_response(response_data, email_text, company_context, email_id)
+        entities = self._parse_response(
+            response_data, email_text, company_context, email_id
+        )
 
         return entities
 
@@ -329,7 +342,7 @@ class GeminiAdapter(LLMProvider):
         except FuturesTimeoutError:
             raise LLMTimeoutError(
                 f"Gemini API call timed out after {self.timeout} seconds",
-                timeout_seconds=self.timeout
+                timeout_seconds=self.timeout,
             )
 
         # Parse JSON response
@@ -360,7 +373,9 @@ class GeminiAdapter(LLMProvider):
             LLMValidationError: If response format is invalid
         """
         try:
-            return self._build_extracted_entities(response_data, email_text, company_context, email_id)
+            return self._build_extracted_entities(
+                response_data, email_text, company_context, email_id
+            )
         except ValidationError as e:
             # Handle Pydantic validation errors gracefully
             # Log validation errors and mark as "needs_review" by setting confidence to 0.0
@@ -375,18 +390,23 @@ class GeminiAdapter(LLMProvider):
                     error_type="ValidationError",
                     stack_trace=str(e),
                     context={
-                        "email_id": email_id or f"email_{hash(email_text) % 1000000:06d}",
+                        "email_id": email_id
+                        or f"email_{hash(email_text) % 1000000:06d}",
                         "operation": "extract_entities",
-                        "validation_errors": e.errors() if hasattr(e, 'errors') else str(e),
-                        "needs_manual_review": True
+                        "validation_errors": e.errors()
+                        if hasattr(e, "errors")
+                        else str(e),
+                        "needs_manual_review": True,
                     },
-                    retry_count=0
+                    retry_count=0,
                 )
                 error_logger.log_error(error_record)
 
             # Return a minimal ExtractedEntities with "needs_review" flag (low confidence)
             # This allows processing to continue while flagging the extraction as problematic
-            return self._create_needs_review_entity(response_data, email_text, email_id, e)
+            return self._create_needs_review_entity(
+                response_data, email_text, email_id, e
+            )
 
     def _build_extracted_entities(
         self,
@@ -532,10 +552,18 @@ class GeminiAdapter(LLMProvider):
 
         # Create entity with all confidence scores at 0.0 (needs manual review)
         return ExtractedEntities(
-            person_in_charge=person_data.get("value") if isinstance(person_data, dict) else None,
-            startup_name=startup_data.get("value") if isinstance(startup_data, dict) else None,
-            partner_org=partner_data.get("value") if isinstance(partner_data, dict) else None,
-            details=details_data.get("value") if isinstance(details_data, dict) else None,
+            person_in_charge=person_data.get("value")
+            if isinstance(person_data, dict)
+            else None,
+            startup_name=startup_data.get("value")
+            if isinstance(startup_data, dict)
+            else None,
+            partner_org=partner_data.get("value")
+            if isinstance(partner_data, dict)
+            else None,
+            details=details_data.get("value")
+            if isinstance(details_data, dict)
+            else None,
             date=parsed_date,
             confidence=ConfidenceScores(
                 person=0.0,

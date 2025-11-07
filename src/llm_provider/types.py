@@ -26,9 +26,15 @@ class ConfidenceScores(BaseModel):
         date: Confidence for date
     """
 
-    person: float = Field(..., ge=0.0, le=1.0, description="Confidence for person_in_charge")
-    startup: float = Field(..., ge=0.0, le=1.0, description="Confidence for startup_name")
-    partner: float = Field(..., ge=0.0, le=1.0, description="Confidence for partner_org")
+    person: float = Field(
+        ..., ge=0.0, le=1.0, description="Confidence for person_in_charge"
+    )
+    startup: float = Field(
+        ..., ge=0.0, le=1.0, description="Confidence for startup_name"
+    )
+    partner: float = Field(
+        ..., ge=0.0, le=1.0, description="Confidence for partner_org"
+    )
     details: float = Field(..., ge=0.0, le=1.0, description="Confidence for details")
     date: float = Field(..., ge=0.0, le=1.0, description="Confidence for date")
 
@@ -51,7 +57,13 @@ class ConfidenceScores(BaseModel):
         """
         return any(
             score < threshold
-            for score in [self.person, self.startup, self.partner, self.details, self.date]
+            for score in [
+                self.person,
+                self.startup,
+                self.partner,
+                self.details,
+                self.date,
+            ]
         )
 
     class Config:
@@ -288,7 +300,7 @@ class ExtractedEntitiesWithClassification(ExtractedEntities):
     def validate_type_format(cls, v: Optional[str]) -> Optional[str]:
         """Ensure type follows [X]* pattern."""
         if v is not None:
-            if not re.match(r'^\[([A-Z0-9]+)\]', v):
+            if not re.match(r"^\[([A-Z0-9]+)\]", v):
                 raise ValueError(f"Invalid collaboration_type format: {v}")
         return v
 
@@ -297,9 +309,11 @@ class ExtractedEntitiesWithClassification(ExtractedEntities):
     def validate_intensity(cls, v: Optional[str]) -> Optional[str]:
         """Ensure intensity is one of 4 valid values."""
         if v is not None:
-            valid = ['이해', '협력', '투자', '인수']
+            valid = ["이해", "협력", "투자", "인수"]
             if v not in valid:
-                raise ValueError(f"Invalid collaboration_intensity: {v}, must be one of {valid}")
+                raise ValueError(
+                    f"Invalid collaboration_intensity: {v}, must be one of {valid}"
+                )
         return v
 
     def needs_manual_review(self, threshold: float = 0.85) -> bool:
@@ -313,7 +327,10 @@ class ExtractedEntitiesWithClassification(ExtractedEntities):
         """
         if self.type_confidence is not None and self.type_confidence < threshold:
             return True
-        if self.intensity_confidence is not None and self.intensity_confidence < threshold:
+        if (
+            self.intensity_confidence is not None
+            and self.intensity_confidence < threshold
+        ):
             return True
         return False
 
@@ -374,7 +391,9 @@ class BatchSummary(BaseModel):
     total_count: int = Field(..., ge=1, description="Total emails in batch")
     success_count: int = Field(..., ge=0, description="Successful extractions")
     failure_count: int = Field(..., ge=0, description="Failed extractions")
-    processing_time_seconds: float = Field(..., ge=0.0, description="Total processing time")
+    processing_time_seconds: float = Field(
+        ..., ge=0.0, description="Total processing time"
+    )
 
     @field_validator("success_count", "failure_count")
     @classmethod
@@ -429,7 +448,9 @@ class ExtractionBatch(BaseModel):
 
     @field_validator("results")
     @classmethod
-    def validate_results_length(cls, v: List[ExtractedEntities], info) -> List[ExtractedEntities]:
+    def validate_results_length(
+        cls, v: List[ExtractedEntities], info
+    ) -> List[ExtractedEntities]:
         """Ensure results length matches emails length (after processing)."""
         if "emails" in info.data and len(v) > 0:
             if len(v) != len(info.data["emails"]):
@@ -477,12 +498,16 @@ class WriteResult(BaseModel):
     success: bool = Field(..., description="Whether write operation succeeded")
     page_id: Optional[str] = Field(None, description="Notion page ID if created")
     email_id: str = Field(..., description="Email identifier for tracking")
-    error_type: Optional[str] = Field(None, description="Exception class name if failed")
+    error_type: Optional[str] = Field(
+        None, description="Exception class name if failed"
+    )
     error_message: Optional[str] = Field(None, description="Error message if failed")
     status_code: Optional[int] = Field(None, description="HTTP status code if failed")
     retry_count: int = Field(0, ge=0, le=3, description="Number of retry attempts")
     is_duplicate: bool = Field(False, description="Whether duplicate was detected")
-    existing_page_id: Optional[str] = Field(None, description="Existing duplicate page ID")
+    existing_page_id: Optional[str] = Field(
+        None, description="Existing duplicate page ID"
+    )
 
 
 class DLQEntry(BaseModel):
@@ -499,11 +524,17 @@ class DLQEntry(BaseModel):
     """
 
     email_id: str = Field(..., description="Email identifier")
-    failed_at: datetime = Field(default_factory=datetime.utcnow, description="Failure timestamp")
+    failed_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Failure timestamp"
+    )
     retry_count: int = Field(0, ge=0, description="Number of retries attempted")
     error: Dict[str, Any] = Field(..., description="Error details")
-    extracted_data: "ExtractedEntitiesWithClassification" = Field(..., description="Full extracted data")
-    original_email_content: Optional[str] = Field(None, description="Original email text")
+    extracted_data: "ExtractedEntitiesWithClassification" = Field(
+        ..., description="Full extracted data"
+    )
+    original_email_content: Optional[str] = Field(
+        None, description="Original email text"
+    )
     dlq_file_path: Optional[str] = Field(None, description="DLQ file path")
 
     class Config:

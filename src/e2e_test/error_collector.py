@@ -86,7 +86,11 @@ class ErrorCollector:
                 error_type = type(exception).__name__
             if error_message is None:
                 error_message = str(exception)
-            stack_trace = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
+            stack_trace = "".join(
+                traceback.format_exception(
+                    type(exception), exception, exception.__traceback__
+                )
+            )
         else:
             stack_trace = None
 
@@ -237,7 +241,9 @@ class ErrorCollector:
         # Return updated ErrorRecord
         return ErrorRecord(**error_data)
 
-    def _auto_categorize_severity(self, error_type: str, stage: PipelineStage | str) -> Severity:
+    def _auto_categorize_severity(
+        self, error_type: str, stage: PipelineStage | str
+    ) -> Severity:
         """
         Auto-categorize severity based on error type and pipeline stage
 
@@ -272,7 +278,9 @@ class ErrorCollector:
             return Severity.HIGH
         if "date" in error_type_lower and "parsing" in error_type_lower:
             return Severity.HIGH
-        if "company" in error_type_lower and ("match" in error_type_lower or "wrong" in error_type_lower):
+        if "company" in error_type_lower and (
+            "match" in error_type_lower or "wrong" in error_type_lower
+        ):
             return Severity.HIGH
 
         # Medium severity errors (edge cases, ambiguity)
@@ -309,7 +317,13 @@ class ErrorCollector:
             # Remove sensitive keys
             if any(
                 sensitive in key_lower
-                for sensitive in ["api_key", "token", "secret", "password", "credential"]
+                for sensitive in [
+                    "api_key",
+                    "token",
+                    "secret",
+                    "password",
+                    "credential",
+                ]
             ):
                 sanitized[key] = "[REDACTED]"
                 continue

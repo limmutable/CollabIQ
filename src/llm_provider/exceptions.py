@@ -68,7 +68,9 @@ class LLMRateLimitError(LLMAPIError):
             message: Human-readable error message
             original_error: Original exception that was caught
         """
-        super().__init__(message=message, status_code=429, original_error=original_error)
+        super().__init__(
+            message=message, status_code=429, original_error=original_error
+        )
 
 
 class LLMTimeoutError(LLMAPIError):
@@ -91,7 +93,9 @@ class LLMTimeoutError(LLMAPIError):
             timeout_seconds: Timeout value that was exceeded
             original_error: Original exception that was caught
         """
-        super().__init__(message=message, status_code=408, original_error=original_error)
+        super().__init__(
+            message=message, status_code=408, original_error=original_error
+        )
         self.timeout_seconds = timeout_seconds
 
     def __str__(self) -> str:
@@ -121,7 +125,9 @@ class LLMAuthenticationError(LLMAPIError):
             status_code: HTTP status code (401 or 403)
             original_error: Original exception that was caught
         """
-        super().__init__(message=message, status_code=status_code, original_error=original_error)
+        super().__init__(
+            message=message, status_code=status_code, original_error=original_error
+        )
 
 
 class LLMValidationError(LLMAPIError):
@@ -142,4 +148,6 @@ class LLMValidationError(LLMAPIError):
             message: Human-readable error message
             original_error: Original exception that was caught
         """
-        super().__init__(message=message, status_code=400, original_error=original_error)
+        super().__init__(
+            message=message, status_code=400, original_error=original_error
+        )

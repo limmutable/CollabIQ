@@ -16,7 +16,6 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import sys
 from pathlib import Path
@@ -256,7 +255,9 @@ Examples:
 
     except LLMTimeoutError as e:
         logger.error(f"Timeout error: {e}")
-        logger.error("The request took too long. Try again or increase timeout in settings")
+        logger.error(
+            "The request took too long. Try again or increase timeout in settings"
+        )
         return 1
 
     except LLMValidationError as e:

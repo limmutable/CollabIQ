@@ -23,36 +23,35 @@ from typing import Optional, List, Tuple
 # Pattern 1: korean_thanks_name
 # Matches: "감사합니다.\n이름 드림" or variations
 KOREAN_THANKS_NAME = re.compile(
-    r'(감사합니다|감사드립니다|고맙습니다)\s*[.。]?\s*\n+\s*([가-힣]{2,4})\s+(드림|올림)',
-    re.MULTILINE | re.UNICODE
+    r"(감사합니다|감사드립니다|고맙습니다)\s*[.。]?\s*\n+\s*([가-힣]{2,4})\s+(드림|올림)",
+    re.MULTILINE | re.UNICODE,
 )
 
 # Pattern 2: korean_greeting_signature
 # Matches: "좋은 하루 보내세요.\n이름 드림" or variations
 KOREAN_GREETING_SIGNATURE = re.compile(
-    r'(좋은\s+하루\s+보내세요|행복한\s+하루\s+되세요|건강하세요)\s*[.。]?\s*\n+\s*([가-힣]{2,4})\s+(드림|올림)',
-    re.MULTILINE | re.UNICODE
+    r"(좋은\s+하루\s+보내세요|행복한\s+하루\s+되세요|건강하세요)\s*[.。]?\s*\n+\s*([가-힣]{2,4})\s+(드림|올림)",
+    re.MULTILINE | re.UNICODE,
 )
 
 # Pattern 3: korean_closing_only
 # Matches: "감사합니다." or "고맙습니다." at end of email (no name)
 KOREAN_CLOSING_ONLY = re.compile(
-    r'\n+(감사합니다|감사드립니다|고맙습니다|수고하세요)\s*[.。]?\s*$',
-    re.MULTILINE | re.UNICODE
+    r"\n+(감사합니다|감사드립니다|고맙습니다|수고하세요)\s*[.。]?\s*$",
+    re.MULTILINE | re.UNICODE,
 )
 
 # Pattern 4: korean_name_only
 # Matches: "이름 드림" at end of email
 KOREAN_NAME_ONLY = re.compile(
-    r'\n+\s*([가-힣]{2,4})\s+(드림|올림)\s*$',
-    re.MULTILINE | re.UNICODE
+    r"\n+\s*([가-힣]{2,4})\s+(드림|올림)\s*$", re.MULTILINE | re.UNICODE
 )
 
 # Pattern 5: korean_contact_block
 # Matches: Contact information block in Korean (name, title, company, contact)
 KOREAN_CONTACT_BLOCK = re.compile(
-    r'\n+[-=]{3,}\s*\n+\s*([가-힣]{2,4})\s+(부장|과장|대리|팀장|이사|대표|매니저)',
-    re.MULTILINE | re.UNICODE
+    r"\n+[-=]{3,}\s*\n+\s*([가-힣]{2,4})\s+(부장|과장|대리|팀장|이사|대표|매니저)",
+    re.MULTILINE | re.UNICODE,
 )
 
 
@@ -63,36 +62,35 @@ KOREAN_CONTACT_BLOCK = re.compile(
 # Pattern 1: english_formal_closing
 # Matches: "Best regards,\nJohn Smith" or similar formal closings
 ENGLISH_FORMAL_CLOSING = re.compile(
-    r'\n+(Best\s+regards|Kind\s+regards|Sincerely|Regards|Yours\s+sincerely|Yours\s+truly)\s*,?\s*\n+\s*([A-Z][a-z]+\s+[A-Z][a-z]+)',
-    re.MULTILINE | re.IGNORECASE
+    r"\n+(Best\s+regards|Kind\s+regards|Sincerely|Regards|Yours\s+sincerely|Yours\s+truly)\s*,?\s*\n+\s*([A-Z][a-z]+\s+[A-Z][a-z]+)",
+    re.MULTILINE | re.IGNORECASE,
 )
 
 # Pattern 2: english_informal_closing
 # Matches: "Thanks,\nEmma" or "Cheers,\nMike"
 ENGLISH_INFORMAL_CLOSING = re.compile(
-    r'\n+(Thanks|Thank\s+you|Cheers|Best)\s*,?\s*\n+\s*([A-Z][a-z]+)',
-    re.MULTILINE | re.IGNORECASE
+    r"\n+(Thanks|Thank\s+you|Cheers|Best)\s*,?\s*\n+\s*([A-Z][a-z]+)",
+    re.MULTILINE | re.IGNORECASE,
 )
 
 # Pattern 3: english_contact_block
 # Matches: Contact information block (name, title, company, phone, email)
 ENGLISH_CONTACT_BLOCK = re.compile(
-    r'\n+[-=]{3,}\s*\n+\s*([A-Z][a-z]+\s+[A-Z][a-z]+)\s*\n+\s*(.*?(Manager|Director|CEO|President|VP|Engineer))',
-    re.MULTILINE | re.IGNORECASE
+    r"\n+[-=]{3,}\s*\n+\s*([A-Z][a-z]+\s+[A-Z][a-z]+)\s*\n+\s*(.*?(Manager|Director|CEO|President|VP|Engineer))",
+    re.MULTILINE | re.IGNORECASE,
 )
 
 # Pattern 4: english_phone_email_block
 # Matches: Block with phone number and/or email
 ENGLISH_PHONE_EMAIL_BLOCK = re.compile(
-    r'\n+(Phone:|Mobile:|Tel:|Email:).+',
-    re.MULTILINE | re.IGNORECASE
+    r"\n+(Phone:|Mobile:|Tel:|Email:).+", re.MULTILINE | re.IGNORECASE
 )
 
 # Pattern 5: english_confidentiality_notice
 # Matches: Confidentiality or legal disclaimer at end
 ENGLISH_CONFIDENTIALITY_NOTICE = re.compile(
-    r'\n+(CONFIDENTIALITY\s+NOTICE|DISCLAIMER|LEGAL\s+NOTICE):.+',
-    re.MULTILINE | re.IGNORECASE
+    r"\n+(CONFIDENTIALITY\s+NOTICE|DISCLAIMER|LEGAL\s+NOTICE):.+",
+    re.MULTILINE | re.IGNORECASE,
 )
 
 
@@ -102,14 +100,14 @@ ENGLISH_CONFIDENTIALITY_NOTICE = re.compile(
 
 # Heuristic 1: separator_line_signature
 # Matches: Separator line (---, ===, ___) followed by text
-SEPARATOR_LINE_SIGNATURE = re.compile(
-    r'\n+\s*[-=_]{3,}\s*\n+',
-    re.MULTILINE
-)
+SEPARATOR_LINE_SIGNATURE = re.compile(r"\n+\s*[-=_]{3,}\s*\n+", re.MULTILINE)
+
 
 # Heuristic 2: short_final_line
 # Detects if last 1-2 lines are very short (< 50 chars) and likely signature
-def detect_short_final_line(text: str, max_lines: int = 2, max_chars: int = 50) -> Optional[int]:
+def detect_short_final_line(
+    text: str, max_lines: int = 2, max_chars: int = 50
+) -> Optional[int]:
     """
     Heuristic: Detect if last few lines are very short (likely signature).
 
@@ -124,13 +122,13 @@ def detect_short_final_line(text: str, max_lines: int = 2, max_chars: int = 50) 
     if not text:
         return None
 
-    lines = text.split('\n')
+    lines = text.split("\n")
     if len(lines) < max_lines:
         return None
 
     # Check last N lines
     final_lines = lines[-max_lines:]
-    final_text = '\n'.join(final_lines)
+    final_text = "\n".join(final_lines)
 
     # If all final lines are short and non-empty, likely signature
     if 0 < len(final_text.strip()) <= max_chars:
@@ -149,6 +147,7 @@ def detect_short_final_line(text: str, max_lines: int = 2, max_chars: int = 50) 
 # ============================================================================
 # Pattern Matching Functions
 # ============================================================================
+
 
 def find_korean_signature(text: str) -> Optional[Tuple[int, str]]:
     """
@@ -301,48 +300,43 @@ def remove_signature(text: str) -> str:
 
 # Pattern 1: angle_bracket_quotes
 # Matches: Lines starting with "> " (standard email quote prefix)
-ANGLE_BRACKET_QUOTES = re.compile(
-    r'^>.*$',
-    re.MULTILINE
-)
+ANGLE_BRACKET_QUOTES = re.compile(r"^>.*$", re.MULTILINE)
 
 # Pattern 2: gmail_reply_header (English)
 # Matches: "On Mon, Oct 30, 2025 at 2:30 PM, John Smith wrote:"
 GMAIL_REPLY_HEADER = re.compile(
-    r'On\s+(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+'
-    r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4}'
-    r'(?:\s+at\s+\d{1,2}:\d{2}\s*(?:AM|PM)?)?'
-    r',?\s+.+?\s+wrote:',
-    re.MULTILINE | re.IGNORECASE
+    r"On\s+(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+"
+    r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4}"
+    r"(?:\s+at\s+\d{1,2}:\d{2}\s*(?:AM|PM)?)?"
+    r",?\s+.+?\s+wrote:",
+    re.MULTILINE | re.IGNORECASE,
 )
 
 # Pattern 3: outlook_reply_header (English)
 # Matches: "From: John Smith\nSent: Monday, October 30, 2025"
 OUTLOOK_REPLY_HEADER = re.compile(
-    r'^From:\s*.+\n'
-    r'Sent:\s*(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s*'
-    r'(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}',
-    re.MULTILINE | re.IGNORECASE
+    r"^From:\s*.+\n"
+    r"Sent:\s*(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s*"
+    r"(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}",
+    re.MULTILINE | re.IGNORECASE,
 )
 
 # Pattern 4: korean_reply_header
 # Matches: "2025년 10월 30일 화요일, 김철수님이 작성:"
 KOREAN_REPLY_HEADER = re.compile(
-    r'\d{4}년\s+\d{1,2}월\s+\d{1,2}일\s+(?:월|화|수|목|금|토|일)요일,?\s*.+?(?:님이\s*작성|wrote):',
-    re.MULTILINE | re.UNICODE
+    r"\d{4}년\s+\d{1,2}월\s+\d{1,2}일\s+(?:월|화|수|목|금|토|일)요일,?\s*.+?(?:님이\s*작성|wrote):",
+    re.MULTILINE | re.UNICODE,
 )
 
 # Pattern 5: simple_on_date_wrote
 # Matches: "On [date]... wrote:" (more flexible than Gmail-specific)
-SIMPLE_ON_DATE_WROTE = re.compile(
-    r'On\s+.+?\s+wrote:',
-    re.MULTILINE | re.IGNORECASE
-)
+SIMPLE_ON_DATE_WROTE = re.compile(r"On\s+.+?\s+wrote:", re.MULTILINE | re.IGNORECASE)
 
 
 # ============================================================================
 # Quoted Thread Detection Functions
 # ============================================================================
+
 
 def find_quoted_thread(text: str) -> Optional[Tuple[int, str]]:
     """
@@ -395,7 +389,7 @@ def detect_nested_quotes(text: str) -> Optional[int]:
         Starting position of first quote line, or None
     """
     # Find first line with "> " (any level)
-    match = re.search(r'^>\s*.*$', text, re.MULTILINE)
+    match = re.search(r"^>\s*.*$", text, re.MULTILINE)
     if match:
         return match.start()
     return None
@@ -473,59 +467,60 @@ def remove_quoted_thread(text: str) -> str:
 # Pattern 1: confidentiality_notice
 # Matches: "CONFIDENTIALITY NOTICE:", "CONFIDENTIAL:", etc.
 CONFIDENTIALITY_NOTICE = re.compile(
-    r'(?:^|\n)\s*CONFIDENTIALITY\s+NOTICE\s*:.*',
-    re.MULTILINE | re.IGNORECASE | re.DOTALL
+    r"(?:^|\n)\s*CONFIDENTIALITY\s+NOTICE\s*:.*",
+    re.MULTILINE | re.IGNORECASE | re.DOTALL,
 )
 
 # Pattern 2: confidential_disclaimer
 # Matches: "This email is confidential..."
 CONFIDENTIAL_DISCLAIMER = re.compile(
-    r'(?:^|\n)\s*(?:This\s+)?(?:email|message|communication)\s+(?:and\s+any\s+attachments\s+)?'
-    r'(?:is|are)\s+confidential.*',
-    re.MULTILINE | re.IGNORECASE | re.DOTALL
+    r"(?:^|\n)\s*(?:This\s+)?(?:email|message|communication)\s+(?:and\s+any\s+attachments\s+)?"
+    r"(?:is|are)\s+confidential.*",
+    re.MULTILINE | re.IGNORECASE | re.DOTALL,
 )
 
 # Pattern 3: intended_only_notice
 # Matches: "This message is intended only for..."
 INTENDED_ONLY_NOTICE = re.compile(
-    r'(?:^|\n)\s*This\s+(?:message|email|communication)\s+is\s+intended\s+only\s+for.*',
-    re.MULTILINE | re.IGNORECASE | re.DOTALL
+    r"(?:^|\n)\s*This\s+(?:message|email|communication)\s+is\s+intended\s+only\s+for.*",
+    re.MULTILINE | re.IGNORECASE | re.DOTALL,
 )
 
 # Pattern 4: legal_disclaimer
 # Matches: "LEGAL DISCLAIMER:", "DISCLAIMER:", etc.
 LEGAL_DISCLAIMER = re.compile(
-    r'(?:^|\n)\s*(?:LEGAL\s+)?DISCLAIMER\s*:.*',
-    re.MULTILINE | re.IGNORECASE | re.DOTALL
+    r"(?:^|\n)\s*(?:LEGAL\s+)?DISCLAIMER\s*:.*",
+    re.MULTILINE | re.IGNORECASE | re.DOTALL,
 )
 
 # Pattern 5: privileged_communication
 # Matches: "privileged and confidential", "attorney-client privilege"
 PRIVILEGED_COMMUNICATION = re.compile(
-    r'(?:^|\n)\s*.*?(?:privileged|privilege).*?(?:confidential|communication).*',
-    re.MULTILINE | re.IGNORECASE | re.DOTALL
+    r"(?:^|\n)\s*.*?(?:privileged|privilege).*?(?:confidential|communication).*",
+    re.MULTILINE | re.IGNORECASE | re.DOTALL,
 )
 
 # Pattern 6: unauthorized_use
 # Matches: "unauthorized use", "strictly prohibited"
 UNAUTHORIZED_USE = re.compile(
-    r'(?:^|\n)\s*.*?(?:unauthorized|unauthorised)\s+(?:use|disclosure|distribution).*?'
-    r'(?:prohibited|forbidden).*',
-    re.MULTILINE | re.IGNORECASE | re.DOTALL
+    r"(?:^|\n)\s*.*?(?:unauthorized|unauthorised)\s+(?:use|disclosure|distribution).*?"
+    r"(?:prohibited|forbidden).*",
+    re.MULTILINE | re.IGNORECASE | re.DOTALL,
 )
 
 # Pattern 7: separator_disclaimer (heuristic)
 # Matches: "---" or "===" followed by disclaimer-like text
 SEPARATOR_DISCLAIMER = re.compile(
-    r'(?:^|\n)\s*[-=_]{3,}\s*\n'
-    r'.*?(?:confidential|disclaimer|legal|privileged|intended\s+only).*',
-    re.MULTILINE | re.IGNORECASE | re.DOTALL
+    r"(?:^|\n)\s*[-=_]{3,}\s*\n"
+    r".*?(?:confidential|disclaimer|legal|privileged|intended\s+only).*",
+    re.MULTILINE | re.IGNORECASE | re.DOTALL,
 )
 
 
 # ============================================================================
 # Disclaimer Detection Functions
 # ============================================================================
+
 
 def find_disclaimer(text: str) -> Optional[Tuple[int, str]]:
     """
@@ -619,6 +614,7 @@ def remove_disclaimer(text: str) -> str:
 # ============================================================================
 # Pattern Statistics and Debugging
 # ============================================================================
+
 
 def get_all_patterns() -> List[Tuple[str, re.Pattern]]:
     """

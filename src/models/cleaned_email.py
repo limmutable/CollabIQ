@@ -14,9 +14,10 @@ from pydantic import BaseModel, Field, field_validator
 
 class CleaningStatus(str, Enum):
     """Cleaning operation outcome."""
+
     SUCCESS = "success"  # Content remains after cleaning
-    EMPTY = "empty"      # No content remains after cleaning (FR-012)
-    FAILED = "failed"    # Cleaning process failed
+    EMPTY = "empty"  # No content remains after cleaning (FR-012)
+    FAILED = "failed"  # Cleaning process failed
     SKIPPED = "skipped"  # Email was skipped (duplicate, invalid, etc.)
 
 
@@ -35,23 +36,42 @@ class RemovedContent(BaseModel):
         cleaned_length: Character count of cleaned body
     """
 
-    signature_removed: bool = Field(default=False, description="Whether signature was detected and removed")
-    quoted_thread_removed: bool = Field(default=False, description="Whether quoted thread was detected and removed")
-    disclaimer_removed: bool = Field(default=False, description="Whether disclaimer was detected and removed")
+    signature_removed: bool = Field(
+        default=False, description="Whether signature was detected and removed"
+    )
+    quoted_thread_removed: bool = Field(
+        default=False, description="Whether quoted thread was detected and removed"
+    )
+    disclaimer_removed: bool = Field(
+        default=False, description="Whether disclaimer was detected and removed"
+    )
 
-    signature_pattern: Optional[str] = Field(None, description="Pattern name that matched signature (e.g., 'korean_thanks')")
-    quote_pattern: Optional[str] = Field(None, description="Pattern name that matched quote (e.g., 'angle_bracket')")
-    disclaimer_pattern: Optional[str] = Field(None, description="Pattern name that matched disclaimer (e.g., 'confidentiality')")
+    signature_pattern: Optional[str] = Field(
+        None, description="Pattern name that matched signature (e.g., 'korean_thanks')"
+    )
+    quote_pattern: Optional[str] = Field(
+        None, description="Pattern name that matched quote (e.g., 'angle_bracket')"
+    )
+    disclaimer_pattern: Optional[str] = Field(
+        None,
+        description="Pattern name that matched disclaimer (e.g., 'confidentiality')",
+    )
 
-    original_length: int = Field(..., description="Character count of original body", ge=0)
-    cleaned_length: int = Field(..., description="Character count of cleaned body", ge=0)
+    original_length: int = Field(
+        ..., description="Character count of original body", ge=0
+    )
+    cleaned_length: int = Field(
+        ..., description="Character count of cleaned body", ge=0
+    )
 
     @property
     def removal_percentage(self) -> float:
         """Calculate percentage of content removed."""
         if self.original_length == 0:
             return 0.0
-        return ((self.original_length - self.cleaned_length) / self.original_length) * 100
+        return (
+            (self.original_length - self.cleaned_length) / self.original_length
+        ) * 100
 
 
 class CleanedEmail(BaseModel):
@@ -72,28 +92,38 @@ class CleanedEmail(BaseModel):
         is_empty: True if no content remains after cleaning (FR-012)
     """
 
-    original_message_id: str = Field(..., description="Links back to RawEmail.metadata.message_id")
-    cleaned_body: str = Field(..., description="Email body with signatures, quotes, disclaimers removed")
-    removed_content: RemovedContent = Field(..., description="Summary of what was removed")
-    processed_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp when cleaning occurred")
+    original_message_id: str = Field(
+        ..., description="Links back to RawEmail.metadata.message_id"
+    )
+    cleaned_body: str = Field(
+        ..., description="Email body with signatures, quotes, disclaimers removed"
+    )
+    removed_content: RemovedContent = Field(
+        ..., description="Summary of what was removed"
+    )
+    processed_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Timestamp when cleaning occurred"
+    )
     status: CleaningStatus = Field(..., description="Outcome of cleaning operation")
-    is_empty: bool = Field(..., description="True if no content remains after cleaning (FR-012)")
+    is_empty: bool = Field(
+        ..., description="True if no content remains after cleaning (FR-012)"
+    )
 
-    @field_validator('is_empty', mode='before')
+    @field_validator("is_empty", mode="before")
     @classmethod
     def validate_is_empty(cls, v: bool, info) -> bool:
         """Auto-set is_empty based on cleaned_body content."""
-        cleaned_body = info.data.get('cleaned_body', '')
+        cleaned_body = info.data.get("cleaned_body", "")
         # Override provided value if cleaned_body is actually empty
         if not cleaned_body or not cleaned_body.strip():
             return True
         return v
 
-    @field_validator('status')
+    @field_validator("status")
     @classmethod
     def validate_status_consistency(cls, v: CleaningStatus, info) -> CleaningStatus:
         """Ensure status matches is_empty flag."""
-        is_empty = info.data.get('is_empty', False)
+        is_empty = info.data.get("is_empty", False)
         if is_empty and v == CleaningStatus.SUCCESS:
             raise ValueError("status cannot be SUCCESS if is_empty is True")
         if not is_empty and v == CleaningStatus.EMPTY:
@@ -113,11 +143,11 @@ class CleanedEmail(BaseModel):
                     "quote_pattern": None,
                     "disclaimer_pattern": None,
                     "original_length": 156,
-                    "cleaned_length": 98
+                    "cleaned_length": 98,
                 },
                 "processed_at": "2025-10-30T14:36:05Z",
                 "status": "success",
-                "is_empty": False
+                "is_empty": False,
             }
         }
     }

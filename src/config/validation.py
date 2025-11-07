@@ -14,7 +14,6 @@ Usage:
 
 import logging
 from dataclasses import dataclass
-from pathlib import Path
 from typing import List, Optional
 
 from src.config.settings import get_settings
@@ -83,9 +82,7 @@ def validate_configuration(
 
     # Check 1: Gmail credentials
     if not settings.gmail_credentials_path.exists():
-        errors.append(
-            f"Gmail credentials not found: {settings.gmail_credentials_path}"
-        )
+        errors.append(f"Gmail credentials not found: {settings.gmail_credentials_path}")
         errors.append(
             "Download OAuth2 credentials from Google Cloud Console as credentials.json"
         )
@@ -118,9 +115,7 @@ def validate_configuration(
         try:
             directory.mkdir(parents=True, exist_ok=True)
         except PermissionError:
-            errors.append(
-                f"Cannot create {name}: {directory} (permission denied)"
-            )
+            errors.append(f"Cannot create {name}: {directory} (permission denied)")
         except Exception as e:
             errors.append(f"Cannot create {name}: {directory} ({e})")
 

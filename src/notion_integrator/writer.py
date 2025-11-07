@@ -11,6 +11,11 @@ from notion_client.errors import APIResponseError
 from llm_provider.types import ExtractedEntitiesWithClassification, WriteResult
 from .field_mapper import FieldMapper
 
+try:
+    from ..error_handling import retry_with_backoff, NOTION_RETRY_CONFIG
+except ImportError:
+    from error_handling import retry_with_backoff, NOTION_RETRY_CONFIG
+
 
 logger = logging.getLogger(__name__)
 
@@ -142,8 +147,8 @@ class NotionWriter:
             # Map extracted data to Notion properties format
             properties = self.field_mapper.map_to_notion_properties(extracted_data)
 
-            # Create page with retry logic
-            page_response = await self._create_page_with_retry(properties)
+            # Create page (retry logic handled by decorator)
+            page_response = await self._create_page(properties)
 
             # Return success result
             return WriteResult(
@@ -201,51 +206,29 @@ class NotionWriter:
                 is_duplicate=False,
             )
 
-    async def _create_page_with_retry(
-        self, properties: Dict[str, Any], max_retries: int = 3
-    ) -> Dict[str, Any]:
-        """Create Notion page with immediate retry for transient errors.
+    @retry_with_backoff(NOTION_RETRY_CONFIG)
+    async def _create_page(self, properties: Dict[str, Any]) -> Dict[str, Any]:
+        """Create Notion page with retry logic handled by decorator.
+
+        The @retry_with_backoff decorator handles:
+        - Exponential backoff with jitter
+        - Circuit breaker integration
+        - Structured error logging
+        - Automatic classification of transient vs permanent errors
 
         Args:
             properties: Notion properties dict
-            max_retries: Maximum number of retry attempts (default: 3)
 
         Returns:
             Notion API response dict
 
         Raises:
-            Exception: If all retry attempts fail
+            APIResponseError: If page creation fails after retries
         """
-        last_exception = None
-
-        for attempt in range(max_retries):
-            try:
-                # Call Notion API to create page
-                response = await self.notion_integrator.client.client.pages.create(
-                    parent={"database_id": self.collabiq_db_id},
-                    properties=properties,
-                )
-                return response
-
-            except Exception as e:
-                last_exception = e
-                logger.warning(
-                    f"Notion write attempt {attempt + 1}/{max_retries} failed: {e}"
-                )
-
-                # Don't retry on validation errors (400)
-                if isinstance(e, APIResponseError):
-                    if hasattr(e, "response") and hasattr(e.response, "status_code"):
-                        if e.response.status_code == 400:
-                            logger.error(f"Validation error, will not retry: {e}")
-                            raise e
-
-                # Continue to next retry for transient errors
-                if attempt < max_retries - 1:
-                    logger.info(
-                        f"Retrying immediately (attempt {attempt + 2}/{max_retries})"
-                    )
-
-        # All retries exhausted
-        logger.error(f"All {max_retries} retry attempts failed")
-        raise last_exception
+        # Call Notion API to create page
+        # Retry logic is handled by the decorator
+        response = await self.notion_integrator.client.client.pages.create(
+            parent={"database_id": self.collabiq_db_id},
+            properties=properties,
+        )
+        return response

@@ -43,8 +43,12 @@ def verify_infisical() -> None:
 
         # Check if Infisical is enabled
         if not settings.infisical_enabled:
-            console.print("[yellow]⚠ Infisical is disabled (INFISICAL_ENABLED=false)[/yellow]")
-            console.print("[dim]Set INFISICAL_ENABLED=true in .env to enable Infisical integration[/dim]\n")
+            console.print(
+                "[yellow]⚠ Infisical is disabled (INFISICAL_ENABLED=false)[/yellow]"
+            )
+            console.print(
+                "[dim]Set INFISICAL_ENABLED=true in .env to enable Infisical integration[/dim]\n"
+            )
             sys.exit(1)
 
         # Display Infisical configuration
@@ -63,7 +67,12 @@ def verify_infisical() -> None:
 
         # Check each required secret
         secret_checks = [
-            ("GMAIL_CREDENTIALS_PATH", str(settings.gmail_credentials_path) if settings.gmail_credentials_path else None),
+            (
+                "GMAIL_CREDENTIALS_PATH",
+                str(settings.gmail_credentials_path)
+                if settings.gmail_credentials_path
+                else None,
+            ),
             ("GEMINI_API_KEY", settings.gemini_api_key),
             ("NOTION_API_KEY", settings.get_notion_api_key()),
             ("NOTION_DATABASE_ID_COMPANIES", settings.get_notion_companies_db_id()),
@@ -78,7 +87,9 @@ def verify_infisical() -> None:
 
         # Display results
         if secrets_found:
-            console.print(f"\n[green]✅ Retrieved {len(secrets_found)} secrets successfully[/green]\n")
+            console.print(
+                f"\n[green]✅ Retrieved {len(secrets_found)} secrets successfully[/green]\n"
+            )
             console.print("[bold]Secrets found:[/bold]")
             for secret_name in secrets_found:
                 console.print(f"  [green]✓[/green] {secret_name}")
@@ -97,16 +108,12 @@ def verify_infisical() -> None:
             sys.exit(1)
 
         console.print("\n[bold green]✅ All secrets loaded successfully[/bold green]")
-        console.print(
-            "[dim]Infisical integration is working correctly![/dim]\n"
-        )
+        console.print("[dim]Infisical integration is working correctly![/dim]\n")
 
     except Exception as e:
-        console.print(f"\n[bold red]✗ Verification failed[/bold red]")
+        console.print("\n[bold red]✗ Verification failed[/bold red]")
         console.print(f"[red]Error: {str(e)}[/red]\n")
-        console.print(
-            "[yellow]Check your Infisical configuration in .env:[/yellow]"
-        )
+        console.print("[yellow]Check your Infisical configuration in .env:[/yellow]")
         console.print("  - INFISICAL_ENABLED=true")
         console.print("  - INFISICAL_PROJECT_ID=<your-project-id>")
         console.print("  - INFISICAL_CLIENT_ID=<your-client-id>")
@@ -173,7 +180,9 @@ def notion_fetch(
 
         if not companies_db:
             console.print("[red]✗ Companies database ID not provided[/red]")
-            console.print("[yellow]Provide via --companies-db or NOTION_DATABASE_ID_COMPANIES in Infisical/.env[/yellow]\n")
+            console.print(
+                "[yellow]Provide via --companies-db or NOTION_DATABASE_ID_COMPANIES in Infisical/.env[/yellow]\n"
+            )
             sys.exit(1)
 
         # Get API key from settings (tries Infisical first, then .env)
@@ -209,7 +218,9 @@ def notion_fetch(
         table.add_row("SSG Affiliates", str(data.metadata.shinsegae_affiliate_count))
         table.add_row("Portfolio Companies", str(data.metadata.portfolio_company_count))
         table.add_row("Data Freshness", data.metadata.data_freshness)
-        table.add_row("Formatted At", data.metadata.formatted_at.strftime("%Y-%m-%d %H:%M:%S"))
+        table.add_row(
+            "Formatted At", data.metadata.formatted_at.strftime("%Y-%m-%d %H:%M:%S")
+        )
 
         console.print(table)
         console.print()
@@ -227,7 +238,7 @@ def notion_fetch(
             console.print(f"[green]✅ Data exported to {output}[/green]\n")
 
     except Exception as e:
-        console.print(f"\n[bold red]✗ Failed to fetch Notion data[/bold red]")
+        console.print("\n[bold red]✗ Failed to fetch Notion data[/bold red]")
         console.print(f"[red]Error: {str(e)}[/red]\n")
         sys.exit(1)
 
@@ -278,7 +289,7 @@ def notion_refresh(
         console.print(f"[dim]Database ID: {database_id}[/dim]\n")
 
     except Exception as e:
-        console.print(f"\n[bold red]✗ Failed to refresh cache[/bold red]")
+        console.print("\n[bold red]✗ Failed to refresh cache[/bold red]")
         console.print(f"[red]Error: {str(e)}[/red]\n")
         sys.exit(1)
 
@@ -312,7 +323,9 @@ def notion_schema(
                 api_key=api_key,
                 use_cache=not no_cache,
             ) as integrator:
-                return await integrator.discover_database_schema(database_id=database_id)
+                return await integrator.discover_database_schema(
+                    database_id=database_id
+                )
 
         schema = asyncio.run(fetch_schema())
 
@@ -323,8 +336,12 @@ def notion_schema(
         console.print(f"[bold]Database:[/bold] {schema.database.title}")
         console.print(f"[dim]ID: {schema.database.id}[/dim]")
         console.print(f"[dim]URL: {schema.database.url}[/dim]")
-        console.print(f"[dim]Created: {schema.database.created_time.strftime('%Y-%m-%d %H:%M:%S')}[/dim]")
-        console.print(f"[dim]Last edited: {schema.database.last_edited_time.strftime('%Y-%m-%d %H:%M:%S')}[/dim]\n")
+        console.print(
+            f"[dim]Created: {schema.database.created_time.strftime('%Y-%m-%d %H:%M:%S')}[/dim]"
+        )
+        console.print(
+            f"[dim]Last edited: {schema.database.last_edited_time.strftime('%Y-%m-%d %H:%M:%S')}[/dim]\n"
+        )
 
         # Properties table
         table = Table(title="Properties")
@@ -342,7 +359,9 @@ def notion_schema(
         if schema.relation_properties:
             console.print("[bold]Relations:[/bold]")
             for rel_prop in schema.relation_properties:
-                target_db = rel_prop.config.get("relation", {}).get("database_id", "N/A")
+                target_db = rel_prop.config.get("relation", {}).get(
+                    "database_id", "N/A"
+                )
                 console.print(f"  • {rel_prop.name} → {target_db}")
             console.print()
 
@@ -360,7 +379,7 @@ def notion_schema(
         console.print()
 
     except Exception as e:
-        console.print(f"\n[bold red]✗ Failed to fetch schema[/bold red]")
+        console.print("\n[bold red]✗ Failed to fetch schema[/bold red]")
         console.print(f"[red]Error: {str(e)}[/red]\n")
         sys.exit(1)
 
@@ -410,7 +429,9 @@ def notion_export(
 
         if not companies_db:
             console.print("[red]✗ Companies database ID not provided[/red]")
-            console.print("[yellow]Provide via --companies-db or NOTION_DATABASE_ID_COMPANIES in Infisical/.env[/yellow]\n")
+            console.print(
+                "[yellow]Provide via --companies-db or NOTION_DATABASE_ID_COMPANIES in Infisical/.env[/yellow]\n"
+            )
             sys.exit(1)
 
         # Get API key from settings (tries Infisical first, then .env)
@@ -421,7 +442,7 @@ def notion_export(
             sys.exit(1)
 
         # Fetch data
-        console.print(f"[yellow]Fetching from Notion...[/yellow]")
+        console.print("[yellow]Fetching from Notion...[/yellow]")
 
         async def fetch_data():
             async with NotionIntegrator(
@@ -441,13 +462,13 @@ def notion_export(
         with open(output, "w", encoding="utf-8") as f:
             json.dump(data.model_dump(mode="json"), f, indent=2, ensure_ascii=False)
 
-        console.print(f"[green]✅ Data exported successfully[/green]")
+        console.print("[green]✅ Data exported successfully[/green]")
         console.print(f"[dim]Output: {output}[/dim]")
         console.print(f"[dim]Companies: {data.metadata.total_companies}[/dim]")
         console.print(f"[dim]Size: {output.stat().st_size:,} bytes[/dim]\n")
 
     except Exception as e:
-        console.print(f"\n[bold red]✗ Failed to export data[/bold red]")
+        console.print("\n[bold red]✗ Failed to export data[/bold red]")
         console.print(f"[red]Error: {str(e)}[/red]\n")
         sys.exit(1)
 

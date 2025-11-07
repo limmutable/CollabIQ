@@ -73,7 +73,10 @@ class ClassificationService:
             ValueError: If "협업형태" property not found or invalid type
         """
         if self._type_values_cache is None:
-            logger.info("Fetching collaboration types from Notion", extra={"db_id": self.collabiq_db_id})
+            logger.info(
+                "Fetching collaboration types from Notion",
+                extra={"db_id": self.collabiq_db_id},
+            )
 
             schema = await self.notion.discover_database_schema(self.collabiq_db_id)
             collab_type_prop = schema.properties.get("협업형태")
@@ -91,7 +94,7 @@ class ClassificationService:
             # Parse options into {code: full_value} dict
             self._type_values_cache = {}
             for option in collab_type_prop.options:
-                match = re.match(r'^\[([A-Z0-9]+)\]', option.name)
+                match = re.match(r"^\[([A-Z0-9]+)\]", option.name)
                 if match:
                     code = match.group(1)
                     self._type_values_cache[code] = option.name
@@ -141,10 +144,16 @@ class ClassificationService:
             return (None, None)
 
         # Deterministic classification logic
-        if company_classification == "Portfolio" and partner_classification == "SSG Affiliate":
+        if (
+            company_classification == "Portfolio"
+            and partner_classification == "SSG Affiliate"
+        ):
             type_code = "A"
             confidence = 0.95
-        elif company_classification == "Portfolio" and partner_classification == "Portfolio":
+        elif (
+            company_classification == "Portfolio"
+            and partner_classification == "Portfolio"
+        ):
             type_code = "C"
             confidence = 0.95
         elif company_classification == "Portfolio":
@@ -231,12 +240,13 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
 
             # Use Gemini's internal _call_gemini_api method
             import asyncio
+
             response_text = await asyncio.to_thread(
                 self.gemini._call_with_retry,
                 lambda: self.gemini._call_gemini_api(
                     prompt=prompt,
                     temperature=0.1,  # Low temperature for consistent classification
-                )
+                ),
             )
 
             response_text = response_text.strip()
@@ -321,11 +331,11 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
         # Prepare entity context for prompt
         entity_context = f"""
 Extracted Entities to Preserve:
-- Person in charge: {extracted_entities.person_in_charge or 'N/A'}
-- Startup/Company: {extracted_entities.startup_name or 'N/A'}
-- Partner Organization: {extracted_entities.partner_org or 'N/A'}
-- Collaboration Details: {extracted_entities.details or 'N/A'}
-- Date: {extracted_entities.date.strftime('%Y-%m-%d') if extracted_entities.date else 'N/A'}
+- Person in charge: {extracted_entities.person_in_charge or "N/A"}
+- Startup/Company: {extracted_entities.startup_name or "N/A"}
+- Partner Organization: {extracted_entities.partner_org or "N/A"}
+- Collaboration Details: {extracted_entities.details or "N/A"}
+- Date: {extracted_entities.date.strftime("%Y-%m-%d") if extracted_entities.date else "N/A"}
 """
 
         # LLM prompt for summary generation
@@ -365,7 +375,7 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
                 lambda: self.gemini._call_gemini_api(
                     prompt=prompt,
                     temperature=0.3,  # Moderate temperature for creative yet consistent summaries
-                )
+                ),
             )
 
             response_text = response_text.strip()
@@ -385,9 +395,13 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
             # Validate summary length
             if summary:
                 if len(summary) < 50:
-                    logger.warning(f"Summary too short ({len(summary)} chars), should be ≥50")
+                    logger.warning(
+                        f"Summary too short ({len(summary)} chars), should be ≥50"
+                    )
                 elif len(summary) > 750:
-                    logger.warning(f"Summary too long ({len(summary)} chars), truncating to 750")
+                    logger.warning(
+                        f"Summary too long ({len(summary)} chars), truncating to 750"
+                    )
                     summary = summary[:750]
 
             # Validate word count range
@@ -398,7 +412,13 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
 
             # Validate key_entities_preserved structure
             if key_entities_preserved:
-                required_keys = {"person_in_charge", "startup_name", "partner_org", "details", "date"}
+                required_keys = {
+                    "person_in_charge",
+                    "startup_name",
+                    "partner_org",
+                    "details",
+                    "date",
+                }
                 if set(key_entities_preserved.keys()) != required_keys:
                     logger.error(
                         f"Invalid key_entities_preserved structure: {key_entities_preserved.keys()}"
@@ -410,7 +430,9 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
                 extra={
                     "summary_length": len(summary) if summary else 0,
                     "word_count": word_count,
-                    "entities_preserved_count": sum(key_entities_preserved.values()) if key_entities_preserved else 0,
+                    "entities_preserved_count": sum(key_entities_preserved.values())
+                    if key_entities_preserved
+                    else 0,
                 },
             )
 
@@ -497,13 +519,21 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
         )
 
         # Step 4: Classify collaboration intensity
-        collaboration_intensity, intensity_confidence, intensity_reasoning = await self.classify_intensity(
+        (
+            collaboration_intensity,
+            intensity_confidence,
+            intensity_reasoning,
+        ) = await self.classify_intensity(
             email_content=email_content,
             details=entities.details,
         )
 
         # Step 5: Generate collaboration summary
-        collaboration_summary, summary_word_count, key_entities_preserved = await self.generate_summary(
+        (
+            collaboration_summary,
+            summary_word_count,
+            key_entities_preserved,
+        ) = await self.generate_summary(
             email_content=email_content,
             extracted_entities=entities,
         )
@@ -522,8 +552,12 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
             # Phase 2b fields
             matched_company_id=matched_company_id,
             matched_partner_id=matched_partner_id,
-            startup_match_confidence=getattr(entities, "startup_match_confidence", None),
-            partner_match_confidence=getattr(entities, "partner_match_confidence", None),
+            startup_match_confidence=getattr(
+                entities, "startup_match_confidence", None
+            ),
+            partner_match_confidence=getattr(
+                entities, "partner_match_confidence", None
+            ),
             # Phase 2c type classification fields
             collaboration_type=collaboration_type,
             type_confidence=type_confidence,

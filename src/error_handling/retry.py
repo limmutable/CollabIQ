@@ -16,7 +16,7 @@ from .circuit_breaker import (
     notion_circuit_breaker,
 )
 from .error_classifier import ErrorClassifier
-from .models import ErrorCategory, ErrorRecord, ErrorSeverity, RetryConfig
+from .models import ErrorRecord, ErrorSeverity, RetryConfig
 from .structured_logger import logger
 
 # Type variable for decorated functions
