@@ -96,7 +96,9 @@ def test_detect_korean_signature_sample_3(normalizer, korean_signature_samples):
     signature_start = normalizer.detect_signature(email_body)
 
     assert signature_start is not None, "Should detect greeting signature"
-    assert "박민수 드림" in email_body[signature_start:], "Should detect name in greeting"
+    assert "박민수 드림" in email_body[signature_start:], (
+        "Should detect name in greeting"
+    )
 
 
 def test_detect_korean_signature_sample_4(normalizer, korean_signature_samples):
@@ -126,8 +128,10 @@ def test_detect_korean_signature_sample_5(normalizer, korean_signature_samples):
     signature_start = normalizer.detect_signature(email_body)
 
     assert signature_start is not None, "Should detect contact block signature"
-    assert "---" in email_body[signature_start:] or "정수진 부장" in email_body[signature_start:], \
-        "Should detect separator or name"
+    assert (
+        "---" in email_body[signature_start:]
+        or "정수진 부장" in email_body[signature_start:]
+    ), "Should detect separator or name"
 
 
 def test_detect_english_signature_sample_1(normalizer, english_signature_samples):
@@ -142,8 +146,10 @@ def test_detect_english_signature_sample_1(normalizer, english_signature_samples
     signature_start = normalizer.detect_signature(email_body)
 
     assert signature_start is not None, "Should detect English signature"
-    assert "Best regards" in email_body[signature_start:] or "John Smith" in email_body[signature_start:], \
-        "Should detect closing or name"
+    assert (
+        "Best regards" in email_body[signature_start:]
+        or "John Smith" in email_body[signature_start:]
+    ), "Should detect closing or name"
 
 
 def test_detect_english_signature_sample_2(normalizer, english_signature_samples):
@@ -158,8 +164,10 @@ def test_detect_english_signature_sample_2(normalizer, english_signature_samples
     signature_start = normalizer.detect_signature(email_body)
 
     assert signature_start is not None, "Should detect signature with title"
-    assert "Sincerely" in email_body[signature_start:] or "Senior Account Manager" in email_body[signature_start:], \
-        "Should detect closing or title"
+    assert (
+        "Sincerely" in email_body[signature_start:]
+        or "Senior Account Manager" in email_body[signature_start:]
+    ), "Should detect closing or title"
 
 
 def test_detect_english_signature_sample_3(normalizer, english_signature_samples):
@@ -174,8 +182,10 @@ def test_detect_english_signature_sample_3(normalizer, english_signature_samples
     signature_start = normalizer.detect_signature(email_body)
 
     assert signature_start is not None, "Should detect informal signature"
-    assert "Thanks" in email_body[signature_start:] or "Emma" in email_body[signature_start:], \
-        "Should detect closing or name"
+    assert (
+        "Thanks" in email_body[signature_start:]
+        or "Emma" in email_body[signature_start:]
+    ), "Should detect closing or name"
 
 
 def test_detect_english_signature_sample_4(normalizer, english_signature_samples):
@@ -190,8 +200,10 @@ def test_detect_english_signature_sample_4(normalizer, english_signature_samples
     signature_start = normalizer.detect_signature(email_body)
 
     assert signature_start is not None, "Should detect contact block"
-    assert any(marker in email_body[signature_start:] for marker in ["---", "David Chen", "Product Manager"]), \
-        "Should detect separator or contact info"
+    assert any(
+        marker in email_body[signature_start:]
+        for marker in ["---", "David Chen", "Product Manager"]
+    ), "Should detect separator or contact info"
 
 
 def test_detect_english_signature_sample_5(normalizer, english_signature_samples):
@@ -206,8 +218,10 @@ def test_detect_english_signature_sample_5(normalizer, english_signature_samples
     signature_start = normalizer.detect_signature(email_body)
 
     assert signature_start is not None, "Should detect signature with disclaimer"
-    assert any(marker in email_body[signature_start:] for marker in ["Lisa Park", "CONFIDENTIALITY"]), \
-        "Should detect name or disclaimer"
+    assert any(
+        marker in email_body[signature_start:]
+        for marker in ["Lisa Park", "CONFIDENTIALITY"]
+    ), "Should detect name or disclaimer"
 
 
 def test_remove_signature_preserves_content(normalizer, korean_signature_samples):
@@ -260,7 +274,9 @@ def test_signature_detection_boundary_cases(normalizer):
     """
     # Very short email
     short_email = "Thanks"
-    assert normalizer.detect_signature(short_email) is None, "Should not detect in very short email"
+    assert normalizer.detect_signature(short_email) is None, (
+        "Should not detect in very short email"
+    )
 
     # Signature-like words in content (not at end)
     content_email = "Thanks for your help yesterday.\n\nI will send the report tomorrow.\n\nMain content here."

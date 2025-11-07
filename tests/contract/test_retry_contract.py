@@ -77,7 +77,9 @@ class TestRetryContract:
         - Circuit breaker records success
         """
         # Import will fail until retry.py is created
-        pytest.importorskip("src.error_handling.retry", reason="retry.py not yet implemented")
+        pytest.importorskip(
+            "src.error_handling.retry", reason="retry.py not yet implemented"
+        )
 
         from src.error_handling.retry import retry_with_backoff, GMAIL_RETRY_CONFIG
 
@@ -107,7 +109,9 @@ class TestRetryContract:
         - Success result returned on third attempt
         - Circuit breaker records success (failure count reset)
         """
-        pytest.importorskip("src.error_handling.retry", reason="retry.py not yet implemented")
+        pytest.importorskip(
+            "src.error_handling.retry", reason="retry.py not yet implemented"
+        )
 
         from src.error_handling.retry import retry_with_backoff, GMAIL_RETRY_CONFIG
 
@@ -144,7 +148,9 @@ class TestRetryContract:
         - Original exception re-raised after final attempt
         - Circuit breaker records failures (increments failure_count)
         """
-        pytest.importorskip("src.error_handling.retry", reason="retry.py not yet implemented")
+        pytest.importorskip(
+            "src.error_handling.retry", reason="retry.py not yet implemented"
+        )
 
         from src.error_handling.retry import retry_with_backoff, GMAIL_RETRY_CONFIG
 
@@ -161,7 +167,9 @@ class TestRetryContract:
         assert attempt_count["count"] == 3
         # Circuit breaker should have recorded 3 failures
         assert gmail_circuit_breaker.failure_count == 3
-        assert gmail_circuit_breaker.get_state() == CircuitState.CLOSED  # Not yet opened
+        assert (
+            gmail_circuit_breaker.get_state() == CircuitState.CLOSED
+        )  # Not yet opened
 
     def test_scenario_4_rate_limit_handling_retry_after(self):
         """
@@ -175,7 +183,9 @@ class TestRetryContract:
         - Function retries after wait
         - If succeeds, returns result
         """
-        pytest.importorskip("src.error_handling.retry", reason="retry.py not yet implemented")
+        pytest.importorskip(
+            "src.error_handling.retry", reason="retry.py not yet implemented"
+        )
 
         from src.error_handling.retry import retry_with_backoff, GMAIL_RETRY_CONFIG
 
@@ -208,7 +218,9 @@ class TestRetryContract:
         - Exception raised immediately (no retry)
         - Circuit breaker records failure
         """
-        pytest.importorskip("src.error_handling.retry", reason="retry.py not yet implemented")
+        pytest.importorskip(
+            "src.error_handling.retry", reason="retry.py not yet implemented"
+        )
 
         from src.error_handling.retry import retry_with_backoff, GMAIL_RETRY_CONFIG
 
@@ -236,7 +248,9 @@ class TestRetryContract:
         - Function does NOT execute (no HTTP call)
         - CircuitBreakerOpen exception raised immediately
         """
-        pytest.importorskip("src.error_handling.retry", reason="retry.py not yet implemented")
+        pytest.importorskip(
+            "src.error_handling.retry", reason="retry.py not yet implemented"
+        )
 
         from src.error_handling.retry import retry_with_backoff, GMAIL_RETRY_CONFIG
 
@@ -277,7 +291,9 @@ class TestRetryContract:
         - Jitter added: random(0, 2) seconds
         - Wait times capped at backoff_max (10s)
         """
-        pytest.importorskip("src.error_handling.retry", reason="retry.py not yet implemented")
+        pytest.importorskip(
+            "src.error_handling.retry", reason="retry.py not yet implemented"
+        )
 
         from src.error_handling.retry import retry_with_backoff, GMAIL_RETRY_CONFIG
 
@@ -320,7 +336,9 @@ class TestRetryContract:
         - Backoff waits use asyncio.sleep() (not time.sleep())
         - Circuit breaker state updates correctly
         """
-        pytest.importorskip("src.error_handling.retry", reason="retry.py not yet implemented")
+        pytest.importorskip(
+            "src.error_handling.retry", reason="retry.py not yet implemented"
+        )
 
         from src.error_handling.retry import retry_with_backoff, GMAIL_RETRY_CONFIG
 
@@ -349,7 +367,9 @@ class TestRetryContract:
         - Log includes: operation, attempt_number, error_type
         - Final failure (after exhausted retries) logged as ERROR severity
         """
-        pytest.importorskip("src.error_handling.retry", reason="retry.py not yet implemented")
+        pytest.importorskip(
+            "src.error_handling.retry", reason="retry.py not yet implemented"
+        )
 
         from src.error_handling.retry import retry_with_backoff, GMAIL_RETRY_CONFIG
 
@@ -374,7 +394,9 @@ class TestRetryConfigConstants:
 
     def test_gmail_retry_config_exists(self):
         """Gmail retry config should exist with correct settings."""
-        pytest.importorskip("src.error_handling.retry", reason="retry.py not yet implemented")
+        pytest.importorskip(
+            "src.error_handling.retry", reason="retry.py not yet implemented"
+        )
 
         from src.error_handling.retry import GMAIL_RETRY_CONFIG
 
@@ -384,7 +406,9 @@ class TestRetryConfigConstants:
 
     def test_gemini_retry_config_exists(self):
         """Gemini retry config should exist with correct settings."""
-        pytest.importorskip("src.error_handling.retry", reason="retry.py not yet implemented")
+        pytest.importorskip(
+            "src.error_handling.retry", reason="retry.py not yet implemented"
+        )
 
         from src.error_handling.retry import GEMINI_RETRY_CONFIG
 
@@ -394,7 +418,9 @@ class TestRetryConfigConstants:
 
     def test_notion_retry_config_exists(self):
         """Notion retry config should exist with correct settings."""
-        pytest.importorskip("src.error_handling.retry", reason="retry.py not yet implemented")
+        pytest.importorskip(
+            "src.error_handling.retry", reason="retry.py not yet implemented"
+        )
 
         from src.error_handling.retry import NOTION_RETRY_CONFIG
 
@@ -404,7 +430,9 @@ class TestRetryConfigConstants:
 
     def test_infisical_retry_config_exists(self):
         """Infisical retry config should exist with correct settings."""
-        pytest.importorskip("src.error_handling.retry", reason="retry.py not yet implemented")
+        pytest.importorskip(
+            "src.error_handling.retry", reason="retry.py not yet implemented"
+        )
 
         from src.error_handling.retry import INFISICAL_RETRY_CONFIG
 

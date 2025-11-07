@@ -39,7 +39,9 @@ class TestTypeClassification:
         )
         return service
 
-    def test_portfolio_ssg_affiliate_returns_type_a(self, classification_service, collaboration_types):
+    def test_portfolio_ssg_affiliate_returns_type_a(
+        self, classification_service, collaboration_types
+    ):
         """Test: Portfolio + SSG Affiliate → type matching '[A]*' pattern."""
         collab_type, confidence = classification_service.classify_collaboration_type(
             company_classification="Portfolio",
@@ -50,7 +52,9 @@ class TestTypeClassification:
         assert collab_type == "[A]PortCoXSSG"
         assert confidence == 0.95  # High confidence for deterministic logic
 
-    def test_portfolio_portfolio_returns_type_c(self, classification_service, collaboration_types):
+    def test_portfolio_portfolio_returns_type_c(
+        self, classification_service, collaboration_types
+    ):
         """Test: Portfolio + Portfolio → type matching '[C]*' pattern."""
         collab_type, confidence = classification_service.classify_collaboration_type(
             company_classification="Portfolio",
@@ -61,7 +65,9 @@ class TestTypeClassification:
         assert collab_type == "[C]PortCoXPortCo"
         assert confidence == 0.95
 
-    def test_portfolio_external_returns_type_b(self, classification_service, collaboration_types):
+    def test_portfolio_external_returns_type_b(
+        self, classification_service, collaboration_types
+    ):
         """Test: Portfolio + External → type matching '[B]*' pattern."""
         collab_type, confidence = classification_service.classify_collaboration_type(
             company_classification="Portfolio",
@@ -72,7 +78,9 @@ class TestTypeClassification:
         assert collab_type == "[B]Non-PortCoXSSG"
         assert confidence == 0.90  # Slightly lower confidence for external
 
-    def test_non_portfolio_returns_type_d(self, classification_service, collaboration_types):
+    def test_non_portfolio_returns_type_d(
+        self, classification_service, collaboration_types
+    ):
         """Test: Non-Portfolio + Any → type matching '[D]*' pattern."""
         collab_type, confidence = classification_service.classify_collaboration_type(
             company_classification="Other",
@@ -93,7 +101,9 @@ class TestTypeClassification:
         assert collab_type2 == "[D]Other"
         assert confidence2 == 0.80
 
-    def test_null_company_classification_returns_none(self, classification_service, collaboration_types):
+    def test_null_company_classification_returns_none(
+        self, classification_service, collaboration_types
+    ):
         """Test: Null matched_company_id → collaboration_type = None."""
         collab_type, confidence = classification_service.classify_collaboration_type(
             company_classification=None,
@@ -104,7 +114,9 @@ class TestTypeClassification:
         assert collab_type is None
         assert confidence is None
 
-    def test_null_partner_classification_returns_none(self, classification_service, collaboration_types):
+    def test_null_partner_classification_returns_none(
+        self, classification_service, collaboration_types
+    ):
         """Test: Null matched_partner_id → collaboration_type = None."""
         collab_type, confidence = classification_service.classify_collaboration_type(
             company_classification="Portfolio",

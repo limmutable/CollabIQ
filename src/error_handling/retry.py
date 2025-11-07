@@ -180,7 +180,21 @@ def retry_with_backoff(
 
     def decorator(func: F) -> F:
         # Auto-detect circuit breaker if not provided
-        cb = circuit_breaker or _get_circuit_breaker_for_function(func)
+        if circuit_breaker:
+            cb = circuit_breaker
+        else:
+            # Try to infer from config
+            if config is GMAIL_RETRY_CONFIG:
+                cb = gmail_circuit_breaker
+            elif config is GEMINI_RETRY_CONFIG:
+                cb = gemini_circuit_breaker
+            elif config is NOTION_RETRY_CONFIG:
+                cb = notion_circuit_breaker
+            elif config is INFISICAL_RETRY_CONFIG:
+                cb = infisical_circuit_breaker
+            else:
+                # Fall back to function name detection
+                cb = _get_circuit_breaker_for_function(func)
 
         # Determine if function is async
         is_async = asyncio.iscoroutinefunction(func)
@@ -253,11 +267,13 @@ def retry_with_backoff(
                                 error_record.message, context=error_record.context
                             )
 
+                        # Record failure in circuit breaker for this attempt
+                        # (each API call counts as a failure for circuit breaker tracking)
+                        if cb:
+                            cb.record_failure()
+
                         # If not retryable or last attempt, fail now
                         if not is_retryable or attempt >= config.max_attempts:
-                            # Record failure in circuit breaker (once at the end)
-                            if cb:
-                                cb.record_failure()
                             raise
 
                         # Calculate backoff time and wait
@@ -338,11 +354,13 @@ def retry_with_backoff(
                                 error_record.message, context=error_record.context
                             )
 
+                        # Record failure in circuit breaker for this attempt
+                        # (each API call counts as a failure for circuit breaker tracking)
+                        if cb:
+                            cb.record_failure()
+
                         # If not retryable or last attempt, fail now
                         if not is_retryable or attempt >= config.max_attempts:
-                            # Record failure in circuit breaker (once at the end)
-                            if cb:
-                                cb.record_failure()
                             raise
 
                         # Calculate backoff time and wait

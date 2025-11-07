@@ -75,7 +75,9 @@ def test_detect_nested_quotes(normalizer, quoted_thread_samples):
     # Verify both levels are in the detected section
     quoted_section = email_body[quote_start:]
     # Pattern detects header "On Wed, Oct 30" which precedes the angle brackets
-    assert "On Wed, Oct 30" in quoted_section or "> I think" in quoted_section, "Should detect quoted section"
+    assert "On Wed, Oct 30" in quoted_section or "> I think" in quoted_section, (
+        "Should detect quoted section"
+    )
     assert "> >" in quoted_section, "Should detect nested quote marker"
 
 
@@ -134,7 +136,9 @@ def test_no_quotes_no_change(normalizer, quoted_thread_samples):
     assert cleaned_body == email_body, "Should not modify email without quotes"
 
 
-def test_remove_angle_bracket_quotes_preserves_content(normalizer, quoted_thread_samples):
+def test_remove_angle_bracket_quotes_preserves_content(
+    normalizer, quoted_thread_samples
+):
     """
     Test that quote removal preserves main email content.
 
@@ -220,7 +224,9 @@ def test_boundary_cases_quoted_threads(normalizer):
 
     # Empty email
     assert normalizer.detect_quoted_thread("") is None, "Should handle empty email"
-    assert normalizer.remove_quoted_thread("") == "", "Should return empty for empty input"
+    assert normalizer.remove_quoted_thread("") == "", (
+        "Should return empty for empty input"
+    )
 
 
 def test_quoted_thread_removal_integration(normalizer, quoted_thread_samples):

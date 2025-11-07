@@ -89,9 +89,9 @@ def test_process_raw_email_integration(normalizer, tmp_path):
             message_id="<test@example.com>",
             sender="sender@example.com",
             subject="Test Subject",
-            received_at=datetime(2025, 10, 31, 12, 0, 0)
+            received_at=datetime(2025, 10, 31, 12, 0, 0),
         ),
-        body="Project update.\n\nBest regards,\nJohn"
+        body="Project update.\n\nBest regards,\nJohn",
     )
 
     # Process it
@@ -120,11 +120,11 @@ def test_save_cleaned_email(normalizer, tmp_path):
             cleaned_length=12,
             signature_removed=True,
             quoted_thread_removed=False,
-            disclaimer_removed=False
+            disclaimer_removed=False,
         ),
         processed_at=datetime(2025, 10, 31, 14, 30, 0),
         status=CleaningStatus.SUCCESS,
-        is_empty=False
+        is_empty=False,
     )
 
     # Save it
@@ -139,6 +139,7 @@ def test_save_cleaned_email(normalizer, tmp_path):
 
     # Verify JSON content
     import json
+
     saved_data = json.loads(file_path.read_text())
     assert saved_data["original_message_id"] == "<test@example.com>"
     assert saved_data["cleaned_body"] == "Test content"

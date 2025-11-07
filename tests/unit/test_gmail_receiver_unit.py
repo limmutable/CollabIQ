@@ -35,7 +35,7 @@ def mock_credentials_path(tmp_path):
             "token_uri": "https://oauth2.googleapis.com/token",
             "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
             "client_secret": "TEST_SECRET",
-            "redirect_uris": ["http://localhost"]
+            "redirect_uris": ["http://localhost"],
         }
     }
     creds_file.write_text(json.dumps(creds_data))
@@ -55,9 +55,9 @@ def gmail_api_list_response():
     return {
         "messages": [
             {"id": "18c5f2e8b3a4d1f0", "threadId": "18c5f2e8b3a4d1f0"},
-            {"id": "18c5f2e8b3a4d1f1", "threadId": "18c5f2e8b3a4d1f1"}
+            {"id": "18c5f2e8b3a4d1f1", "threadId": "18c5f2e8b3a4d1f1"},
         ],
-        "resultSizeEstimate": 2
+        "resultSizeEstimate": 2,
     }
 
 
@@ -77,23 +77,25 @@ def gmail_api_message_detail():
                 {"name": "To", "value": "portfolioupdates@signite.co"},
                 {"name": "Subject", "value": "CollabIQ 협업 업데이트"},
                 {"name": "Date", "value": "Wed, 30 Oct 2025 14:35:22 +0900"},
-                {"name": "Message-ID", "value": "<CABc123@mail.gmail.com>"}
+                {"name": "Message-ID", "value": "<CABc123@mail.gmail.com>"},
             ],
             "body": {
                 "size": 156,
-                "data": "7JWI64WV7ZWY7IS47JqULAoK7KeA64K067KI7KO8IO2ajOydmOyXkOyEnCDrhbztpZTtlZwg7ZSE66Gc7KCd7Yq47Yq4IOyngO2Wieygke2VqeustOuLiOuLpC4KCuqwkOyCrO2VqeuLiOuLpC4K6rmA7LKg7IiYIOuTnOumvA=="
-            }
+                "data": "7JWI64WV7ZWY7IS47JqULAoK7KeA64K067KI7KO8IO2ajOydmOyXkOyEnCDrhbztpZTtlZwg7ZSE66Gc7KCd7Yq47Yq4IOyngO2Wieygke2VqeustOuLiOuLpC4KCuqwkOyCrO2VqeuLiOuLpC4K6rmA7LKg7IiYIOuTnOumvA==",
+            },
         },
         "sizeEstimate": 3456,
         "historyId": "123456",
-        "internalDate": "1730267722000"
+        "internalDate": "1730267722000",
     }
 
 
 # T024: Test Gmail receiver connect
-@patch('email_receiver.gmail_receiver.build')
-@patch('email_receiver.gmail_receiver.Credentials')
-def test_gmail_receiver_connect(mock_creds_class, mock_build, mock_credentials_path, mock_token_path):
+@patch("email_receiver.gmail_receiver.build")
+@patch("email_receiver.gmail_receiver.Credentials")
+def test_gmail_receiver_connect(
+    mock_creds_class, mock_build, mock_credentials_path, mock_token_path
+):
     """
     Test OAuth2 connection initialization.
 
@@ -106,7 +108,7 @@ def test_gmail_receiver_connect(mock_creds_class, mock_build, mock_credentials_p
     token_data = {
         "token": "mock_token",
         "refresh_token": "mock_refresh",
-        "expiry": "2025-12-31T00:00:00Z"
+        "expiry": "2025-12-31T00:00:00Z",
     }
     mock_token_path.write_text(json.dumps(token_data))
 
@@ -123,22 +125,25 @@ def test_gmail_receiver_connect(mock_creds_class, mock_build, mock_credentials_p
 
     # Create receiver and connect
     receiver = GmailReceiver(
-        credentials_path=mock_credentials_path,
-        token_path=mock_token_path
+        credentials_path=mock_credentials_path, token_path=mock_token_path
     )
     receiver.connect()
 
     # Assertions
     assert receiver.service is not None
-    mock_build.assert_called_once_with('gmail', 'v1', credentials=mock_creds)
+    mock_build.assert_called_once_with("gmail", "v1", credentials=mock_creds)
 
 
 # T025: Test Gmail receiver fetch new messages
-@patch('email_receiver.gmail_receiver.build')
-@patch('email_receiver.gmail_receiver.Credentials')
+@patch("email_receiver.gmail_receiver.build")
+@patch("email_receiver.gmail_receiver.Credentials")
 def test_gmail_receiver_fetch_new_messages(
-    mock_creds_class, mock_build, gmail_api_list_response,
-    gmail_api_message_detail, mock_credentials_path, mock_token_path
+    mock_creds_class,
+    mock_build,
+    gmail_api_list_response,
+    gmail_api_message_detail,
+    mock_credentials_path,
+    mock_token_path,
 ):
     """
     Test fetching messages from Gmail API.
@@ -152,7 +157,7 @@ def test_gmail_receiver_fetch_new_messages(
     token_data = {
         "token": "mock_token",
         "refresh_token": "mock_refresh",
-        "expiry": "2025-12-31T00:00:00Z"
+        "expiry": "2025-12-31T00:00:00Z",
     }
     mock_token_path.write_text(json.dumps(token_data))
 
@@ -176,8 +181,7 @@ def test_gmail_receiver_fetch_new_messages(
 
     # Create receiver and fetch messages
     receiver = GmailReceiver(
-        credentials_path=mock_credentials_path,
-        token_path=mock_token_path
+        credentials_path=mock_credentials_path, token_path=mock_token_path
     )
     receiver.connect()
 
@@ -186,15 +190,17 @@ def test_gmail_receiver_fetch_new_messages(
     # Assertions
     mock_service.users().messages().list.assert_called_once()
     call_kwargs = mock_service.users().messages().list.call_args[1]
-    assert call_kwargs['userId'] == 'me'
-    assert call_kwargs['maxResults'] == 10
+    assert call_kwargs["userId"] == "me"
+    assert call_kwargs["maxResults"] == 10
 
     assert len(messages) == 2  # Two messages from list response
     assert all(isinstance(msg, RawEmail) for msg in messages)
 
 
 # T026: Test Gmail receiver parse message
-def test_gmail_receiver_parse_message(gmail_api_message_detail, mock_credentials_path, mock_token_path, tmp_path):
+def test_gmail_receiver_parse_message(
+    gmail_api_message_detail, mock_credentials_path, mock_token_path, tmp_path
+):
     """
     Test parsing Gmail API response to RawEmail model.
 
@@ -208,13 +214,12 @@ def test_gmail_receiver_parse_message(gmail_api_message_detail, mock_credentials
     token_data = {
         "token": "mock_token",
         "refresh_token": "mock_refresh",
-        "expiry": "2025-12-31T00:00:00Z"
+        "expiry": "2025-12-31T00:00:00Z",
     }
     mock_token_path.write_text(json.dumps(token_data))
 
     receiver = GmailReceiver(
-        credentials_path=mock_credentials_path,
-        token_path=mock_token_path
+        credentials_path=mock_credentials_path, token_path=mock_token_path
     )
 
     raw_email = receiver._parse_message(gmail_api_message_detail)
@@ -230,7 +235,9 @@ def test_gmail_receiver_parse_message(gmail_api_message_detail, mock_credentials
 
 
 # T027: Test Gmail receiver save raw email
-def test_gmail_receiver_save_raw_email(tmp_path, mock_credentials_path, mock_token_path):
+def test_gmail_receiver_save_raw_email(
+    tmp_path, mock_credentials_path, mock_token_path
+):
     """
     Test saving RawEmail to file storage.
 
@@ -244,7 +251,7 @@ def test_gmail_receiver_save_raw_email(tmp_path, mock_credentials_path, mock_tok
     token_data = {
         "token": "mock_token",
         "refresh_token": "mock_refresh",
-        "expiry": "2025-12-31T00:00:00Z"
+        "expiry": "2025-12-31T00:00:00Z",
     }
     mock_token_path.write_text(json.dumps(token_data))
 
@@ -255,16 +262,16 @@ def test_gmail_receiver_save_raw_email(tmp_path, mock_credentials_path, mock_tok
             sender="test@example.com",
             subject="Test Email",
             received_at=datetime(2025, 10, 30, 14, 35, 22),
-            has_attachments=False
+            has_attachments=False,
         ),
         body="Test email body content",
-        attachments=[]
+        attachments=[],
     )
 
     receiver = GmailReceiver(
         credentials_path=mock_credentials_path,
         token_path=mock_token_path,
-        raw_email_dir=tmp_path / "data" / "raw"
+        raw_email_dir=tmp_path / "data" / "raw",
     )
 
     # Save email
@@ -284,12 +291,11 @@ def test_gmail_receiver_save_raw_email(tmp_path, mock_credentials_path, mock_tok
 
 
 # T028: Test Gmail receiver exponential backoff
-@patch('email_receiver.gmail_receiver.build')
-@patch('email_receiver.gmail_receiver.Credentials')
-@patch('time.sleep')  # Mock sleep to speed up tests
+@patch("email_receiver.gmail_receiver.build")
+@patch("email_receiver.gmail_receiver.Credentials")
+@patch("time.sleep")  # Mock sleep to speed up tests
 def test_gmail_receiver_exponential_backoff(
-    mock_sleep, mock_creds_class, mock_build,
-    mock_credentials_path, mock_token_path
+    mock_sleep, mock_creds_class, mock_build, mock_credentials_path, mock_token_path
 ):
     """
     Test exponential backoff retry logic per FR-010.
@@ -304,7 +310,7 @@ def test_gmail_receiver_exponential_backoff(
     token_data = {
         "token": "mock_token",
         "refresh_token": "mock_refresh",
-        "expiry": "2025-12-31T00:00:00Z"
+        "expiry": "2025-12-31T00:00:00Z",
     }
     mock_token_path.write_text(json.dumps(token_data))
 
@@ -317,18 +323,14 @@ def test_gmail_receiver_exponential_backoff(
     mock_build.return_value = mock_service
 
     # Mock 503 Service Unavailable error (should retry)
-    http_error = HttpError(
-        resp=Mock(status=503),
-        content=b'Service Unavailable'
-    )
+    http_error = HttpError(resp=Mock(status=503), content=b"Service Unavailable")
     mock_list = Mock()
     mock_list.execute.side_effect = http_error
     mock_service.users().messages().list.return_value = mock_list
 
     # Create receiver
     receiver = GmailReceiver(
-        credentials_path=mock_credentials_path,
-        token_path=mock_token_path
+        credentials_path=mock_credentials_path, token_path=mock_token_path
     )
     receiver.connect()
 
@@ -337,7 +339,9 @@ def test_gmail_receiver_exponential_backoff(
         receiver.fetch_emails()
 
     # Assertions
-    assert "CONNECTION_FAILED" in str(exc_info.value) or "Service Unavailable" in str(exc_info.value)
+    assert "CONNECTION_FAILED" in str(exc_info.value) or "Service Unavailable" in str(
+        exc_info.value
+    )
 
     # Verify exponential backoff delays
     assert mock_sleep.call_count >= 3  # At least 3 retries
@@ -347,11 +351,10 @@ def test_gmail_receiver_exponential_backoff(
     assert sleep_calls[2] == 16  # Third retry: 2 * 2^3 = 16 seconds
 
 
-@patch('email_receiver.gmail_receiver.build')
-@patch('email_receiver.gmail_receiver.Credentials')
+@patch("email_receiver.gmail_receiver.build")
+@patch("email_receiver.gmail_receiver.Credentials")
 def test_gmail_receiver_no_retry_on_auth_failure(
-    mock_creds_class, mock_build,
-    mock_credentials_path, mock_token_path
+    mock_creds_class, mock_build, mock_credentials_path, mock_token_path
 ):
     """
     Test that authentication failures (401) do not trigger retry.
@@ -364,7 +367,7 @@ def test_gmail_receiver_no_retry_on_auth_failure(
     token_data = {
         "token": "mock_token",
         "refresh_token": "mock_refresh",
-        "expiry": "2025-12-31T00:00:00Z"
+        "expiry": "2025-12-31T00:00:00Z",
     }
     mock_token_path.write_text(json.dumps(token_data))
 
@@ -377,18 +380,14 @@ def test_gmail_receiver_no_retry_on_auth_failure(
     mock_build.return_value = mock_service
 
     # Mock 401 Unauthorized error (should not retry)
-    http_error = HttpError(
-        resp=Mock(status=401),
-        content=b'Unauthorized'
-    )
+    http_error = HttpError(resp=Mock(status=401), content=b"Unauthorized")
     mock_list = Mock()
     mock_list.execute.side_effect = http_error
     mock_service.users().messages().list.return_value = mock_list
 
     # Create receiver
     receiver = GmailReceiver(
-        credentials_path=mock_credentials_path,
-        token_path=mock_token_path
+        credentials_path=mock_credentials_path, token_path=mock_token_path
     )
     receiver.connect()
 
@@ -397,7 +396,9 @@ def test_gmail_receiver_no_retry_on_auth_failure(
         receiver.fetch_emails()
 
     # Assertions
-    assert "AUTHENTICATION_FAILED" in str(exc_info.value) or "Unauthorized" in str(exc_info.value)
+    assert "AUTHENTICATION_FAILED" in str(exc_info.value) or "Unauthorized" in str(
+        exc_info.value
+    )
 
     # Verify only called once (no retries)
     assert mock_list.execute.call_count == 1

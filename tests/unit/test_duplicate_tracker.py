@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 import sys
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from models.duplicate_tracker import DuplicateTracker
@@ -175,7 +176,7 @@ def test_duplicate_tracker_with_gmail_receiver(tmp_path):
     receiver = GmailReceiver(
         credentials_path=credentials_path,
         token_path=token_path,
-        metadata_dir=tmp_path / "metadata"
+        metadata_dir=tmp_path / "metadata",
     )
 
     message_id = "<TEST@gmail.com>"
@@ -196,7 +197,7 @@ def test_duplicate_tracker_with_gmail_receiver(tmp_path):
     receiver2 = GmailReceiver(
         credentials_path=credentials_path,
         token_path=token_path,
-        metadata_dir=tmp_path / "metadata"
+        metadata_dir=tmp_path / "metadata",
     )
 
     # Should still be marked as duplicate

@@ -22,7 +22,9 @@ from src.llm_provider.exceptions import LLMAPIError
 class MockLLMProvider(LLMProvider):
     """Mock implementation for contract testing."""
 
-    def __init__(self, return_value: ExtractedEntities = None, should_raise: Exception = None):
+    def __init__(
+        self, return_value: ExtractedEntities = None, should_raise: Exception = None
+    ):
         """Initialize mock provider.
 
         Args:

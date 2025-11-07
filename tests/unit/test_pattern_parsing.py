@@ -24,7 +24,7 @@ class TestPatternParsing:
 
         parsed = {}
         for value in test_values:
-            match = re.match(r'^\[([A-Z0-9]+)\]', value)
+            match = re.match(r"^\[([A-Z0-9]+)\]", value)
             if match:
                 code = match.group(1)
                 parsed[code] = value
@@ -47,7 +47,7 @@ class TestPatternParsing:
 
         parsed = {}
         for value in test_values:
-            match = re.match(r'^\[([A-Z0-9]+)\]', value)
+            match = re.match(r"^\[([A-Z0-9]+)\]", value)
             if match:
                 code = match.group(1)
                 parsed[code] = value
@@ -69,7 +69,7 @@ class TestPatternParsing:
 
         parsed = {}
         for value in test_values:
-            match = re.match(r'^\[([A-Z0-9]+)\]', value)
+            match = re.match(r"^\[([A-Z0-9]+)\]", value)
             if match:
                 code = match.group(1)
                 parsed[code] = value
@@ -91,7 +91,7 @@ class TestPatternParsing:
 
         parsed = {}
         for value in test_values:
-            match = re.match(r'^\[([A-Z0-9]+)\]', value)
+            match = re.match(r"^\[([A-Z0-9]+)\]", value)
             if match:
                 code = match.group(1)
                 parsed[code] = value
@@ -105,14 +105,14 @@ class TestPatternParsing:
     def test_case_sensitivity(self):
         """Test: Pattern matching is case-sensitive (uppercase only)."""
         test_values = [
-            "[A]Uppercase",   # Valid
-            "[a]lowercase",   # Invalid (lowercase not in pattern)
-            "[1]Number",      # Valid
+            "[A]Uppercase",  # Valid
+            "[a]lowercase",  # Invalid (lowercase not in pattern)
+            "[1]Number",  # Valid
         ]
 
         parsed = {}
         for value in test_values:
-            match = re.match(r'^\[([A-Z0-9]+)\]', value)
+            match = re.match(r"^\[([A-Z0-9]+)\]", value)
             if match:
                 code = match.group(1)
                 parsed[code] = value
@@ -127,7 +127,7 @@ class TestPatternParsing:
         """Test: Extract code from full Notion field value."""
         full_value = "[A]PortCoXSSG"
 
-        match = re.match(r'^\[([A-Z0-9]+)\]', full_value)
+        match = re.match(r"^\[([A-Z0-9]+)\]", full_value)
         assert match is not None
         assert match.group(1) == "A"  # Extracted code
 
@@ -153,7 +153,7 @@ class TestPatternParsing:
         # Parse like ClassificationService does
         parsed = {}
         for option in mock_options:
-            match = re.match(r'^\[([A-Z0-9]+)\]', option.name)
+            match = re.match(r"^\[([A-Z0-9]+)\]", option.name)
             if match:
                 code = match.group(1)
                 parsed[code] = option.name
@@ -168,13 +168,13 @@ class TestPatternParsing:
     def test_empty_bracket_code_not_matched(self):
         """Test: Empty bracket code [] is not matched."""
         test_values = [
-            "[]EmptyCode",      # Invalid
-            "[A]ValidCode",     # Valid
+            "[]EmptyCode",  # Invalid
+            "[A]ValidCode",  # Valid
         ]
 
         parsed = {}
         for value in test_values:
-            match = re.match(r'^\[([A-Z0-9]+)\]', value)
+            match = re.match(r"^\[([A-Z0-9]+)\]", value)
             if match:
                 code = match.group(1)
                 parsed[code] = value

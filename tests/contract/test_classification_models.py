@@ -58,7 +58,13 @@ class TestExtractedEntitiesWithClassification:
         )
 
         # Valid formats
-        for valid_type in ["[A]PortCoXSSG", "[B]Non-PortCoXSSG", "[C]PortCoXPortCo", "[D]Other", "[1]NewType"]:
+        for valid_type in [
+            "[A]PortCoXSSG",
+            "[B]Non-PortCoXSSG",
+            "[C]PortCoXPortCo",
+            "[D]Other",
+            "[1]NewType",
+        ]:
             entity = ExtractedEntitiesWithClassification(
                 person_in_charge="김철수",
                 startup_name="본봄",

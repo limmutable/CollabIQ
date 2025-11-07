@@ -46,19 +46,29 @@ class TestNotionSchemaFetching:
         return schema
 
     @pytest.mark.asyncio
-    async def test_collaboration_type_property_exists(self, mock_notion_integrator, mock_database_schema):
+    async def test_collaboration_type_property_exists(
+        self, mock_notion_integrator, mock_database_schema
+    ):
         """Verify 협업형태 property exists in CollabIQ database schema."""
-        mock_notion_integrator.discover_database_schema.return_value = mock_database_schema
+        mock_notion_integrator.discover_database_schema.return_value = (
+            mock_database_schema
+        )
 
         schema = await mock_notion_integrator.discover_database_schema("test-db-id")
         collab_type_prop = schema.properties.get("협업형태")
 
-        assert collab_type_prop is not None, "협업형태 property must exist in database schema"
+        assert collab_type_prop is not None, (
+            "협업형태 property must exist in database schema"
+        )
 
     @pytest.mark.asyncio
-    async def test_collaboration_type_property_is_select(self, mock_notion_integrator, mock_database_schema):
+    async def test_collaboration_type_property_is_select(
+        self, mock_notion_integrator, mock_database_schema
+    ):
         """Verify 협업형태 property has type 'select'."""
-        mock_notion_integrator.discover_database_schema.return_value = mock_database_schema
+        mock_notion_integrator.discover_database_schema.return_value = (
+            mock_database_schema
+        )
 
         schema = await mock_notion_integrator.discover_database_schema("test-db-id")
         collab_type_prop = schema.properties.get("협업형태")
@@ -66,25 +76,35 @@ class TestNotionSchemaFetching:
         assert collab_type_prop.type == "select", "협업형태 must be a Select property"
 
     @pytest.mark.asyncio
-    async def test_collaboration_type_options_follow_pattern(self, mock_notion_integrator, mock_database_schema):
+    async def test_collaboration_type_options_follow_pattern(
+        self, mock_notion_integrator, mock_database_schema
+    ):
         """Verify 협업형태 options follow [X]* pattern."""
-        mock_notion_integrator.discover_database_schema.return_value = mock_database_schema
+        mock_notion_integrator.discover_database_schema.return_value = (
+            mock_database_schema
+        )
 
         schema = await mock_notion_integrator.discover_database_schema("test-db-id")
         collab_type_prop = schema.properties.get("협업형태")
 
         import re
+
         for option in collab_type_prop.options:
-            assert re.match(r'^\[([A-Z0-9]+)\]', option.name), \
+            assert re.match(r"^\[([A-Z0-9]+)\]", option.name), (
                 f"Option '{option.name}' must follow [X]* pattern"
+            )
 
     @pytest.mark.asyncio
-    async def test_schema_fetching_caching(self, mock_notion_integrator, mock_database_schema):
+    async def test_schema_fetching_caching(
+        self, mock_notion_integrator, mock_database_schema
+    ):
         """Verify schema is cached to avoid repeated API calls."""
         from src.models.classification_service import ClassificationService
 
         mock_gemini = Mock()
-        mock_notion_integrator.discover_database_schema.return_value = mock_database_schema
+        mock_notion_integrator.discover_database_schema.return_value = (
+            mock_database_schema
+        )
 
         service = ClassificationService(
             notion_integrator=mock_notion_integrator,
@@ -98,13 +118,17 @@ class TestNotionSchemaFetching:
 
         # Second call should use cache (no additional API call)
         types2 = await service.get_collaboration_types()
-        assert mock_notion_integrator.discover_database_schema.call_count == 1  # Still 1, not 2
+        assert (
+            mock_notion_integrator.discover_database_schema.call_count == 1
+        )  # Still 1, not 2
 
         # Results should be identical
         assert types1 == types2
 
     @pytest.mark.asyncio
-    async def test_missing_collaboration_type_property_raises_error(self, mock_notion_integrator):
+    async def test_missing_collaboration_type_property_raises_error(
+        self, mock_notion_integrator
+    ):
         """Verify missing 협업형태 property raises ValueError."""
         from src.models.classification_service import ClassificationService
 

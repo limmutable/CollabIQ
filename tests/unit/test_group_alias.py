@@ -13,7 +13,9 @@ To run these tests:
 import pytest
 
 
-def construct_deliveredto_query(email_address: str, additional_filters: str = "") -> str:
+def construct_deliveredto_query(
+    email_address: str, additional_filters: str = ""
+) -> str:
     """
     Helper function to construct Gmail API query with deliveredto filter.
 
@@ -89,8 +91,7 @@ class TestDeliveredToQueryConstruction:
         Then: Returns combined query string
         """
         result = construct_deliveredto_query(
-            "collab@signite.co",
-            "in:inbox after:2025/11/01"
+            "collab@signite.co", "in:inbox after:2025/11/01"
         )
         assert result == 'deliveredto:"collab@signite.co" in:inbox after:2025/11/01'
 
@@ -104,7 +105,7 @@ class TestDeliveredToQueryConstruction:
         """
         result = construct_deliveredto_query("test@example.com")
         assert '"test@example.com"' in result
-        assert result.startswith('deliveredto:')
+        assert result.startswith("deliveredto:")
 
     def test_deliveredto_query_different_email(self):
         """
