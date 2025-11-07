@@ -79,7 +79,7 @@ class E2ERunner:
         (self.output_dir / "reports").mkdir(parents=True, exist_ok=True)
 
         logger.info(
-            f"E2ERunner initialized",
+            "E2ERunner initialized",
             extra={
                 "test_mode": test_mode,
                 "output_dir": str(self.output_dir),
@@ -120,7 +120,7 @@ class E2ERunner:
         run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         logger.info(
-            f"Starting E2E test run",
+            "Starting E2E test run",
             extra={
                 "run_id": run_id,
                 "email_count": len(email_ids),
@@ -168,7 +168,9 @@ class E2ERunner:
                 self._save_test_run(test_run)
 
             except KeyboardInterrupt:
-                logger.warning(f"Test run interrupted by user at email {i}/{len(email_ids)}")
+                logger.warning(
+                    f"Test run interrupted by user at email {i}/{len(email_ids)}"
+                )
                 test_run.status = "interrupted"
                 test_run.end_time = datetime.now()
                 self._save_test_run(test_run)
@@ -201,7 +203,7 @@ class E2ERunner:
         self._save_test_run(test_run)
 
         logger.info(
-            f"E2E test run completed",
+            "E2E test run completed",
             extra={
                 "run_id": run_id,
                 "emails_processed": test_run.emails_processed,
@@ -317,9 +319,7 @@ class E2ERunner:
             return True
 
         except Exception as e:
-            logger.error(
-                f"Failed to process email {email_id}: {e}", exc_info=True
-            )
+            logger.error(f"Failed to process email {email_id}: {e}", exc_info=True)
             # Collect error
             error = self.error_collector.collect_error(
                 run_id=run_id,
@@ -341,11 +341,12 @@ class E2ERunner:
             logger.debug(f"Fetching email from Gmail: {email_id}")
 
             # Use Gmail API directly to fetch single message
-            msg_detail = self.gmail_receiver.service.users().messages().get(
-                userId='me',
-                id=email_id,
-                format='full'
-            ).execute()
+            msg_detail = (
+                self.gmail_receiver.service.users()
+                .messages()
+                .get(userId="me", id=email_id, format="full")
+                .execute()
+            )
 
             # Parse message to RawEmail
             raw_email = self.gmail_receiver._parse_message(msg_detail)
@@ -504,7 +505,9 @@ class E2ERunner:
             if isinstance(classified_entities, ExtractedEntitiesWithClassification):
                 extracted_data = classified_entities
             elif isinstance(classified_entities, dict):
-                extracted_data = ExtractedEntitiesWithClassification(**classified_entities)
+                extracted_data = ExtractedEntitiesWithClassification(
+                    **classified_entities
+                )
             else:
                 # Handle ExtractedEntities or other types - convert via model_dump
                 data_dict = (
@@ -517,7 +520,9 @@ class E2ERunner:
             # Call async writer method and retrieve page in single event loop
             async def write_and_retrieve():
                 # Write to Notion
-                write_result = await self.notion_writer.create_collabiq_entry(extracted_data)
+                write_result = await self.notion_writer.create_collabiq_entry(
+                    extracted_data
+                )
 
                 if not write_result.success:
                     return None, write_result.error_message
@@ -541,7 +546,9 @@ class E2ERunner:
             page_data, error_message = asyncio.run(write_and_retrieve())
 
             if page_data is None:
-                logger.error(f"Notion write failed for email {email_id}: {error_message}")
+                logger.error(
+                    f"Notion write failed for email {email_id}: {error_message}"
+                )
                 error = self.error_collector.collect_error(
                     run_id=run_id,
                     email_id=email_id,
@@ -554,7 +561,6 @@ class E2ERunner:
 
             logger.info(f"Successfully wrote to Notion, page_id={page_data.get('id')}")
             return page_data
-
 
         except Exception as e:
             error = self.error_collector.collect_error(

@@ -88,9 +88,16 @@ deactivate
 - ✅ **Phase 2a Complete**: Notion Read Operations (schema discovery, data fetching, LLM formatting)
 - ✅ **Phase 2b Complete**: LLM-based company matching with confidence scores
 - ✅ **Phase 2c Complete**: Classification & Summarization (type, intensity, summary generation)
+- ✅ **Phase 010 Complete**: Error Handling & Retry Logic (unified retry system with circuit breakers)
 - 🚧 **Phase 2d (Next)**: Notion Write Operations
 
-See [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md) for full implementation timeline.
+**Error Handling**: CollabIQ includes comprehensive error handling with automatic retry logic:
+- **Automatic Retries**: Transient failures (timeouts, rate limits) retry automatically with exponential backoff
+- **Circuit Breakers**: Prevents cascading failures by failing fast when services are degraded
+- **Dead Letter Queue (DLQ)**: Failed operations are preserved for later replay
+- **Structured Logging**: All errors logged with full context for debugging
+
+See [src/error_handling/README.md](../../src/error_handling/README.md) for usage guide and [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md) for full implementation timeline.
 
 ## Step 3: Configure Environment
 
@@ -156,7 +163,7 @@ GMAIL_BATCH_SIZE=50
 GEMINI_API_KEY=AIzaSy...your_actual_key_here
 GEMINI_MODEL=gemini-2.5-flash  # Updated model for Phase 2b
 GEMINI_TIMEOUT_SECONDS=10
-GEMINI_MAX_RETRIES=3
+# Note: Retry logic is handled automatically by Phase 010 error handling system
 
 # Notion API Configuration (✅ Implemented - Phase 2a)
 NOTION_API_KEY=secret_...your_actual_token_here
@@ -467,8 +474,10 @@ uv run python -c "from src.llm_provider.gemini_adapter import GeminiAdapter; ada
 
 **Common Issues**:
 - Invalid API key
-- Rate limit exceeded (wait and retry)
+- Rate limit exceeded (automatically retried with exponential backoff via Phase 010 error handling)
 - Model not available (check model name in .env)
+
+**Note**: Gemini API calls automatically retry on transient failures (timeouts, rate limits, server errors) using the unified retry system from Phase 010. See [src/error_handling/README.md](../../src/error_handling/README.md) for details.
 
 ### "Tests failing"
 ```bash

@@ -92,9 +92,7 @@ class TestRun(BaseModel):
     average_time_per_email: Optional[float] = Field(
         None, ge=0, description="Average processing time"
     )
-    error_summary: dict[str, int] = Field(
-        ..., description="Error counts by severity"
-    )
+    error_summary: dict[str, int] = Field(..., description="Error counts by severity")
     test_email_ids: list[str] = Field(
         ..., min_length=1, description="Gmail message IDs being tested"
     )
@@ -117,7 +115,9 @@ class ErrorRecord(BaseModel):
     stage: PipelineStage = Field(..., description="Pipeline stage where error occurred")
     error_type: str = Field(..., description="Type of error (e.g., APIError)")
     error_message: str = Field(..., min_length=1, description="Human-readable error")
-    stack_trace: Optional[str] = Field(None, description="Full stack trace if available")
+    stack_trace: Optional[str] = Field(
+        None, description="Full stack trace if available"
+    )
     input_data_snapshot: Optional[dict] = Field(
         None, description="Input data that caused error (sanitized)"
     )
@@ -167,7 +167,9 @@ class TestEmailMetadata(BaseModel):
 
     email_id: str = Field(..., min_length=1, description="Gmail message ID")
     subject: str = Field(..., min_length=1, description="Email subject line")
-    received_date: str = Field(..., description="When email was received (ISO 8601 date)")
+    received_date: str = Field(
+        ..., description="When email was received (ISO 8601 date)"
+    )
     collaboration_type: Optional[str] = Field(
         None, description="Detected type: [A], [B], [C], [D], or null"
     )

@@ -108,6 +108,15 @@ class DLQManager:
         # Load DLQ entry
         dlq_entry = self.load_dlq_entry(file_path)
 
+        # Check if already processed (idempotency)
+        if self.is_processed(dlq_entry.email_id):
+            logger.info(
+                f"DLQ entry {dlq_entry.email_id} already processed, skipping (idempotency check)"
+            )
+            # Delete the DLQ file since it's already processed
+            Path(file_path).unlink()
+            return True
+
         logger.info(
             f"Retrying DLQ entry: {dlq_entry.email_id} (retry #{dlq_entry.retry_count + 1})"
         )
@@ -116,7 +125,8 @@ class DLQManager:
         result = await notion_writer.create_collabiq_entry(dlq_entry.extracted_data)
 
         if result.success:
-            # Success - delete DLQ file
+            # Success - mark as processed and delete DLQ file
+            self._mark_processed(dlq_entry.email_id)
             Path(file_path).unlink()
             logger.info(f"DLQ retry succeeded: {dlq_entry.email_id} - file deleted")
             return True
@@ -143,3 +153,104 @@ class DLQManager:
                 f"DLQ retry failed: {dlq_entry.email_id} (retry #{dlq_entry.retry_count}) - {result.error_message}"
             )
             return False
+
+    async def replay_batch(
+        self, notion_writer, max_count: int = 10, operation_type: str = "all"
+    ) -> Dict[str, int]:
+        """Replay multiple DLQ entries in batch.
+
+        Args:
+            notion_writer: NotionWriter instance to use for retry
+            max_count: Maximum number of entries to replay (default: 10)
+            operation_type: Filter by operation type (default: "all")
+
+        Returns:
+            Dictionary with success/failure counts: {"succeeded": N, "failed": M}
+        """
+        results = {"succeeded": 0, "failed": 0}
+
+        # Get all DLQ entries
+        dlq_files = self.list_dlq_entries()[:max_count]
+
+        if not dlq_files:
+            logger.info("No DLQ entries found for replay")
+            return results
+
+        logger.info(f"Replaying {len(dlq_files)} DLQ entries (max: {max_count})")
+
+        # Replay each entry
+        for file_path in dlq_files:
+            try:
+                success = await self.retry_failed_write(file_path, notion_writer)
+                if success:
+                    results["succeeded"] += 1
+                else:
+                    results["failed"] += 1
+            except Exception as e:
+                logger.error(f"Error replaying DLQ entry {file_path}: {e}")
+                results["failed"] += 1
+
+        logger.info(
+            f"DLQ replay complete: {results['succeeded']} succeeded, {results['failed']} failed"
+        )
+        return results
+
+    def is_processed(self, email_id: str) -> bool:
+        """Check if an email has already been processed (idempotency check).
+
+        Args:
+            email_id: Email identifier to check
+
+        Returns:
+            True if already processed, False otherwise
+        """
+        processed_ids = self._load_processed_ids()
+        return email_id in processed_ids
+
+    def _mark_processed(self, email_id: str) -> None:
+        """Mark an email as processed (for idempotency).
+
+        Args:
+            email_id: Email identifier to mark as processed
+        """
+        processed_ids = self._load_processed_ids()
+        processed_ids.add(email_id)
+        self._save_processed_ids(processed_ids)
+
+    def _load_processed_ids(self) -> set:
+        """Load set of processed email IDs from file.
+
+        Returns:
+            Set of processed email IDs
+        """
+        processed_file = self.dlq_dir / ".processed_ids.json"
+
+        if not processed_file.exists():
+            return set()
+
+        try:
+            with open(processed_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return set(data.get("processed_ids", []))
+        except Exception as e:
+            logger.warning(f"Failed to load processed IDs: {e}")
+            return set()
+
+    def _save_processed_ids(self, processed_ids: set) -> None:
+        """Save set of processed email IDs to file.
+
+        Args:
+            processed_ids: Set of email IDs to save
+        """
+        processed_file = self.dlq_dir / ".processed_ids.json"
+
+        try:
+            with open(processed_file, "w", encoding="utf-8") as f:
+                json.dump(
+                    {"processed_ids": sorted(list(processed_ids))},
+                    f,
+                    indent=2,
+                    ensure_ascii=False,
+                )
+        except Exception as e:
+            logger.error(f"Failed to save processed IDs: {e}")

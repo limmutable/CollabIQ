@@ -23,7 +23,9 @@ class FieldMapper:
         properties_dict = (
             schema.database.properties
             if hasattr(schema, "database")
-            else schema.properties if hasattr(schema, "properties") else {}
+            else schema.properties
+            if hasattr(schema, "properties")
+            else {}
         )
         self.property_types = {
             name: prop.type if hasattr(prop, "type") else prop.get("type")

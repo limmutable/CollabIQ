@@ -52,7 +52,9 @@ def test_detect_confidentiality_disclaimer(normalizer, disclaimer_samples):
 
     assert disclaimer_start is not None, "Should detect CONFIDENTIALITY NOTICE"
     assert disclaimer_start > 0, "Disclaimer should not start at beginning"
-    assert "CONFIDENTIALITY" in email_body[disclaimer_start:], "Should detect confidentiality keyword"
+    assert "CONFIDENTIALITY" in email_body[disclaimer_start:], (
+        "Should detect confidentiality keyword"
+    )
 
 
 def test_detect_intended_only_notice(normalizer, disclaimer_samples):
@@ -69,7 +71,9 @@ def test_detect_intended_only_notice(normalizer, disclaimer_samples):
     disclaimer_start = normalizer.detect_disclaimer(email_body)
 
     assert disclaimer_start is not None, "Should detect 'intended only' notice"
-    assert "intended only" in email_body[disclaimer_start:].lower(), "Should detect intended only phrase"
+    assert "intended only" in email_body[disclaimer_start:].lower(), (
+        "Should detect intended only phrase"
+    )
 
 
 def test_detect_legal_disclaimer(normalizer, disclaimer_samples):
@@ -86,7 +90,9 @@ def test_detect_legal_disclaimer(normalizer, disclaimer_samples):
     disclaimer_start = normalizer.detect_disclaimer(email_body)
 
     assert disclaimer_start is not None, "Should detect LEGAL DISCLAIMER"
-    assert "LEGAL DISCLAIMER" in email_body[disclaimer_start:], "Should detect legal disclaimer keyword"
+    assert "LEGAL DISCLAIMER" in email_body[disclaimer_start:], (
+        "Should detect legal disclaimer keyword"
+    )
 
 
 def test_remove_disclaimer_preserves_content(normalizer, disclaimer_samples):
@@ -167,7 +173,9 @@ def test_boundary_cases_disclaimers(normalizer):
 
     # Very short email
     short_email = "Quick update"
-    assert normalizer.detect_disclaimer(short_email) is None, "Should not detect in very short email"
+    assert normalizer.detect_disclaimer(short_email) is None, (
+        "Should not detect in very short email"
+    )
 
     # Disclaimer keyword in content (not disclaimer)
     content_email = "Please keep this confidential. Project update: Phase 1 complete."
@@ -224,7 +232,9 @@ def test_disclaimer_removal_integration(normalizer, disclaimer_samples):
 
     # Step 3: Verify main content preserved
     assert "Budget approval confirmed" in cleaned_body, "Should preserve main content"
-    assert "proceed with the vendor contracts" in cleaned_body, "Should preserve full content"
+    assert "proceed with the vendor contracts" in cleaned_body, (
+        "Should preserve full content"
+    )
 
     # Step 4: Verify disclaimer removed
     assert "LEGAL DISCLAIMER" not in cleaned_body, "Should remove disclaimer header"

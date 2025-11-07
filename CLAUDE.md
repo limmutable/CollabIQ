@@ -33,9 +33,9 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Python 3.12 (established in project): Follow standard conventions
 
 ## Recent Changes
+- 010-error-handling: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 - 008-mvp-e2e-test: Added Python 3.12 (established in project) + pytest (testing framework), existing MVP components (email_receiver, llm_adapters, notion_integrator, content_normalizer), Gmail/Gemini/Notion APIs
 - 009-notion-write: Added Python 3.12+ (established in project)
-- 008-classification-summarization: Added Python 3.12 (established in project, using UV package manager)
 
 
 <!-- MANUAL ADDITIONS START -->

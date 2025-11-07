@@ -26,7 +26,9 @@ class EmailAttachment(BaseModel):
     filename: str = Field(..., description="Original filename of attachment")
     content_type: str = Field(..., description="MIME type (e.g., 'application/pdf')")
     size_bytes: int = Field(..., description="File size in bytes", ge=0)
-    storage_path: Optional[Path] = Field(None, description="Path to stored attachment file")
+    storage_path: Optional[Path] = Field(
+        None, description="Path to stored attachment file"
+    )
 
 
 class EmailMetadata(BaseModel):
@@ -42,17 +44,23 @@ class EmailMetadata(BaseModel):
         has_attachments: Whether email contains attachments
     """
 
-    message_id: str = Field(..., description="Unique email message ID from email server")
+    message_id: str = Field(
+        ..., description="Unique email message ID from email server"
+    )
     sender: EmailStr = Field(..., description="Sender email address")
     subject: str = Field(..., description="Email subject line")
-    received_at: datetime = Field(..., description="Timestamp when email was received by server")
+    received_at: datetime = Field(
+        ..., description="Timestamp when email was received by server"
+    )
     retrieved_at: datetime = Field(
         default_factory=datetime.utcnow,
-        description="Timestamp when email was retrieved by EmailReceiver"
+        description="Timestamp when email was retrieved by EmailReceiver",
     )
-    has_attachments: bool = Field(default=False, description="Whether email contains attachments")
+    has_attachments: bool = Field(
+        default=False, description="Whether email contains attachments"
+    )
 
-    @field_validator('message_id')
+    @field_validator("message_id")
     @classmethod
     def validate_message_id(cls, v: str) -> str:
         """Ensure message ID is not empty."""
@@ -80,14 +88,13 @@ class RawEmail(BaseModel):
     body: str = Field(
         ...,
         description="Full email body including signatures, quotes, disclaimers",
-        min_length=1
+        min_length=1,
     )
     attachments: List[EmailAttachment] = Field(
-        default_factory=list,
-        description="List of attachment metadata"
+        default_factory=list, description="List of attachment metadata"
     )
 
-    @field_validator('body')
+    @field_validator("body")
     @classmethod
     def validate_body(cls, v: str) -> str:
         """Ensure body is not empty or whitespace-only."""
@@ -97,6 +104,7 @@ class RawEmail(BaseModel):
 
     class Config:
         """Pydantic model configuration with example."""
+
         json_schema_extra = {
             "example": {
                 "metadata": {
@@ -105,9 +113,9 @@ class RawEmail(BaseModel):
                     "subject": "CollabIQ 협업 업데이트",
                     "received_at": "2025-10-30T14:35:22Z",
                     "retrieved_at": "2025-10-30T14:36:00Z",
-                    "has_attachments": False
+                    "has_attachments": False,
                 },
                 "body": "안녕하세요,\n\n지난주 회의에서 논의한 프로젝트 진행 상황을 공유드립니다.\n\n감사합니다.\n김철수 드림",
-                "attachments": []
+                "attachments": [],
             }
         }

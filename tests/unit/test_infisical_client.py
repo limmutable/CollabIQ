@@ -85,9 +85,7 @@ class TestInfisicalClientInitialization:
         settings.infisical_client_id = "test-client-id"
         settings.infisical_client_secret = "test-client-secret"
 
-        with pytest.raises(
-            ValueError, match="Invalid environment slug"
-        ):
+        with pytest.raises(ValueError, match="Invalid environment slug"):
             InfisicalClient(settings)
 
 
@@ -124,7 +122,9 @@ class TestInfisicalClientAuthentication:
         """Test authentication fails with invalid client_id/client_secret."""
         # Mock SDK to raise auth error
         mock_sdk_instance = MagicMock()
-        mock_sdk_instance.auth.universal_auth.login.side_effect = Exception("Invalid credentials (Status: 401)")
+        mock_sdk_instance.auth.universal_auth.login.side_effect = Exception(
+            "Invalid credentials (Status: 401)"
+        )
         mock_sdk_class.return_value = mock_sdk_instance
 
         client = InfisicalClient(mock_settings)
@@ -137,7 +137,9 @@ class TestInfisicalClientAuthentication:
         """Test authentication fails when network connection times out."""
         # Mock SDK to raise timeout error
         mock_sdk_instance = MagicMock()
-        mock_sdk_instance.auth.universal_auth.login.side_effect = TimeoutError("Connection timeout")
+        mock_sdk_instance.auth.universal_auth.login.side_effect = TimeoutError(
+            "Connection timeout"
+        )
         mock_sdk_class.return_value = mock_sdk_instance
 
         client = InfisicalClient(mock_settings)
@@ -162,7 +164,9 @@ class TestInfisicalClientSecretRetrieval:
         """Test successful secret retrieval from Infisical API."""
         # Mock SDK instance and secret retrieval
         mock_sdk_instance = MagicMock()
-        mock_sdk_instance.secrets.get_secret_by_name.return_value = MagicMock(secret_value="api-secret-value")
+        mock_sdk_instance.secrets.get_secret_by_name.return_value = MagicMock(
+            secret_value="api-secret-value"
+        )
         mock_sdk_class.return_value = mock_sdk_instance
 
         client = InfisicalClient(mock_settings)
@@ -199,7 +203,9 @@ class TestInfisicalClientSecretRetrieval:
         """Test fallback to .env file when API fails and cache expired."""
         # Mock SDK to raise connection error
         mock_sdk_instance = MagicMock()
-        mock_sdk_instance.secrets.get_secret_by_name.side_effect = Exception("API unreachable")
+        mock_sdk_instance.secrets.get_secret_by_name.side_effect = Exception(
+            "API unreachable"
+        )
         mock_sdk_class.return_value = mock_sdk_instance
 
         client = InfisicalClient(mock_settings)
@@ -214,7 +220,9 @@ class TestInfisicalClientSecretRetrieval:
         """Test SecretNotFoundError when secret doesn't exist anywhere."""
         # Mock SDK to raise secret not found error
         mock_sdk_instance = MagicMock()
-        mock_sdk_instance.secrets.get_secret_by_name.side_effect = Exception("Secret not found")
+        mock_sdk_instance.secrets.get_secret_by_name.side_effect = Exception(
+            "Secret not found"
+        )
         mock_sdk_class.return_value = mock_sdk_instance
 
         client = InfisicalClient(mock_settings)
@@ -290,7 +298,9 @@ class TestInfisicalClientCacheManagement:
         # Mock SDK to return new secrets
         mock_sdk_instance = MagicMock()
         mock_secret = MagicMock(secret_key="KEY", secret_value="new-value")
-        mock_sdk_instance.secrets.list_secrets.return_value = MagicMock(secrets=[mock_secret])
+        mock_sdk_instance.secrets.list_secrets.return_value = MagicMock(
+            secrets=[mock_secret]
+        )
         mock_sdk_class.return_value = mock_sdk_instance
 
         client = InfisicalClient(mock_settings)

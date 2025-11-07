@@ -34,9 +34,7 @@ class EmailReceiver(ABC):
 
     @abstractmethod
     def fetch_emails(
-        self,
-        since: Optional[datetime] = None,
-        max_emails: int = 100
+        self, since: Optional[datetime] = None, max_emails: int = 100
     ) -> List[RawEmail]:
         """
         Retrieve unprocessed emails from the inbox in chronological order.

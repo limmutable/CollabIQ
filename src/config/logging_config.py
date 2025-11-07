@@ -48,9 +48,7 @@ def setup_logging(
     root_logger.handlers.clear()
 
     # Define log format (FR-009: timestamps required)
-    log_format = (
-        "%(asctime)s | %(levelname)-8s | %(name)s:%(lineno)d | %(message)s"
-    )
+    log_format = "%(asctime)s | %(levelname)-8s | %(name)s:%(lineno)d | %(message)s"
     date_format = "%Y-%m-%d %H:%M:%S"
     formatter = logging.Formatter(log_format, datefmt=date_format)
 

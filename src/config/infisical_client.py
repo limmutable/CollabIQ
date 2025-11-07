@@ -197,8 +197,16 @@ class InfisicalClient:
         except Exception as e:
             # Check if it's an auth error vs connection error
             error_msg = str(e).lower()
-            if "credential" in error_msg or "auth" in error_msg or "invalid" in error_msg or "401" in error_msg or "403" in error_msg:
-                logger.error(f"Infisical authentication failed - will fall back to .env: {e}")
+            if (
+                "credential" in error_msg
+                or "auth" in error_msg
+                or "invalid" in error_msg
+                or "401" in error_msg
+                or "403" in error_msg
+            ):
+                logger.error(
+                    f"Infisical authentication failed - will fall back to .env: {e}"
+                )
                 raise InfisicalAuthError(
                     f"Authentication failed with Infisical. Invalid machine identity credentials.\n"
                     f"Please verify:\n"
@@ -213,7 +221,9 @@ class InfisicalClient:
                     f"Original error: {e}"
                 ) from e
             else:
-                logger.error(f"Infisical connection failed - will fall back to .env: {e}")
+                logger.error(
+                    f"Infisical connection failed - will fall back to .env: {e}"
+                )
                 raise InfisicalConnectionError(
                     f"Failed to connect to Infisical at {self.settings.infisical_host}.\n"
                     f"Please check:\n"
@@ -249,13 +259,17 @@ class InfisicalClient:
 
         # Check our local cache first (if not expired)
         if key in self._cache and not self._is_cache_expired(key):
-            logger.debug(f"✓ Retrieved '{key}' from cache (age: {int(time.time() - self._cache_timestamps[key])}s)")
+            logger.debug(
+                f"✓ Retrieved '{key}' from cache (age: {int(time.time() - self._cache_timestamps[key])}s)"
+            )
             return self._cache[key]
 
         # Cache expired or miss - fetch from Infisical API
         is_refresh = key in self._cache
         if is_refresh:
-            logger.info(f"Cache expired for '{key}' (TTL: {self.settings.infisical_cache_ttl}s) - refreshing from Infisical")
+            logger.info(
+                f"Cache expired for '{key}' (TTL: {self.settings.infisical_cache_ttl}s) - refreshing from Infisical"
+            )
 
         # Try fetching from Infisical API (SDK handles its own caching)
         if self._sdk_client:
@@ -281,17 +295,23 @@ class InfisicalClient:
 
             except InfisicalConnectionError as e:
                 # API unreachable, fall back to .env
-                logger.warning(f"Infisical API unreachable for '{key}', falling back to .env: {e}")
+                logger.warning(
+                    f"Infisical API unreachable for '{key}', falling back to .env: {e}"
+                )
                 return self._get_from_env(key)
             except Exception as e:
                 # Secret not found in Infisical or other API error
                 if "not found" in str(e).lower() or "404" in str(e):
                     # Try .env as last resort
-                    logger.warning(f"Secret '{key}' not found in Infisical, falling back to .env")
+                    logger.warning(
+                        f"Secret '{key}' not found in Infisical, falling back to .env"
+                    )
                     return self._get_from_env(key)
                 else:
                     # Connection error, fall back to .env
-                    logger.warning(f"Infisical error for '{key}', falling back to .env: {e}")
+                    logger.warning(
+                        f"Infisical error for '{key}', falling back to .env: {e}"
+                    )
                     return self._get_from_env(key)
 
         # No SDK client, fall back to .env
@@ -314,7 +334,9 @@ class InfisicalClient:
             return {}
 
         try:
-            logger.info(f"Fetching all secrets from Infisical (environment: {self.settings.infisical_environment})")
+            logger.info(
+                f"Fetching all secrets from Infisical (environment: {self.settings.infisical_environment})"
+            )
 
             secrets_response = self._sdk_client.secrets.list_secrets(
                 environment_slug=self.settings.infisical_environment,
@@ -332,7 +354,9 @@ class InfisicalClient:
                 self._cache[key] = value
                 self._cache_timestamps[key] = current_time
 
-            logger.info(f"✓ Cache refreshed with {len(secrets_dict)} secrets from Infisical (TTL: {self.settings.infisical_cache_ttl}s)")
+            logger.info(
+                f"✓ Cache refreshed with {len(secrets_dict)} secrets from Infisical (TTL: {self.settings.infisical_cache_ttl}s)"
+            )
 
             return secrets_dict
 

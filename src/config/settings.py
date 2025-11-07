@@ -232,9 +232,7 @@ class Settings(BaseSettings):
         valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
         v_upper = v.upper()
         if v_upper not in valid_levels:
-            raise ValueError(
-                f"Invalid log level: {v}. Must be one of {valid_levels}"
-            )
+            raise ValueError(f"Invalid log level: {v}. Must be one of {valid_levels}")
         return v_upper
 
     @field_validator(
@@ -279,7 +277,9 @@ class Settings(BaseSettings):
 
         return self._infisical_client
 
-    def get_secret_or_env(self, key: str, default: Optional[str] = None) -> Optional[str]:
+    def get_secret_or_env(
+        self, key: str, default: Optional[str] = None
+    ) -> Optional[str]:
         """Retrieve secret from Infisical with fallback to environment variable.
 
         Three-tier fallback:
@@ -329,9 +329,7 @@ class Settings(BaseSettings):
 
         now = datetime.utcnow()
         year_month_raw = self.raw_email_dir / str(now.year) / f"{now.month:02d}"
-        year_month_cleaned = (
-            self.cleaned_email_dir / str(now.year) / f"{now.month:02d}"
-        )
+        year_month_cleaned = self.cleaned_email_dir / str(now.year) / f"{now.month:02d}"
         year_month_raw.mkdir(parents=True, exist_ok=True)
         year_month_cleaned.mkdir(parents=True, exist_ok=True)
 

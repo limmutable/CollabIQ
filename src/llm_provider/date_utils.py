@@ -10,13 +10,15 @@ Uses dateparser library for robust multi-format parsing.
 """
 
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 
 import dateparser
 
 
-def parse_date(date_str: str, reference_date: Optional[datetime] = None) -> Optional[datetime]:
+def parse_date(
+    date_str: str, reference_date: Optional[datetime] = None
+) -> Optional[datetime]:
     """Parse date string in various formats to datetime object.
 
     Handles:

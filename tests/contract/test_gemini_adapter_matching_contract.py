@@ -83,9 +83,7 @@ class TestGeminiAdapterMatchingContract:
         assert entities.startup_match_confidence is None
         assert entities.partner_match_confidence is None
 
-    def test_matching_enabled_with_company_context(
-        self, company_context_markdown: str
-    ):
+    def test_matching_enabled_with_company_context(self, company_context_markdown: str):
         """MUST: Phase 2b matching populates matched_* fields when company_context provided.
 
         Contract: When company_context is provided, GeminiAdapter must:
@@ -111,8 +109,14 @@ class TestGeminiAdapterMatchingContract:
         # Validate matching fields are populated (at least one should be set)
         # Note: We don't assert specific IDs here (that's for integration tests)
         # We only verify the contract is respected
-        assert entities.matched_company_id is not None or entities.matched_partner_id is not None
-        assert entities.startup_match_confidence is not None or entities.partner_match_confidence is not None
+        assert (
+            entities.matched_company_id is not None
+            or entities.matched_partner_id is not None
+        )
+        assert (
+            entities.startup_match_confidence is not None
+            or entities.partner_match_confidence is not None
+        )
 
         # Validate confidence ranges
         if entities.startup_match_confidence is not None:

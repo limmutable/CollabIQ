@@ -73,14 +73,28 @@ class TestFieldMapperEdgeCases:
         # Optional null fields should be omitted
         assert "담당자" not in properties, "person_in_charge (None) should be omitted"
         assert "협업내용" not in properties, "details (None) should be omitted"
-        assert "요약" not in properties, "collaboration_summary (None) should be omitted"
-        assert "스타트업명" not in properties, "matched_company_id (None) should be omitted"
-        assert "협업기관" not in properties, "matched_partner_id (None) should be omitted"
-        assert "협업형태" not in properties, "collaboration_type (None) should be omitted"
-        assert "협업강도" not in properties, "collaboration_intensity (None) should be omitted"
+        assert "요약" not in properties, (
+            "collaboration_summary (None) should be omitted"
+        )
+        assert "스타트업명" not in properties, (
+            "matched_company_id (None) should be omitted"
+        )
+        assert "협업기관" not in properties, (
+            "matched_partner_id (None) should be omitted"
+        )
+        assert "협업형태" not in properties, (
+            "collaboration_type (None) should be omitted"
+        )
+        assert "협업강도" not in properties, (
+            "collaboration_intensity (None) should be omitted"
+        )
         assert "날짜" not in properties, "date (None) should be omitted"
-        assert "type_confidence" not in properties, "type_confidence (None) should be omitted"
-        assert "intensity_confidence" not in properties, "intensity_confidence (None) should be omitted"
+        assert "type_confidence" not in properties, (
+            "type_confidence (None) should be omitted"
+        )
+        assert "intensity_confidence" not in properties, (
+            "intensity_confidence (None) should be omitted"
+        )
 
     def test_text_truncation(self, field_mapper):
         """T044: Test that long text fields are truncated to 2000 characters.
@@ -107,17 +121,19 @@ class TestFieldMapperEdgeCases:
 
         # Check details field is preserved at full length
         details_content = properties["협업내용"]["rich_text"][0]["text"]["content"]
-        assert len(details_content) <= 2000, \
-            "details field must not exceed 2000 chars"
-        assert details_content == long_text, \
+        assert len(details_content) <= 2000, "details field must not exceed 2000 chars"
+        assert details_content == long_text, (
             "Text at 2000 chars should be preserved exactly"
+        )
 
         # Check summary field is preserved at full length
         summary_content = properties["요약"]["rich_text"][0]["text"]["content"]
-        assert len(summary_content) <= 2000, \
+        assert len(summary_content) <= 2000, (
             "summary field must not exceed 2000 chars (Notion limit)"
-        assert summary_content == long_summary, \
+        )
+        assert summary_content == long_summary, (
             "Text within limits should be preserved exactly"
+        )
 
     def test_invalid_relation_id_handling(self, field_mapper):
         """T045: Test that None relation IDs are omitted gracefully.
@@ -139,10 +155,10 @@ class TestFieldMapperEdgeCases:
         properties = field_mapper.map_to_notion_properties(data)
 
         # None IDs should be omitted
-        assert "스타트업명" not in properties, \
+        assert "스타트업명" not in properties, (
             "None matched_company_id should be omitted"
-        assert "협업기관" not in properties, \
-            "None matched_partner_id should be omitted"
+        )
+        assert "협업기관" not in properties, "None matched_partner_id should be omitted"
 
         # Other fields should still be present
         assert "협력주체" in properties, "Title field should still be present"
@@ -162,16 +178,16 @@ class TestFieldMapperEdgeCases:
         ]
 
         for valid_id in valid_ids:
-            data = create_valid_extracted_data(
-                matched_company_id=valid_id
-            )
+            data = create_valid_extracted_data(matched_company_id=valid_id)
 
             properties = field_mapper.map_to_notion_properties(data)
 
-            assert "스타트업명" in properties, \
+            assert "스타트업명" in properties, (
                 f"Valid relation ID '{valid_id}' should be included"
-            assert properties["스타트업명"]["relation"][0]["id"] == valid_id, \
+            )
+            assert properties["스타트업명"]["relation"][0]["id"] == valid_id, (
                 "Relation ID should match input"
+            )
 
     def test_korean_text_with_special_characters(self, field_mapper):
         """T046: Test Korean text with emojis and special characters.
@@ -202,13 +218,16 @@ class TestFieldMapperEdgeCases:
 
         # Verify special characters are preserved
         details_content = properties["협업내용"]["rich_text"][0]["text"]["content"]
-        assert details_content == special_text, \
+        assert details_content == special_text, (
             "Korean text with special characters must be preserved exactly"
+        )
 
         summary_content = properties["요약"]["rich_text"][0]["text"]["content"]
-        assert summary_content == special_summary, \
+        assert summary_content == special_summary, (
             "Korean text in summary must be preserved exactly"
+        )
 
         person_content = properties["담당자"]["rich_text"][0]["text"]["content"]
-        assert person_content == "김철수 🧑‍💼", \
+        assert person_content == "김철수 🧑‍💼", (
             "Korean name with emoji must be preserved exactly"
+        )

@@ -26,12 +26,10 @@ class DuplicateTracker(BaseModel):
     """
 
     processed_message_ids: Set[str] = Field(
-        default_factory=set,
-        description="Set of processed message IDs"
+        default_factory=set, description="Set of processed message IDs"
     )
     last_updated: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="Last time tracker was updated"
+        default_factory=datetime.utcnow, description="Last time tracker was updated"
     )
 
     def is_duplicate(self, message_id: str) -> bool:
@@ -80,7 +78,9 @@ class DuplicateTracker(BaseModel):
         try:
             data = json.loads(file_path.read_text())
             # Convert list back to set (JSON doesn't support sets)
-            if "processed_message_ids" in data and isinstance(data["processed_message_ids"], list):
+            if "processed_message_ids" in data and isinstance(
+                data["processed_message_ids"], list
+            ):
                 data["processed_message_ids"] = set(data["processed_message_ids"])
             return cls(**data)
         except json.JSONDecodeError as e:
@@ -105,7 +105,7 @@ class DuplicateTracker(BaseModel):
         # Convert set to list for JSON serialization
         data = {
             "processed_message_ids": list(self.processed_message_ids),
-            "last_updated": self.last_updated.isoformat()
+            "last_updated": self.last_updated.isoformat(),
         }
 
         file_path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
@@ -120,18 +120,15 @@ class DuplicateTracker(BaseModel):
         return len(self.processed_message_ids)
 
     model_config = {
-        "json_encoders": {
-            set: list,
-            datetime: lambda dt: dt.isoformat()
-        },
+        "json_encoders": {set: list, datetime: lambda dt: dt.isoformat()},
         "json_schema_extra": {
             "example": {
                 "processed_message_ids": [
                     "<CABc123@mail.gmail.com>",
                     "<DEF456@mail.example.com>",
-                    "<GHI789@mail.test.com>"
+                    "<GHI789@mail.test.com>",
                 ],
-                "last_updated": "2025-10-30T16:00:00Z"
+                "last_updated": "2025-10-30T16:00:00Z",
             }
-        }
+        },
     }

@@ -60,8 +60,9 @@ class TestDLQManagerContract:
         - Not async (synchronous method)
         """
         # Verify method exists
-        assert hasattr(dlq_manager, "save_failed_write"), \
+        assert hasattr(dlq_manager, "save_failed_write"), (
             "DLQManager must have save_failed_write method"
+        )
 
         # Verify method is callable
         method = getattr(dlq_manager, "save_failed_write")
@@ -69,8 +70,10 @@ class TestDLQManagerContract:
 
         # Verify method is NOT async
         import inspect
-        assert not inspect.iscoroutinefunction(method), \
+
+        assert not inspect.iscoroutinefunction(method), (
             "save_failed_write must be synchronous (not async)"
+        )
 
     def test_save_failed_write_file_creation(
         self, dlq_manager, sample_extracted_data, sample_error_details, temp_dlq_dir
@@ -85,28 +88,24 @@ class TestDLQManagerContract:
         """
         # Execute save operation
         file_path = dlq_manager.save_failed_write(
-            extracted_data=sample_extracted_data,
-            error_details=sample_error_details
+            extracted_data=sample_extracted_data, error_details=sample_error_details
         )
 
         # Verify file path returned
-        assert isinstance(file_path, str), \
+        assert isinstance(file_path, str), (
             "save_failed_write must return file path as string"
+        )
 
         # Verify file exists
-        assert Path(file_path).exists(), \
-            f"DLQ file must be created at {file_path}"
+        assert Path(file_path).exists(), f"DLQ file must be created at {file_path}"
 
         # Verify file is in correct directory
-        assert str(temp_dlq_dir) in file_path, \
-            "DLQ file must be created in dlq_dir"
+        assert str(temp_dlq_dir) in file_path, "DLQ file must be created in dlq_dir"
 
         # Verify file naming pattern (email_id_timestamp.json)
         filename = Path(file_path).name
-        assert filename.startswith("test-dlq-001_"), \
-            "Filename must start with email_id"
-        assert filename.endswith(".json"), \
-            "Filename must have .json extension"
+        assert filename.startswith("test-dlq-001_"), "Filename must start with email_id"
+        assert filename.endswith(".json"), "Filename must have .json extension"
 
         # Verify file contains valid JSON
         with open(file_path, "r") as f:
@@ -127,8 +126,7 @@ class TestDLQManagerContract:
         """
         # Execute save operation
         file_path = dlq_manager.save_failed_write(
-            extracted_data=sample_extracted_data,
-            error_details=sample_error_details
+            extracted_data=sample_extracted_data, error_details=sample_error_details
         )
 
         # Load and verify serialized data
@@ -137,26 +135,26 @@ class TestDLQManagerContract:
 
         # Verify required fields
         assert "email_id" in data, "DLQ entry must include email_id"
-        assert data["email_id"] == "test-dlq-001", \
-            "email_id must match input"
+        assert data["email_id"] == "test-dlq-001", "email_id must match input"
 
         assert "failed_at" in data, "DLQ entry must include failed_at timestamp"
-        assert isinstance(data["failed_at"], str), \
+        assert isinstance(data["failed_at"], str), (
             "failed_at must be serialized as ISO string"
+        )
 
         assert "error" in data, "DLQ entry must include error details"
-        assert data["error"]["error_type"] == "APIResponseError", \
+        assert data["error"]["error_type"] == "APIResponseError", (
             "error_type must be preserved"
-        assert data["error"]["status_code"] == 400, \
-            "status_code must be preserved"
+        )
+        assert data["error"]["status_code"] == 400, "status_code must be preserved"
 
         assert "extracted_data" in data, "DLQ entry must include full extracted_data"
-        assert data["extracted_data"]["email_id"] == "test-dlq-001", \
+        assert data["extracted_data"]["email_id"] == "test-dlq-001", (
             "extracted_data must be fully serialized"
+        )
 
         assert "retry_count" in data, "DLQ entry must include retry_count"
-        assert data["retry_count"] == 0, \
-            "Initial retry_count must be 0"
+        assert data["retry_count"] == 0, "Initial retry_count must be 0"
 
     def test_load_dlq_entry_method_signature(self, dlq_manager):
         """T058: Verify load_dlq_entry() method exists with correct signature.
@@ -168,8 +166,9 @@ class TestDLQManagerContract:
         - Not async (synchronous method)
         """
         # Verify method exists
-        assert hasattr(dlq_manager, "load_dlq_entry"), \
+        assert hasattr(dlq_manager, "load_dlq_entry"), (
             "DLQManager must have load_dlq_entry method"
+        )
 
         # Verify method is callable
         method = getattr(dlq_manager, "load_dlq_entry")
@@ -177,8 +176,10 @@ class TestDLQManagerContract:
 
         # Verify method is NOT async
         import inspect
-        assert not inspect.iscoroutinefunction(method), \
+
+        assert not inspect.iscoroutinefunction(method), (
             "load_dlq_entry must be synchronous (not async)"
+        )
 
     def test_load_dlq_entry_deserialization(
         self, dlq_manager, sample_extracted_data, sample_error_details
@@ -194,34 +195,34 @@ class TestDLQManagerContract:
         """
         # First, create a DLQ entry
         file_path = dlq_manager.save_failed_write(
-            extracted_data=sample_extracted_data,
-            error_details=sample_error_details
+            extracted_data=sample_extracted_data, error_details=sample_error_details
         )
 
         # Load the entry back
         dlq_entry = dlq_manager.load_dlq_entry(file_path)
 
         # Verify return type
-        assert isinstance(dlq_entry, DLQEntry), \
+        assert isinstance(dlq_entry, DLQEntry), (
             "load_dlq_entry must return DLQEntry instance"
+        )
 
         # Verify fields
-        assert dlq_entry.email_id == "test-dlq-001", \
-            "email_id must be preserved"
+        assert dlq_entry.email_id == "test-dlq-001", "email_id must be preserved"
 
-        assert isinstance(dlq_entry.failed_at, datetime), \
+        assert isinstance(dlq_entry.failed_at, datetime), (
             "failed_at must be deserialized to datetime"
+        )
 
-        assert dlq_entry.error["error_type"] == "APIResponseError", \
+        assert dlq_entry.error["error_type"] == "APIResponseError", (
             "error_type must be preserved"
-        assert dlq_entry.error["status_code"] == 400, \
-            "status_code must be preserved"
+        )
+        assert dlq_entry.error["status_code"] == 400, "status_code must be preserved"
 
-        assert dlq_entry.extracted_data.email_id == "test-dlq-001", \
+        assert dlq_entry.extracted_data.email_id == "test-dlq-001", (
             "extracted_data must be deserialized correctly"
+        )
 
-        assert dlq_entry.retry_count == 0, \
-            "retry_count must be preserved"
+        assert dlq_entry.retry_count == 0, "retry_count must be preserved"
 
     def test_list_dlq_entries_method_signature(self, dlq_manager):
         """T059: Verify list_dlq_entries() method exists with correct signature.
@@ -233,8 +234,9 @@ class TestDLQManagerContract:
         - Not async (synchronous method)
         """
         # Verify method exists
-        assert hasattr(dlq_manager, "list_dlq_entries"), \
+        assert hasattr(dlq_manager, "list_dlq_entries"), (
             "DLQManager must have list_dlq_entries method"
+        )
 
         # Verify method is callable
         method = getattr(dlq_manager, "list_dlq_entries")
@@ -242,8 +244,10 @@ class TestDLQManagerContract:
 
         # Verify method is NOT async
         import inspect
-        assert not inspect.iscoroutinefunction(method), \
+
+        assert not inspect.iscoroutinefunction(method), (
             "list_dlq_entries must be synchronous (not async)"
+        )
 
     def test_list_dlq_entries_listing(
         self, dlq_manager, sample_extracted_data, sample_error_details
@@ -263,25 +267,26 @@ class TestDLQManagerContract:
         # Create 3 DLQ entries
         file1 = dlq_manager.save_failed_write(
             extracted_data=create_valid_extracted_data(email_id="dlq-test-001"),
-            error_details=sample_error_details
+            error_details=sample_error_details,
         )
 
         file2 = dlq_manager.save_failed_write(
             extracted_data=create_valid_extracted_data(email_id="dlq-test-002"),
-            error_details=sample_error_details
+            error_details=sample_error_details,
         )
 
         file3 = dlq_manager.save_failed_write(
             extracted_data=create_valid_extracted_data(email_id="dlq-test-003"),
-            error_details=sample_error_details
+            error_details=sample_error_details,
         )
 
         # List entries
         entries = dlq_manager.list_dlq_entries()
 
         # Verify count
-        assert len(entries) == initial_count + 3, \
+        assert len(entries) == initial_count + 3, (
             "list_dlq_entries must return all DLQ files"
+        )
 
         # Verify all files are in the list
         entry_paths = [str(Path(e).resolve()) for e in entries]
@@ -290,7 +295,7 @@ class TestDLQManagerContract:
         assert str(Path(file3).resolve()) in entry_paths, "file3 must be in list"
 
         # Verify return type
-        assert isinstance(entries, list), \
-            "list_dlq_entries must return a list"
-        assert all(isinstance(e, str) for e in entries), \
+        assert isinstance(entries, list), "list_dlq_entries must return a list"
+        assert all(isinstance(e, str) for e in entries), (
             "All entries must be file path strings"
+        )

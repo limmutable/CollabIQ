@@ -167,9 +167,7 @@ class TestSummaryGenerationContract:
         )
         assert isinstance(entity.key_entities_preserved, dict)
         assert len(entity.key_entities_preserved) == 5
-        assert all(
-            isinstance(v, bool) for v in entity.key_entities_preserved.values()
-        )
+        assert all(isinstance(v, bool) for v in entity.key_entities_preserved.values())
 
         # Partial preservation (some entities not preserved)
         entity_partial = ExtractedEntitiesWithClassification(

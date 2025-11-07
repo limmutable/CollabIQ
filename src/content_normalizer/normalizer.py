@@ -9,7 +9,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 try:
     from ..models.cleaned_email import CleanedEmail, CleaningStatus, RemovedContent
@@ -60,7 +60,7 @@ class ContentNormalizer:
         body: str,
         remove_signatures: bool = True,
         remove_quotes: bool = True,
-        remove_disclaimers: bool = True
+        remove_disclaimers: bool = True,
     ) -> CleaningResult:
         """
         Remove signatures, quoted threads, and disclaimers from email body text.
@@ -94,8 +94,8 @@ class ContentNormalizer:
                     cleaned_length=0,
                     signature_removed=False,
                     quoted_thread_removed=False,
-                    disclaimer_removed=False
-                )
+                    disclaimer_removed=False,
+                ),
             )
 
         original_length = len(body)
@@ -144,8 +144,8 @@ class ContentNormalizer:
                 cleaned_length=cleaned_length,
                 signature_removed=signature_removed,
                 quoted_thread_removed=quoted_thread_removed,
-                disclaimer_removed=disclaimer_removed
-            )
+                disclaimer_removed=disclaimer_removed,
+            ),
         )
 
     def detect_signature(self, body: str) -> Optional[int]:
@@ -334,7 +334,9 @@ class ContentNormalizer:
         cleaning_result = self.clean(raw_email.body)
 
         # Determine cleaning status and is_empty flag
-        is_empty = not cleaning_result.cleaned_body or not cleaning_result.cleaned_body.strip()
+        is_empty = (
+            not cleaning_result.cleaned_body or not cleaning_result.cleaned_body.strip()
+        )
 
         if is_empty:
             # Email is entirely noise (FR-012)
@@ -352,7 +354,7 @@ class ContentNormalizer:
             removed_content=cleaning_result.removed_content,
             processed_at=datetime.utcnow(),
             status=status,
-            is_empty=is_empty
+            is_empty=is_empty,
         )
 
         logger.info(
@@ -362,7 +364,9 @@ class ContentNormalizer:
 
         return cleaned_email
 
-    def save_cleaned_email(self, cleaned_email: CleanedEmail, base_dir: Path = Path("data/cleaned")) -> Path:
+    def save_cleaned_email(
+        self, cleaned_email: CleanedEmail, base_dir: Path = Path("data/cleaned")
+    ) -> Path:
         """
         Save cleaned email to file storage with monthly directory structure.
 
@@ -378,18 +382,24 @@ class ContentNormalizer:
         """
         # Create monthly directory structure: data/cleaned/YYYY/MM/
         processed_date = cleaned_email.processed_at
-        monthly_dir = base_dir / str(processed_date.year) / f"{processed_date.month:02d}"
+        monthly_dir = (
+            base_dir / str(processed_date.year) / f"{processed_date.month:02d}"
+        )
         monthly_dir.mkdir(parents=True, exist_ok=True)
 
         # Generate filename: YYYYMMDD_HHMMSS_{message_id}.json
         timestamp = processed_date.strftime("%Y%m%d_%H%M%S")
         # Clean message_id for filename (remove < > and @ symbols)
-        clean_id = cleaned_email.original_message_id.strip("<>").replace("@", "_at_").replace("/", "_")
+        clean_id = (
+            cleaned_email.original_message_id.strip("<>")
+            .replace("@", "_at_")
+            .replace("/", "_")
+        )
         filename = f"{timestamp}_{clean_id}.json"
         file_path = monthly_dir / filename
 
         # Serialize CleanedEmail to JSON
-        cleaned_dict = cleaned_email.model_dump(mode='json')
+        cleaned_dict = cleaned_email.model_dump(mode="json")
         file_path.write_text(json.dumps(cleaned_dict, indent=2, ensure_ascii=False))
 
         logger.info(f"Saved cleaned email to {file_path}")

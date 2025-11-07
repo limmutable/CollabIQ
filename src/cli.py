@@ -16,7 +16,6 @@ Usage:
 
 import sys
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -44,9 +43,7 @@ def fetch(
     clean: bool = typer.Option(
         True, "--clean/--no-clean", help="Clean emails after fetching"
     ),
-    debug: bool = typer.Option(
-        False, "--debug", "-d", help="Enable debug logging"
-    ),
+    debug: bool = typer.Option(False, "--debug", "-d", help="Enable debug logging"),
 ) -> None:
     """Fetch emails from Gmail and optionally clean them."""
     # Setup
@@ -68,9 +65,7 @@ def fetch(
         console.print("[green]✓ Connected to Gmail[/green]\n")
 
         # Fetch emails
-        console.print(
-            f"[yellow]Fetching emails (max: {max_results})...[/yellow]"
-        )
+        console.print(f"[yellow]Fetching emails (max: {max_results})...[/yellow]")
         raw_emails = receiver.fetch_emails(max_results=max_results)
         console.print(f"[green]✓ Fetched {len(raw_emails)} new emails[/green]\n")
 
@@ -115,9 +110,7 @@ def fetch(
                 if cleaned.is_empty:
                     empty_count += 1
 
-            console.print(
-                f"[green]✓ Cleaned {len(raw_emails)} emails[/green]"
-            )
+            console.print(f"[green]✓ Cleaned {len(raw_emails)} emails[/green]")
             if empty_count > 0:
                 console.print(
                     f"[yellow]⚠ {empty_count} emails became empty after cleaning[/yellow]"
@@ -132,9 +125,7 @@ def fetch(
         console.print("[bold green]Pipeline completed successfully![/bold green]")
 
     except FileNotFoundError:
-        console.print(
-            "[bold red]Error: credentials.json not found[/bold red]"
-        )
+        console.print("[bold red]Error: credentials.json not found[/bold red]")
         console.print(
             "Please download Gmail API credentials and save as credentials.json"
         )
@@ -151,9 +142,7 @@ def clean_emails(
     input_dir: Path = typer.Option(
         Path("data/raw"), "--input-dir", "-i", help="Directory with raw emails"
     ),
-    debug: bool = typer.Option(
-        False, "--debug", "-d", help="Enable debug logging"
-    ),
+    debug: bool = typer.Option(False, "--debug", "-d", help="Enable debug logging"),
 ) -> None:
     """Clean existing raw emails from directory."""
     settings = get_settings()
