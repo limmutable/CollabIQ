@@ -86,16 +86,18 @@ deactivate
 - ✅ **Phase 1b Complete**: Gemini entity extraction (100% accuracy on test dataset)
 - ✅ **Phase 005 Complete**: Gmail OAuth2 setup with group alias support
 - ✅ **Phase 2a Complete**: Notion Read Operations (schema discovery, data fetching, LLM formatting)
-- ✅ **Phase 2b Complete**: LLM-based company matching with confidence scores
+- ✅ **Phase 2b Complete**: LLM-based company matching with confidence scores (100% accuracy)
 - ✅ **Phase 2c Complete**: Classification & Summarization (type, intensity, summary generation)
+- ✅ **Phase 2d Complete**: Notion Write Operations (duplicate detection, DLQ handling)
 - ✅ **Phase 010 Complete**: Error Handling & Retry Logic (unified retry system with circuit breakers)
-- 🚧 **Phase 2d (Next)**: Notion Write Operations
+- 🎯 **MVP Status**: COMPLETE - Full extraction pipeline with Notion integration working end-to-end
 
 **Error Handling**: CollabIQ includes comprehensive error handling with automatic retry logic:
 - **Automatic Retries**: Transient failures (timeouts, rate limits) retry automatically with exponential backoff
 - **Circuit Breakers**: Prevents cascading failures by failing fast when services are degraded
-- **Dead Letter Queue (DLQ)**: Failed operations are preserved for later replay
-- **Structured Logging**: All errors logged with full context for debugging
+- **Dead Letter Queue (DLQ)**: Failed operations are preserved for later replay via `scripts/retry_dlq.py`
+- **Structured Logging**: All errors logged with full context for debugging (JSON-formatted)
+- **Service-Specific Configs**: Pre-configured retry settings for Gmail, Gemini, Notion, and Infisical
 
 See [src/error_handling/README.md](../../src/error_handling/README.md) for usage guide and [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md) for full implementation timeline.
 
@@ -159,10 +161,10 @@ GMAIL_CREDENTIALS_PATH=credentials.json
 GMAIL_TOKEN_PATH=token.json
 GMAIL_BATCH_SIZE=50
 
-# Gemini API Configuration (✅ Implemented - Phase 1b + 2b)
+# Gemini API Configuration (✅ Implemented - Phase 1b + 2b + 2c)
 GEMINI_API_KEY=AIzaSy...your_actual_key_here
-GEMINI_MODEL=gemini-2.5-flash  # Updated model for Phase 2b
-GEMINI_TIMEOUT_SECONDS=10
+GEMINI_MODEL=gemini-2.5-flash  # Latest model (2025)
+GEMINI_TIMEOUT_SECONDS=60
 # Note: Retry logic is handled automatically by Phase 010 error handling system
 
 # Notion API Configuration (✅ Implemented - Phase 2a)
@@ -382,16 +384,42 @@ uv run collabiq notion export --output companies.json
   - LLM-based intensity classification (이해/협력/투자/인수)
   - Summary generation (3-5 sentences, preserves 5 key entities)
   - Confidence scoring with 0.85 threshold for manual review routing
-  - **Tests**: 45/45 Phase 2c tests passing (100%), 213/217 total (98.2%)
-🎯 **MVP Complete**: Email ingestion + entity extraction + company matching + classification + summarization
+✅ **Phase 2d Complete**: Notion Write Operations
+  - Duplicate detection with configurable strategies (skip/update)
+  - Schema-aware property mapping via FieldMapper
+  - Dead Letter Queue (DLQ) for failed writes
+  - Retry script for manual DLQ replay (`scripts/retry_dlq.py`)
+✅ **Phase 010 Complete**: Error Handling & Retry Logic
+  - Unified `@retry_with_backoff` decorator replacing ad-hoc retry logic
+  - Circuit breaker pattern for Gmail, Gemini, Notion, and Infisical
+  - Structured error logging with JSON formatting
+  - Service-specific retry configurations (timeouts, attempts, jitter)
+  - Rate limit handling with `Retry-After` header support
 
-### Next Implementation Phase
+🎯 **MVP Status**: COMPLETE - Full extraction pipeline with Notion integration working end-to-end
 
-**Phase 2d: Notion Write Operations**
+### Next Steps: Production & Monitoring
 
-This phase will add the ability to write extracted and classified collaboration data to Notion databases.
+With the MVP complete, the focus shifts to:
 
-See [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md) for Phase 2d details and full implementation timeline.
+1. **Production Deployment**
+   - Deploy to Cloud Run or similar serverless platform
+   - Configure production Infisical environment
+   - Set up monitoring and alerting
+
+2. **Monitoring & Observability**
+   - DLQ monitoring dashboard
+   - Circuit breaker state tracking
+   - Error rate and retry metrics
+   - Performance monitoring (latency, throughput)
+
+3. **Operational Workflows**
+   - Scheduled email processing (e.g., hourly cron job)
+   - Manual DLQ replay workflow
+   - Secret rotation procedures
+   - Backup and disaster recovery
+
+See [docs/architecture/ROADMAP.md](../architecture/ROADMAP.md) for the complete implementation timeline and future phases.
 
 ### Explore the System
 
@@ -554,15 +582,18 @@ After completing this quick start, you should:
 6. ✅ Be able to fetch and format Notion data for LLM consumption
 7. ✅ Be able to classify collaboration types and intensity
 8. ✅ Be able to generate summaries preserving key entities
-9. ✅ Understand the project structure
+9. ✅ Be able to write results to Notion with duplicate detection
+10. ✅ Understand error handling with automatic retries and circuit breakers
+11. ✅ Understand the project structure
 
 Now you're ready to:
-- **Use the Full Pipeline**: Fetch emails → extract entities → match companies → classify type/intensity → generate summaries
-- **Test Classification**: Run Phase 2c tests to see dynamic classification in action
+- **Use the Full MVP Pipeline**: Fetch emails → extract entities → match companies → classify type/intensity → generate summaries → write to Notion
+- **Test the Complete Flow**: Run end-to-end tests to see the full pipeline in action
+- **Explore Error Handling**: Review retry logic, circuit breakers, and DLQ management
+- **Monitor DLQ**: Check `data/dlq/` for failed operations and replay them with `scripts/retry_dlq.py`
 - **Review Confidence Scores**: Understand auto-acceptance vs manual review routing
-- **Explore Phase 2c**: Review classification and summarization implementation
-- **Start Phase 2d**: Implement Notion write operations to persist results
-- **Add more features**: Follow the implementation roadmap
+- **Production Planning**: Prepare for deployment with monitoring and operational workflows
+- **Add more features**: Follow the implementation roadmap for future phases
 
 Welcome to CollabIQ! 🚀
 

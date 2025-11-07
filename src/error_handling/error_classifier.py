@@ -62,9 +62,9 @@ class ErrorClassifier:
                 return ErrorCategory.CRITICAL
             elif http_status == 429:
                 return ErrorCategory.TRANSIENT
-            elif http_status in {400, 403, 404, 501}:
+            elif http_status in {400, 403, 404}:
                 return ErrorCategory.PERMANENT
-            elif 500 <= http_status <= 504:
+            elif 500 <= http_status < 600:  # All 5xx errors are transient
                 return ErrorCategory.TRANSIENT
 
         # Check for API-specific exceptions by name

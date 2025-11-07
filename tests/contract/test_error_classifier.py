@@ -47,34 +47,39 @@ class MockAPIResponseError(Exception):
         super().__init__(f"API Error: {status_code}")
 
 
-class MockResourceExhausted(Exception):
+# Create mock Gemini exceptions with matching names for error_classifier
+# The error_classifier checks type(exception).__name__ for these names
+class ResourceExhausted(Exception):
     """Mock Gemini ResourceExhausted error."""
-
     pass
 
 
-class MockDeadlineExceeded(Exception):
+class DeadlineExceeded(Exception):
     """Mock Gemini DeadlineExceeded error."""
-
     pass
 
 
-class MockUnauthenticated(Exception):
+class Unauthenticated(Exception):
     """Mock Gemini Unauthenticated error."""
-
     pass
 
 
-class MockPermissionDenied(Exception):
+class PermissionDenied(Exception):
     """Mock Gemini PermissionDenied error."""
-
     pass
 
 
-class MockInvalidArgument(Exception):
+class InvalidArgument(Exception):
     """Mock Gemini InvalidArgument error."""
-
     pass
+
+
+# Aliases for backward compatibility in tests
+MockResourceExhausted = ResourceExhausted
+MockDeadlineExceeded = DeadlineExceeded
+MockUnauthenticated = Unauthenticated
+MockPermissionDenied = PermissionDenied
+MockInvalidArgument = InvalidArgument
 
 
 class TestErrorClassifierContract:

@@ -12,6 +12,7 @@ import argparse
 import json
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 # Add project root to path
@@ -67,41 +68,89 @@ def main():
         # Connect to Gmail API
         receiver.connect()
 
-        # Fetch all emails from inbox (using existing method)
-        emails = receiver.fetch_emails(max_emails=100, query="to:collab@signite.co")
+        # Fetch message list directly from Gmail API to get internal message IDs
+        print("Fetching message list from Gmail API...")
+        query_str = "to:collab@signite.co"
+        results = (
+            receiver.service.users()
+            .messages()
+            .list(userId="me", q=query_str, maxResults=100)
+            .execute()
+        )
 
-        print(f"Found {len(emails)} emails in inbox")
+        messages = results.get("messages", [])
+        print(f"Found {len(messages)} emails in inbox")
 
-        if len(emails) == 0:
+        if len(messages) == 0:
             print("WARNING: No emails found in inbox")
             print("Ensure collab@signite.co has emails to test")
             sys.exit(1)
 
         # Create test email metadata list
         test_emails = []
-        for email in emails:
-            # Detect if email contains Korean text
-            # email is a RawEmail object with metadata and body attributes
-            subject_text = email.metadata.subject
-            body_text = email.body
+        for msg in messages:
+            # Fetch full message details to extract subject, date, and body
+            try:
+                msg_detail = (
+                    receiver.service.users()
+                    .messages()
+                    .get(userId="me", id=msg["id"], format="full")
+                    .execute()
+                )
 
-            has_korean = any(
-                "\uac00" <= char <= "\ud7a3"  # Hangul syllables range
-                for char in (subject_text + body_text)
-            )
+                # Extract subject from headers
+                headers = msg_detail.get("payload", {}).get("headers", [])
+                subject = next(
+                    (h["value"] for h in headers if h["name"].lower() == "subject"),
+                    "(No Subject)"
+                )
 
-            # Create metadata
-            metadata = TestEmailMetadata(
-                email_id=email.metadata.message_id,
-                subject=subject_text,
-                received_date=email.metadata.received_at.isoformat(),
-                collaboration_type=None,  # Will be detected during processing
-                has_korean_text=has_korean,
-                selection_reason=SelectionReason.STRATIFIED_SAMPLE,
-                notes=f"Selected from inbox (all available emails)",
-            )
+                # Extract received date from internalDate (milliseconds since epoch)
+                received_timestamp = int(msg_detail.get("internalDate", 0)) / 1000
+                received_date = datetime.fromtimestamp(received_timestamp)
 
-            test_emails.append(metadata.model_dump(mode="json"))
+                # Extract body text (simplified - just get text/plain part)
+                body_text = ""
+                payload = msg_detail.get("payload", {})
+
+                # Handle multipart messages
+                if "parts" in payload:
+                    for part in payload["parts"]:
+                        if part.get("mimeType") == "text/plain":
+                            body_data = part.get("body", {}).get("data", "")
+                            if body_data:
+                                import base64
+                                body_text = base64.urlsafe_b64decode(body_data).decode("utf-8", errors="ignore")
+                                break
+                # Handle single-part messages
+                elif payload.get("mimeType") == "text/plain":
+                    body_data = payload.get("body", {}).get("data", "")
+                    if body_data:
+                        import base64
+                        body_text = base64.urlsafe_b64decode(body_data).decode("utf-8", errors="ignore")
+
+                # Detect if email contains Korean text
+                has_korean = any(
+                    "\uac00" <= char <= "\ud7a3"  # Hangul syllables range
+                    for char in (subject + body_text)
+                )
+
+                # Create metadata using Gmail's internal message ID
+                metadata = TestEmailMetadata(
+                    email_id=msg["id"],  # Use Gmail's internal message ID, not Message-ID header
+                    subject=subject,
+                    received_date=received_date.isoformat(),
+                    collaboration_type=None,  # Will be detected during processing
+                    has_korean_text=has_korean,
+                    selection_reason=SelectionReason.STRATIFIED_SAMPLE,
+                    notes=f"Selected from inbox (Gmail internal ID: {msg['id']})",
+                )
+
+                test_emails.append(metadata.model_dump(mode="json"))
+
+            except Exception as e:
+                print(f"WARNING: Failed to process message {msg['id']}: {e}")
+                continue
 
         # Ensure output directory exists
         output_path = Path(args.output)
