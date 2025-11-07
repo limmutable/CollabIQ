@@ -140,6 +140,8 @@ class StructuredLogger:
         level = level_map.get(error_record.severity, logging.ERROR)
 
         # Create log record with extra context
+        # Note: Don't pass exc_info since we don't have a real traceback object
+        # The stack_trace is already in the context as a string
         self.logger.log(
             level,
             error_record.message,
@@ -148,16 +150,8 @@ class StructuredLogger:
                 "error_type": error_record.error_type,
                 "category": error_record.category.value,
                 "retry_count": error_record.retry_count,
+                "stack_trace": error_record.stack_trace,
             },
-            exc_info=(
-                (
-                    type(error_record.stack_trace),
-                    error_record.stack_trace,
-                    None,
-                )
-                if error_record.stack_trace
-                else None
-            ),
         )
 
     def debug(self, message: str, context: Optional[Dict[str, Any]] = None):
@@ -184,6 +178,42 @@ class StructuredLogger:
         """Log critical message."""
         sanitized = self._sanitize_context(context or {})
         self.logger.critical(message, extra={"context": sanitized})
+
+    def log_validation_error(
+        self,
+        message: str,
+        validation_error: Exception,
+        context: Optional[Dict[str, Any]] = None,
+    ):
+        """
+        Log validation error with field-level details.
+
+        Args:
+            message: Human-readable error message
+            validation_error: Pydantic ValidationError or similar
+            context: Additional context (email_id, operation, etc.)
+        """
+        context = context or {}
+
+        # Extract field-level validation errors if available
+        if hasattr(validation_error, 'errors'):
+            context['validation_errors'] = validation_error.errors()
+        else:
+            context['validation_errors'] = str(validation_error)
+
+        # Create and log error record
+        error_record = ErrorRecord(
+            timestamp=datetime.utcnow(),
+            severity=ErrorSeverity.WARNING,
+            category=ErrorCategory.PERMANENT,
+            message=message,
+            error_type=type(validation_error).__name__,
+            stack_trace=str(validation_error),
+            context=context,
+            retry_count=0
+        )
+
+        self.log_error(error_record)
 
 
 # Global logger instance

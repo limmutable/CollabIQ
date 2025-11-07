@@ -5,6 +5,11 @@ from datetime import datetime
 from email.utils import parsedate_to_datetime
 from typing import Optional
 
+try:
+    from pydantic import ValidationError as PydanticValidationError
+except ImportError:
+    PydanticValidationError = None
+
 from .models import ErrorCategory
 
 
@@ -20,7 +25,9 @@ class ErrorClassifier:
     }
 
     # Permanent exceptions (should not be retried)
-    PERMANENT_EXCEPTIONS = set()  # Will add Pydantic ValidationError in Phase 4
+    PERMANENT_EXCEPTIONS = set()
+    if PydanticValidationError:
+        PERMANENT_EXCEPTIONS.add(PydanticValidationError)
 
     # Critical exceptions (authentication/authorization failures)
     CRITICAL_EXCEPTIONS = set()  # Will add google.auth.exceptions in Phase 3

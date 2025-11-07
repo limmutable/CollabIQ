@@ -19,15 +19,20 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from pydantic import ValidationError
 
 try:
     from ..models.raw_email import EmailAttachment, EmailMetadata, RawEmail
     from ..models.duplicate_tracker import DuplicateTracker
     from .base import EmailReceiver
+    from ..error_handling.structured_logger import logger as error_logger
+    from ..error_handling.models import ErrorRecord, ErrorSeverity, ErrorCategory
 except ImportError:
     from models.raw_email import EmailAttachment, EmailMetadata, RawEmail
     from models.duplicate_tracker import DuplicateTracker
     from email_receiver.base import EmailReceiver
+    from error_handling.structured_logger import logger as error_logger
+    from error_handling.models import ErrorRecord, ErrorSeverity, ErrorCategory
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -258,6 +263,26 @@ class GmailReceiver(EmailReceiver):
                         raw_email = self._parse_message(msg_detail)
                         raw_emails.append(raw_email)
 
+                    except ValidationError as e:
+                        # Log validation error with field-level details and continue processing
+                        logger.warning(f"Validation error for message {msg['id']}, skipping: {e}")
+                        error_record = ErrorRecord(
+                            timestamp=datetime.utcnow(),
+                            severity=ErrorSeverity.WARNING,
+                            category=ErrorCategory.PERMANENT,
+                            message=f"Email validation failed for message {msg['id']}",
+                            error_type="ValidationError",
+                            stack_trace=str(e),
+                            context={
+                                "message_id": msg['id'],
+                                "operation": "fetch_emails",
+                                "validation_errors": e.errors() if hasattr(e, 'errors') else str(e)
+                            },
+                            retry_count=0
+                        )
+                        error_logger.log_error(error_record)
+                        continue
+
                     except Exception as e:
                         logger.error(f"Failed to fetch message {msg['id']}: {e}")
                         continue
@@ -433,13 +458,48 @@ class GmailReceiver(EmailReceiver):
         return ""
 
     def _decode_base64(self, data: str) -> str:
-        """Decode base64url-encoded string."""
+        """Decode base64url-encoded string with fallback encoding."""
         try:
             # Gmail uses base64url encoding (RFC 4648)
             decoded = base64.urlsafe_b64decode(data)
-            return decoded.decode('utf-8', errors='replace')
+
+            # Try UTF-8 first
+            try:
+                return decoded.decode('utf-8')
+            except UnicodeDecodeError:
+                # Fallback to latin-1 (never fails but may not be semantically correct)
+                logger.warning("UTF-8 decode failed, falling back to latin-1")
+                error_record = ErrorRecord(
+                    timestamp=datetime.utcnow(),
+                    severity=ErrorSeverity.WARNING,
+                    category=ErrorCategory.PERMANENT,
+                    message="Email encoding issue: UTF-8 decode failed, using fallback",
+                    error_type="UnicodeDecodeError",
+                    stack_trace=None,
+                    context={
+                        "operation": "_decode_base64",
+                        "encoding": "latin-1 fallback"
+                    },
+                    retry_count=0
+                )
+                error_logger.log_error(error_record)
+                return decoded.decode('latin-1', errors='replace')
+
         except Exception as e:
             logger.warning(f"Failed to decode base64 data: {e}")
+            error_record = ErrorRecord(
+                timestamp=datetime.utcnow(),
+                severity=ErrorSeverity.WARNING,
+                category=ErrorCategory.PERMANENT,
+                message=f"Base64 decode failed: {str(e)}",
+                error_type=type(e).__name__,
+                stack_trace=str(e),
+                context={
+                    "operation": "_decode_base64"
+                },
+                retry_count=0
+            )
+            error_logger.log_error(error_record)
             return ""
 
     def _has_attachments(self, payload: dict) -> bool:

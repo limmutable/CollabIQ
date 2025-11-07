@@ -9,11 +9,13 @@ import logging
 import random
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 from google import generativeai as genai
 from google.api_core import exceptions as google_exceptions
+from pydantic import ValidationError
 
 from llm_provider.base import LLMProvider
 from llm_provider.types import ConfidenceScores, ExtractedEntities
@@ -25,6 +27,16 @@ from llm_provider.exceptions import (
     LLMValidationError,
 )
 from llm_provider.date_utils import parse_date
+
+try:
+    from error_handling.structured_logger import logger as error_logger
+    from error_handling.models import ErrorRecord, ErrorSeverity, ErrorCategory
+except ImportError:
+    # Graceful fallback if error_handling module not available
+    error_logger = None
+    ErrorRecord = None
+    ErrorSeverity = None
+    ErrorCategory = None
 
 
 logger = logging.getLogger(__name__)
@@ -343,6 +355,56 @@ class GeminiAdapter(LLMProvider):
             LLMValidationError: If response format is invalid
         """
         try:
+            return self._build_extracted_entities(response_data, email_text, company_context, email_id)
+        except ValidationError as e:
+            # Handle Pydantic validation errors gracefully
+            # Log validation errors and mark as "needs_review" by setting confidence to 0.0
+            logger.warning(f"Validation error parsing extraction response: {e}")
+
+            if error_logger and ErrorRecord and ErrorSeverity and ErrorCategory:
+                error_record = ErrorRecord(
+                    timestamp=datetime.utcnow(),
+                    severity=ErrorSeverity.WARNING,
+                    category=ErrorCategory.PERMANENT,
+                    message="Entity extraction validation failed - marked for manual review",
+                    error_type="ValidationError",
+                    stack_trace=str(e),
+                    context={
+                        "email_id": email_id or f"email_{hash(email_text) % 1000000:06d}",
+                        "operation": "extract_entities",
+                        "validation_errors": e.errors() if hasattr(e, 'errors') else str(e),
+                        "needs_manual_review": True
+                    },
+                    retry_count=0
+                )
+                error_logger.log_error(error_record)
+
+            # Return a minimal ExtractedEntities with "needs_review" flag (low confidence)
+            # This allows processing to continue while flagging the extraction as problematic
+            return self._create_needs_review_entity(response_data, email_text, email_id, e)
+
+    def _build_extracted_entities(
+        self,
+        response_data: Dict[str, Any],
+        email_text: str,
+        company_context: Optional[str] = None,
+        email_id: Optional[str] = None,
+    ) -> ExtractedEntities:
+        """Build ExtractedEntities from response data (with validation).
+
+        Args:
+            response_data: Parsed JSON response from Gemini
+            email_text: Original email text
+            company_context: Optional company context
+            email_id: Optional email message ID
+
+        Returns:
+            ExtractedEntities: Validated entity extraction
+
+        Raises:
+            ValidationError: If Pydantic validation fails
+        """
+        try:
             # Extract values and confidence scores (Phase 1b fields)
             person_data = response_data.get("person_in_charge", {})
             startup_data = response_data.get("startup_name", {})
@@ -416,8 +478,74 @@ class GeminiAdapter(LLMProvider):
 
             return entities
 
+        except ValidationError:
+            # Re-raise ValidationError to be caught by _parse_response
+            raise
         except (KeyError, TypeError, ValueError) as e:
             raise LLMValidationError(f"Invalid response format: {e}") from e
+
+    def _create_needs_review_entity(
+        self,
+        response_data: Dict[str, Any],
+        email_text: str,
+        email_id: Optional[str],
+        validation_error: ValidationError,
+    ) -> ExtractedEntities:
+        """Create a minimal ExtractedEntities marked for manual review.
+
+        This is called when validation fails (e.g., malformed company UUID).
+        Returns an entity with all confidence scores set to 0.0 to flag as "needs_review".
+
+        Args:
+            response_data: Original response data (may be malformed)
+            email_text: Original email text
+            email_id: Email message ID
+            validation_error: The validation error that occurred
+
+        Returns:
+            ExtractedEntities: Minimal entity marked for review (all confidences = 0.0)
+        """
+        # Use provided email_id or generate from email text hash
+        if email_id is None:
+            email_id = f"email_{hash(email_text) % 1000000:06d}"
+
+        # Extract whatever values we can from the malformed response (best effort)
+        person_data = response_data.get("person_in_charge", {})
+        startup_data = response_data.get("startup_name", {})
+        partner_data = response_data.get("partner_org", {})
+        details_data = response_data.get("details", {})
+        date_data = response_data.get("date", {})
+
+        # Parse date if possible
+        date_str = date_data.get("value") if isinstance(date_data, dict) else None
+        parsed_date = None
+        if date_str:
+            try:
+                parsed_date = parse_date(date_str)
+            except Exception:
+                pass
+
+        # Create entity with all confidence scores at 0.0 (needs manual review)
+        return ExtractedEntities(
+            person_in_charge=person_data.get("value") if isinstance(person_data, dict) else None,
+            startup_name=startup_data.get("value") if isinstance(startup_data, dict) else None,
+            partner_org=partner_data.get("value") if isinstance(partner_data, dict) else None,
+            details=details_data.get("value") if isinstance(details_data, dict) else None,
+            date=parsed_date,
+            confidence=ConfidenceScores(
+                person=0.0,
+                startup=0.0,
+                partner=0.0,
+                details=0.0,
+                date=0.0,
+            ),
+            email_id=email_id,
+            # Set matched IDs to None (validation failed, so no matching)
+            matched_company_id=None,
+            matched_partner_id=None,
+            startup_match_confidence=None,
+            partner_match_confidence=None,
+        )
 
     def _call_with_retry(
         self, email_text: str, company_context: Optional[str] = None

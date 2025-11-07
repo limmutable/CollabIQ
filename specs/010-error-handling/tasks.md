@@ -154,17 +154,17 @@ Per constitution principle III, all tests MUST be written before implementation:
 
 ### Validation Error Handling
 
-- [ ] T027 [P] [US2] Extend `ErrorClassifier` in `src/error_handling/error_classifier.py` to classify Pydantic `ValidationError` as PERMANENT
-- [ ] T028 [P] [US2] Add validation error handler in `src/email_receiver/gmail_receiver.py` (catch ValidationError, log with field-level details, continue)
-- [ ] T029 [P] [US2] Add validation error handler in `src/llm_adapters/gemini_adapter.py` (mark extraction as "needs_review" if company UUIDs invalid)
-- [ ] T030 [P] [US2] Update `StructuredLogger` to include field-level validation errors in `context` field
+- [x] T027 [P] [US2] Extend `ErrorClassifier` in `src/error_handling/error_classifier.py` to classify Pydantic `ValidationError` as PERMANENT
+- [x] T028 [P] [US2] Add validation error handler in `src/email_receiver/gmail_receiver.py` (catch ValidationError, log with field-level details, continue)
+- [x] T029 [P] [US2] Add validation error handler in `src/llm_adapters/gemini_adapter.py` (mark extraction as "needs_review" if company UUIDs invalid)
+- [x] T030 [P] [US2] Update `StructuredLogger` to include field-level validation errors in `context` field
 
 ### Integration Tests
 
-- [ ] T031 [US2] Write integration test for validation error handling in `tests/integration/test_validation_errors.py` (malformed email → logged, skipped)
-- [ ] T032 [US2] Write E2E test in `tests/integration/test_batch_processing.py` (10 emails, 1 malformed → verify 9 succeed)
+- [x] T031 [US2] Write integration test for validation error handling in `tests/integration/test_validation_errors.py` (malformed email → logged, skipped)
+- [x] T032 [US2] Write E2E test in `tests/integration/test_batch_processing.py` (10 emails, 1 malformed → verify 9 succeed)
 
-**US2 Checkpoint**: Run `uv run pytest tests/integration/test_validation_errors.py tests/integration/test_batch_processing.py -v` → all tests pass. Verify SC-002 (90% email processing success).
+**US2 Checkpoint**: Run `uv run pytest tests/integration/test_validation_errors.py tests/integration/test_batch_processing.py -v` → all tests pass (7 passed, 1 skipped). Verified SC-002 (90% email processing success).
 
 ---
 
