@@ -2,6 +2,8 @@
 
 Entity Extraction from Korean/English Emails with Confidence Scores
 
+> **Note (2025-11-08)**: This document contains the original research and manual retry implementation from Phase 1b. The retry logic has been superseded by the unified error handling system in **Phase 010 (Error Handling & Retry Logic)**. For current retry/error handling, see [src/error_handling/README.md](../../src/error_handling/README.md). This document is preserved for historical context and API research reference.
+
 ---
 
 ## Table of Contents
