@@ -31,12 +31,16 @@ from llm_provider.date_utils import parse_date
 try:
     from error_handling.structured_logger import logger as error_logger
     from error_handling.models import ErrorRecord, ErrorSeverity, ErrorCategory
+    from error_handling import retry_with_backoff, GEMINI_RETRY_CONFIG, gemini_circuit_breaker
 except ImportError:
     # Graceful fallback if error_handling module not available
     error_logger = None
     ErrorRecord = None
     ErrorSeverity = None
     ErrorCategory = None
+    retry_with_backoff = None
+    GEMINI_RETRY_CONFIG = None
+    gemini_circuit_breaker = None
 
 
 logger = logging.getLogger(__name__)
@@ -101,10 +105,11 @@ class GeminiAdapter(LLMProvider):
 
         logger.info(f"Initialized GeminiAdapter with model={model}, timeout={timeout}s")
 
+    @retry_with_backoff(GEMINI_RETRY_CONFIG) if retry_with_backoff and GEMINI_RETRY_CONFIG else lambda f: f
     def extract_entities(
         self, email_text: str, company_context: Optional[str] = None, email_id: Optional[str] = None
     ) -> ExtractedEntities:
-        """Extract 5 key entities from email text with optional company matching.
+        """Extract 5 key entities from email text with optional company matching (with automatic retry).
 
         Args:
             email_text: Cleaned email body (Korean/English/mixed)

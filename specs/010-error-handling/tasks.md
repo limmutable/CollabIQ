@@ -128,15 +128,15 @@ Per constitution principle III, all tests MUST be written before implementation:
 
 ### API Integration (Apply Retry Logic)
 
-- [ ] T021 [P] [US1] Add `@retry_with_backoff(GMAIL_RETRY_CONFIG)` to `GmailReceiver.fetch_messages()` in `src/email_receiver/gmail_receiver.py`
-- [ ] T022 [P] [US1] Add `@retry_with_backoff(GEMINI_RETRY_CONFIG)` to `GeminiAdapter.extract_entities()` in `src/llm_adapters/gemini_adapter.py`
-- [ ] T023 [P] [US1] Add `@retry_with_backoff(NOTION_RETRY_CONFIG)` to `NotionClient.create_page()` in `src/notion_integrator/client.py`
-- [ ] T024 [P] [US1] Add `@retry_with_backoff(INFISICAL_RETRY_CONFIG)` with `.env` fallback to `InfisicalClient.get_secret()` in `src/config/infisical_client.py`
+- [x] T021 [P] [US1] Add `@retry_with_backoff(GMAIL_RETRY_CONFIG)` to `GmailReceiver.fetch_messages()` in `src/email_receiver/gmail_receiver.py`
+- [x] T022 [P] [US1] Add `@retry_with_backoff(GEMINI_RETRY_CONFIG)` to `GeminiAdapter.extract_entities()` in `src/llm_adapters/gemini_adapter.py`
+- [x] T023 [P] [US1] Add `@retry_with_backoff(NOTION_RETRY_CONFIG)` to `NotionClient.create_page()` in `src/notion_integrator/client.py` (SKIPPED - Notion already has tenacity retry)
+- [x] T024 [P] [US1] Add `@retry_with_backoff(INFISICAL_RETRY_CONFIG)` with `.env` fallback to `InfisicalClient.get_secret()` in `src/config/infisical_client.py` (SKIPPED - Infisical already has retry)
 
 ### Integration Tests
 
-- [ ] T025 [US1] Write integration test for Gmail retry flow in `tests/integration/test_gmail_retry_flow.py` (mock timeout → retry → success)
-- [ ] T026 [US1] Write integration test for Gemini rate limit in `tests/integration/test_gemini_retry_flow.py` (mock 429 → wait → success)
+- [x] T025 [US1] Write integration test for Gmail retry flow in `tests/integration/test_gmail_retry_flow.py` (mock timeout → retry → success)
+- [x] T026 [US1] Write integration test for Gemini rate limit in `tests/integration/test_gemini_retry_flow.py` (mock 429 → wait → success)
 
 **US1 Checkpoint**: Run `uv run pytest tests/contract/ tests/integration/ -v` → all tests pass. Verify SC-001 (95% transient failure recovery).
 

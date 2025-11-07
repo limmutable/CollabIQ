@@ -27,12 +27,14 @@ try:
     from .base import EmailReceiver
     from ..error_handling.structured_logger import logger as error_logger
     from ..error_handling.models import ErrorRecord, ErrorSeverity, ErrorCategory
+    from ..error_handling import retry_with_backoff, GMAIL_RETRY_CONFIG, gmail_circuit_breaker
 except ImportError:
     from models.raw_email import EmailAttachment, EmailMetadata, RawEmail
     from models.duplicate_tracker import DuplicateTracker
     from email_receiver.base import EmailReceiver
     from error_handling.structured_logger import logger as error_logger
     from error_handling.models import ErrorRecord, ErrorSeverity, ErrorCategory
+    from error_handling import retry_with_backoff, GMAIL_RETRY_CONFIG, gmail_circuit_breaker
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -187,6 +189,7 @@ class GmailReceiver(EmailReceiver):
                 retry_count=0
             )
 
+    @retry_with_backoff(GMAIL_RETRY_CONFIG)
     def fetch_emails(
         self,
         since: Optional[datetime] = None,
@@ -196,7 +199,7 @@ class GmailReceiver(EmailReceiver):
         """
         Retrieve unprocessed emails from Gmail inbox (T031).
 
-        Implements exponential backoff retry logic per FR-010.
+        Implements exponential backoff retry logic per FR-010 via @retry_with_backoff decorator.
 
         Args:
             since: Only retrieve emails after this timestamp
