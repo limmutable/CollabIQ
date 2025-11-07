@@ -20,13 +20,17 @@ Learn about the system design and implementation strategy:
 
 ## Validation Results
 
-Review the feasibility testing and API validation results:
+Review testing guides and API validation results:
 
+- **[Validation Documentation Index](validation/README.md)** - Overview of all validation docs
+- [E2E Testing Guide](validation/E2E_TESTING.md) - Comprehensive end-to-end testing workflow
+- [E2E Data Model](validation/E2E_DATA_MODEL.md) - Test data structure reference
+- [Gemini API Reference](validation/GEMINI_API_REFERENCE.md) - API capabilities, rate limits, pricing
 - [Notion API Validation](validation/NOTION_API_VALIDATION.md) - Comprehensive Notion API test results
 - [Notion Schema Analysis](validation/NOTION_SCHEMA_ANALYSIS.md) - Database field structures and types
-- [Foundation Work Report](validation/FOUNDATION_WORK_REPORT.md) - Phase 0 completion summary
-- [Feasibility Testing](validation/FEASIBILITY_TESTING.md) - Gemini API and Notion API validation results
-- [Email Infrastructure](validation/EMAIL_INFRASTRUCTURE.md) - Gmail API, IMAP, and webhook comparison
+- [Date Parsing Library Comparison](validation/date-parsing-library-comparison.md) - dateutil vs dateparser analysis
+
+**Historical Docs**: Phase 0 documentation archived in [docs/archive/phase0/](archive/phase0/)
 
 ## Project Status
 

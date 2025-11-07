@@ -1,8 +1,22 @@
-# Gemini 2.5 Flash API Integration Research
+# Gemini 2.5 Flash API Reference
 
-Entity Extraction from Korean/English Emails with Confidence Scores
+API Research, Rate Limits, Pricing, and Prompt Engineering
 
-> **Note (2025-11-08)**: This document contains the original research and manual retry implementation from Phase 1b. The retry logic has been superseded by the unified error handling system in **Phase 010 (Error Handling & Retry Logic)**. For current retry/error handling, see [src/error_handling/README.md](../../src/error_handling/README.md). This document is preserved for historical context and API research reference.
+> **⚠️ IMPORTANT - Error Handling Notice**:
+>
+> This document contains **DEPRECATED** manual retry implementation from Phase 1b.
+>
+> **For current error handling**, see:
+> - [src/error_handling/README.md](../../src/error_handling/README.md) - Phase 010 unified retry system
+> - [docs/architecture/ARCHITECTURE.md](../architecture/ARCHITECTURE.md#error-handling--retry-strategy) - Architecture documentation
+>
+> **This document IS current for**:
+> - API authentication and setup
+> - Rate limits and pricing information
+> - Prompt engineering best practices
+> - Gemini model capabilities
+>
+> **Last Updated**: 2025-11-08 (Phase 010 complete)
 
 ---
 
