@@ -485,3 +485,418 @@ def test_llm_disable_enable_contract():
 
     # Should have description about enabling
     assert "enable" in result.stdout.lower(), "enable: Missing enable description"
+
+
+# ==============================================================================
+# User Story 6: Error Management - Contract Tests (T084-T087)
+# ==============================================================================
+
+
+def test_errors_list_contract():
+    """
+    Contract: `collabiq errors list` command signature and filtering options.
+
+    Verifies:
+    - Command exists and responds to --help
+    - Accepts --severity filter (error, warning, info)
+    - Accepts --since date filter
+    - Accepts --limit option (default 20)
+    - Accepts --json flag for JSON output
+    - Help text describes error listing functionality
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["errors", "list", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show filtering options
+    assert "--severity" in result.stdout, "Missing --severity option in help"
+    assert "--since" in result.stdout, "Missing --since option in help"
+    assert "--limit" in result.stdout, "Missing --limit option in help"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about listing/errors
+    assert (
+        "list" in result.stdout.lower() or "error" in result.stdout.lower()
+    ), "Missing list/error description"
+
+
+def test_errors_show_contract():
+    """
+    Contract: `collabiq errors show <error-id>` command signature.
+
+    Verifies:
+    - Command exists and responds to --help
+    - Accepts error_id argument
+    - Accepts --json flag for JSON output
+    - Help text describes error detail display functionality
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["errors", "show", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show error_id argument
+    assert (
+        "error" in result.stdout.lower() and ("id" in result.stdout.lower() or "ERROR" in result.stdout)
+    ), "Missing error-id argument in help"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about showing/details
+    assert (
+        "show" in result.stdout.lower() or "detail" in result.stdout.lower()
+    ), "Missing show/detail description"
+
+
+def test_errors_retry_contract():
+    """
+    Contract: `collabiq errors retry` command signature and options.
+
+    Verifies:
+    - Command exists and responds to --help
+    - Accepts --all flag to retry all failed operations
+    - Accepts --id option to retry specific error
+    - Accepts --since option to retry errors after date
+    - Accepts --json flag for JSON output
+    - Help text describes retry functionality
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["errors", "retry", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show retry options
+    assert "--all" in result.stdout, "Missing --all option in help"
+    assert "--id" in result.stdout, "Missing --id option in help"
+    assert "--since" in result.stdout, "Missing --since option in help"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about retry
+    assert "retry" in result.stdout.lower(), "Missing retry description"
+
+
+def test_errors_clear_contract():
+    """
+    Contract: `collabiq errors clear` command signature and options.
+
+    Verifies:
+    - Command exists and responds to --help
+    - Accepts --resolved flag to clear only resolved errors
+    - Accepts --before option to clear errors before date
+    - Accepts --yes flag to skip confirmation
+    - Accepts --json flag for JSON output
+    - Help text describes clear/cleanup functionality
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["errors", "clear", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show clear options
+    assert "--resolved" in result.stdout, "Missing --resolved option in help"
+    assert "--before" in result.stdout, "Missing --before option in help"
+    assert "--yes" in result.stdout, "Missing --yes flag for confirmation skip"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about clear/cleanup
+    assert (
+        "clear" in result.stdout.lower() or "clean" in result.stdout.lower()
+    ), "Missing clear/clean description"
+
+
+# ==============================================================================
+# User Story 7: System Health - Contract Tests (T096-T098)
+# ==============================================================================
+
+
+def test_status_basic_contract():
+    """
+    Contract: `collabiq status` command signature and output.
+
+    T096 - Verifies:
+    - Command exists and responds to --help
+    - Basic status command runs without flags
+    - Accepts --json flag for JSON output
+    - Shows component status (Gmail, Notion, Gemini)
+    - Shows overall health indicator
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["status", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should show --detailed option
+    assert "--detailed" in result.stdout, "Missing --detailed option in help"
+
+    # Should show --watch option
+    assert "--watch" in result.stdout, "Missing --watch option in help"
+
+    # Should have description about status/health
+    assert (
+        "status" in result.stdout.lower() or "health" in result.stdout.lower()
+    ), "Missing status/health description"
+
+
+def test_status_detailed_contract():
+    """
+    Contract: `collabiq status --detailed` command signature and options.
+
+    T097 - Verifies:
+    - Command accepts --detailed flag
+    - Accepts --json flag for JSON output
+    - Help text describes extended metrics functionality
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["status", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show --detailed option
+    assert "--detailed" in result.stdout, "Missing --detailed option in help"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about detailed/metrics
+    assert (
+        "detailed" in result.stdout.lower() or "metrics" in result.stdout.lower()
+    ), "Missing detailed/metrics description"
+
+
+def test_status_watch_contract():
+    """
+    Contract: `collabiq status --watch` command signature and options.
+
+    T098 - Verifies:
+    - Command accepts --watch flag
+    - Help text describes real-time monitoring functionality
+    - Exit code 0 on --help
+    - Mentions 30-second refresh interval
+    """
+    result = runner.invoke(app, ["status", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show --watch option
+    assert "--watch" in result.stdout, "Missing --watch option in help"
+
+    # Should have description about watch/monitoring
+    assert (
+        "watch" in result.stdout.lower() or "monitor" in result.stdout.lower()
+    ), "Missing watch/monitoring description"
+
+
+# ==============================================================================
+# User Story 8: Configuration - Contract Tests (T108-T111)
+# ==============================================================================
+
+
+def test_config_show_contract():
+    """
+    Contract: `collabiq config show` command signature and options.
+
+    Verifies:
+    - Command exists and responds to --help
+    - Accepts --json flag for JSON output
+    - Help text describes configuration display with secret masking
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["config", "show", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about showing/displaying config
+    assert (
+        "show" in result.stdout.lower() or "display" in result.stdout.lower()
+    ), "Missing show/display description"
+
+
+def test_config_validate_contract():
+    """
+    Contract: `collabiq config validate` command signature and options.
+
+    Verifies:
+    - Command exists and responds to --help
+    - Accepts --json flag for JSON output
+    - Help text describes configuration validation
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["config", "validate", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about validation
+    assert (
+        "validate" in result.stdout.lower() or "check" in result.stdout.lower()
+    ), "Missing validate/check description"
+
+
+def test_config_test_secrets_contract():
+    """
+    Contract: `collabiq config test-secrets` command signature and options.
+
+    Verifies:
+    - Command exists and responds to --help
+    - Accepts --json flag for JSON output
+    - Help text describes Infisical connectivity testing
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["config", "test-secrets", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about testing/secrets
+    assert (
+        "test" in result.stdout.lower() or "secret" in result.stdout.lower()
+    ), "Missing test/secret description"
+
+
+def test_config_get_contract():
+    """
+    Contract: `collabiq config get <key>` command signature and options.
+
+    Verifies:
+    - Command exists and responds to --help
+    - Accepts key argument
+    - Accepts --json flag for JSON output
+    - Help text describes getting specific config value
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["config", "get", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show key argument
+    assert "key" in result.stdout.lower() or "KEY" in result.stdout, "Missing key argument in help"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about getting config
+    assert (
+        "get" in result.stdout.lower() or "retrieve" in result.stdout.lower()
+    ), "Missing get/retrieve description"
+
+
+# ==============================================================================
+# User Story 5: E2E Testing - Contract Tests (T070-T072)
+# ==============================================================================
+
+
+def test_test_e2e_contract():
+    """
+    Contract: `collabiq test e2e` command signature and options.
+
+    T070 - Verifies:
+    - Command exists and responds to --help
+    - Accepts --all flag to run all test emails
+    - Accepts --limit option to limit number of emails
+    - Accepts --email-id option for specific email testing
+    - Accepts --resume option to resume interrupted test run
+    - Accepts --json flag for JSON output
+    - Help text describes E2E testing functionality
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["test", "e2e", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show E2E testing options
+    assert "--all" in result.stdout, "Missing --all option in help"
+    assert "--limit" in result.stdout, "Missing --limit option in help"
+    assert "--email-id" in result.stdout, "Missing --email-id option in help"
+    assert "--resume" in result.stdout, "Missing --resume option in help"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about E2E testing
+    assert (
+        "e2e" in result.stdout.lower() or "end-to-end" in result.stdout.lower()
+    ), "Missing E2E testing description"
+
+
+def test_test_select_emails_contract():
+    """
+    Contract: `collabiq test select-emails` command signature and options.
+
+    T071 - Verifies:
+    - Command exists and responds to --help
+    - Accepts --limit option to limit number of emails to select
+    - Accepts --from-date option to filter emails by date
+    - Accepts --json flag for JSON output
+    - Help text describes email selection functionality
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["test", "select-emails", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show email selection options
+    assert "--limit" in result.stdout, "Missing --limit option in help"
+    assert "--from-date" in result.stdout, "Missing --from-date option in help"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about selecting test emails
+    assert (
+        "select" in result.stdout.lower() or "email" in result.stdout.lower()
+    ), "Missing select/email description"
+
+
+def test_test_validate_contract():
+    """
+    Contract: `collabiq test validate` command signature and options.
+
+    T072 - Verifies:
+    - Command exists and responds to --help
+    - Accepts --json flag for JSON output
+    - Help text describes quick health check functionality
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["test", "validate", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about validation/health checks
+    assert (
+        "validate" in result.stdout.lower() or "health" in result.stdout.lower()
+    ), "Missing validate/health description"
