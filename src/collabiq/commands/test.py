@@ -316,10 +316,10 @@ def select_emails(
         if not quiet and not json_output:
             with create_spinner(f"Fetching up to {limit} emails...") as progress:
                 task = progress.add_task("", total=None)
-                emails = receiver.fetch_emails(limit=limit)
+                emails = receiver.fetch_emails(max_emails=limit)
                 progress.update(task, description=f"[green]✓ Fetched {len(emails)} emails[/green]")
         else:
-            emails = receiver.fetch_emails(limit=limit)
+            emails = receiver.fetch_emails(max_emails=limit)
 
         # Create test email metadata
         test_emails = []

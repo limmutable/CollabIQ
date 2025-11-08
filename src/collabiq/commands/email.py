@@ -99,12 +99,12 @@ def fetch(
         if not quiet and not json_output:
             with create_spinner(f"Fetching up to {limit} emails...") as progress:
                 task = progress.add_task("", total=None)
-                emails = receiver.fetch_emails(limit=limit)
+                emails = receiver.fetch_emails(max_emails=limit)
                 progress.update(
                     task, description=f"[green]✓ Fetched {len(emails)} emails"
                 )
         else:
-            emails = receiver.fetch_emails(limit=limit)
+            emails = receiver.fetch_emails(max_emails=limit)
 
         # Calculate stats (duplicates would be tracked in receiver)
         fetched_count = len(emails)
