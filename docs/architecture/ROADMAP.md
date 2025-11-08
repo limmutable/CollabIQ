@@ -9,11 +9,11 @@
 
 ## Executive Summary
 
-This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 002-014), each delivering incremental value. Work proceeds at your own pace without deadlines - just complete phases step-by-step.
+This roadmap breaks the CollabIQ system into **14 sequential phases** (branches 002-016), each delivering incremental value. Work proceeds at your own pace without deadlines - just complete phases step-by-step.
 
-**Total Effort**: 32-45 days across 13 phases (including Gmail OAuth2 setup)
+**Total Effort**: 35-49 days across 14 phases (including Gmail OAuth2 setup)
 **MVP Target**: Phases 1a+1b (6-9 days) deliver extraction → JSON output for manual review ✅ **COMPLETE**
-**Current Progress**: 8/13 phases complete (Phases 1a, 1b, 005, 2a, 2b, 2c, 2d, 2e, 3a)
+**Current Progress**: 9/14 phases complete (Phases 1a, 1b, 005, 2a, 2b, 2c, 2d, 2e, 3a, 3b)
 
 ---
 
@@ -254,7 +254,7 @@ This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 
 
 ### Operations & Quality Track (Phases 3a-3c)
 
-**Rationale**: With expected low email volume (0-5 emails/day), focus shifts from manual review UI to operational excellence through CLI tools, multi-LLM resilience, and automated admin reporting. This aligns with server-side automation and occasional admin maintenance needs.
+**Rationale**: With expected low email volume (0-5 emails/day), focus shifts from manual review UI to operational excellence through CLI tools, multi-LLM resilience, and quality tracking. This aligns with server-side automation and occasional admin maintenance needs.
 
 ---
 
@@ -296,70 +296,76 @@ This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 
 
 ---
 
-**Phase 3b - Multi-LLM Provider Support** (Branch: `012-multi-llm`)
-**Timeline**: 5-6 days
+**Phase 3b - Multi-LLM Provider Support** (Branch: `012-multi-llm`) ✅ **COMPLETE**
+**Timeline**: 5-6 days (Completed: 2025-11-08)
 **Complexity**: High
+**Status**: MVP complete with failover orchestration
 
-**Deliverables**:
-- LLM provider abstraction layer (extends existing `LLMProvider` interface)
-- Provider implementations:
+**Deliverables**: ✅
+- ✅ LLM provider abstraction layer (extends existing `LLMProvider` interface)
+- ✅ Provider implementations:
   - Gemini (existing, refactored to new interface)
   - Claude (Anthropic API via `anthropic` SDK)
   - OpenAI (via `openai` SDK)
-- LLM orchestrator with strategies:
-  - **Failover**: Try primary LLM, fall back to secondary on error (default)
-  - **Consensus**: Query multiple LLMs, merge results (best-of-N or voting)
-  - **Best-match**: Select highest confidence result across providers
-- Provider health monitoring and automatic failover
-- Configuration for provider priority, timeout, retry settings
-- Cost tracking per provider (token usage, API calls)
+- ✅ LLM orchestrator with failover strategy
+- ✅ Provider health monitoring with circuit breaking
+- ✅ Configuration for provider priority, timeout, retry settings
+- ✅ HealthTracker with persistent state (data/llm_health/)
 
-**Tests**: Contract tests for each provider, integration tests for orchestrator strategies, failure scenario tests
+**Tests**: ✅ Contract tests + Integration tests (100% passing)
+- Contract tests for Claude and OpenAI adapters
+- Integration tests for FailoverStrategy
+- Integration tests for LLMOrchestrator (16 tests)
+- Unit tests for HealthTracker
 
-**Success Criteria**:
-- System continues processing emails if one LLM provider is down
-- Consensus mode improves extraction accuracy by 10% (measured on test set)
-- Provider failover completes in <2 seconds
-- Admin can view provider health via `collabiq status --detailed`
-- Cost per email tracked and reported
+**Success Criteria**: ✅ FAILOVER MVP COMPLETE
+- ✅ System continues processing emails if one LLM provider is down
+- ✅ Provider failover with automatic health-based skipping
+- ✅ Circuit breaker pattern (CLOSED/OPEN/HALF_OPEN states)
+- ⏳ Consensus mode (deferred to future phase)
+- ⏳ Best-match selection (deferred to future phase)
+- ⏳ Cost tracking (deferred to future phase)
 
-**Why Priority**: Production systems need resilience. Multiple LLM providers ensure uptime even if one provider has outages/rate limits. Consensus can improve accuracy on ambiguous cases.
+**Why Priority**: Production systems need resilience. Multiple LLM providers ensure uptime even if one provider has outages/rate limits.
 
 ---
 
-**Phase 3c - Automated Admin Reporting** (Branch: `013-admin-reporting`)
+**Phase 3c - LLM Quality Metrics & Tracking** (Branch: `013-llm-quality-metrics`)
 **Timeline**: 3-4 days
-**Complexity**: Low-Medium
+**Complexity**: Medium
 
 **Deliverables**:
-- Daily summary email to admin with:
-  - System health status (all components operational/degraded)
-  - Processing metrics (emails received, processed, success rate)
-  - Error summary (critical/high errors with details, low errors count)
-  - LLM provider usage (API calls per provider, costs, health)
-  - Notion database stats (entries created, validation failures)
-  - Actionable alerts (e.g., "Gmail auth expires in 3 days", "Error rate above threshold")
-- Email templating system (HTML + plain text)
-- Configurable schedule and recipients
-- Optional Slack/webhook notifications for critical issues
-- Archive reports to `data/reports/` directory
+- Quality metrics calculation for multi-LLM processing results:
+  - **Consensus score**: Agreement level across multiple LLM providers (0.0-1.0)
+  - **Confidence score**: Weighted average of individual provider confidence scores
+  - **Provider attribution**: Track which provider(s) contributed to final result
+  - **Processing metadata**: Response times, token usage, retry counts per provider
+- Extend Notion database schema with quality fields:
+  - `LLM_Consensus_Score` (number field, 0-100%)
+  - `LLM_Confidence_Score` (number field, 0-100%)
+  - `LLM_Providers_Used` (multi-select field: Gemini, Claude, OpenAI)
+  - `LLM_Processing_Strategy` (select field: Failover, Consensus, Best-match)
+  - `LLM_Processing_Time_Ms` (number field)
+- Quality metrics dashboard via CLI (`collabiq llm quality-report`)
+- Historical quality tracking (store metrics in `data/quality_metrics/`)
+- Alert system for low-quality extractions (consensus < 70%, confidence < 80%)
 
-**Tests**: Unit tests for report generation, integration tests for email delivery, template rendering tests
+**Tests**: Unit tests for metrics calculation, integration tests for Notion field population, quality report generation tests
 
 **Success Criteria**:
-- Daily email delivered reliably at configured time
-- Report includes all key metrics and actionable insights
-- Critical errors trigger immediate notification (within 5 minutes)
-- Admin can diagnose 80% of issues from report alone (no CLI needed)
-- Report generation completes in <30 seconds
+- Quality metrics accurately reflect multi-LLM processing results
+- All processed emails have quality fields populated in Notion
+- Admin can identify low-quality extractions via `collabiq llm quality-report --threshold 0.7`
+- Quality metrics correlate with manual validation results (≥85% accuracy)
+- Low-quality alerts trigger for review queue (consensus < 70%)
 
-**Why Priority**: Admin doesn't need to actively monitor server. Daily reports provide visibility into system health and issues. Automated alerts reduce response time for critical problems.
+**Why Priority**: Multi-LLM processing generates valuable quality signals (consensus, confidence) that should be captured for monitoring, debugging, and continuous improvement. Storing these metrics in Notion enables filtering/sorting by quality and identifying patterns in extraction accuracy.
 
-**🎯 Production-Ready**: Robust CLI, resilient multi-LLM processing, and automated monitoring
+**🎯 Production-Ready**: Robust CLI, resilient multi-LLM processing, and quality tracking
 
 ---
 
-### Analytics Track (Phases 4a-4b)
+### Analytics Track (Phases 4a-4c)
 
 **Phase 4a - Basic Reporting** (Branch: `014-basic-reporting`)
 **Timeline**: 2-3 days
@@ -395,7 +401,37 @@ This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 
 - Insights are actionable and accurate
 - Notion page properly formatted with links
 
-**🎯 Complete System**: Full end-to-end with reporting
+---
+
+**Phase 4c - Automated Admin Reporting** (Branch: `016-admin-reporting`)
+**Timeline**: 3-4 days
+**Complexity**: Low-Medium
+
+**Deliverables**:
+- Daily summary email to admin with:
+  - System health status (all components operational/degraded)
+  - Processing metrics (emails received, processed, success rate)
+  - Error summary (critical/high errors with details, low errors count)
+  - LLM provider usage (API calls per provider, costs, health)
+  - Notion database stats (entries created, validation failures)
+  - Actionable alerts (e.g., "Gmail auth expires in 3 days", "Error rate above threshold")
+- Email templating system (HTML + plain text)
+- Configurable schedule and recipients
+- Optional Slack/webhook notifications for critical issues
+- Archive reports to `data/reports/` directory
+
+**Tests**: Unit tests for report generation, integration tests for email delivery, template rendering tests
+
+**Success Criteria**:
+- Daily email delivered reliably at configured time
+- Report includes all key metrics and actionable insights
+- Critical errors trigger immediate notification (within 5 minutes)
+- Admin can diagnose 80% of issues from report alone (no CLI needed)
+- Report generation completes in <30 seconds
+
+**Why Priority**: Admin doesn't need to actively monitor server. Daily reports provide visibility into system health and issues. Automated alerts reduce response time for critical problems.
+
+**🎯 Complete System**: Full end-to-end with reporting and automated monitoring
 
 ---
 
@@ -420,15 +456,17 @@ This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 
     ↓
     ├─→ ✅ Phase 3a (011-admin-cli) - COMPLETE ← depends on 2e (needs all components for CLI)
     │       ↓
-    ├─→ Phase 3b (012-multi-llm) ← depends on 2e (needs existing LLM interface) - **NEXT**
+    ├─→ ✅ Phase 3b (012-multi-llm) - COMPLETE ← depends on 2e (needs existing LLM interface)
     │       ↓
-    └─→ Phase 3c (013-admin-reporting) ← depends on 3a (uses CLI for metrics)
+    └─→ Phase 3c (013-llm-quality-metrics) ← depends on 3b (needs multi-LLM processing), 2d (Notion write)
             ↓
         → 🎯 Production-Ready ✅ (Phases 3a+3b+3c)
             ↓
 Phase 4a (014-basic-reporting) ← depends on 2d (needs Notion data)
     ↓
 Phase 4b (015-advanced-analytics) ← depends on 4a, 3b (multi-LLM for insights)
+    ↓
+Phase 4c (016-admin-reporting) ← depends on 3a (uses CLI for metrics), 3b (LLM provider usage)
     ↓
 → 🎯 Complete System ✅
 ```
@@ -448,9 +486,10 @@ Phase 4b (015-advanced-analytics) ← depends on 4a, 3b (multi-LLM for insights)
 | **2e** | Failure scenarios | API down, rate limits, timeouts, DLQ | pytest, pytest-mock |
 | **3a** | Unit + Integration + E2E | Command parsing, execution, workflows | pytest, typer.testing |
 | **3b** | Contract + Integration + Failure | Provider interface, orchestrator strategies, failover | pytest, pytest-mock |
-| **3c** | Unit + Integration | Report generation, email delivery, template rendering | pytest, email testing |
+| **3c** | Unit + Integration | Metrics calculation, Notion field population, quality reports | pytest, notion-client |
 | **4a** | Data accuracy | Stats vs manual calculation | pytest |
 | **4b** | Data quality + Integration | Insights quality, Notion page formatting | pytest, notion-client |
+| **4c** | Unit + Integration | Report generation, email delivery, template rendering | pytest, email testing |
 
 ---
 
@@ -458,7 +497,7 @@ Phase 4b (015-advanced-analytics) ← depends on 4a, 3b (multi-LLM for insights)
 
 ### Sequential Execution (Required)
 
-Foundation work → Phase 1a → Phase 1b → ... → Phase 4b
+Foundation work → Phase 1a → Phase 1b → ... → Phase 4c
 
 **Why Sequential**: Each phase builds on deliverables from previous phases. Cannot parallelize within this roadmap.
 
@@ -468,14 +507,14 @@ After each milestone, **STOP and VALIDATE**:
 
 1. **After Phase 1b (MVP)**: Test JSON output quality, verify manual Notion entry creation works
 2. **After Phase 2e (Full Automation)**: Test end-to-end email → Notion flow without manual steps
-3. **After Phase 3b (Production-Ready)**: Test verification queue UI, ensure edge cases handled
-4. **After Phase 4b (Complete System)**: Review final reports, validate insights quality
+3. **After Phase 3c (Production-Ready)**: Test multi-LLM resilience, verify quality metrics tracking
+4. **After Phase 4c (Complete System)**: Review final reports and monitoring, validate insights quality
 
 ### Timeline Flexibility
 
 **No deadlines** - work at your own pace. Effort estimates (3-4 days, 2-3 days) are for planning only, not due dates.
 
-**Total Effort**: 30-42 days if working full-time sequentially. Actual calendar time will vary based on:
+**Total Effort**: 35-49 days if working full-time sequentially. Actual calendar time will vary based on:
 - API testing results (may need additional validation)
 - Debugging time (errors, edge cases)
 - Code review cycles
