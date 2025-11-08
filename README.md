@@ -12,7 +12,7 @@ CollabIQ automates the tedious process of tracking collaboration activities:
 
 1. **Receives** emails from your collaboration inbox via Gmail API
 2. **Cleans** email content (removes signatures, disclaimers, quoted threads)
-3. **Extracts** key entities using Gemini AI:
+3. **Extracts** key entities using Multi-LLM orchestration (Gemini/Claude/OpenAI):
    - 담당자 (Person in charge)
    - 스타트업명 (Startup name)
    - 협업기관 (Partner organization)
@@ -33,7 +33,10 @@ CollabIQ automates the tedious process of tracking collaboration activities:
 ## Key Features
 
 ### ✅ Intelligent Entity Extraction
-- **100% accuracy** on test dataset using Gemini AI
+- **Multi-LLM support** with failover across Gemini, Claude, and OpenAI
+- **100% accuracy** on test dataset with automatic provider failover
+- **Provider health monitoring** with circuit breakers (CLOSED/OPEN/HALF_OPEN states)
+- **Cost tracking** monitors token usage and pricing across all providers
 - Handles both Korean and English emails
 - Extracts 5 key entities: person, startup, partner, details, date
 - Confidence scoring for each field
@@ -76,7 +79,10 @@ CollabIQ automates the tedious process of tracking collaboration activities:
 ### Prerequisites
 - Python 3.12 or higher
 - UV package manager ([install here](https://github.com/astral-sh/uv))
-- Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+- **At least one LLM API key** (recommended: all three for failover):
+  - Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey) (free tier available)
+  - Anthropic API key from [Anthropic Console](https://console.anthropic.com/) (optional)
+  - OpenAI API key from [OpenAI Platform](https://platform.openai.com/api-keys) (optional)
 - Notion API integration token and database IDs
 - Gmail OAuth2 credentials (for email access)
 
@@ -140,9 +146,11 @@ uv run collabiq config validate
 uv run collabiq test validate
 uv run collabiq test e2e --limit 5
 
-# LLM provider management
-uv run collabiq llm status
+# LLM provider management (Multi-provider support)
+uv run collabiq llm status --detailed
 uv run collabiq llm test gemini
+uv run collabiq llm test claude
+uv run collabiq llm set-strategy failover
 ```
 
 For complete CLI documentation, see [docs/validation/COMMANDS.md](docs/validation/COMMANDS.md)
@@ -195,7 +203,8 @@ Email (Gmail) → EmailReceiver → ContentNormalizer → Gemini AI
 ```
 
 **Key Design Principles**:
-- **LLM Abstraction Layer**: Swap between Gemini/GPT/Claude in ~30 minutes
+- **Multi-LLM Orchestration**: Automatic failover across Gemini/Claude/OpenAI with health monitoring
+- **LLM Abstraction Layer**: Pluggable provider architecture with unified interface
 - **Single-Service Monolith**: Simple deployment, easy debugging
 - **Error Resilience**: Automatic retries, circuit breakers, DLQ for fault tolerance
 - **Pydantic Validation**: Type-safe data handling throughout
@@ -212,7 +221,8 @@ CollabIQ/
 │   ├── collabiq/              # CLI application
 │   ├── config/                # Configuration & secrets management
 │   ├── llm_provider/          # LLM abstraction layer
-│   ├── llm_adapters/          # Gemini adapter implementation
+│   ├── llm_adapters/          # Provider implementations (Gemini, Claude, OpenAI)
+│   ├── llm_orchestrator/      # Multi-LLM orchestration with health & cost tracking
 │   ├── email_receiver/        # Gmail API integration
 │   ├── content_normalizer/    # Email cleaning pipeline
 │   ├── notion_integrator/     # Notion API client (read + write)
@@ -283,7 +293,13 @@ Direct configuration for solo developers or local development.
 ```bash
 # .env configuration
 INFISICAL_ENABLED=false
-GEMINI_API_KEY=your_api_key_here
+
+# LLM API Keys (at least one required)
+GEMINI_API_KEY=your_gemini_api_key_here
+ANTHROPIC_API_KEY=your_anthropic_api_key_here  # Optional for failover
+OPENAI_API_KEY=your_openai_api_key_here        # Optional for failover
+
+# Notion & Gmail
 NOTION_API_KEY=your_notion_token_here
 GMAIL_CREDENTIALS_PATH=credentials.json
 CONFIDENCE_THRESHOLD=0.70
@@ -379,4 +395,4 @@ This project follows a specification-first development approach:
 
 ---
 
-**Built with**: Python 3.12 | Gemini API | Notion API | Pydantic | pytest | ruff | mypy
+**Built with**: Python 3.12 | Multi-LLM (Gemini/Claude/OpenAI) | Notion API | Pydantic | pytest | ruff | mypy
