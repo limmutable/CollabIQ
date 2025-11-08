@@ -252,49 +252,108 @@ This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 
 
 ---
 
-### Quality Track (Phases 3a-3b)
+### Operations & Quality Track (Phases 3a-3c)
 
-**Phase 3a - Verification Queue Storage** (Branch: `011-queue-storage`)
-**Timeline**: 2-3 days
-**Complexity**: Low
-
-**Deliverables**:
-- VerificationQueue component
-- Store records with confidence <0.85
-- Flag specific fields needing review (e.g., ambiguous company match)
-- Simple file-based storage (JSON or SQLite)
-
-**Tests**: Unit tests for queue operations (add, list, update, remove)
-
-**Success Criteria**:
-- All low-confidence records captured
-- Queue queryable by confidence threshold
+**Rationale**: With expected low email volume (0-5 emails/day), focus shifts from manual review UI to operational excellence through CLI tools, multi-LLM resilience, and automated admin reporting. This aligns with server-side automation and occasional admin maintenance needs.
 
 ---
 
-**Phase 3b - Review UI** (Branch: `012-review-ui`)
-**Timeline**: 3-4 days
+**Phase 3a - Admin CLI Enhancement** (Branch: `011-admin-cli`)
+**Timeline**: 4-5 days
 **Complexity**: Medium
 
 **Deliverables**:
-- Simple FastAPI web app (HTML templates)
-- List queued records with flagged fields highlighted
-- Edit form to correct extractions
-- Approve button → create Notion entry
+- Unified `collabiq` command with organized subcommands
+  - `email`: fetch, clean, list, verify, process (complete pipeline)
+  - `notion`: verify, schema, test-write, cleanup-tests
+  - `test`: e2e, select-emails, validate
+  - `errors`: list, show, retry, clear (DLQ management)
+  - `status`: health check, component status, metrics (with `--watch` mode)
+  - `config`: show, validate, test-secrets, get
+- Color-coded output, progress indicators, table formatting
+- JSON output mode (`--json`) for all commands (scripting support)
+- Graceful interrupt handling with resume capability
+- Help text with examples for all commands
 
-**Tests**: UI tests (Selenium or Playwright)
+**Tests**: Unit tests for command parsing, integration tests for command execution, E2E tests for workflows
 
 **Success Criteria**:
-- ≤2 minutes average review time per record
-- UI works on mobile (responsive design)
+- 100% of admin operations accessible via `collabiq` command
+- `collabiq status` completes in <5 seconds
+- E2E test on 10 emails completes in <3 minutes with detailed report
+- All commands provide actionable error messages
+- Admin can diagnose/resolve common issues (Gmail auth, Notion connection, API limits) via CLI alone
 
-**🎯 Production-Ready**: Edge cases handled gracefully
+**Why Priority**: Admin needs robust CLI tools before system goes to production. This replaces scattered scripts with unified interface for setup, testing, monitoring, and troubleshooting.
+
+---
+
+**Phase 3b - Multi-LLM Provider Support** (Branch: `012-multi-llm`)
+**Timeline**: 5-6 days
+**Complexity**: High
+
+**Deliverables**:
+- LLM provider abstraction layer (extends existing `LLMProvider` interface)
+- Provider implementations:
+  - Gemini (existing, refactored to new interface)
+  - Claude (Anthropic API via `anthropic` SDK)
+  - OpenAI (via `openai` SDK)
+- LLM orchestrator with strategies:
+  - **Failover**: Try primary LLM, fall back to secondary on error (default)
+  - **Consensus**: Query multiple LLMs, merge results (best-of-N or voting)
+  - **Best-match**: Select highest confidence result across providers
+- Provider health monitoring and automatic failover
+- Configuration for provider priority, timeout, retry settings
+- Cost tracking per provider (token usage, API calls)
+
+**Tests**: Contract tests for each provider, integration tests for orchestrator strategies, failure scenario tests
+
+**Success Criteria**:
+- System continues processing emails if one LLM provider is down
+- Consensus mode improves extraction accuracy by 10% (measured on test set)
+- Provider failover completes in <2 seconds
+- Admin can view provider health via `collabiq status --detailed`
+- Cost per email tracked and reported
+
+**Why Priority**: Production systems need resilience. Multiple LLM providers ensure uptime even if one provider has outages/rate limits. Consensus can improve accuracy on ambiguous cases.
+
+---
+
+**Phase 3c - Automated Admin Reporting** (Branch: `013-admin-reporting`)
+**Timeline**: 3-4 days
+**Complexity**: Low-Medium
+
+**Deliverables**:
+- Daily summary email to admin with:
+  - System health status (all components operational/degraded)
+  - Processing metrics (emails received, processed, success rate)
+  - Error summary (critical/high errors with details, low errors count)
+  - LLM provider usage (API calls per provider, costs, health)
+  - Notion database stats (entries created, validation failures)
+  - Actionable alerts (e.g., "Gmail auth expires in 3 days", "Error rate above threshold")
+- Email templating system (HTML + plain text)
+- Configurable schedule and recipients
+- Optional Slack/webhook notifications for critical issues
+- Archive reports to `data/reports/` directory
+
+**Tests**: Unit tests for report generation, integration tests for email delivery, template rendering tests
+
+**Success Criteria**:
+- Daily email delivered reliably at configured time
+- Report includes all key metrics and actionable insights
+- Critical errors trigger immediate notification (within 5 minutes)
+- Admin can diagnose 80% of issues from report alone (no CLI needed)
+- Report generation completes in <30 seconds
+
+**Why Priority**: Admin doesn't need to actively monitor server. Daily reports provide visibility into system health and issues. Automated alerts reduce response time for critical problems.
+
+**🎯 Production-Ready**: Robust CLI, resilient multi-LLM processing, and automated monitoring
 
 ---
 
 ### Analytics Track (Phases 4a-4b)
 
-**Phase 4a - Basic Reporting** (Branch: `013-basic-reporting`)
+**Phase 4a - Basic Reporting** (Branch: `014-basic-reporting`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -312,7 +371,7 @@ This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 
 
 ---
 
-**Phase 4b - Advanced Analytics** (Branch: `014-advanced-analytics`)
+**Phase 4b - Advanced Analytics** (Branch: `015-advanced-analytics`)
 **Timeline**: 3-4 days
 **Complexity**: Medium
 
@@ -351,13 +410,19 @@ Phase 2d (009-notion-write) ← depends on 2a, 2c
     ↓
 Phase 2e (010-error-handling) ← depends on 2d → 🎯 Full Automation ✅
     ↓
-Phase 3a (011-queue-storage) ← depends on 2e
+    ├─→ Phase 3a (011-admin-cli) ← depends on 2e (needs all components for CLI)
+    │       ↓
+    ├─→ Phase 3b (012-multi-llm) ← depends on 2e (needs existing LLM interface)
+    │       ↓
+    └─→ Phase 3c (013-admin-reporting) ← depends on 3a (uses CLI for metrics)
+            ↓
+        → 🎯 Production-Ready ✅ (Phases 3a+3b+3c)
+            ↓
+Phase 4a (014-basic-reporting) ← depends on 2d (needs Notion data)
     ↓
-Phase 3b (012-review-ui) ← depends on 3a → 🎯 Production-Ready ✅
+Phase 4b (015-advanced-analytics) ← depends on 4a, 3b (multi-LLM for insights)
     ↓
-Phase 4a (013-basic-reporting) ← depends on 2d (needs data)
-    ↓
-Phase 4b (014-advanced-analytics) ← depends on 4a → 🎯 Complete System ✅
+→ 🎯 Complete System ✅
 ```
 
 ---
@@ -373,8 +438,9 @@ Phase 4b (014-advanced-analytics) ← depends on 4a → 🎯 Complete System ✅
 | **2c** | Accuracy + Quality | Classification accuracy, summarization completeness | pytest |
 | **2d** | Integration | Entry creation, field population, relation linking | pytest, notion-client |
 | **2e** | Failure scenarios | API down, rate limits, timeouts, DLQ | pytest, pytest-mock |
-| **3a** | Unit tests | Queue CRUD operations | pytest |
-| **3b** | UI tests | Review interface, edit form, approval flow | Selenium/Playwright |
+| **3a** | Unit + Integration + E2E | Command parsing, execution, workflows | pytest, typer.testing |
+| **3b** | Contract + Integration + Failure | Provider interface, orchestrator strategies, failover | pytest, pytest-mock |
+| **3c** | Unit + Integration | Report generation, email delivery, template rendering | pytest, email testing |
 | **4a** | Data accuracy | Stats vs manual calculation | pytest |
 | **4b** | Data quality + Integration | Insights quality, Notion page formatting | pytest, notion-client |
 
