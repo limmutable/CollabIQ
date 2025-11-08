@@ -58,9 +58,18 @@ def get_gemini_provider():
 
     Returns:
         GeminiAdapter instance or None if not available
+
+    Note:
+        Returns None if Gemini is not configured or credentials are missing.
+        This allows graceful degradation when testing without full setup.
     """
     try:
+        import os
         from llm_adapters.gemini_adapter import GeminiAdapter
+
+        # Check if Gemini API key is configured
+        if not os.getenv("GEMINI_API_KEY"):
+            return None
 
         return GeminiAdapter()
     except Exception:
@@ -110,14 +119,28 @@ def status(
             gemini = get_gemini_provider()
 
             if not gemini:
+                error_msg = (
+                    "Gemini provider not configured. "
+                    "Please set GEMINI_API_KEY environment variable."
+                )
                 if json:
                     output_json(
-                        data={},
+                        data={
+                            "phase": "3a",
+                            "configured": False,
+                            "note": "Set GEMINI_API_KEY to enable LLM provider management",
+                        },
                         status="failure",
-                        errors=["Gemini provider not available"],
+                        errors=[error_msg],
                     )
                 else:
-                    console.print("\n[red]Error: Gemini provider not available[/red]")
+                    console.print(f"\n[yellow]⚠ {error_msg}[/yellow]")
+                    console.print(
+                        "\n[dim]To configure Gemini:[/dim]"
+                        "\n  1. Get API key from https://makersuite.google.com/app/apikey"
+                        "\n  2. Set environment variable: export GEMINI_API_KEY=your_key_here"
+                        "\n  3. Or add to .env file: GEMINI_API_KEY=your_key_here\n"
+                    )
                 raise typer.Exit(1)
 
             # Test Gemini connectivity
