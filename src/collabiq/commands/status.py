@@ -344,7 +344,7 @@ async def check_notion_health() -> ComponentStatus:
 
         # Test by attempting to retrieve database schema
         try:
-            schema = await integrator.get_schema(collabiq_db_id)
+            schema = await integrator.discover_database_schema(database_id=collabiq_db_id)
             response_time = (time.time() - start_time) * 1000
 
             return ComponentStatus(

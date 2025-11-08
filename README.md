@@ -109,40 +109,52 @@ cp .env.example .env
 
 ## Usage
 
-### Fetch and Process Emails
+### Admin CLI
+
+CollabIQ provides a comprehensive CLI for all operations:
 
 ```bash
-# Fetch recent emails and extract entities
+# System health check
+uv run collabiq status
+uv run collabiq status --detailed
+
+# Email pipeline
+uv run collabiq email fetch --limit 10
+uv run collabiq email list
+uv run collabiq email verify
+
+# Notion integration
+uv run collabiq notion verify
+uv run collabiq notion schema
+uv run collabiq notion test-write
+
+# Error management
+uv run collabiq errors list
+uv run collabiq errors retry --all
+
+# Configuration
+uv run collabiq config show
+uv run collabiq config validate
+
+# E2E testing
+uv run collabiq test validate
+uv run collabiq test e2e --limit 5
+
+# LLM provider management
+uv run collabiq llm status
+uv run collabiq llm test gemini
+```
+
+For complete CLI documentation, see [tests/cli/COMMANDS.md](tests/cli/COMMANDS.md)
+
+### Legacy Scripts (Deprecated)
+
+```bash
+# Legacy: Fetch recent emails and extract entities
 uv run python tests/manual/test_gmail_retrieval.py --max-results 5
 
-# Run full pipeline (extract + match + classify + write to Notion)
+# Legacy: Run full pipeline (extract + match + classify + write to Notion)
 uv run python tests/manual/test_e2e_phase2b.py --limit 3
-```
-
-### Notion Operations
-
-```bash
-# Fetch company data from Notion
-uv run collabiq notion fetch
-
-# View database schema
-uv run collabiq notion schema YOUR_DATABASE_ID
-
-# Refresh cached data
-uv run collabiq notion refresh YOUR_DATABASE_ID
-```
-
-### Error Handling & DLQ
-
-```bash
-# Check failed operations
-ls -la data/dlq/
-
-# Replay ALL failed operations
-uv run python scripts/retry_dlq.py
-
-# Replay specific operation
-uv run python scripts/retry_dlq.py --file data/dlq/notion_write_*.json
 ```
 
 ---
