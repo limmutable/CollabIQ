@@ -166,19 +166,45 @@ class OpenAIAdapter(LLMProvider):
                     f"Invalid JSON in OpenAI response: {str(e)}"
                 ) from e
 
+            # Helper functions to handle both nested and flat formats
+            def get_value(field_data):
+                """Extract value from nested format or return as-is."""
+                if field_data is None:
+                    return None
+                if isinstance(field_data, dict):
+                    return field_data.get("value")
+                return field_data
+
+            def get_confidence(field_data, default=0.0):
+                """Extract confidence from nested format or return default."""
+                if field_data is None:
+                    return default
+                if isinstance(field_data, dict):
+                    return field_data.get("confidence", default)
+                return default
+
             # Parse date if present
             date_value = None
-            if data.get("date"):
-                date_value = parse_date(data["date"])
+            date_field = data.get("date")
+            if date_field:
+                date_str = get_value(date_field)
+                if date_str:
+                    date_value = parse_date(date_str)
 
             # Build ExtractedEntities
             entities = ExtractedEntities(
-                person_in_charge=data.get("person_in_charge"),
-                startup_name=data.get("startup_name"),
-                partner_org=data.get("partner_org"),
-                details=data.get("details", ""),
+                person_in_charge=get_value(data.get("person_in_charge")),
+                startup_name=get_value(data.get("startup_name")),
+                partner_org=get_value(data.get("partner_org")),
+                details=get_value(data.get("details")) or "",
                 date=date_value,
-                confidence=ConfidenceScores(**data.get("confidence", {})),
+                confidence=ConfidenceScores(
+                    person=get_confidence(data.get("person_in_charge"), 0.0),
+                    startup=get_confidence(data.get("startup_name"), 0.0),
+                    partner=get_confidence(data.get("partner_org"), 0.0),
+                    details=get_confidence(data.get("details"), 0.0),
+                    date=get_confidence(date_field, 0.0),
+                ),
                 email_id=email_id,
                 extracted_at=datetime.utcnow(),
                 # Phase 2: Company matching fields (if context provided)

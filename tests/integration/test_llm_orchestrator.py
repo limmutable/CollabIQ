@@ -250,6 +250,7 @@ class TestOrchestratorFromConfig:
             "GEMINI_API_KEY": "",
             "ANTHROPIC_API_KEY": "",
             "OPENAI_API_KEY": "",
+            "INFISICAL_ENABLED": "false",  # Disable Infisical to test env var fallback
         },
         clear=True,
     )
@@ -257,6 +258,10 @@ class TestOrchestratorFromConfig:
         self, orchestration_config, tmp_path
     ):
         """Test that providers without API keys are skipped."""
+        # Clear settings cache to ensure test isolation
+        from src.config.settings import get_settings
+        get_settings.cache_clear()
+
         orchestrator = LLMOrchestrator.from_config(
             config=orchestration_config, data_dir=tmp_path / "health"
         )

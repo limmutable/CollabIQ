@@ -114,6 +114,7 @@ class LLMOrchestrator:
             >>> orchestrator = LLMOrchestrator.from_config(config)
         """
         # Import adapters here to avoid circular import
+        from src.config.settings import get_settings
         from src.llm_adapters.claude_adapter import ClaudeAdapter
         from src.llm_adapters.gemini_adapter import GeminiAdapter
         from src.llm_adapters.health_tracker import HealthTracker
@@ -124,6 +125,9 @@ class LLMOrchestrator:
         if provider_configs is None:
             provider_configs = cls._get_default_provider_configs()
 
+        # Get settings instance for Infisical support
+        settings = get_settings()
+
         # Initialize providers
         providers = {}
         for name, pconfig in provider_configs.items():
@@ -131,8 +135,8 @@ class LLMOrchestrator:
                 logger.info(f"Skipping disabled provider: {name}")
                 continue
 
-            # Get API key from environment
-            api_key = os.getenv(pconfig.api_key_env_var)
+            # Get API key from Infisical or environment
+            api_key = settings.get_secret_or_env(pconfig.api_key_env_var)
             if not api_key:
                 logger.warning(
                     f"API key not found for {name} "
@@ -220,8 +224,8 @@ class LLMOrchestrator:
             ),
             "openai": ProviderConfig(
                 provider_name="openai",
-                display_name="GPT-5 Mini",
-                model_id="gpt-5-mini",
+                display_name="GPT-4o Mini",
+                model_id="gpt-4o-mini",
                 api_key_env_var="OPENAI_API_KEY",
                 enabled=True,
                 priority=3,
