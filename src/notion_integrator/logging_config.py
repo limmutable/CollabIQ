@@ -97,7 +97,8 @@ def configure_logging(
     # Prevent propagation to root logger to avoid duplicate logs
     logger.propagate = False
 
-    logger.info(
+    # Only log configuration at DEBUG level to avoid cluttering CLI output
+    logger.debug(
         "Notion integrator logging configured",
         extra={
             "log_level": log_level,
