@@ -36,7 +36,7 @@ All checklist items passed. Specification is ready for `/speckit.plan`.
 **Validation Summary**:
 - 8 user stories with clear priorities (P1-P3)
   - P1: Single Entry Point, Email Pipeline Management
-  - P2: Notion Integration, E2E Testing, LLM Provider Management
+  - P2: Notion Integration, LLM Provider Management, E2E Testing
   - P3: Error Management, System Health, Configuration Management
 - 78 functional requirements organized by 8 categories
   - Core CLI Infrastructure (10)

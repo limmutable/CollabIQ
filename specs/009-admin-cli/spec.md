@@ -43,26 +43,46 @@ As an admin, I want to manage email operations (fetch, clean, list, verify, proc
 
 ### User Story 3 - Notion Integration Management (Priority: P2)
 
-As an admin, I want to verify Notion connectivity, inspect database schema, test writes, and clean up test data through `collabiq notion` commands so that I can diagnose and resolve Notion integration issues without writing code.
+As an admin, I want to manage Notion integration (verify, schema, test-write, cleanup) through `collabiq notion` commands so that I can ensure database connectivity, validate schema compatibility, and test write operations safely.
 
-**Why this priority**: Notion is the final destination for data. Admins need diagnostic tools to ensure data reaches Notion correctly, but this is secondary to getting emails into the system.
+**Why this priority**: Notion is the output destination for extracted data. Admins need to verify connectivity and schema before processing emails.
 
-**Independent Test**: Run `collabiq notion verify` and confirm all checks pass (connection, authentication, database access, schema compatibility). Then run `collabiq notion test-write` and verify a test entry is created and cleaned up.
+**Independent Test**: Run `collabiq notion verify` and verify it checks connection, authentication, database access, and schema. Then run `collabiq notion test-write` to create and automatically cleanup a test entry.
 
 **Acceptance Scenarios**:
 
-1. **Given** Notion credentials are configured, **When** admin runs `collabiq notion verify`, **Then** they see connection status, database access validation, and schema compatibility check with clear pass/fail indicators
-2. **Given** admin needs schema information, **When** they run `collabiq notion schema`, **Then** they see a formatted table of all database properties with names, types, and validation rules
-3. **Given** admin wants to test Notion writes, **When** they run `collabiq notion test-write`, **Then** a test entry is created, verified, and immediately deleted with confirmation of each step
-4. **Given** test entries exist from previous testing, **When** admin runs `collabiq notion cleanup-tests`, **Then** all test entries are identified and removed with a count of deleted entries
+1. **Given** Notion credentials are configured, **When** admin runs `collabiq notion verify`, **Then** they see connection status, authentication result, database accessibility, and schema compatibility check with detailed error messages for any failures
+2. **Given** admin wants to inspect database schema, **When** they run `collabiq notion schema`, **Then** they see a formatted table of all properties with names, types, required status, and validation rules
+3. **Given** admin wants to test write operations, **When** they run `collabiq notion test-write`, **Then** a test entry is created with sample data, verified to exist, automatically cleaned up, and confirmation is displayed
+4. **Given** test entries exist from interrupted tests, **When** admin runs `collabiq notion cleanup-tests`, **Then** all test entries are identified, admin is prompted for confirmation, and entries are removed with summary
+5. **Given** admin needs to check API usage, **When** they run `collabiq notion verify --detailed`, **Then** API quota usage and rate limit status are displayed alongside connection info
 
 ---
 
-### User Story 4 - End-to-End Testing (Priority: P2)
+### User Story 4 - LLM Provider Management (Priority: P2)
+
+As an admin, I want to view LLM provider status, test connectivity, manage orchestration policies, and monitor usage through `collabiq llm` commands so that I can ensure multi-LLM resilience and optimize provider selection for accuracy and cost.
+
+**Why this priority**: With Phase 3b introducing multi-LLM support, admins need tools to manage provider health, failover policies, and cost tracking. This is critical for production resilience but depends on multi-LLM infrastructure.
+
+**Independent Test**: Run `collabiq llm status` and verify it shows all configured LLM providers (Gemini, Claude, OpenAI) with health status, response times, and recent error rates. Then test a provider with `collabiq llm test <provider>` and verify connectivity.
+
+**Acceptance Scenarios**:
+
+1. **Given** multiple LLM providers are configured, **When** admin runs `collabiq llm status`, **Then** they see a table of all providers with health (online/degraded/offline), response time, success rate, and last check time
+2. **Given** admin needs to test a specific provider, **When** they run `collabiq llm test gemini`, **Then** a test extraction is performed, results are displayed with confidence scores, and connectivity is confirmed
+3. **Given** admin wants to see orchestration policy, **When** they run `collabiq llm policy`, **Then** they see current strategy (failover/consensus/best-match), provider priority order, and fallback rules
+4. **Given** admin needs to change orchestration, **When** they run `collabiq llm set-policy consensus`, **Then** the policy is updated, confirmed, and the new configuration is displayed
+5. **Given** admin wants cost tracking, **When** they run `collabiq llm usage --since yesterday`, **Then** they see API calls, tokens consumed, and estimated cost per provider
+6. **Given** admin wants to temporarily disable a provider, **When** they run `collabiq llm disable claude`, **Then** the provider is marked inactive, orchestrator stops using it, and confirmation is displayed with instructions to re-enable
+
+---
+
+### User Story 5 - End-to-End Testing (Priority: P2)
 
 As an admin, I want to run E2E tests on the complete pipeline through `collabiq test` commands so that I can validate system health, catch integration issues, and verify deployment readiness.
 
-**Why this priority**: E2E testing is critical for production confidence, but requires emails to exist first (depends on email pipeline).
+**Why this priority**: E2E testing is critical for production confidence, but requires emails, Notion, and LLM providers to be working (depends on previous user stories).
 
 **Independent Test**: Run `collabiq test e2e --limit 3` on three test emails and verify a detailed report is generated showing pass/fail for each pipeline stage (reception, extraction, matching, classification, validation, write).
 
@@ -76,7 +96,7 @@ As an admin, I want to run E2E tests on the complete pipeline through `collabiq 
 
 ---
 
-### User Story 5 - Error Management and DLQ Operations (Priority: P3)
+### User Story 6 - Error Management and DLQ Operations (Priority: P3)
 
 As an admin, I want to view, inspect, retry, and clear failed operations through `collabiq errors` commands so that I can recover from transient errors and maintain data integrity.
 
@@ -93,7 +113,7 @@ As an admin, I want to view, inspect, retry, and clear failed operations through
 
 ---
 
-### User Story 6 - System Health Monitoring (Priority: P3)
+### User Story 7 - System Health Monitoring (Priority: P3)
 
 As an admin, I want to check overall system health, component status, and metrics through `collabiq status` commands so that I can quickly diagnose issues and monitor system performance.
 
@@ -107,25 +127,6 @@ As an admin, I want to check overall system health, component status, and metric
 2. **Given** admin needs detailed metrics, **When** they run `collabiq status --detailed`, **Then** they see processing rates, error breakdown by severity, API quota usage, and performance metrics (avg processing time)
 3. **Given** admin wants continuous monitoring, **When** they run `collabiq status --watch`, **Then** the status display refreshes every 30 seconds with updated metrics and highlighted changes
 4. **Given** a component is degraded, **When** admin checks status, **Then** degraded components are highlighted in yellow/red, with specific error messages and suggested remediation actions
-
----
-
-### User Story 7 - LLM Provider Management (Priority: P2)
-
-As an admin, I want to view LLM provider status, test connectivity, manage orchestration policies, and monitor usage through `collabiq llm` commands so that I can ensure multi-LLM resilience and optimize provider selection for accuracy and cost.
-
-**Why this priority**: With Phase 3b introducing multi-LLM support, admins need tools to manage provider health, failover policies, and cost tracking. This is critical for production resilience but depends on multi-LLM infrastructure.
-
-**Independent Test**: Run `collabiq llm status` and verify it shows all configured LLM providers (Gemini, Claude, OpenAI) with health status, response times, and recent error rates. Then test a provider with `collabiq llm test <provider>` and verify connectivity.
-
-**Acceptance Scenarios**:
-
-1. **Given** multiple LLM providers are configured, **When** admin runs `collabiq llm status`, **Then** they see a table of all providers with health (online/degraded/offline), response time, success rate, and last check time
-2. **Given** admin needs to test a specific provider, **When** they run `collabiq llm test gemini`, **Then** a test extraction is performed, results are displayed with confidence scores, and connectivity is confirmed
-3. **Given** admin wants to see orchestration policy, **When** they run `collabiq llm policy`, **Then** they see current strategy (failover/consensus/best-match), provider priority order, and fallback rules
-4. **Given** admin needs to change orchestration, **When** they run `collabiq llm set-policy consensus`, **Then** the policy is updated, confirmed, and the new configuration is displayed
-5. **Given** admin wants cost tracking, **When** they run `collabiq llm usage --since yesterday`, **Then** they see API calls, tokens consumed, and estimated cost per provider
-6. **Given** admin wants to temporarily disable a provider, **When** they run `collabiq llm disable claude`, **Then** the provider is marked inactive, orchestrator stops using it, and confirmation is displayed with instructions to re-enable
 
 ---
 
