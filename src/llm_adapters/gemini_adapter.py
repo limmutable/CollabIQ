@@ -17,16 +17,16 @@ from google import generativeai as genai
 from google.api_core import exceptions as google_exceptions
 from pydantic import ValidationError
 
-from src.llm_provider.base import LLMProvider
-from src.llm_provider.types import ConfidenceScores, ExtractedEntities
-from src.llm_provider.exceptions import (
+from llm_provider.base import LLMProvider
+from llm_provider.types import ConfidenceScores, ExtractedEntities
+from llm_provider.exceptions import (
     LLMAPIError,
     LLMAuthenticationError,
     LLMRateLimitError,
     LLMTimeoutError,
     LLMValidationError,
 )
-from src.llm_provider.date_utils import parse_date
+from llm_provider.date_utils import parse_date
 
 try:
     from error_handling.structured_logger import logger as error_logger
