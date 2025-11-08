@@ -354,7 +354,7 @@ async def check_notion_health() -> ComponentStatus:
                 response_time_ms=response_time,
                 details={
                     "database_id": collabiq_db_id[:8] + "...",
-                    "properties_count": len(schema.properties) if schema else 0,
+                    "properties_count": len(schema.database.properties) if schema else 0,
                 }
             )
         except Exception as e:
