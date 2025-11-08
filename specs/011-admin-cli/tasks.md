@@ -154,26 +154,26 @@ All paths are relative to repository root:
 
 ### Contract Tests for User Story 4
 
-- [ ] T053 [P] [US4] Contract test for `collabiq llm status` in tests/contract/test_cli_interface.py
-- [ ] T054 [P] [US4] Contract test for `collabiq llm test <provider>` in tests/contract/test_cli_interface.py
-- [ ] T055 [P] [US4] Contract test for `collabiq llm policy` in tests/contract/test_cli_interface.py
-- [ ] T056 [P] [US4] Contract test for `collabiq llm set-policy <strategy>` in tests/contract/test_cli_interface.py
-- [ ] T057 [P] [US4] Contract test for `collabiq llm usage` in tests/contract/test_cli_interface.py
-- [ ] T058 [P] [US4] Contract test for `collabiq llm disable/enable <provider>` in tests/contract/test_cli_interface.py
+- [X] T053 [P] [US4] Contract test for `collabiq llm status` in tests/contract/test_cli_interface.py
+- [X] T054 [P] [US4] Contract test for `collabiq llm test <provider>` in tests/contract/test_cli_interface.py
+- [X] T055 [P] [US4] Contract test for `collabiq llm policy` in tests/contract/test_cli_interface.py
+- [X] T056 [P] [US4] Contract test for `collabiq llm set-policy <strategy>` in tests/contract/test_cli_interface.py
+- [X] T057 [P] [US4] Contract test for `collabiq llm usage` in tests/contract/test_cli_interface.py
+- [X] T058 [P] [US4] Contract test for `collabiq llm disable/enable <provider>` in tests/contract/test_cli_interface.py
 
 ### Implementation for User Story 4
 
-- [ ] T059 [US4] Implement Phase 3b availability check helper in src/collabiq/commands/llm.py
-- [ ] T060 [P] [US4] Implement `collabiq llm status` with graceful degradation (Phase 3a: Gemini only, Phase 3b: multi-LLM) in src/collabiq/commands/llm.py
-- [ ] T061 [P] [US4] Implement `collabiq llm test <provider>` in src/collabiq/commands/llm.py
-- [ ] T062 [P] [US4] Implement `collabiq llm policy` in src/collabiq/commands/llm.py
-- [ ] T063 [P] [US4] Implement `collabiq llm set-policy <strategy>` in src/collabiq/commands/llm.py
-- [ ] T064 [P] [US4] Implement `collabiq llm usage` in src/collabiq/commands/llm.py
-- [ ] T065 [P] [US4] Implement `collabiq llm disable <provider>` in src/collabiq/commands/llm.py
-- [ ] T066 [P] [US4] Implement `collabiq llm enable <provider>` in src/collabiq/commands/llm.py
-- [ ] T067 [US4] Add table formatting for multi-provider status display
-- [ ] T068 [US4] Add JSON output support for all LLM commands
-- [ ] T069 [US4] Add informative messages for Phase 3a (before Phase 3b implemented)
+- [X] T059 [US4] Implement Phase 3b availability check helper in src/collabiq/commands/llm.py
+- [X] T060 [P] [US4] Implement `collabiq llm status` with graceful degradation (Phase 3a: Gemini only, Phase 3b: multi-LLM) in src/collabiq/commands/llm.py
+- [X] T061 [P] [US4] Implement `collabiq llm test <provider>` in src/collabiq/commands/llm.py
+- [X] T062 [P] [US4] Implement `collabiq llm policy` in src/collabiq/commands/llm.py
+- [X] T063 [P] [US4] Implement `collabiq llm set-policy <strategy>` in src/collabiq/commands/llm.py
+- [X] T064 [P] [US4] Implement `collabiq llm usage` in src/collabiq/commands/llm.py
+- [X] T065 [P] [US4] Implement `collabiq llm disable <provider>` in src/collabiq/commands/llm.py
+- [X] T066 [P] [US4] Implement `collabiq llm enable <provider>` in src/collabiq/commands/llm.py
+- [X] T067 [US4] Add table formatting for multi-provider status display
+- [X] T068 [US4] Add JSON output support for all LLM commands
+- [X] T069 [US4] Add informative messages for Phase 3a (before Phase 3b implemented)
 
 **Checkpoint**: All LLM commands functional - works with current Gemini setup, ready for Phase 3b multi-LLM
 

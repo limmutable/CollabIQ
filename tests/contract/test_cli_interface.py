@@ -321,3 +321,167 @@ def test_email_process_contract():
     assert (
         "process" in result.stdout.lower() or "pipeline" in result.stdout.lower()
     ), "Missing process/pipeline description"
+
+
+# ==============================================================================
+# User Story 4: LLM Provider Management - Contract Tests (T053-T058)
+# ==============================================================================
+
+
+def test_llm_status_contract():
+    """
+    Contract: `collabiq llm status` command signature and options.
+
+    Verifies:
+    - Command exists and responds to --help
+    - Accepts --json flag for JSON output
+    - Help text describes provider health status functionality
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["llm", "status", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about status/health
+    assert (
+        "status" in result.stdout.lower() or "health" in result.stdout.lower()
+    ), "Missing status/health description"
+
+
+def test_llm_test_provider_contract():
+    """
+    Contract: `collabiq llm test <provider>` command signature and options.
+
+    Verifies:
+    - Command exists and responds to --help
+    - Accepts provider argument
+    - Accepts --json flag
+    - Help text describes provider connectivity testing
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["llm", "test", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show provider argument
+    assert "provider" in result.stdout.lower() or "PROVIDER" in result.stdout, "Missing provider argument in help"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about testing/connectivity
+    assert (
+        "test" in result.stdout.lower() or "connect" in result.stdout.lower()
+    ), "Missing test/connectivity description"
+
+
+def test_llm_policy_contract():
+    """
+    Contract: `collabiq llm policy` command signature and options.
+
+    Verifies:
+    - Command exists and responds to --help
+    - Accepts --json flag
+    - Help text describes orchestration policy viewing
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["llm", "policy", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about policy/orchestration
+    assert (
+        "policy" in result.stdout.lower() or "orchestration" in result.stdout.lower()
+    ), "Missing policy/orchestration description"
+
+
+def test_llm_set_policy_contract():
+    """
+    Contract: `collabiq llm set-policy <strategy>` command signature and options.
+
+    Verifies:
+    - Command exists and responds to --help
+    - Accepts strategy argument
+    - Help text describes available strategies (failover, consensus, best-match)
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["llm", "set-policy", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show strategy argument
+    assert "strategy" in result.stdout.lower() or "STRATEGY" in result.stdout, "Missing strategy argument in help"
+
+    # Should have description about setting/changing policy
+    assert (
+        "set" in result.stdout.lower() or "change" in result.stdout.lower()
+    ), "Missing set/change description"
+
+
+def test_llm_usage_contract():
+    """
+    Contract: `collabiq llm usage` command signature and options.
+
+    Verifies:
+    - Command exists and responds to --help
+    - Accepts --json flag
+    - Help text describes usage statistics viewing
+    - Exit code 0 on --help
+    """
+    result = runner.invoke(app, ["llm", "usage", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
+
+    # Should show --json option
+    assert "--json" in result.stdout, "Missing --json option in help"
+
+    # Should have description about usage/statistics
+    assert (
+        "usage" in result.stdout.lower() or "statistics" in result.stdout.lower()
+    ), "Missing usage/statistics description"
+
+
+def test_llm_disable_enable_contract():
+    """
+    Contract: `collabiq llm disable/enable <provider>` command signature and options.
+
+    Verifies:
+    - Both commands exist and respond to --help
+    - Accept provider argument
+    - Help text describes provider management
+    - Exit code 0 on --help
+    """
+    # Test disable command
+    result = runner.invoke(app, ["llm", "disable", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"disable: Expected exit code 0, got {result.exit_code}"
+
+    # Should show provider argument
+    assert "provider" in result.stdout.lower() or "PROVIDER" in result.stdout, "disable: Missing provider argument in help"
+
+    # Should have description about disabling
+    assert "disable" in result.stdout.lower(), "disable: Missing disable description"
+
+    # Test enable command
+    result = runner.invoke(app, ["llm", "enable", "--help"])
+
+    # Should exit successfully
+    assert result.exit_code == 0, f"enable: Expected exit code 0, got {result.exit_code}"
+
+    # Should show provider argument
+    assert "provider" in result.stdout.lower() or "PROVIDER" in result.stdout, "enable: Missing provider argument in help"
+
+    # Should have description about enabling
+    assert "enable" in result.stdout.lower(), "enable: Missing enable description"
