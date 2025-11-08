@@ -292,7 +292,7 @@ This roadmap breaks the CollabIQ system into **13 sequential phases** (branches 
 
 **Why Priority**: Admin needs robust CLI tools before system goes to production. This replaces scattered scripts with unified interface for setup, testing, monitoring, and troubleshooting.
 
-**Documentation**: See [docs/architecture/CLI_IMPLEMENTATION_COMPLETE.md](CLI_IMPLEMENTATION_COMPLETE.md) and [tests/cli/COMMANDS.md](../../tests/cli/COMMANDS.md)
+**Documentation**: See [docs/architecture/CLI_IMPLEMENTATION_COMPLETE.md](CLI_IMPLEMENTATION_COMPLETE.md) and [docs/validation/COMMANDS.md](../validation/COMMANDS.md)
 
 ---
 

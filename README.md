@@ -145,7 +145,7 @@ uv run collabiq llm status
 uv run collabiq llm test gemini
 ```
 
-For complete CLI documentation, see [tests/cli/COMMANDS.md](tests/cli/COMMANDS.md)
+For complete CLI documentation, see [docs/validation/COMMANDS.md](docs/validation/COMMANDS.md)
 
 ### Legacy Scripts (Deprecated)
 

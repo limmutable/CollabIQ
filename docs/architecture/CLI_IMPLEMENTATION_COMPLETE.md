@@ -164,10 +164,12 @@ tests/
 │   ├── test_cli_notion_workflow.py   - 3 tests ✓
 │   └── test_cli_e2e_workflow.py      - 4 tests ✓
 └── cli/
-    ├── COMMANDS.md            - User guide
     ├── test_cli_quick.sh      - Quick smoke test
     ├── test_cli_manual.sh     - Comprehensive test
     └── test_cli_examples.sh   - Usage examples
+
+docs/validation/
+└── COMMANDS.md                - User guide
 ```
 
 ---
@@ -353,7 +355,7 @@ uv run collabiq --debug notion verify
 ### Documentation
 - ✅ Comprehensive help text for all commands
 - ✅ Usage examples in help
-- ✅ User guide (COMMANDS.md)
+- ✅ User guide (docs/validation/COMMANDS.md)
 - ✅ Test scripts with instructions
 
 ### Performance
@@ -394,7 +396,7 @@ The CLI is now production-ready and can be used by admins to:
 ./tests/cli/test_cli_examples.sh
 
 # Read user guide
-cat tests/cli/COMMANDS.md
+cat docs/validation/COMMANDS.md
 ```
 
 ---
