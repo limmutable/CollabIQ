@@ -9,7 +9,10 @@ Before starting, ensure you have:
 1. **Python 3.12 or higher** installed
 2. **UV package manager** ([install here](https://github.com/astral-sh/uv))
 3. **Gmail API credentials** (Phase 1a complete - email reception) - See [Gmail OAuth Setup Guide](gmail-oauth-setup.md)
-4. **Gemini API key** from [Google AI Studio](https://makersuite.google.com/app/apikey) (Phase 1b complete - entity extraction + Phase 2c classification)
+4. **At least one LLM API key** (recommended: all three for failover):
+   - **Gemini API key** from [Google AI Studio](https://makersuite.google.com/app/apikey) (free tier available)
+   - **Anthropic API key** from [Anthropic Console](https://console.anthropic.com/) (optional for failover)
+   - **OpenAI API key** from [OpenAI Platform](https://platform.openai.com/api-keys) (optional for failover)
 5. **Notion API integration token and database IDs** (Phase 2a complete - Notion read operations + Phase 2c schema fetching)
 6. **(Optional)** [Infisical](https://infisical.com) account for centralized secret management (recommended for teams) - See [Infisical Setup Guide](infisical-setup.md)
 
@@ -89,8 +92,10 @@ deactivate
 - ✅ **Phase 2b Complete**: LLM-based company matching with confidence scores (100% accuracy)
 - ✅ **Phase 2c Complete**: Classification & Summarization (type, intensity, summary generation)
 - ✅ **Phase 2d Complete**: Notion Write Operations (duplicate detection, DLQ handling)
-- ✅ **Phase 010 Complete**: Error Handling & Retry Logic (unified retry system with circuit breakers)
-- 🎯 **MVP Status**: COMPLETE - Full extraction pipeline with Notion integration working end-to-end
+- ✅ **Phase 2e Complete**: Error Handling & Retry Logic (unified retry system with circuit breakers)
+- ✅ **Phase 3a Complete**: Admin CLI Enhancement (30 commands across 7 groups)
+- ✅ **Phase 3b Complete**: Multi-LLM Provider Support (Gemini/Claude/OpenAI with failover, consensus, best-match)
+- 🎯 **Production Status**: READY - Full automation with multi-LLM resilience, health monitoring, and cost tracking
 
 **Error Handling**: CollabIQ includes comprehensive error handling with automatic retry logic:
 - **Automatic Retries**: Transient failures (timeouts, rate limits) retry automatically with exponential backoff
