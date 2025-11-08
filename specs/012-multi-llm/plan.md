@@ -1,7 +1,7 @@
 # Implementation Plan: Multi-LLM Provider Support
 
-**Branch**: `011-multi-llm` | **Date**: 2025-11-08 | **Spec**: [spec.md](spec.md)
-**Input**: Feature specification from `/specs/011-multi-llm/spec.md`
+**Branch**: `012-multi-llm` | **Date**: 2025-11-08 | **Spec**: [spec.md](spec.md)
+**Input**: Feature specification from `/specs/012-multi-llm/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
@@ -27,7 +27,7 @@ Implement a multi-LLM provider architecture that enables the system to use Gemin
 
 ### I. Specification-First Development ✅
 
-- [x] Feature specification exists at `specs/011-multi-llm/spec.md`
+- [x] Feature specification exists at `specs/012-multi-llm/spec.md`
 - [x] Specification includes user scenarios with acceptance criteria (4 user stories)
 - [x] Specification includes functional requirements (32 FRs in FR-XXX format)
 - [x] Specification includes success criteria (8 SCs in SC-XXX format)
@@ -108,7 +108,7 @@ This feature adds orchestration layer on top of existing `LLMProvider` interface
 ### Documentation (this feature)
 
 ```text
-specs/011-multi-llm/
+specs/012-multi-llm/
 ├── spec.md              # Feature specification (DONE)
 ├── plan.md              # This file (/speckit.plan command output - DONE)
 ├── research.md          # Phase 0 output (/speckit.plan command - DONE)

@@ -1,6 +1,6 @@
 # Feature Specification: Multi-LLM Provider Support
 
-**Feature Branch**: `011-multi-llm`
+**Feature Branch**: `012-multi-llm`
 **Created**: 2025-11-08
 **Status**: Draft
 **Input**: User description: "Multi-LLM Provider Support with orchestrator strategies for failover, consensus, and best-match selection"
