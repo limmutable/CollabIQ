@@ -4,12 +4,15 @@ This module provides the main orchestrator class that coordinates multiple
 LLM providers using configurable strategies (failover, consensus, best-match).
 """
 
+import asyncio
 import logging
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Optional
 
 from src.llm_orchestrator.exceptions import InvalidProviderError, InvalidStrategyError
+from src.llm_orchestrator.strategies.best_match import BestMatchStrategy
+from src.llm_orchestrator.strategies.consensus import ConsensusStrategy
 from src.llm_orchestrator.strategies.failover import FailoverStrategy
 from src.llm_orchestrator.types import (
     OrchestrationConfig,
@@ -24,6 +27,7 @@ if TYPE_CHECKING:
     from src.llm_adapters.gemini_adapter import GeminiAdapter
     from src.llm_adapters.health_tracker import HealthTracker
     from src.llm_adapters.openai_adapter import OpenAIAdapter
+    from src.llm_orchestrator.cost_tracker import CostTracker
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +55,7 @@ class LLMOrchestrator:
         providers: dict[str, LLMProvider],
         config: OrchestrationConfig,
         health_tracker: "HealthTracker",
+        cost_tracker: Optional["CostTracker"] = None,
     ):
         """Initialize LLM Orchestrator.
 
@@ -58,14 +63,23 @@ class LLMOrchestrator:
             providers: Dictionary mapping provider_name → LLMProvider instance
             config: Orchestration configuration
             health_tracker: Health tracking instance
+            cost_tracker: Optional cost tracking instance
         """
         self.providers = providers
         self.config = config
         self.health_tracker = health_tracker
+        self.cost_tracker = cost_tracker
 
         # Initialize strategies
         self._strategies = {
-            "failover": FailoverStrategy(priority_order=config.provider_priority)
+            "failover": FailoverStrategy(priority_order=config.provider_priority),
+            "consensus": ConsensusStrategy(
+                provider_names=config.provider_priority,
+                fuzzy_threshold=config.fuzzy_match_threshold,
+                min_agreement=config.consensus_min_agreement,
+                abstention_threshold=config.abstention_confidence_threshold,
+            ),
+            "best_match": BestMatchStrategy(provider_names=config.provider_priority),
         }
 
         self._active_strategy = config.default_strategy
@@ -104,6 +118,7 @@ class LLMOrchestrator:
         from src.llm_adapters.gemini_adapter import GeminiAdapter
         from src.llm_adapters.health_tracker import HealthTracker
         from src.llm_adapters.openai_adapter import OpenAIAdapter
+        from src.llm_orchestrator.cost_tracker import CostTracker
 
         # Use default provider configs if not provided
         if provider_configs is None:
@@ -158,8 +173,17 @@ class LLMOrchestrator:
             half_open_max_calls=config.half_open_max_calls,
         )
 
+        # Initialize cost tracker
+        cost_tracker = CostTracker(
+            data_dir=data_dir,
+            provider_configs=provider_configs,
+        )
+
         return cls(
-            providers=providers, config=config, health_tracker=health_tracker
+            providers=providers,
+            config=config,
+            health_tracker=health_tracker,
+            cost_tracker=cost_tracker,
         )
 
     @staticmethod
@@ -246,13 +270,29 @@ class LLMOrchestrator:
 
         # Execute strategy
         strategy_impl = self._strategies[strategy_name]
-        entities, provider_used = strategy_impl.execute(
-            providers=self.providers,
-            email_text=email_text,
-            health_tracker=self.health_tracker,
-            company_context=company_context,
-            email_id=email_id,
-        )
+
+        # Check if strategy is async (consensus, best_match) or sync (failover)
+        import inspect
+        if inspect.iscoroutinefunction(strategy_impl.execute):
+            # Run async strategy
+            entities, provider_used = asyncio.run(
+                strategy_impl.execute(
+                    providers=self.providers,
+                    email_text=email_text,
+                    health_tracker=self.health_tracker,
+                    company_context=company_context,
+                    email_id=email_id,
+                )
+            )
+        else:
+            # Run sync strategy
+            entities, provider_used = strategy_impl.execute(
+                providers=self.providers,
+                email_text=email_text,
+                health_tracker=self.health_tracker,
+                company_context=company_context,
+                email_id=email_id,
+            )
 
         logger.info(
             f"Successfully extracted entities using {provider_used} "
