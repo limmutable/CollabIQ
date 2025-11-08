@@ -106,6 +106,20 @@ def fetch(
         else:
             emails = receiver.fetch_emails(max_emails=limit)
 
+        # Save fetched emails to disk
+        saved_count = 0
+        if not quiet and not json_output:
+            with create_spinner(f"Saving {len(emails)} emails...") as progress:
+                task = progress.add_task("", total=None)
+                for email in emails:
+                    receiver.save_raw_email(email)
+                    saved_count += 1
+                progress.update(task, description=f"[green]✓ Saved {saved_count} emails")
+        else:
+            for email in emails:
+                receiver.save_raw_email(email)
+                saved_count += 1
+
         # Calculate stats (duplicates would be tracked in receiver)
         fetched_count = len(emails)
         duplicates_skipped = 0  # Would come from receiver's duplicate tracker
@@ -336,9 +350,9 @@ def list(
         # Collect emails from various directories
         emails = []
 
-        # Check raw emails
+        # Check raw emails (in YYYY/MM/ subdirectories)
         if RAW_EMAIL_DIR.exists():
-            for email_file in RAW_EMAIL_DIR.glob("*.json"):
+            for email_file in RAW_EMAIL_DIR.glob("**/*.json"):
                 try:
                     with open(email_file) as f:
                         data = json.load(f)
@@ -351,12 +365,14 @@ def list(
                     if status and status != "raw":
                         continue
 
+                    # Extract email data from the saved format
+                    metadata = data.get("metadata", {})
                     emails.append({
-                        "id": data.get("email_id", email_file.stem),
-                        "sender": data.get("from", "Unknown"),
-                        "subject": data.get("subject", "No subject"),
+                        "id": metadata.get("message_id", email_file.stem),
+                        "sender": metadata.get("from", "Unknown"),
+                        "subject": metadata.get("subject", "No subject"),
                         "status": "raw",
-                        "timestamp": data.get("received_at", ""),
+                        "timestamp": metadata.get("received_at", ""),
                     })
                 except Exception:
                     continue
