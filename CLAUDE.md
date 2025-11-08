@@ -13,6 +13,8 @@ Auto-generated from all feature plans. Last updated: 2025-10-30
 - File-based JSON output (`data/extractions/{email_id}.json`) - no schema changes (008-classification-summarization)
 - Python 3.12 (established in project) + pytest (testing framework), existing MVP components (email_receiver, llm_adapters, notion_integrator, content_normalizer), Gmail/Gemini/Notion APIs (008-mvp-e2e-test)
 - File-based (JSON files for error reports, performance metrics, test results in data/e2e_test/ directory) (008-mvp-e2e-test)
+- Python 3.12 (established in project) + anthropic (Claude SDK), openai (OpenAI SDK) (011-multi-llm)
+- File-based JSON for provider health metrics and cost tracking (011-multi-llm)
 
 - Python 3.12 (established in project) + Git (for file operations and history preservation), markdown (for documentation) (002-structure-standards)
 - Python 3.12 (002-email-reception)
@@ -33,9 +35,9 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Python 3.12 (established in project): Follow standard conventions
 
 ## Recent Changes
+- 011-multi-llm: Added Python 3.12 (established in project) + anthropic (Claude SDK), openai (OpenAI SDK)
+- 011-multi-llm: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 - 010-error-handling: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
-- 008-mvp-e2e-test: Added Python 3.12 (established in project) + pytest (testing framework), existing MVP components (email_receiver, llm_adapters, notion_integrator, content_normalizer), Gmail/Gemini/Notion APIs
-- 009-notion-write: Added Python 3.12+ (established in project)
 
 
 <!-- MANUAL ADDITIONS START -->
