@@ -24,12 +24,12 @@ All paths are relative to repository root:
 
 **Purpose**: Project initialization and CLI infrastructure setup
 
-- [ ] T001 Add typer and rich dependencies to pyproject.toml
-- [ ] T002 [P] Configure collabiq entry point in pyproject.toml [project.scripts] section
-- [ ] T003 [P] Create src/collabiq/ directory structure (commands/, formatters/, utils/)
-- [ ] T004 [P] Create tests/contract/test_cli_interface.py (empty, for contract tests)
-- [ ] T005 [P] Create tests/integration/ test files for CLI workflows (empty placeholders)
-- [ ] T006 [P] Create tests/unit/ test files for formatters and utils (empty placeholders)
+- [X] T001 Add typer and rich dependencies to pyproject.toml
+- [X] T002 [P] Configure collabiq entry point in pyproject.toml [project.scripts] section
+- [X] T003 [P] Create src/collabiq/ directory structure (commands/, formatters/, utils/)
+- [X] T004 [P] Create tests/contract/test_cli_interface.py (empty, for contract tests)
+- [X] T005 [P] Create tests/integration/ test files for CLI workflows (empty placeholders)
+- [X] T006 [P] Create tests/unit/ test files for formatters and utils (empty placeholders)
 
 ---
 
@@ -39,17 +39,17 @@ All paths are relative to repository root:
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T007 Implement main CLI app in src/collabiq/__init__.py with typer.Typer() setup
-- [ ] T008 [P] Implement base formatters in src/collabiq/formatters/tables.py (Rich table helper)
-- [ ] T009 [P] Implement progress indicators in src/collabiq/formatters/progress.py (spinners, bars)
-- [ ] T010 [P] Implement color output handler in src/collabiq/formatters/colors.py (NO_COLOR support)
-- [ ] T011 [P] Implement JSON output formatter in src/collabiq/formatters/json_output.py
-- [ ] T012 [P] Implement interrupt handler in src/collabiq/utils/interrupt.py (SIGINT/SIGTERM)
-- [ ] T013 [P] Implement input validation helpers in src/collabiq/utils/validation.py
-- [ ] T014 [P] Implement CLI audit logger in src/collabiq/utils/logging.py
-- [ ] T015 Create command group stub files in src/collabiq/commands/ (__init__.py, email.py, notion.py, test.py, errors.py, status.py, llm.py, config.py)
-- [ ] T016 Register all command groups in src/collabiq/__init__.py main app
-- [ ] T017 Add global callback for --debug, --quiet, --no-color flags in src/collabiq/__init__.py
+- [X] T007 Implement main CLI app in src/collabiq/__init__.py with typer.Typer() setup
+- [X] T008 [P] Implement base formatters in src/collabiq/formatters/tables.py (Rich table helper)
+- [X] T009 [P] Implement progress indicators in src/collabiq/formatters/progress.py (spinners, bars)
+- [X] T010 [P] Implement color output handler in src/collabiq/formatters/colors.py (NO_COLOR support)
+- [X] T011 [P] Implement JSON output formatter in src/collabiq/formatters/json_output.py
+- [X] T012 [P] Implement interrupt handler in src/collabiq/utils/interrupt.py (SIGINT/SIGTERM)
+- [X] T013 [P] Implement input validation helpers in src/collabiq/utils/validation.py
+- [X] T014 [P] Implement CLI audit logger in src/collabiq/utils/logging.py
+- [X] T015 Create command group stub files in src/collabiq/commands/ (__init__.py, email.py, notion.py, test.py, errors.py, status.py, llm.py, config.py)
+- [X] T016 Register all command groups in src/collabiq/__init__.py main app
+- [X] T017 Add global callback for --debug, --quiet, --no-color flags in src/collabiq/__init__.py
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
