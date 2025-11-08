@@ -166,19 +166,19 @@ uv run collabiq notion schema --json | jq '.data.properties'
 
 ### Quick Smoke Test (~10 seconds)
 ```bash
-./test_cli_quick.sh
+./tests/cli/test_cli_quick.sh
 ```
 Fast test of the most important commands
 
 ### Comprehensive Test (~2-3 minutes)
 ```bash
-./test_cli_manual.sh
+./tests/cli/test_cli_manual.sh
 ```
 Thorough testing of all help text and features
 
 ### Usage Examples
 ```bash
-./test_cli_examples.sh
+./tests/cli/test_cli_examples.sh
 ```
 Shows all available commands with copy/paste examples
 
