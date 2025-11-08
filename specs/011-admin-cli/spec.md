@@ -58,11 +58,30 @@ As an admin, I want to manage Notion integration (verify, schema, test-write, cl
 
 ---
 
-### User Story 4 - End-to-End Testing (Priority: P2)
+### User Story 4 - LLM Provider Management (Priority: P2)
+
+As an admin, I want to view LLM provider status, test connectivity, manage orchestration policies, and monitor usage through `collabiq llm` commands so that I can ensure multi-LLM resilience and optimize provider selection for accuracy and cost.
+
+**Why this priority**: With Phase 3b introducing multi-LLM support (Gemini, Claude, OpenAI), admins need tools to manage provider health, failover policies, and cost tracking. This is critical for production resilience but depends on multi-LLM infrastructure.
+
+**Independent Test**: Run `collabiq llm status` and verify it shows all configured LLM providers (Gemini, Claude, OpenAI) with health status, response times, and recent error rates. Then test a provider with `collabiq llm test <provider>` and verify connectivity.
+
+**Acceptance Scenarios**:
+
+1. **Given** multiple LLM providers are configured, **When** admin runs `collabiq llm status`, **Then** they see a table of all providers with health (online/degraded/offline), response time, success rate, and last check time
+2. **Given** admin needs to test a specific provider, **When** they run `collabiq llm test gemini`, **Then** a test extraction is performed, results are displayed with confidence scores, and connectivity is confirmed
+3. **Given** admin wants to see orchestration policy, **When** they run `collabiq llm policy`, **Then** they see current strategy (failover/consensus/best-match), provider priority order, and fallback rules
+4. **Given** admin needs to change orchestration, **When** they run `collabiq llm set-policy consensus`, **Then** the policy is updated, confirmed, and the new configuration is displayed
+5. **Given** admin wants cost tracking, **When** they run `collabiq llm usage --since yesterday`, **Then** they see API calls, tokens consumed, and estimated cost per provider
+6. **Given** admin wants to temporarily disable a provider, **When** they run `collabiq llm disable claude`, **Then** the provider is marked inactive, orchestrator stops using it, and confirmation is displayed with instructions to re-enable
+
+---
+
+### User Story 5 - End-to-End Testing (Priority: P2)
 
 As an admin, I want to run E2E tests on the complete pipeline through `collabiq test` commands so that I can validate system health, catch integration issues, and verify deployment readiness.
 
-**Why this priority**: E2E testing is critical for production confidence, but requires emails to exist first (depends on email pipeline).
+**Why this priority**: E2E testing is critical for production confidence, but requires emails, Notion, and LLM providers to be working (depends on previous user stories).
 
 **Independent Test**: Run `collabiq test e2e --limit 3` on three test emails and verify a detailed report is generated showing pass/fail for each pipeline stage (reception, extraction, matching, classification, validation, write).
 
@@ -76,7 +95,7 @@ As an admin, I want to run E2E tests on the complete pipeline through `collabiq 
 
 ---
 
-### User Story 5 - Error Management and DLQ Operations (Priority: P3)
+### User Story 6 - Error Management and DLQ Operations (Priority: P3)
 
 As an admin, I want to view, inspect, retry, and clear failed operations through `collabiq errors` commands so that I can recover from transient errors and maintain data integrity.
 
@@ -93,7 +112,7 @@ As an admin, I want to view, inspect, retry, and clear failed operations through
 
 ---
 
-### User Story 6 - System Health Monitoring (Priority: P3)
+### User Story 7 - System Health Monitoring (Priority: P3)
 
 As an admin, I want to check overall system health, component status, and metrics through `collabiq status` commands so that I can quickly diagnose issues and monitor system performance.
 
@@ -110,7 +129,7 @@ As an admin, I want to check overall system health, component status, and metric
 
 ---
 
-### User Story 7 - Configuration Management (Priority: P3)
+### User Story 8 - Configuration Management (Priority: P3)
 
 As an admin, I want to view, validate, and test configuration through `collabiq config` commands so that I can troubleshoot setup issues, verify environment variables, and ensure secrets are accessible.
 
@@ -138,6 +157,9 @@ As an admin, I want to view, validate, and test configuration through `collabiq 
 - What happens when disk space is low? → `status` command shows disk usage warning, cleanup suggestions are provided, processing operations check available space before starting
 - How does JSON output mode work? → All commands support `--json` flag, outputs valid JSON with consistent structure (status, data, errors), suitable for parsing by scripts or CI/CD
 - What happens when required credentials are missing? → Command fails immediately with clear error message, displays setup instructions, provides link to credential configuration docs
+- What happens when all LLM providers are offline? → System displays critical error, suggests checking API keys and network connectivity, provides `collabiq llm status` command to diagnose
+- How does LLM provider failover work in the CLI? → When primary provider fails, orchestrator automatically uses next available provider, `collabiq status` shows which provider is currently active
+- What happens when Phase 3b multi-LLM is not yet implemented? → LLM commands display informative message: "Multi-LLM support coming in Phase 3b. Currently using Gemini only." and show basic Gemini status
 
 ## Requirements *(mandatory)*
 
@@ -146,7 +168,7 @@ As an admin, I want to view, validate, and test configuration through `collabiq 
 #### Core CLI Infrastructure
 
 - **FR-001**: System MUST provide a single entry point command `collabiq` installed in the system PATH
-- **FR-002**: System MUST organize commands into six logical groups: email, notion, test, errors, status, config
+- **FR-002**: System MUST organize commands into seven logical groups: email, notion, test, errors, status, llm, config
 - **FR-003**: System MUST provide contextual help via `--help` flag for main command and all subcommands
 - **FR-004**: System MUST use consistent option naming across all commands (`--limit`, `--debug`, `--json`, `--yes`, `--quiet`)
 - **FR-005**: System MUST display operation progress for long-running tasks using progress bars or status messages
@@ -222,27 +244,43 @@ As an admin, I want to view, validate, and test configuration through `collabiq 
 - **FR-057**: Config show MUST mask sensitive values (API keys, tokens) showing only first 4 and last 3 characters
 - **FR-058**: Config validate MUST check all required settings and report missing/invalid values with fix suggestions
 
+#### LLM Provider Commands
+
+- **FR-059**: System MUST provide `collabiq llm status` command to display all configured LLM providers with health metrics
+- **FR-060**: System MUST provide `collabiq llm test <provider>` command to test connectivity and run sample extraction
+- **FR-061**: System MUST provide `collabiq llm policy` command to display current orchestration strategy and provider priority
+- **FR-062**: System MUST provide `collabiq llm set-policy <strategy>` command to change orchestration (failover/consensus/best-match)
+- **FR-063**: System MUST provide `collabiq llm usage` command with filtering by `--provider`, `--since`, `--until` options
+- **FR-064**: System MUST provide `collabiq llm disable <provider>` and `collabiq llm enable <provider>` commands for provider management
+- **FR-065**: LLM status MUST display provider name, health status (online/degraded/offline), response time, success rate, and last check time
+- **FR-066**: LLM test MUST perform a real extraction using sample text, display results with confidence scores, and report latency
+- **FR-067**: LLM policy MUST show orchestration strategy, provider priority order, timeout settings, and fallback rules
+- **FR-068**: LLM usage MUST display API calls, tokens consumed (prompt + completion), estimated cost, and success rate per provider
+- **FR-069**: LLM disable/enable MUST update orchestrator configuration and display current active providers
+- **FR-070**: LLM commands MUST gracefully handle when multi-LLM infrastructure is not yet implemented (display informative message)
+
 #### User Experience
 
-- **FR-059**: System MUST use color-coded output (green for success, yellow for warnings, red for errors, blue for info)
-- **FR-060**: System MUST display tables with proper column alignment using rich text formatting library
-- **FR-061**: System MUST provide usage examples in help text for complex commands
-- **FR-062**: System MUST support `--yes` flag to skip confirmation prompts for automation
-- **FR-063**: System MUST display helpful error messages with context and suggested next steps (not just stack traces)
-- **FR-064**: System MUST show command execution time for operations taking longer than 2 seconds
-- **FR-065**: System MUST provide clear progress indicators (spinner, progress bar, percentage) for long operations
-- **FR-066**: System MUST support color disabling via `--no-color` flag or `NO_COLOR` environment variable
+- **FR-071**: System MUST use color-coded output (green for success, yellow for warnings, red for errors, blue for info)
+- **FR-072**: System MUST display tables with proper column alignment using rich text formatting library
+- **FR-073**: System MUST provide usage examples in help text for complex commands
+- **FR-074**: System MUST support `--yes` flag to skip confirmation prompts for automation
+- **FR-075**: System MUST display helpful error messages with context and suggested next steps (not just stack traces)
+- **FR-076**: System MUST show command execution time for operations taking longer than 2 seconds
+- **FR-077**: System MUST provide clear progress indicators (spinner, progress bar, percentage) for long operations
+- **FR-078**: System MUST support color disabling via `--no-color` flag or `NO_COLOR` environment variable
 
 ### Key Entities
 
 - **CLI Command**: An executable operation with name, description, arguments, options, help text, and handler function
-- **Command Group**: Logical grouping of related commands (email, notion, test, errors, status, config) with shared context
+- **Command Group**: Logical grouping of related commands (email, notion, test, errors, status, llm, config) with shared context
 - **Operation Result**: Execution outcome with status (success/failure/partial), message, data, and execution time
 - **Progress Indicator**: Visual feedback showing operation progress (spinner, bar, percentage, ETA) for user awareness
 - **Error Record**: Failed operation details including error ID, timestamp, severity, type, message, stack trace, and retry count
 - **Health Status**: Component health snapshot with status (healthy/degraded/critical), last check time, and metrics
 - **Configuration Item**: Setting with key, value, source (Infisical/env/default), category, and validation rules
 - **Test Report**: E2E test execution summary with run ID, timestamp, email count, stage results, and error details
+- **LLM Provider**: Language model provider with name (gemini/claude/openai), health status, response time, success rate, token usage, and orchestration priority
 
 ## Success Criteria *(mandatory)*
 
@@ -271,6 +309,7 @@ As an admin, I want to view, validate, and test configuration through `collabiq 
 - File-based data storage in `data/` directory structure
 - Error handling system with DLQ support (Phase 2e)
 - E2E testing infrastructure (Phase 2e)
+- Multi-LLM infrastructure and orchestrator (Phase 3b - for full LLM command functionality)
 
 ### Assumptions
 
