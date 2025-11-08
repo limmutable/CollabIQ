@@ -1,11 +1,15 @@
 """
-CLI commands for status.
+System health monitoring commands.
 
-This module will be implemented in later phases.
+Displays overall system health, component status, and metrics.
+Supports continuous monitoring with --watch mode.
 """
 
 import typer
 
-app = typer.Typer(name="status", help="status commands")
+app = typer.Typer(
+    name="status",
+    help="System health monitoring (basic, --detailed, --watch)",
+)
 
-# Commands will be added in implementation phases
+# Commands will be implemented in Phase 9 (User Story 7)

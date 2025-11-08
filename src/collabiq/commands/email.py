@@ -1,11 +1,19 @@
 """
-CLI commands for email.
+Email pipeline management commands.
 
-This module will be implemented in later phases.
+Commands:
+- fetch: Download emails from Gmail
+- clean: Normalize email content
+- list: Display recent emails
+- verify: Check Gmail connectivity
+- process: Run complete pipeline
 """
 
 import typer
 
-app = typer.Typer(name="email", help="email commands")
+app = typer.Typer(
+    name="email",
+    help="Email pipeline operations (fetch, clean, list, verify, process)",
+)
 
-# Commands will be added in implementation phases
+# Commands will be implemented in Phase 4 (User Story 2)

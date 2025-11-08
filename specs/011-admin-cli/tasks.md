@@ -65,16 +65,16 @@ All paths are relative to repository root:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T018 [P] [US1] Contract test for main app help text in tests/contract/test_cli_interface.py
-- [ ] T019 [P] [US1] Contract test for command group registration in tests/contract/test_cli_interface.py
-- [ ] T020 [P] [US1] Contract test for global options (--help, --debug, --quiet, --no-color) in tests/contract/test_cli_interface.py
+- [X] T018 [P] [US1] Contract test for main app help text in tests/contract/test_cli_interface.py
+- [X] T019 [P] [US1] Contract test for command group registration in tests/contract/test_cli_interface.py
+- [X] T020 [P] [US1] Contract test for global options (--help, --debug, --quiet, --no-color) in tests/contract/test_cli_interface.py
 
 ### Implementation for User Story 1
 
-- [ ] T021 [US1] Complete main CLI app implementation with all command group registrations
-- [ ] T022 [US1] Add comprehensive help text to main app and all command groups
-- [ ] T023 [US1] Implement global options handler (--debug logging setup, --quiet output suppression, --no-color)
-- [ ] T024 [US1] Verify CLI installation works with `uv pip install -e .` and `collabiq --help`
+- [X] T021 [US1] Complete main CLI app implementation with all command group registrations
+- [X] T022 [US1] Add comprehensive help text to main app and all command groups
+- [X] T023 [US1] Implement global options handler (--debug logging setup, --quiet output suppression, --no-color)
+- [X] T024 [US1] Verify CLI installation works with `uv pip install -e .` and `collabiq --help`
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - `collabiq --help` shows all groups with proper help text
 

@@ -1,11 +1,18 @@
 """
-CLI commands for errors.
+Error management and DLQ operations commands.
 
-This module will be implemented in later phases.
+Commands:
+- list: View failed operations
+- show: Display error details
+- retry: Retry failed operations
+- clear: Remove resolved errors
 """
 
 import typer
 
-app = typer.Typer(name="errors", help="errors commands")
+app = typer.Typer(
+    name="errors",
+    help="Error management and DLQ operations (list, show, retry, clear)",
+)
 
-# Commands will be added in implementation phases
+# Commands will be implemented in Phase 8 (User Story 6)

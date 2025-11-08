@@ -1,11 +1,18 @@
 """
-CLI commands for notion.
+Notion integration management commands.
 
-This module will be implemented in later phases.
+Commands:
+- verify: Check Notion connection and schema
+- schema: Display database schema
+- test-write: Create and cleanup test entry
+- cleanup-tests: Remove all test entries
 """
 
 import typer
 
-app = typer.Typer(name="notion", help="notion commands")
+app = typer.Typer(
+    name="notion",
+    help="Notion integration management (verify, schema, test-write, cleanup-tests)",
+)
 
-# Commands will be added in implementation phases
+# Commands will be implemented in Phase 5 (User Story 3)
