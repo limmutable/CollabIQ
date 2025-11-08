@@ -9,6 +9,17 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+# Re-export ProviderHealthMetrics from llm_adapters to avoid circular import
+from src.llm_adapters.types import ProviderHealthMetrics
+
+__all__ = [
+    "ProviderConfig",
+    "ProviderHealthMetrics",
+    "ProviderStatus",
+    "OrchestrationConfig",
+    "CostMetricsSummary",
+]
+
 
 class ProviderConfig(BaseModel):
     """Configuration for a specific LLM provider.

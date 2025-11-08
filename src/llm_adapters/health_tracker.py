@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
-from src.llm_orchestrator.types import ProviderHealthMetrics
+from src.llm_adapters.types import ProviderHealthMetrics
 
 logger = logging.getLogger(__name__)
 
