@@ -22,11 +22,14 @@ def mock_api_key():
 
 
 @pytest.fixture
-def claude_adapter(mock_api_key):
+@patch("src.llm_adapters.claude_adapter.anthropic.Anthropic")
+def claude_adapter(mock_anthropic_class, mock_api_key):
     """Create ClaudeAdapter instance for testing."""
     # Import here to avoid issues if module doesn't exist yet
     from src.llm_adapters.claude_adapter import ClaudeAdapter
 
+    # Mock the Anthropic client
+    mock_anthropic_class.return_value = MagicMock()
     return ClaudeAdapter(api_key=mock_api_key)
 
 
@@ -42,15 +45,9 @@ class TestClaudeAdapterContract:
         assert hasattr(claude_adapter, "extract_entities")
         assert callable(claude_adapter.extract_entities)
 
-    @patch("anthropic.Anthropic")
-    def test_extract_entities_accepts_email_text(
-        self, mock_anthropic_client, claude_adapter
-    ):
+    def test_extract_entities_accepts_email_text(self, claude_adapter):
         """Contract 1: extract_entities accepts email_text string parameter."""
         # Mock successful API response
-        mock_client_instance = MagicMock()
-        mock_anthropic_client.return_value = mock_client_instance
-
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
@@ -62,7 +59,7 @@ class TestClaudeAdapterContract:
         ]
         mock_response.usage.input_tokens = 100
         mock_response.usage.output_tokens = 50
-        mock_client_instance.messages.create.return_value = mock_response
+        claude_adapter.client.messages.create.return_value = mock_response
 
         # Call with email_text string
         result = claude_adapter.extract_entities("sample email text")
@@ -70,14 +67,8 @@ class TestClaudeAdapterContract:
         # Verify it returns ExtractedEntities
         assert isinstance(result, ExtractedEntities)
 
-    @patch("anthropic.Anthropic")
-    def test_extract_entities_returns_extracted_entities(
-        self, mock_anthropic_client, claude_adapter
-    ):
+    def test_extract_entities_returns_extracted_entities(self, claude_adapter):
         """Contract 2: extract_entities returns ExtractedEntities with all attributes."""
-        mock_client_instance = MagicMock()
-        mock_anthropic_client.return_value = mock_client_instance
-
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
@@ -89,7 +80,7 @@ class TestClaudeAdapterContract:
         ]
         mock_response.usage.input_tokens = 100
         mock_response.usage.output_tokens = 50
-        mock_client_instance.messages.create.return_value = mock_response
+        claude_adapter.client.messages.create.return_value = mock_response
 
         result = claude_adapter.extract_entities("collaboration update email")
 
@@ -103,26 +94,16 @@ class TestClaudeAdapterContract:
         assert hasattr(result, "email_id")
         assert hasattr(result, "extracted_at")
 
-    @patch("anthropic.Anthropic")
-    def test_extract_entities_raises_llm_api_error_on_failure(
-        self, mock_anthropic_client, claude_adapter
-    ):
+    def test_extract_entities_raises_llm_api_error_on_failure(self, claude_adapter):
         """Contract 3: extract_entities raises LLMAPIError on failure."""
-        mock_client_instance = MagicMock()
-        mock_anthropic_client.return_value = mock_client_instance
-
         # Simulate API error
-        mock_client_instance.messages.create.side_effect = Exception("API Error")
+        claude_adapter.client.messages.create.side_effect = Exception("API Error")
 
         with pytest.raises(LLMAPIError):
             claude_adapter.extract_entities("email text")
 
-    @patch("anthropic.Anthropic")
-    def test_confidence_scores_are_0_to_1(self, mock_anthropic_client, claude_adapter):
+    def test_confidence_scores_are_0_to_1(self, claude_adapter):
         """Contract 4: Confidence scores are in range [0.0, 1.0]."""
-        mock_client_instance = MagicMock()
-        mock_anthropic_client.return_value = mock_client_instance
-
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
@@ -134,7 +115,7 @@ class TestClaudeAdapterContract:
         ]
         mock_response.usage.input_tokens = 100
         mock_response.usage.output_tokens = 50
-        mock_client_instance.messages.create.return_value = mock_response
+        claude_adapter.client.messages.create.return_value = mock_response
 
         result = claude_adapter.extract_entities("sample email")
 
@@ -145,14 +126,8 @@ class TestClaudeAdapterContract:
         assert 0.0 <= result.confidence.details <= 1.0
         assert 0.0 <= result.confidence.date <= 1.0
 
-    @patch("anthropic.Anthropic")
-    def test_missing_entities_return_none_with_zero_confidence(
-        self, mock_anthropic_client, claude_adapter
-    ):
+    def test_missing_entities_return_none_with_zero_confidence(self, claude_adapter):
         """Contract 5: Missing entities return None with confidence 0.0."""
-        mock_client_instance = MagicMock()
-        mock_anthropic_client.return_value = mock_client_instance
-
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
@@ -164,7 +139,7 @@ class TestClaudeAdapterContract:
         ]
         mock_response.usage.input_tokens = 100
         mock_response.usage.output_tokens = 50
-        mock_client_instance.messages.create.return_value = mock_response
+        claude_adapter.client.messages.create.return_value = mock_response
 
         result = claude_adapter.extract_entities("email with missing person")
 

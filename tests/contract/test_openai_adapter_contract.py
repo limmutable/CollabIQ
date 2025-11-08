@@ -22,11 +22,14 @@ def mock_api_key():
 
 
 @pytest.fixture
-def openai_adapter(mock_api_key):
+@patch("src.llm_adapters.openai_adapter.openai.OpenAI")
+def openai_adapter(mock_openai_class, mock_api_key):
     """Create OpenAIAdapter instance for testing."""
     # Import here to avoid issues if module doesn't exist yet
     from src.llm_adapters.openai_adapter import OpenAIAdapter
 
+    # Mock the OpenAI client
+    mock_openai_class.return_value = MagicMock()
     return OpenAIAdapter(api_key=mock_api_key)
 
 
@@ -42,15 +45,9 @@ class TestOpenAIAdapterContract:
         assert hasattr(openai_adapter, "extract_entities")
         assert callable(openai_adapter.extract_entities)
 
-    @patch("openai.OpenAI")
-    def test_extract_entities_accepts_email_text(
-        self, mock_openai_client, openai_adapter
-    ):
+    def test_extract_entities_accepts_email_text(self, openai_adapter):
         """Contract 1: extract_entities accepts email_text string parameter."""
         # Mock successful API response
-        mock_client_instance = MagicMock()
-        mock_openai_client.return_value = mock_client_instance
-
         mock_choice = MagicMock()
         mock_choice.message.content = (
             '{"person_in_charge": "김철수", "startup_name": "본봄", '
@@ -63,7 +60,7 @@ class TestOpenAIAdapterContract:
         mock_response.choices = [mock_choice]
         mock_response.usage.prompt_tokens = 100
         mock_response.usage.completion_tokens = 50
-        mock_client_instance.chat.completions.create.return_value = mock_response
+        openai_adapter.client.chat.completions.create.return_value = mock_response
 
         # Call with email_text string
         result = openai_adapter.extract_entities("sample email text")
@@ -71,14 +68,8 @@ class TestOpenAIAdapterContract:
         # Verify it returns ExtractedEntities
         assert isinstance(result, ExtractedEntities)
 
-    @patch("openai.OpenAI")
-    def test_extract_entities_returns_extracted_entities(
-        self, mock_openai_client, openai_adapter
-    ):
+    def test_extract_entities_returns_extracted_entities(self, openai_adapter):
         """Contract 2: extract_entities returns ExtractedEntities with all attributes."""
-        mock_client_instance = MagicMock()
-        mock_openai_client.return_value = mock_client_instance
-
         mock_choice = MagicMock()
         mock_choice.message.content = (
             '{"person_in_charge": "김철수", "startup_name": "본봄", '
@@ -91,7 +82,7 @@ class TestOpenAIAdapterContract:
         mock_response.choices = [mock_choice]
         mock_response.usage.prompt_tokens = 100
         mock_response.usage.completion_tokens = 50
-        mock_client_instance.chat.completions.create.return_value = mock_response
+        openai_adapter.client.chat.completions.create.return_value = mock_response
 
         result = openai_adapter.extract_entities("collaboration update email")
 
@@ -105,28 +96,18 @@ class TestOpenAIAdapterContract:
         assert hasattr(result, "email_id")
         assert hasattr(result, "extracted_at")
 
-    @patch("openai.OpenAI")
-    def test_extract_entities_raises_llm_api_error_on_failure(
-        self, mock_openai_client, openai_adapter
-    ):
+    def test_extract_entities_raises_llm_api_error_on_failure(self, openai_adapter):
         """Contract 3: extract_entities raises LLMAPIError on failure."""
-        mock_client_instance = MagicMock()
-        mock_openai_client.return_value = mock_client_instance
-
         # Simulate API error
-        mock_client_instance.chat.completions.create.side_effect = Exception(
+        openai_adapter.client.chat.completions.create.side_effect = Exception(
             "API Error"
         )
 
         with pytest.raises(LLMAPIError):
             openai_adapter.extract_entities("email text")
 
-    @patch("openai.OpenAI")
-    def test_confidence_scores_are_0_to_1(self, mock_openai_client, openai_adapter):
+    def test_confidence_scores_are_0_to_1(self, openai_adapter):
         """Contract 4: Confidence scores are in range [0.0, 1.0]."""
-        mock_client_instance = MagicMock()
-        mock_openai_client.return_value = mock_client_instance
-
         mock_choice = MagicMock()
         mock_choice.message.content = (
             '{"person_in_charge": "김철수", "startup_name": "본봄", '
@@ -139,7 +120,7 @@ class TestOpenAIAdapterContract:
         mock_response.choices = [mock_choice]
         mock_response.usage.prompt_tokens = 100
         mock_response.usage.completion_tokens = 50
-        mock_client_instance.chat.completions.create.return_value = mock_response
+        openai_adapter.client.chat.completions.create.return_value = mock_response
 
         result = openai_adapter.extract_entities("sample email")
 
@@ -150,14 +131,8 @@ class TestOpenAIAdapterContract:
         assert 0.0 <= result.confidence.details <= 1.0
         assert 0.0 <= result.confidence.date <= 1.0
 
-    @patch("openai.OpenAI")
-    def test_missing_entities_return_none_with_zero_confidence(
-        self, mock_openai_client, openai_adapter
-    ):
+    def test_missing_entities_return_none_with_zero_confidence(self, openai_adapter):
         """Contract 5: Missing entities return None with confidence 0.0."""
-        mock_client_instance = MagicMock()
-        mock_openai_client.return_value = mock_client_instance
-
         mock_choice = MagicMock()
         mock_choice.message.content = (
             '{"person_in_charge": null, "startup_name": "본봄", '
@@ -170,7 +145,7 @@ class TestOpenAIAdapterContract:
         mock_response.choices = [mock_choice]
         mock_response.usage.prompt_tokens = 100
         mock_response.usage.completion_tokens = 50
-        mock_client_instance.chat.completions.create.return_value = mock_response
+        openai_adapter.client.chat.completions.create.return_value = mock_response
 
         result = openai_adapter.extract_entities("email with missing person")
 
