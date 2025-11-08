@@ -88,28 +88,28 @@ All paths are relative to repository root:
 
 ### Contract Tests for User Story 2
 
-- [ ] T025 [P] [US2] Contract test for `collabiq email fetch` signature and options in tests/contract/test_cli_interface.py
-- [ ] T026 [P] [US2] Contract test for `collabiq email clean` in tests/contract/test_cli_interface.py
-- [ ] T027 [P] [US2] Contract test for `collabiq email list` with filtering options in tests/contract/test_cli_interface.py
-- [ ] T028 [P] [US2] Contract test for `collabiq email verify` in tests/contract/test_cli_interface.py
-- [ ] T029 [P] [US2] Contract test for `collabiq email process` in tests/contract/test_cli_interface.py
+- [X] T025 [P] [US2] Contract test for `collabiq email fetch` signature and options in tests/contract/test_cli_interface.py
+- [X] T026 [P] [US2] Contract test for `collabiq email clean` in tests/contract/test_cli_interface.py
+- [X] T027 [P] [US2] Contract test for `collabiq email list` with filtering options in tests/contract/test_cli_interface.py
+- [X] T028 [P] [US2] Contract test for `collabiq email verify` in tests/contract/test_cli_interface.py
+- [X] T029 [P] [US2] Contract test for `collabiq email process` in tests/contract/test_cli_interface.py
 
 ### Integration Tests for User Story 2
 
-- [ ] T030 [P] [US2] Integration test for fetch → clean → list workflow in tests/integration/test_cli_email_workflow.py
-- [ ] T031 [P] [US2] Integration test for full email process pipeline in tests/integration/test_cli_email_workflow.py
+- [X] T030 [P] [US2] Integration test for fetch → clean → list workflow in tests/integration/test_cli_email_workflow.py
+- [X] T031 [P] [US2] Integration test for full email process pipeline in tests/integration/test_cli_email_workflow.py
 
 ### Implementation for User Story 2
 
-- [ ] T032 [P] [US2] Implement `collabiq email fetch` command in src/collabiq/commands/email.py
-- [ ] T033 [P] [US2] Implement `collabiq email clean` command in src/collabiq/commands/email.py
-- [ ] T034 [P] [US2] Implement `collabiq email list` command in src/collabiq/commands/email.py
-- [ ] T035 [P] [US2] Implement `collabiq email verify` command in src/collabiq/commands/email.py
-- [ ] T036 [US2] Implement `collabiq email process` command (orchestrates fetch, clean, extract, write) in src/collabiq/commands/email.py
-- [ ] T037 [US2] Add progress indicators for long-running email operations (fetch, clean, process)
-- [ ] T038 [US2] Add error handling and remediation suggestions for email commands
-- [ ] T039 [US2] Add JSON output support (--json) for all email commands
-- [ ] T040 [US2] Add color-coded output (green success, yellow warnings, red errors) for email commands
+- [X] T032 [P] [US2] Implement `collabiq email fetch` command in src/collabiq/commands/email.py
+- [X] T033 [P] [US2] Implement `collabiq email clean` command in src/collabiq/commands/email.py
+- [X] T034 [P] [US2] Implement `collabiq email list` command in src/collabiq/commands/email.py
+- [X] T035 [P] [US2] Implement `collabiq email verify` command in src/collabiq/commands/email.py
+- [X] T036 [US2] Implement `collabiq email process` command (orchestrates fetch, clean, extract, write) in src/collabiq/commands/email.py
+- [X] T037 [US2] Add progress indicators for long-running email operations (fetch, clean, process)
+- [X] T038 [US2] Add error handling and remediation suggestions for email commands
+- [X] T039 [US2] Add JSON output support (--json) for all email commands
+- [X] T040 [US2] Add color-coded output (green success, yellow warnings, red errors) for email commands
 
 **Checkpoint**: All email commands functional - can fetch, clean, list, verify, and process emails with proper formatting
 
@@ -123,24 +123,24 @@ All paths are relative to repository root:
 
 ### Contract Tests for User Story 3
 
-- [ ] T041 [P] [US3] Contract test for `collabiq notion verify` in tests/contract/test_cli_interface.py
-- [ ] T042 [P] [US3] Contract test for `collabiq notion schema` in tests/contract/test_cli_interface.py
-- [ ] T043 [P] [US3] Contract test for `collabiq notion test-write` in tests/contract/test_cli_interface.py
-- [ ] T044 [P] [US3] Contract test for `collabiq notion cleanup-tests` in tests/contract/test_cli_interface.py
+- [X] T041 [P] [US3] Contract test for `collabiq notion verify` in tests/contract/test_cli_interface.py
+- [X] T042 [P] [US3] Contract test for `collabiq notion schema` in tests/contract/test_cli_interface.py
+- [X] T043 [P] [US3] Contract test for `collabiq notion test-write` in tests/contract/test_cli_interface.py
+- [X] T044 [P] [US3] Contract test for `collabiq notion cleanup-tests` in tests/contract/test_cli_interface.py
 
 ### Integration Tests for User Story 3
 
-- [ ] T045 [P] [US3] Integration test for verify → test-write → cleanup workflow in tests/integration/test_cli_notion_workflow.py
+- [X] T045 [P] [US3] Integration test for verify → test-write → cleanup workflow in tests/integration/test_cli_notion_workflow.py
 
 ### Implementation for User Story 3
 
-- [ ] T046 [P] [US3] Implement `collabiq notion verify` command in src/collabiq/commands/notion.py
-- [ ] T047 [P] [US3] Implement `collabiq notion schema` command in src/collabiq/commands/notion.py
-- [ ] T048 [P] [US3] Implement `collabiq notion test-write` command in src/collabiq/commands/notion.py
-- [ ] T049 [US3] Implement `collabiq notion cleanup-tests` command with confirmation prompt in src/collabiq/commands/notion.py
-- [ ] T050 [US3] Add table formatting for schema display
-- [ ] T051 [US3] Add JSON output support for all notion commands
-- [ ] T052 [US3] Add error handling and remediation for Notion API errors
+- [X] T046 [P] [US3] Implement `collabiq notion verify` command in src/collabiq/commands/notion.py
+- [X] T047 [P] [US3] Implement `collabiq notion schema` command in src/collabiq/commands/notion.py
+- [X] T048 [P] [US3] Implement `collabiq notion test-write` command in src/collabiq/commands/notion.py
+- [X] T049 [US3] Implement `collabiq notion cleanup-tests` command with confirmation prompt in src/collabiq/commands/notion.py
+- [X] T050 [US3] Add table formatting for schema display
+- [X] T051 [US3] Add JSON output support for all notion commands
+- [X] T052 [US3] Add error handling and remediation for Notion API errors
 
 **Checkpoint**: All Notion commands functional - can verify, inspect schema, test writes, and cleanup
 
