@@ -17,7 +17,7 @@ class LLMProvider(ABC):
     implement this interface to ensure consistent behavior across providers.
 
     Example:
-        >>> from src.llm_adapters.gemini_adapter import GeminiAdapter
+        >>> from llm_adapters.gemini_adapter import GeminiAdapter
         >>> llm: LLMProvider = GeminiAdapter(api_key="AIza...")
         >>> email_text = "어제 신세계와 본봄 파일럿 킥오프"
         >>> entities = llm.extract_entities(email_text)

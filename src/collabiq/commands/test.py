@@ -26,8 +26,8 @@ from ..utils.logging import log_cli_operation, log_cli_error
 
 # Import E2E test infrastructure
 try:
-    from src.e2e_test.runner import E2ERunner
-    from src.e2e_test.report_generator import ReportGenerator
+    from e2e_test.runner import E2ERunner
+    from e2e_test.report_generator import ReportGenerator
     from email_receiver.gmail_receiver import GmailReceiver
     from llm_adapters.gemini_adapter import GeminiAdapter
     from llm_provider.classification_service import ClassificationService

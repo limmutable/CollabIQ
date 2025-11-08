@@ -14,16 +14,16 @@ from typing import Optional
 import openai
 from pydantic import ValidationError
 
-from src.llm_provider.base import LLMProvider
-from src.llm_provider.exceptions import (
+from llm_provider.base import LLMProvider
+from llm_provider.exceptions import (
     LLMAPIError,
     LLMAuthenticationError,
     LLMRateLimitError,
     LLMTimeoutError,
     LLMValidationError,
 )
-from src.llm_provider.types import ConfidenceScores, ExtractedEntities
-from src.llm_provider.date_utils import parse_date
+from llm_provider.types import ConfidenceScores, ExtractedEntities
+from llm_provider.date_utils import parse_date
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class OpenAIAdapter(LLMProvider):
     - Token usage tracking for cost monitoring
 
     Example:
-        >>> from src.llm_adapters.openai_adapter import OpenAIAdapter
+        >>> from llm_adapters.openai_adapter import OpenAIAdapter
         >>> adapter = OpenAIAdapter(api_key=os.getenv("OPENAI_API_KEY"))
         >>> email_text = "어제 신세계와 본봄 파일럿 킥오프"
         >>> entities = adapter.extract_entities(email_text)

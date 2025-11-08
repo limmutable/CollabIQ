@@ -24,16 +24,16 @@ from typing import Optional
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.llm_adapters.gemini_adapter import GeminiAdapter
-from src.llm_provider.types import ExtractedEntities
-from src.llm_provider.exceptions import (
+from llm_adapters.gemini_adapter import GeminiAdapter
+from llm_provider.types import ExtractedEntities
+from llm_provider.exceptions import (
     LLMAPIError,
     LLMAuthenticationError,
     LLMRateLimitError,
     LLMTimeoutError,
     LLMValidationError,
 )
-from src.config.settings import get_settings
+from config.settings import get_settings
 
 
 # Configure logging

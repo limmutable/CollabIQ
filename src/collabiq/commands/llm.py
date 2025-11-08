@@ -16,8 +16,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from src.llm_orchestrator.orchestrator import LLMOrchestrator
-from src.llm_orchestrator.types import OrchestrationConfig
+from llm_orchestrator.orchestrator import LLMOrchestrator
+from llm_orchestrator.types import OrchestrationConfig
 
 app = typer.Typer(
     name="llm",

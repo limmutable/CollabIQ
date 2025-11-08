@@ -61,8 +61,8 @@ class GeminiAdapter(LLMProvider):
     - Comprehensive error handling
 
     Example:
-        >>> from src.llm_adapters.gemini_adapter import GeminiAdapter
-        >>> from src.config.settings import get_settings
+        >>> from llm_adapters.gemini_adapter import GeminiAdapter
+        >>> from config.settings import get_settings
         >>>
         >>> settings = get_settings()
         >>> adapter = GeminiAdapter(

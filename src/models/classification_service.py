@@ -493,7 +493,7 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
             >>> result.type_confidence
             0.95
         """
-        from src.llm_provider.types import ExtractedEntitiesWithClassification
+        from llm_provider.types import ExtractedEntitiesWithClassification
         from datetime import datetime
 
         logger.info(

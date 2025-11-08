@@ -16,10 +16,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
-from src.e2e_test.error_collector import ErrorCollector
-from src.e2e_test.models import PipelineStage, TestRun
-from src.e2e_test.validators import Validator
-from src.llm_provider.types import ExtractedEntitiesWithClassification
+from e2e_test.error_collector import ErrorCollector
+from e2e_test.models import PipelineStage, TestRun
+from e2e_test.validators import Validator
+from llm_provider.types import ExtractedEntitiesWithClassification
 
 logger = logging.getLogger(__name__)
 
@@ -577,7 +577,7 @@ class E2ERunner:
         self, notion_entry: dict, email: dict, email_id: str, run_id: str
     ) -> "ValidationResult":
         """Validate Notion entry (Stage 6)"""
-        from src.e2e_test.validators import ValidationResult
+        from e2e_test.validators import ValidationResult
 
         try:
             # Validate required fields

@@ -3,7 +3,7 @@
 Implements FR-009: Log all email processing activities with timestamps.
 
 Usage:
-    from src.config.logging_config import setup_logging
+    from config.logging_config import setup_logging
 
     setup_logging()  # Use defaults
     setup_logging(level="DEBUG", log_dir="custom_logs")  # Custom settings

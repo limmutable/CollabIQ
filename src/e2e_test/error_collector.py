@@ -15,7 +15,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from src.e2e_test.models import ErrorRecord, PipelineStage, ResolutionStatus, Severity
+from e2e_test.models import ErrorRecord, PipelineStage, ResolutionStatus, Severity
 
 
 class ErrorCollector:

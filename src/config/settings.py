@@ -3,7 +3,7 @@
 Manages Gmail credentials, Pub/Sub configuration, and other environment settings.
 
 Usage:
-    from src.config.settings import get_settings
+    from config.settings import get_settings
 
     settings = get_settings()
     print(settings.gmail_credentials_path)

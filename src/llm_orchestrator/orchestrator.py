@@ -10,24 +10,24 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Optional
 
-from src.llm_orchestrator.exceptions import InvalidProviderError, InvalidStrategyError
-from src.llm_orchestrator.strategies.best_match import BestMatchStrategy
-from src.llm_orchestrator.strategies.consensus import ConsensusStrategy
-from src.llm_orchestrator.strategies.failover import FailoverStrategy
-from src.llm_orchestrator.types import (
+from llm_orchestrator.exceptions import InvalidProviderError, InvalidStrategyError
+from llm_orchestrator.strategies.best_match import BestMatchStrategy
+from llm_orchestrator.strategies.consensus import ConsensusStrategy
+from llm_orchestrator.strategies.failover import FailoverStrategy
+from llm_orchestrator.types import (
     OrchestrationConfig,
     ProviderConfig,
     ProviderStatus,
 )
-from src.llm_provider.base import LLMProvider
-from src.llm_provider.types import ExtractedEntities
+from llm_provider.base import LLMProvider
+from llm_provider.types import ExtractedEntities
 
 if TYPE_CHECKING:
-    from src.llm_adapters.claude_adapter import ClaudeAdapter
-    from src.llm_adapters.gemini_adapter import GeminiAdapter
-    from src.llm_adapters.health_tracker import HealthTracker
-    from src.llm_adapters.openai_adapter import OpenAIAdapter
-    from src.llm_orchestrator.cost_tracker import CostTracker
+    from llm_adapters.claude_adapter import ClaudeAdapter
+    from llm_adapters.gemini_adapter import GeminiAdapter
+    from llm_adapters.health_tracker import HealthTracker
+    from llm_adapters.openai_adapter import OpenAIAdapter
+    from llm_orchestrator.cost_tracker import CostTracker
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +39,8 @@ class LLMOrchestrator:
     multiple providers, handling failover, health monitoring, and strategy selection.
 
     Example:
-        >>> from src.llm_orchestrator.orchestrator import LLMOrchestrator
-        >>> from src.llm_orchestrator.types import OrchestrationConfig
+        >>> from llm_orchestrator.orchestrator import LLMOrchestrator
+        >>> from llm_orchestrator.types import OrchestrationConfig
         >>>
         >>> config = OrchestrationConfig(
         ...     default_strategy="failover",
@@ -114,12 +114,12 @@ class LLMOrchestrator:
             >>> orchestrator = LLMOrchestrator.from_config(config)
         """
         # Import adapters here to avoid circular import
-        from src.config.settings import get_settings
-        from src.llm_adapters.claude_adapter import ClaudeAdapter
-        from src.llm_adapters.gemini_adapter import GeminiAdapter
-        from src.llm_adapters.health_tracker import HealthTracker
-        from src.llm_adapters.openai_adapter import OpenAIAdapter
-        from src.llm_orchestrator.cost_tracker import CostTracker
+        from config.settings import get_settings
+        from llm_adapters.claude_adapter import ClaudeAdapter
+        from llm_adapters.gemini_adapter import GeminiAdapter
+        from llm_adapters.health_tracker import HealthTracker
+        from llm_adapters.openai_adapter import OpenAIAdapter
+        from llm_orchestrator.cost_tracker import CostTracker
 
         # Use default provider configs if not provided
         if provider_configs is None:

@@ -4,7 +4,7 @@ Provides integration with Infisical API for secure secret retrieval with
 three-tier fallback: API → SDK cache → .env file.
 
 Usage:
-    from src.config.infisical_client import InfisicalClient
+    from config.infisical_client import InfisicalClient
 
     client = InfisicalClient(settings)
     secret = client.get_secret("GEMINI_API_KEY")

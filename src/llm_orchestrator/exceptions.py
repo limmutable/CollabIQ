@@ -4,7 +4,7 @@ This module defines exceptions specific to multi-provider orchestration,
 extending the base LLM provider exceptions.
 """
 
-from src.llm_provider.exceptions import LLMAPIError
+from llm_provider.exceptions import LLMAPIError
 
 
 class AllProvidersFailedError(LLMAPIError):

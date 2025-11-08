@@ -3,7 +3,7 @@
 Verifies credentials, directory permissions, and environment setup.
 
 Usage:
-    from src.config.validation import validate_configuration
+    from config.validation import validate_configuration
 
     # Validate all settings
     results = validate_configuration()
@@ -16,7 +16,7 @@ import logging
 from dataclasses import dataclass
 from typing import List, Optional
 
-from src.config.settings import get_settings
+from config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +196,7 @@ def validate_configuration(
             and settings.infisical_client_secret
         ):
             try:
-                from src.config.infisical_client import InfisicalClient
+                from config.infisical_client import InfisicalClient
 
                 client = InfisicalClient(settings)
                 client.authenticate()

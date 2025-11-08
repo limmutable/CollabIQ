@@ -21,11 +21,11 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from src.config.logging_config import setup_logging
-from src.config.settings import get_settings
-from src.content_normalizer.normalizer import ContentNormalizer
-from src.email_receiver.duplicate_tracker import DuplicateTracker
-from src.email_receiver.gmail_receiver import GmailReceiver
+from config.logging_config import setup_logging
+from config.settings import get_settings
+from content_normalizer.normalizer import ContentNormalizer
+from email_receiver.duplicate_tracker import DuplicateTracker
+from email_receiver.gmail_receiver import GmailReceiver
 
 app = typer.Typer(
     name="collabiq-email",
@@ -167,7 +167,7 @@ def clean_emails(
     empty_count = 0
     error_count = 0
 
-    from src.models.raw_email import RawEmail
+    from models.raw_email import RawEmail
 
     for file_path in raw_files:
         try:

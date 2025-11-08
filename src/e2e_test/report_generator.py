@@ -13,7 +13,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from src.e2e_test.models import ErrorRecord, TestRun
+from e2e_test.models import ErrorRecord, TestRun
 
 logger = logging.getLogger(__name__)
 
