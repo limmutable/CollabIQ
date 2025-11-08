@@ -63,7 +63,7 @@ def get_notion_config(json_mode: bool = False) -> Dict[str, str]:
         typer.Exit: If required configuration is missing
     """
     api_key = os.getenv("NOTION_API_KEY")
-    collabiq_db_id = os.getenv("COLLABIQ_DB_ID")
+    collabiq_db_id = os.getenv("NOTION_DATABASE_ID_COLLABIQ")
 
     if not api_key:
         if json_mode:
@@ -84,12 +84,12 @@ def get_notion_config(json_mode: bool = False) -> Dict[str, str]:
             output_json(
                 data={},
                 status="failure",
-                errors=[{"error_type": "ConfigurationError", "message": "COLLABIQ_DB_ID not set in environment"}]
+                errors=[{"error_type": "ConfigurationError", "message": "NOTION_DATABASE_ID_COLLABIQ not set in environment"}]
             )
         else:
-            console.print("[red]Error: COLLABIQ_DB_ID not set in environment[/red]")
+            console.print("[red]Error: NOTION_DATABASE_ID_COLLABIQ not set in environment[/red]")
             console.print("\n[yellow]Remediation:[/yellow]")
-            console.print("1. Set COLLABIQ_DB_ID environment variable")
+            console.print("1. Set NOTION_DATABASE_ID_COLLABIQ environment variable")
             console.print("2. Get database ID from Notion database URL")
         raise typer.Exit(1)
 
@@ -130,7 +130,7 @@ def handle_notion_error(error: Exception, context: str, json_mode: bool = False)
         console.print("3. Run: collabiq config show (to check configuration)")
     elif isinstance(error, NotionObjectNotFoundError):
         console.print("\n[yellow]Remediation:[/yellow]")
-        console.print("1. Check COLLABIQ_DB_ID is correct")
+        console.print("1. Check NOTION_DATABASE_ID_COLLABIQ is correct")
         console.print("2. Verify database exists and is accessible")
         console.print("3. Ensure integration has access to the database")
     elif isinstance(error, NotionPermissionError):

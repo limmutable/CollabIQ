@@ -195,7 +195,8 @@ GMAIL_TOKEN_FILE=path/to/token.json
 Set in `.env` file:
 ```
 NOTION_API_KEY=your_notion_api_key
-NOTION_DATABASE_ID=your_database_id
+NOTION_DATABASE_ID_COLLABIQ=your_collabiq_database_id
+NOTION_DATABASE_ID_COMPANIES=your_companies_database_id
 ```
 
 ### Gemini (for llm commands)
@@ -231,7 +232,7 @@ uv run collabiq config --help    # Phase 10: Configuration
 Set the `GEMINI_API_KEY` environment variable. See configuration section above.
 
 ### "Notion integration error"
-Ensure `NOTION_API_KEY` and `NOTION_DATABASE_ID` are set in `.env` file.
+Ensure `NOTION_API_KEY` and `NOTION_DATABASE_ID_COLLABIQ` are set in `.env` file.
 
 ### "Gmail authentication failed"
 Run the Gmail authentication flow to generate credentials and token files.

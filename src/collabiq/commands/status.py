@@ -312,7 +312,7 @@ async def check_notion_health() -> ComponentStatus:
     try:
         # Get configuration
         api_key = os.getenv("NOTION_API_KEY")
-        collabiq_db_id = os.getenv("COLLABIQ_DB_ID")
+        collabiq_db_id = os.getenv("NOTION_DATABASE_ID_COLLABIQ")
 
         if not api_key:
             return ComponentStatus(
@@ -331,10 +331,10 @@ async def check_notion_health() -> ComponentStatus:
             return ComponentStatus(
                 name="Notion",
                 status="degraded",
-                message="COLLABIQ_DB_ID not configured",
+                message="NOTION_DATABASE_ID_COLLABIQ not configured",
                 response_time_ms=None,
                 remediation=[
-                    "Set COLLABIQ_DB_ID environment variable",
+                    "Set NOTION_DATABASE_ID_COLLABIQ environment variable",
                     "Get database ID from Notion database URL",
                 ]
             )
@@ -372,7 +372,7 @@ async def check_notion_health() -> ComponentStatus:
             elif "not found" in error_msg.lower():
                 status = "degraded"
                 remediation = [
-                    "Check COLLABIQ_DB_ID is correct",
+                    "Check NOTION_DATABASE_ID_COLLABIQ is correct",
                     "Verify database exists and is accessible",
                     "Ensure integration has access to the database",
                 ]

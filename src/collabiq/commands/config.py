@@ -109,7 +109,6 @@ def categorize_config_keys() -> Dict[str, List[str]]:
         ],
         "Notion": [
             "NOTION_API_KEY",
-            "COLLABIQ_DB_ID",
             "NOTION_DATABASE_ID_COMPANIES",
             "NOTION_DATABASE_ID_COLLABIQ",
             "DUPLICATE_BEHAVIOR",
@@ -172,7 +171,6 @@ def get_config_value(key: str, settings: Any) -> Optional[str]:
         "GMAIL_TOKEN_FILE": "gmail_token_path",
         "GMAIL_BATCH_SIZE": "gmail_batch_size",
         "NOTION_API_KEY": lambda s: s.get_secret_or_env("NOTION_API_KEY"),
-        "COLLABIQ_DB_ID": lambda s: s.get_secret_or_env("COLLABIQ_DB_ID"),
         "NOTION_DATABASE_ID_COMPANIES": "notion_database_id_companies",
         "NOTION_DATABASE_ID_COLLABIQ": "notion_database_id_collabiq",
         "DUPLICATE_BEHAVIOR": "duplicate_behavior",
@@ -244,12 +242,12 @@ def validate_required_settings(settings: Any) -> Tuple[bool, List[Dict[str, str]
             "fix": "Set NOTION_API_KEY in .env or Infisical",
         })
 
-    collabiq_db = settings.get_secret_or_env("COLLABIQ_DB_ID")
+    collabiq_db = settings.notion_database_id_collabiq
     if not collabiq_db:
         errors.append({
-            "key": "COLLABIQ_DB_ID",
+            "key": "NOTION_DATABASE_ID_COLLABIQ",
             "issue": "Not set",
-            "fix": "Set COLLABIQ_DB_ID in .env or Infisical",
+            "fix": "Set NOTION_DATABASE_ID_COLLABIQ in .env or Infisical",
         })
 
     # Gemini requirements
