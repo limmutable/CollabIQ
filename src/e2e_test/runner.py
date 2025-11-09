@@ -420,6 +420,9 @@ class E2ERunner:
         Uses multi-LLM orchestration with the configured strategy (failover,
         consensus, best_match, or all_providers). Automatically tracks quality
         metrics and supports quality-based routing.
+
+        Returns:
+            Dictionary with extracted entities, or None on failure
         """
         try:
             if self.llm_orchestrator is None:
@@ -457,7 +460,21 @@ class E2ERunner:
                 except Exception as metrics_error:
                     logger.debug(f"Could not retrieve quality metrics: {metrics_error}")
 
-            return entities
+            # Convert ExtractedEntities to dictionary for downstream processing
+            entities_dict = {
+                "person_in_charge": entities.person_in_charge or "N/A",
+                "startup_name": entities.startup_name or "N/A",
+                "partner_org": entities.partner_org or "N/A",
+                "details": entities.details or "N/A",
+                "date": str(entities.date) if entities.date else "2025-01-01",
+            }
+
+            logger.info(f"Extracted entities: {entities_dict}")
+
+            # Save extraction to file for later analysis
+            self._save_extraction(run_id, email_id, entities_dict, entities)
+
+            return entities_dict
 
         except Exception as e:
             error = self.error_collector.collect_error(
@@ -714,6 +731,40 @@ class E2ERunner:
 
         except Exception as e:
             logger.error(f"Failed to save quality metrics report: {e}")
+
+    def _save_extraction(self, run_id: str, email_id: str, entities_dict: dict, entities_model):
+        """Save extracted entities to file for later analysis.
+
+        Args:
+            run_id: Test run ID
+            email_id: Email ID
+            entities_dict: Dictionary of extracted entities
+            entities_model: Original ExtractedEntities model with confidence scores
+        """
+        extraction_dir = self.output_dir / "extractions" / run_id
+        extraction_dir.mkdir(parents=True, exist_ok=True)
+
+        extraction_file = extraction_dir / f"{email_id}.json"
+
+        # Include confidence scores and provider info from model
+        extraction_data = {
+            **entities_dict,
+            "confidence": {
+                "person": entities_model.confidence.person,
+                "startup": entities_model.confidence.startup,
+                "partner": entities_model.confidence.partner,
+                "details": entities_model.confidence.details,
+                "date": entities_model.confidence.date,
+            },
+            "provider_name": getattr(entities_model, 'provider_name', 'unknown'),
+            "email_id": email_id,
+            "extracted_at": str(entities_model.extracted_at) if hasattr(entities_model, 'extracted_at') else None,
+        }
+
+        with extraction_file.open("w", encoding="utf-8") as f:
+            json.dump(extraction_data, f, indent=2, ensure_ascii=False)
+
+        logger.debug(f"Saved extraction to {extraction_file}")
 
     def _save_test_run(self, test_run: TestRun):
         """Save test run state to disk"""
