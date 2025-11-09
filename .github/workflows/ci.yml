@@ -27,7 +27,7 @@ jobs:
       run: uv python install ${{ matrix.python-version }}
 
     - name: Install dependencies
-      run: uv sync --all-extras --dev
+      run: uv sync --group dev
 
     - name: Run linting (ruff)
       run: uv run ruff check .
@@ -39,7 +39,7 @@ jobs:
     - name: Run tests
       run: uv run pytest --cov=src --cov-report=xml --cov-report=term
 
-    - name: Upload coverage to Codecov (optional)
+    - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       if: matrix.python-version == '3.12'
       with:
@@ -47,7 +47,7 @@ jobs:
         fail_ci_if_error: false
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      continue-on-error: true  # Don't fail if Codecov upload fails
+      continue-on-error: true
 
   format-check:
     runs-on: ubuntu-latest
@@ -57,12 +57,15 @@ jobs:
 
     - name: Install UV
       uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
 
     - name: Set up Python
       run: uv python install 3.12
 
     - name: Install dependencies
-      run: uv sync --dev
+      run: uv sync --group dev
 
     - name: Check code formatting
       run: uv run ruff format --check .
@@ -75,15 +78,16 @@ jobs:
 
     - name: Install UV
       uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
 
     - name: Set up Python
       run: uv python install 3.12
 
     - name: Install dependencies
-      run: uv sync --dev
+      run: uv sync --group dev
 
-    - name: Run safety check (optional)
-      run: |
-        uv pip install safety
-        uv run safety check --json || true
-      continue-on-error: true  # Don't fail CI on safety check initially
+    - name: Run ruff security checks
+      run: uv run ruff check --select S .
+      continue-on-error: true
