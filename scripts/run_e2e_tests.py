@@ -6,6 +6,8 @@ Production CLI with argparse for flexible test execution. Supports running
 tests with all emails, single email, or resuming interrupted runs. Now includes
 multi-LLM orchestration and quality-based routing.
 
+Generates consolidated test report with format: YYYYMMDD_HHMMSS-e2e_test.md
+
 Usage:
     # Process all emails from test_email_ids.json (failover strategy)
     uv run python scripts/run_e2e_tests.py --all
@@ -21,9 +23,6 @@ Usage:
 
     # Resume interrupted test run
     uv run python scripts/run_e2e_tests.py --resume 20251105_143000
-
-    # Generate detailed error report after test run
-    uv run python scripts/run_e2e_tests.py --all --report
 """
 
 import argparse
@@ -36,7 +35,6 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.e2e_test.runner import E2ERunner
-from src.e2e_test.report_generator import ReportGenerator
 from src.e2e_test.detailed_report_generator import DetailedReportGenerator
 
 
@@ -81,9 +79,6 @@ Examples:
   # Resume interrupted run
   %(prog)s --resume 20251105_143000
 
-  # Generate detailed error report
-  %(prog)s --all --report
-
 Multi-LLM Strategies:
   failover       - Try providers sequentially (fastest, default)
   consensus      - Query multiple providers, use majority vote
@@ -114,12 +109,6 @@ Multi-LLM Strategies:
 
     # Optional arguments
     parser.add_argument(
-        "--report",
-        action="store_true",
-        help="Generate detailed error report after test run",
-    )
-
-    parser.add_argument(
         "--email-ids-file",
         type=str,
         default="data/e2e_test/test_email_ids.json",
@@ -134,10 +123,10 @@ Multi-LLM Strategies:
     )
 
     parser.add_argument(
-        "--no-test-mode",
+        "--production-mode",
         action="store_false",
         dest="test_mode",
-        help="Disable test mode (use real components)",
+        help="Run in production mode (use real components)",
     )
 
     parser.add_argument(
@@ -173,9 +162,8 @@ Multi-LLM Strategies:
         enable_quality_routing=args.quality_routing,
     )
 
-    # Initialize report generators
-    report_gen = ReportGenerator()
-    detailed_report_gen = DetailedReportGenerator()
+    # Initialize report generator
+    report_gen = DetailedReportGenerator()
 
     # Run tests based on mode
     test_run = None
@@ -207,14 +195,9 @@ Multi-LLM Strategies:
         print(f"Processing {len(email_ids)} emails...")
         test_run = runner.run_tests(email_ids, test_mode=args.test_mode)
 
-    # Generate summary report
+    # Generate consolidated report
     if test_run:
-        print("\nGenerating summary report...")
-        summary = report_gen.generate_summary(test_run)
-        summary_path = Path(f"data/e2e_test/reports/{test_run.run_id}_summary.md")
-        summary_path.write_text(summary, encoding="utf-8")
-
-        # Print summary
+        # Print summary to console
         print("\n" + "=" * 70)
         print("Test Run Summary")
         print("=" * 70)
@@ -224,7 +207,6 @@ Multi-LLM Strategies:
         print(f"Success: {test_run.success_count} ({test_run.success_count / test_run.emails_processed * 100:.1f}%)")
         print(f"Failures: {test_run.failure_count}")
         print(f"Errors: {test_run.error_summary}")
-        print(f"\nSummary report saved to: {summary_path}")
 
         # Show quality metrics if available
         quality_metrics = runner.get_quality_metrics_summary()
@@ -239,22 +221,11 @@ Multi-LLM Strategies:
                 print(f"  Field Completeness: {metrics['field_completeness']:.1f}%")
                 print(f"  Validation Rate: {metrics['validation_success_rate']:.1f}%")
             print("=" * 70)
-            quality_report_path = Path(f"data/e2e_test/reports/{test_run.run_id}_quality_metrics.json")
-            print(f"\nQuality metrics saved to: {quality_report_path}")
 
-        # Generate error report if requested
-        if args.report:
-            print("\nGenerating detailed error report...")
-            error_report = report_gen.generate_error_report(test_run.run_id)
-            error_path = Path(f"data/e2e_test/reports/{test_run.run_id}_errors.md")
-            error_path.write_text(error_report, encoding="utf-8")
-            print(f"Error report saved to: {error_path}")
-
-        # Always generate detailed report with timestamped filename
-        print("\nGenerating detailed E2E report...")
-        detailed_report_path = detailed_report_gen.save_report(test_run.run_id)
-        print(f"Detailed report saved to: {detailed_report_path}")
-
+        # Generate single consolidated report with format: YYYYMMDD_HHMMSS-e2e_test.md
+        print("\nGenerating consolidated E2E test report...")
+        report_path = report_gen.save_report(test_run.run_id)
+        print(f"Report saved to: {report_path}")
         print("=" * 70)
 
         # Exit with appropriate status code

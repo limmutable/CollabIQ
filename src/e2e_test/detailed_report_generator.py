@@ -58,6 +58,9 @@ class DetailedReportGenerator:
             with quality_metrics_file.open() as f:
                 quality_metrics = json.load(f)
 
+        # Load error details
+        errors = self._load_errors(run_id)
+
         # Generate report sections
         report = []
         report.append(self._generate_header(run_id, run_data))
@@ -66,6 +69,11 @@ class DetailedReportGenerator:
         report.append(self._generate_field_mappings())
         report.append(self._generate_notion_write_results(run_data, extractions))
         report.append(self._generate_quality_metrics(quality_metrics))
+
+        # Add error details section if errors exist
+        if errors:
+            report.append(self._generate_error_details(errors))
+
         report.append(self._generate_footer(run_id))
 
         return "\n\n".join(report)
@@ -90,6 +98,37 @@ class DetailedReportGenerator:
                 extractions[email_id] = json.load(f)
 
         return extractions
+
+    def _load_errors(self, run_id: str) -> Dict[str, List[dict]]:
+        """Load all error files for a run organized by severity.
+
+        Args:
+            run_id: Test run ID
+
+        Returns:
+            Dictionary mapping severity -> list of error records
+        """
+        errors_dir = self.base_dir / "errors"
+        errors_by_severity = {
+            "critical": [],
+            "high": [],
+            "medium": [],
+            "low": [],
+        }
+
+        for severity in errors_by_severity.keys():
+            severity_dir = errors_dir / severity
+            if not severity_dir.exists():
+                continue
+
+            # Load all error files for this run_id
+            error_files = list(severity_dir.glob(f"{run_id}_*.json"))
+            for error_file in error_files:
+                with error_file.open("r", encoding="utf-8") as f:
+                    error_data = json.load(f)
+                    errors_by_severity[severity].append(error_data)
+
+        return errors_by_severity
 
     def _generate_header(self, run_id: str, run_data: dict) -> str:
         """Generate report header."""
@@ -292,6 +331,81 @@ Quality metrics collected across all LLM providers:
 
         return "\n".join(section)
 
+    def _generate_error_details(self, errors_by_severity: Dict[str, List[dict]]) -> str:
+        """Generate detailed error section.
+
+        Args:
+            errors_by_severity: Dictionary mapping severity -> list of error records
+
+        Returns:
+            Markdown-formatted error details section
+        """
+        total_errors = sum(len(errors) for errors in errors_by_severity.values())
+        if total_errors == 0:
+            return ""
+
+        section = [f"""## 6. Detailed Error Report
+
+**Total Errors**: {total_errors}
+
+"""]
+
+        # Generate error details by severity
+        for severity in ["critical", "high", "medium", "low"]:
+            errors = errors_by_severity[severity]
+            if len(errors) == 0:
+                continue
+
+            section.append(f"### {severity.upper()} Errors ({len(errors)})\n")
+
+            for i, error in enumerate(errors, 1):
+                section.append(f"""#### {i}. {error.get("error_type", "Unknown Error")}
+
+- **Error ID**: `{error.get("error_id", "N/A")}`
+- **Email ID**: `{error.get("email_id", "N/A")}`
+- **Stage**: {error.get("stage", "N/A")}
+- **Timestamp**: {error.get("timestamp", "N/A")}
+- **Status**: {error.get("resolution_status", "unresolved")}
+
+**Error Message**:
+```
+{error.get("error_message", "No message")}
+```
+""")
+
+                if error.get("stack_trace"):
+                    section.append(f"""<details>
+<summary>Stack Trace</summary>
+
+```python
+{error["stack_trace"]}
+```
+
+</details>
+""")
+
+                if error.get("input_data_snapshot"):
+                    section.append(f"""<details>
+<summary>Input Data Snapshot</summary>
+
+```json
+{json.dumps(error["input_data_snapshot"], indent=2, ensure_ascii=False)}
+```
+
+</details>
+""")
+
+                if error.get("fix_commit"):
+                    section.append(f"**Fix Commit**: `{error['fix_commit']}`\n")
+
+                if error.get("notes"):
+                    section.append(f"**Notes**: {error['notes']}\n")
+
+                section.append("\n---\n")
+
+        section.append("\n")
+        return "\n".join(section)
+
     def _generate_footer(self, run_id: str) -> str:
         """Generate report footer."""
         return f"""## Test Artifacts
@@ -364,9 +478,9 @@ collabiq llm compare --detailed
         """
         report_content = self.generate_detailed_report(run_id)
 
-        # Create timestamped filename
+        # Create timestamped filename in format: YYYYMMDD_HHMMSS-e2e_test.md
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        report_filename = f"{timestamp}_detailed_e2e_report_{run_id}.md"
+        report_filename = f"{timestamp}-e2e_test.md"
         report_path = self.reports_dir / report_filename
 
         with report_path.open("w", encoding="utf-8") as f:

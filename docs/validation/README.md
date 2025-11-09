@@ -8,7 +8,7 @@ This directory contains API validation results, testing guides, and technical re
 
 ### End-to-End Testing
 
-- **[E2E_TESTING.md](E2E_TESTING.md)** (40K) - Comprehensive E2E testing guide
+- **[E2E_TESTING.md](../testing/E2E_TESTING.md)** (40K) - Comprehensive E2E testing guide
   - Setup and configuration
   - Running tests (mock, dry-run, full modes)
   - Module testing (Gmail, Gemini, Notion)
@@ -68,13 +68,13 @@ See [docs/archive/README.md](../archive/README.md) for more details on archived 
 
 ### For New Developers
 
-1. **Start here**: [E2E_TESTING.md](E2E_TESTING.md) - Understand the full testing workflow
+1. **Start here**: [E2E_TESTING.md](../testing/E2E_TESTING.md) - Understand the full testing workflow
 2. **Understand APIs**: Read API validation docs to see what's been tested
 3. **Reference**: Use data model and schema docs when working with test data
 
 ### For Testing
 
-- **Run E2E tests**: Follow [E2E_TESTING.md](E2E_TESTING.md) Quick Start section
+- **Run E2E tests**: Follow [E2E_TESTING.md](../testing/E2E_TESTING.md) Quick Start section
 - **Validate APIs**: Check validation docs to confirm API capabilities
 - **Debug issues**: Refer to schema analysis for data structure reference
 
@@ -90,7 +90,7 @@ See [docs/archive/README.md](../archive/README.md) for more details on archived 
 
 | Document | Status | Last Updated | Purpose |
 |----------|--------|--------------|---------|
-| E2E_TESTING.md | ✅ Current | Nov 8, 2025 | E2E test guide |
+| ../testing/E2E_TESTING.md | ✅ Current | Nov 10, 2025 | E2E test guide |
 | E2E_DATA_MODEL.md | ✅ Current | Nov 8, 2025 | Test data reference |
 | GEMINI_API_REFERENCE.md | ⚠️ Partially current | Nov 8, 2025 | API reference (retry logic deprecated) |
 | NOTION_API_VALIDATION.md | ✅ Current | Oct 29, 2025 | API validation results |
