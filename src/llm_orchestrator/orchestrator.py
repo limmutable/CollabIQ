@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Optional
 
 from llm_orchestrator.exceptions import InvalidProviderError, InvalidStrategyError
+from llm_orchestrator.strategies.all_providers import AllProvidersStrategy
 from llm_orchestrator.strategies.best_match import BestMatchStrategy
 from llm_orchestrator.strategies.consensus import ConsensusStrategy
 from llm_orchestrator.strategies.failover import FailoverStrategy
@@ -28,6 +29,7 @@ if TYPE_CHECKING:
     from llm_adapters.health_tracker import HealthTracker
     from llm_adapters.openai_adapter import OpenAIAdapter
     from llm_orchestrator.cost_tracker import CostTracker
+    from llm_orchestrator.quality_tracker import QualityTracker
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +58,7 @@ class LLMOrchestrator:
         config: OrchestrationConfig,
         health_tracker: "HealthTracker",
         cost_tracker: Optional["CostTracker"] = None,
+        quality_tracker: Optional["QualityTracker"] = None,
     ):
         """Initialize LLM Orchestrator.
 
@@ -64,15 +67,21 @@ class LLMOrchestrator:
             config: Orchestration configuration
             health_tracker: Health tracking instance
             cost_tracker: Optional cost tracking instance
+            quality_tracker: Optional quality tracking instance
         """
         self.providers = providers
         self.config = config
         self.health_tracker = health_tracker
         self.cost_tracker = cost_tracker
+        self.quality_tracker = quality_tracker
 
         # Initialize strategies
+        # Pass quality_tracker to FailoverStrategy for quality-based routing
         self._strategies = {
-            "failover": FailoverStrategy(priority_order=config.provider_priority),
+            "failover": FailoverStrategy(
+                priority_order=config.provider_priority,
+                quality_tracker=quality_tracker if config.enable_quality_routing else None,
+            ),
             "consensus": ConsensusStrategy(
                 provider_names=config.provider_priority,
                 fuzzy_threshold=config.fuzzy_match_threshold,
@@ -80,6 +89,11 @@ class LLMOrchestrator:
                 abstention_threshold=config.abstention_confidence_threshold,
             ),
             "best_match": BestMatchStrategy(provider_names=config.provider_priority),
+            "all_providers": AllProvidersStrategy(
+                provider_names=config.provider_priority,
+                selection_mode="quality_based" if config.enable_quality_routing else "highest_confidence",
+                quality_tracker=quality_tracker,
+            ),
         }
 
         self._active_strategy = config.default_strategy
@@ -120,6 +134,7 @@ class LLMOrchestrator:
         from llm_adapters.health_tracker import HealthTracker
         from llm_adapters.openai_adapter import OpenAIAdapter
         from llm_orchestrator.cost_tracker import CostTracker
+        from llm_orchestrator.quality_tracker import QualityTracker
 
         # Use default provider configs if not provided
         if provider_configs is None:
@@ -183,11 +198,18 @@ class LLMOrchestrator:
             provider_configs=provider_configs,
         )
 
+        # Initialize quality tracker
+        quality_tracker = QualityTracker(
+            data_dir=data_dir,
+            evaluation_window_size=50,  # Default window for trend calculation
+        )
+
         return cls(
             providers=providers,
             config=config,
             health_tracker=health_tracker,
             cost_tracker=cost_tracker,
+            quality_tracker=quality_tracker,
         )
 
     @staticmethod
@@ -247,7 +269,7 @@ class LLMOrchestrator:
 
         Args:
             email_text: Cleaned email body
-            strategy: Override default strategy (one of: failover, consensus, best_match)
+            strategy: Override default strategy (one of: failover, consensus, best_match, all_providers)
             company_context: Optional company context for matching
             email_id: Optional email ID
 
@@ -302,6 +324,98 @@ class LLMOrchestrator:
             f"Successfully extracted entities using {provider_used} "
             f"(strategy={strategy_name})"
         )
+
+        # Record cost metrics if cost_tracker is available
+        if self.cost_tracker:
+            try:
+                # Get token usage from the provider adapter
+                provider = self.providers[provider_used]
+                if hasattr(provider, "last_input_tokens") and hasattr(
+                    provider, "last_output_tokens"
+                ):
+                    self.cost_tracker.record_usage(
+                        provider_name=provider_used,
+                        input_tokens=provider.last_input_tokens,
+                        output_tokens=provider.last_output_tokens,
+                    )
+                    logger.debug(
+                        f"Recorded cost metrics for {provider_used}: "
+                        f"{provider.last_input_tokens} input, "
+                        f"{provider.last_output_tokens} output tokens"
+                    )
+            except Exception as e:
+                logger.warning(f"Failed to record cost metrics: {e}", exc_info=True)
+
+        # Record quality metrics if quality_tracker is available
+        if self.quality_tracker:
+            try:
+                # For MVP, we assume validation passes if extraction succeeded
+                # TODO: Add actual validation logic in Phase 6 (T031)
+                validation_passed = True
+                validation_failure_reasons = None
+
+                # Check if we used all_providers strategy - record metrics for ALL providers
+                if strategy_name == "all_providers" and isinstance(
+                    strategy_impl, AllProvidersStrategy
+                ):
+                    # Record metrics for ALL successful providers
+                    for prov_name, prov_entities in strategy_impl.last_all_results.items():
+                        try:
+                            self.quality_tracker.record_extraction(
+                                provider_name=prov_name,
+                                extracted_entities=prov_entities,
+                                validation_passed=validation_passed,
+                                validation_failure_reasons=validation_failure_reasons,
+                            )
+                            logger.debug(
+                                f"Recorded quality metrics for {prov_name} "
+                                f"(all_providers strategy)"
+                            )
+                        except Exception as e:
+                            logger.warning(
+                                f"Failed to record quality metrics for {prov_name}: {e}"
+                            )
+
+                    # Also record cost metrics for all providers
+                    if self.cost_tracker:
+                        for prov_name in strategy_impl.last_all_results.keys():
+                            try:
+                                provider = self.providers[prov_name]
+                                if hasattr(provider, "last_input_tokens") and hasattr(
+                                    provider, "last_output_tokens"
+                                ):
+                                    self.cost_tracker.record_usage(
+                                        provider_name=prov_name,
+                                        input_tokens=provider.last_input_tokens,
+                                        output_tokens=provider.last_output_tokens,
+                                    )
+                                    logger.debug(
+                                        f"Recorded cost metrics for {prov_name} "
+                                        f"(all_providers strategy)"
+                                    )
+                            except Exception as e:
+                                logger.warning(
+                                    f"Failed to record cost metrics for {prov_name}: {e}"
+                                )
+
+                    logger.info(
+                        f"Recorded metrics for {len(strategy_impl.last_all_results)} "
+                        f"providers (all_providers strategy)"
+                    )
+                else:
+                    # Standard single-provider metrics recording
+                    self.quality_tracker.record_extraction(
+                        provider_name=provider_used,
+                        extracted_entities=entities,
+                        validation_passed=validation_passed,
+                        validation_failure_reasons=validation_failure_reasons,
+                    )
+                    logger.debug(
+                        f"Recorded quality metrics for {provider_used}: "
+                        f"validation={'PASS' if validation_passed else 'FAIL'}"
+                    )
+            except Exception as e:
+                logger.warning(f"Failed to record quality metrics: {e}", exc_info=True)
 
         return entities
 

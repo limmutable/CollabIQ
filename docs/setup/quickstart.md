@@ -93,9 +93,10 @@ deactivate
 - ✅ **Phase 2c Complete**: Classification & Summarization (type, intensity, summary generation)
 - ✅ **Phase 2d Complete**: Notion Write Operations (duplicate detection, DLQ handling)
 - ✅ **Phase 2e Complete**: Error Handling & Retry Logic (unified retry system with circuit breakers)
-- ✅ **Phase 3a Complete**: Admin CLI Enhancement (30 commands across 7 groups)
+- ✅ **Phase 3a Complete**: Admin CLI Enhancement (30+ commands across 7 groups)
 - ✅ **Phase 3b Complete**: Multi-LLM Provider Support (Gemini/Claude/OpenAI with failover, consensus, best-match)
-- 🎯 **Production Status**: READY - Full automation with multi-LLM resilience, health monitoring, and cost tracking
+- ✅ **Phase 013 Complete**: Quality Metrics & Intelligent Routing (track quality, compare providers, quality-based routing)
+- 🎯 **Production Status**: READY - Full automation with multi-LLM resilience, quality-based routing, and cost/performance tracking
 
 **Error Handling**: CollabIQ includes comprehensive error handling with automatic retry logic:
 - **Automatic Retries**: Transient failures (timeouts, rate limits) retry automatically with exponential backoff
@@ -376,6 +377,97 @@ uv run collabiq notion export --output companies.json
 - Markdown format: Human-readable summary with company classifications
 - Cache location: `data/cache/*.json`
 
+## Step 9: Quality Metrics & Intelligent Routing
+
+### Test Quality Metrics (Phase 013)
+
+Test quality tracking and provider comparison:
+
+```bash
+# Check current system status
+collabiq llm status
+
+# Compare provider performance
+collabiq llm compare --detailed
+
+# Export all metrics to JSON file
+collabiq llm export-metrics
+
+# Export only quality metrics
+collabiq llm export-metrics -o quality_report.json --no-health --no-cost
+
+# Test with specific email ID
+uv run python test_specific_email.py --email-id "test_001" --show-metrics
+```
+
+**What happens**:
+1. Tracks extraction quality automatically (confidence, completeness, validation)
+2. Compares providers using composite scoring:
+   - **Quality Score**: 40% confidence + 30% completeness + 30% validation
+   - **Value Score**: quality-to-cost ratio (considers free tier vs paid)
+3. Routes requests to optimal provider based on historical performance
+4. Falls back to next provider if primary fails or is unhealthy
+
+**Example Output**:
+```
+Quality Rankings:
+1. Claude   - Quality: 0.85 (85% confidence, 90% completeness, 100% validation)
+2. Gemini   - Quality: 0.82 (80% confidence, 85% completeness, 95% validation)
+3. OpenAI   - Quality: 0.78 (75% confidence, 80% completeness, 90% validation)
+
+Value Rankings (Quality-to-Cost):
+1. Gemini   - Value: 1.23 (Free tier: 1.5x multiplier)
+2. Claude   - Value: 8.10 (Quality 0.85 / Cost $0.105)
+3. OpenAI   - Value: 346.67 (Quality 0.78 / Cost $0.00225)
+
+Recommendation: Claude (highest quality, acceptable cost)
+```
+
+### Enable Quality-Based Routing
+
+Turn on intelligent provider selection:
+
+```bash
+# Enable quality-based routing
+collabiq llm set-quality-routing --enabled
+
+# Test with quality routing
+collabiq llm test "Your email text here" --quality-routing
+
+# Switch orchestration strategy
+collabiq llm set-strategy consensus  # or: failover, best_match
+```
+
+**Routing Logic**:
+- **Enabled**: Selects provider with highest historical quality score
+- **Disabled**: Uses fixed priority order (Gemini → Claude → OpenAI)
+- **No metrics**: Falls back to priority order automatically
+
+### View Quality Metrics
+
+Check stored metrics and trends:
+
+```bash
+# View quality metrics file
+cat data/llm_health/quality_metrics.json
+
+# View cost tracking
+cat data/llm_health/cost_metrics.json
+
+# Show metrics in test script
+uv run python test_specific_email.py --email-id "test_002" --show-metrics
+```
+
+**Metrics Tracked**:
+- Per-provider extraction counts
+- Confidence averages (overall + per-field)
+- Field completeness percentages
+- Validation success rates
+- Total cost and cost-per-email
+- Token usage (input/output/total)
+
+**See Also**: [docs/CLI_REFERENCE.md](../CLI_REFERENCE.md) for complete CLI command reference
+
 ## Next Steps
 
 ### Current Status (Completed Phases)
@@ -401,8 +493,15 @@ uv run collabiq notion export --output companies.json
   - Structured error logging with JSON formatting
   - Service-specific retry configurations (timeouts, attempts, jitter)
   - Rate limit handling with `Retry-After` header support
+✅ **Phase 011 Complete**: Admin CLI (30+ commands for system management)
+✅ **Phase 012 Complete**: Multi-LLM Support (Claude, OpenAI, Gemini with failover)
+✅ **Phase 013 Complete**: Quality Metrics & Intelligent Routing
+  - Automatic quality tracking (confidence, completeness, validation)
+  - Provider comparison with composite scoring
+  - Quality-based routing with cost optimization
+  - Cost tracking with per-provider metrics
 
-🎯 **MVP Status**: COMPLETE - Full extraction pipeline with Notion integration working end-to-end
+🎯 **Production Status**: READY - Full automation with multi-LLM resilience, quality-based routing, and cost/performance tracking
 
 ### Next Steps: Production & Monitoring
 

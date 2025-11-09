@@ -34,9 +34,12 @@ CollabIQ automates the tedious process of tracking collaboration activities:
 
 ### ✅ Intelligent Entity Extraction
 - **Multi-LLM support** with failover across Gemini, Claude, and OpenAI
+- **Quality-based routing** automatically selects best provider based on historical performance
 - **100% accuracy** on test dataset with automatic provider failover
 - **Provider health monitoring** with circuit breakers (CLOSED/OPEN/HALF_OPEN states)
+- **Quality metrics tracking** monitors confidence, completeness, and validation success
 - **Cost tracking** monitors token usage and pricing across all providers
+- **Provider comparison** with composite scoring (quality vs cost optimization)
 - Handles both Korean and English emails
 - Extracts 5 key entities: person, startup, partner, details, date
 - Confidence scoring for each field
@@ -148,12 +151,21 @@ uv run collabiq test e2e --limit 5
 
 # LLM provider management (Multi-provider support)
 uv run collabiq llm status --detailed
+uv run collabiq llm compare --detailed
 uv run collabiq llm test gemini
 uv run collabiq llm test claude
 uv run collabiq llm set-strategy failover
+uv run collabiq llm set-quality-routing --enabled
+
+# Export metrics to JSON
+uv run collabiq llm export-metrics
+uv run collabiq llm export-metrics -o quality_report.json --no-health --no-cost
+
+# Test with specific email ID
+uv run python scripts/test_specific_email.py --email-id "test_001" --show-metrics
 ```
 
-For complete CLI documentation, see [docs/validation/COMMANDS.md](docs/validation/COMMANDS.md)
+For complete CLI documentation, see [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)
 
 ### Legacy Scripts (Deprecated)
 
@@ -210,6 +222,46 @@ Email (Gmail) → EmailReceiver → ContentNormalizer → Gemini AI
 - **Pydantic Validation**: Type-safe data handling throughout
 
 For detailed architecture, see [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)
+
+---
+
+## Project Status
+
+**Current Phase**: Phase 013 Complete - Quality Metrics & Intelligent Routing
+**Production Ready**: ✅ Yes - Full automation with multi-LLM resilience
+**Overall Progress**: 12/14 phases complete (86%)
+
+### Completed Features
+
+✅ **Phase 1a**: Email Reception (Gmail API OAuth2)
+✅ **Phase 1b**: Gemini Entity Extraction (100% accuracy)
+✅ **Phase 005**: Gmail OAuth2 Setup (group alias support)
+✅ **Phase 2a**: Notion Read Operations (schema discovery, data fetching)
+✅ **Phase 2b**: LLM-Based Company Matching (100% accuracy)
+✅ **Phase 2c**: Classification & Summarization (type/intensity/summary)
+✅ **Phase 2d**: Notion Write Operations (duplicate detection, DLQ)
+✅ **Phase 2e**: Error Handling (circuit breakers, unified retry logic)
+✅ **Phase 3a**: Admin CLI (30+ commands for system management)
+✅ **Phase 3b**: Multi-LLM Support (Gemini, Claude, OpenAI with failover)
+✅ **Phase 3c**: Quality Metrics & Intelligent Routing (quality tracking, provider comparison)
+
+### Current Capabilities
+
+- Full end-to-end automation: Email → Notion without manual intervention
+- Multi-LLM resilience with automatic failover
+- Quality-based provider selection with cost optimization
+- Comprehensive CLI for all operations
+- Circuit breakers and automatic retry for fault tolerance
+- Cost and quality tracking per provider
+- Dead Letter Queue for failed operations
+
+### Next Steps
+
+🎯 **Phase 4a**: Basic Reporting - Generate analytics from Notion data
+⏳ **Phase 4b**: Advanced Analytics - Trend analysis and insights
+⏳ **Phase 4c**: Dashboards - Visual reporting interface
+
+For detailed roadmap, see [docs/architecture/ROADMAP.md](docs/architecture/ROADMAP.md)
 
 ---
 

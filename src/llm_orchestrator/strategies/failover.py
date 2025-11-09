@@ -5,13 +5,16 @@ in priority order until one succeeds. Unhealthy providers are automatically skip
 """
 
 import logging
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from llm_adapters.health_tracker import HealthTracker
 from llm_orchestrator.exceptions import AllProvidersFailedError
 from llm_provider.base import LLMProvider
 from llm_provider.exceptions import LLMAPIError
 from llm_provider.types import ExtractedEntities
+
+if TYPE_CHECKING:
+    from llm_orchestrator.quality_tracker import QualityTracker
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +25,9 @@ class FailoverStrategy:
     Tries providers sequentially in priority order. If one fails,
     automatically tries the next healthy provider. Skips unhealthy providers.
 
+    Supports optional quality-based routing to select providers based on
+    historical quality metrics before falling back to priority order.
+
     Example:
         >>> strategy = FailoverStrategy(priority_order=["gemini", "claude", "openai"])
         >>> providers = {"gemini": gemini_adapter, "claude": claude_adapter}
@@ -29,15 +35,22 @@ class FailoverStrategy:
         >>> result = strategy.execute(providers, "email text", tracker)
     """
 
-    def __init__(self, priority_order: list[str]):
+    def __init__(
+        self, priority_order: list[str], quality_tracker: Optional["QualityTracker"] = None
+    ):
         """Initialize failover strategy.
 
         Args:
             priority_order: List of provider names in priority order
                           (e.g., ["gemini", "claude", "openai"])
+            quality_tracker: Optional QualityTracker for quality-based routing
         """
         self.priority_order = priority_order
-        logger.info(f"Initialized FailoverStrategy with priority: {priority_order}")
+        self.quality_tracker = quality_tracker
+        logger.info(
+            f"Initialized FailoverStrategy with priority: {priority_order}, "
+            f"quality_routing={'enabled' if quality_tracker else 'disabled'}"
+        )
 
     def execute(
         self,
@@ -50,6 +63,8 @@ class FailoverStrategy:
         """Execute failover strategy across providers.
 
         Tries providers in priority order until one succeeds.
+        If quality_tracker is available, quality-ranked providers are tried first,
+        then falls back to priority order for remaining providers.
 
         Args:
             providers: Dictionary mapping provider_name → LLMProvider instance
@@ -65,7 +80,7 @@ class FailoverStrategy:
             AllProvidersFailedError: If all providers failed or are unhealthy
 
         Contract:
-            - MUST try providers in priority order
+            - MUST try providers in priority order (or quality order if enabled)
             - MUST skip unhealthy providers
             - MUST record failures in health tracker
             - MUST raise AllProvidersFailedError if all fail
@@ -74,7 +89,39 @@ class FailoverStrategy:
         last_error: Optional[Exception] = None
         attempted_providers = []
 
-        for provider_name in self.priority_order:
+        # Determine provider order: quality-based or priority-based
+        provider_order = self.priority_order.copy()
+
+        # If quality routing is enabled, try quality-ranked providers first
+        if self.quality_tracker:
+            # Get available provider names from the providers dict
+            available_providers = list(providers.keys())
+
+            # Get quality-ranked provider (best quality score)
+            quality_selected = self.quality_tracker.select_provider_by_quality(
+                available_providers
+            )
+
+            if quality_selected:
+                # Put quality-selected provider first
+                provider_order = [quality_selected]
+
+                # Add remaining providers in priority order
+                for provider_name in self.priority_order:
+                    if provider_name != quality_selected and provider_name in available_providers:
+                        provider_order.append(provider_name)
+
+                logger.info(
+                    f"Quality routing enabled: trying {quality_selected} first, "
+                    f"then falling back to: {provider_order[1:]}"
+                )
+            else:
+                logger.info(
+                    "Quality routing enabled but no quality metrics available, "
+                    "falling back to priority order"
+                )
+
+        for provider_name in provider_order:
             # Skip if provider not available
             if provider_name not in providers:
                 logger.warning(
