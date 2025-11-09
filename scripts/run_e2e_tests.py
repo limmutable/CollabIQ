@@ -37,6 +37,7 @@ sys.path.insert(0, str(project_root))
 
 from src.e2e_test.runner import E2ERunner
 from src.e2e_test.report_generator import ReportGenerator
+from src.e2e_test.detailed_report_generator import DetailedReportGenerator
 
 
 def load_test_email_ids(email_ids_file: str = "data/e2e_test/test_email_ids.json") -> list[str]:
@@ -172,8 +173,9 @@ Multi-LLM Strategies:
         enable_quality_routing=args.quality_routing,
     )
 
-    # Initialize report generator
+    # Initialize report generators
     report_gen = ReportGenerator()
+    detailed_report_gen = DetailedReportGenerator()
 
     # Run tests based on mode
     test_run = None
@@ -247,6 +249,11 @@ Multi-LLM Strategies:
             error_path = Path(f"data/e2e_test/reports/{test_run.run_id}_errors.md")
             error_path.write_text(error_report, encoding="utf-8")
             print(f"Error report saved to: {error_path}")
+
+        # Always generate detailed report with timestamped filename
+        print("\nGenerating detailed E2E report...")
+        detailed_report_path = detailed_report_gen.save_report(test_run.run_id)
+        print(f"Detailed report saved to: {detailed_report_path}")
 
         print("=" * 70)
 

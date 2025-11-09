@@ -71,7 +71,21 @@ class E2ERunner:
             orchestration_strategy: Strategy for LLM orchestration (failover, consensus, best_match, all_providers)
             enable_quality_routing: Enable quality-based provider selection
         """
-        self.gmail_receiver = gmail_receiver
+        # Auto-initialize GmailReceiver if not in test mode and not provided
+        if not test_mode and gmail_receiver is None:
+            try:
+                from email_receiver.gmail_receiver import GmailReceiver
+
+                self.gmail_receiver = GmailReceiver(
+                    credentials_path="credentials.json",
+                    token_path="token.json"
+                )
+                logger.info("Auto-initialized GmailReceiver for production mode")
+            except Exception as e:
+                logger.warning(f"Failed to auto-initialize GmailReceiver: {e}")
+                self.gmail_receiver = None
+        else:
+            self.gmail_receiver = gmail_receiver
 
         # Initialize LLM Orchestrator (preferred) or fall back to legacy gemini_adapter
         if llm_orchestrator is not None:
@@ -102,7 +116,33 @@ class E2ERunner:
             self.gemini_adapter = None
 
         self.classification_service = classification_service
-        self.notion_writer = notion_writer
+
+        # Auto-initialize NotionWriter if not in test mode and not provided
+        if not test_mode and notion_writer is None:
+            try:
+                import os
+                from notion_integrator.integrator import NotionIntegrator
+                from notion_integrator.writer import NotionWriter
+
+                # Initialize Notion components
+                notion_integrator = NotionIntegrator()
+                # Get database ID from environment variable
+                collabiq_db_id = os.getenv("COLLABIQ_DB")
+
+                if not collabiq_db_id:
+                    raise ValueError("COLLABIQ_DB environment variable not set")
+
+                self.notion_writer = NotionWriter(
+                    notion_integrator=notion_integrator,
+                    collabiq_db_id=collabiq_db_id,
+                    duplicate_behavior="skip"
+                )
+                logger.info("Auto-initialized NotionWriter for production mode")
+            except Exception as e:
+                logger.warning(f"Failed to auto-initialize NotionWriter: {e}")
+                self.notion_writer = None
+        else:
+            self.notion_writer = notion_writer
 
         self.output_dir = Path(output_dir)
         self.error_collector = ErrorCollector(output_dir=str(self.output_dir))
