@@ -264,9 +264,10 @@ def test_select_provider_by_quality_with_subset(quality_tracker):
     assert best_provider == "gemini"
 
 
-def test_select_provider_by_quality_no_metrics():
+def test_select_provider_by_quality_no_metrics(tmp_path):
     """Test quality selection with no metrics returns None."""
-    empty_tracker = QualityTracker()
+    # Use temporary directory to ensure no existing metrics
+    empty_tracker = QualityTracker(data_dir=tmp_path / "empty_metrics")
     candidates = ["gemini", "claude", "openai"]
 
     best_provider = empty_tracker.select_provider_by_quality(candidates)
