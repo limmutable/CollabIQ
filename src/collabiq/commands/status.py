@@ -312,9 +312,11 @@ async def check_notion_health() -> ComponentStatus:
     start_time = time.time()
 
     try:
-        # Get configuration
-        api_key = os.getenv("NOTION_API_KEY")
-        collabiq_db_id = os.getenv("NOTION_DATABASE_ID_COLLABIQ")
+        # Get configuration from Infisical or environment
+        from config.settings import get_settings
+        settings = get_settings()
+        api_key = settings.get_secret_or_env("NOTION_API_KEY")
+        collabiq_db_id = settings.get_secret_or_env("NOTION_DATABASE_ID_COLLABIQ")
 
         if not api_key:
             return ComponentStatus(
@@ -426,8 +428,10 @@ async def check_gemini_health() -> ComponentStatus:
     start_time = time.time()
 
     try:
-        # Get configuration
-        api_key = os.getenv("GEMINI_API_KEY")
+        # Get configuration from Infisical or environment
+        from config.settings import get_settings
+        settings = get_settings()
+        api_key = settings.get_secret_or_env("GEMINI_API_KEY")
 
         if not api_key:
             return ComponentStatus(
@@ -529,8 +533,10 @@ async def check_claude_health() -> ComponentStatus:
     start_time = time.time()
 
     try:
-        # Get configuration
-        api_key = os.getenv("ANTHROPIC_API_KEY")
+        # Get configuration from Infisical or environment
+        from config.settings import get_settings
+        settings = get_settings()
+        api_key = settings.get_secret_or_env("ANTHROPIC_API_KEY")
 
         if not api_key:
             return ComponentStatus(
@@ -631,8 +637,10 @@ async def check_openai_health() -> ComponentStatus:
     start_time = time.time()
 
     try:
-        # Get configuration
-        api_key = os.getenv("OPENAI_API_KEY")
+        # Get configuration from Infisical or environment
+        from config.settings import get_settings
+        settings = get_settings()
+        api_key = settings.get_secret_or_env("OPENAI_API_KEY")
 
         if not api_key:
             return ComponentStatus(
