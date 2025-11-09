@@ -117,14 +117,15 @@ class Settings(BaseSettings):
         description="Base delay in seconds for exponential backoff",
     )
 
-    # Gemini API Configuration (Phase 1b - Entity Extraction)
+    # LLM API Configuration (Phase 012 - Multi-LLM Support)
+    # Gemini
     gemini_api_key: Optional[str] = Field(
         default=None,
         description="Gemini API key (from Infisical or .env)",
     )
     gemini_model: str = Field(
-        default="gemini-2.0-flash-exp",
-        description="Gemini model name (gemini-2.0-flash-exp, gemini-1.5-flash)",
+        default="gemini-2.5-flash",
+        description="Gemini model name (gemini-2.5-flash, gemini-2.0-flash-exp, gemini-1.5-flash)",
     )
     gemini_timeout_seconds: int = Field(
         default=10,
@@ -137,6 +138,18 @@ class Settings(BaseSettings):
         ge=0,
         le=5,
         description="Maximum retry attempts for Gemini API errors",
+    )
+
+    # Claude
+    claude_model: str = Field(
+        default="claude-sonnet-4-5-20250929",
+        description="Claude model name (claude-sonnet-4-5-20250929, claude-opus-4-5-20250514)",
+    )
+
+    # OpenAI
+    openai_model: str = Field(
+        default="gpt-4o-mini",
+        description="OpenAI model name (gpt-4o-mini, gpt-4o, gpt-4-turbo)",
     )
 
     # Infisical Secret Management Configuration

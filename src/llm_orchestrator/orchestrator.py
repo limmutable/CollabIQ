@@ -216,14 +216,20 @@ class LLMOrchestrator:
     def _get_default_provider_configs() -> dict[str, ProviderConfig]:
         """Get default provider configurations.
 
+        Reads model IDs from settings (environment variables with fallback to defaults).
+
         Returns:
             Dictionary mapping provider_name → ProviderConfig
         """
+        from config.settings import get_settings
+
+        settings = get_settings()
+
         return {
             "gemini": ProviderConfig(
                 provider_name="gemini",
-                display_name="Google Gemini 2.0 Flash",
-                model_id="gemini-2.0-flash-exp",
+                display_name="Google Gemini 2.5 Flash",
+                model_id=settings.gemini_model,  # From GEMINI_MODEL env var
                 api_key_env_var="GEMINI_API_KEY",
                 enabled=True,
                 priority=1,
@@ -235,7 +241,7 @@ class LLMOrchestrator:
             "claude": ProviderConfig(
                 provider_name="claude",
                 display_name="Claude Sonnet 4.5",
-                model_id="claude-sonnet-4-5-20250929",
+                model_id=settings.claude_model,  # From CLAUDE_MODEL env var
                 api_key_env_var="ANTHROPIC_API_KEY",
                 enabled=True,
                 priority=2,
@@ -247,7 +253,7 @@ class LLMOrchestrator:
             "openai": ProviderConfig(
                 provider_name="openai",
                 display_name="GPT-4o Mini",
-                model_id="gpt-4o-mini",
+                model_id=settings.openai_model,  # From OPENAI_MODEL env var
                 api_key_env_var="OPENAI_API_KEY",
                 enabled=True,
                 priority=3,
