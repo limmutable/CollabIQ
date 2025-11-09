@@ -1,9 +1,9 @@
 # Technology Stack & Implementation Guide
 
 **Status**: ✅ ACTIVE - Living document tracking implementation decisions
-**Version**: 1.3.0
-**Date**: 2025-11-08
-**Last Updated**: Phase 010 Complete (Error Handling & Retry Logic)
+**Version**: 1.4.0
+**Date**: 2025-11-09
+**Last Updated**: Phase 013 Complete (Quality Metrics & Intelligent Routing)
 
 ---
 
@@ -48,6 +48,9 @@
 | `typer` | ≥0.20.0 | CLI framework | Phase 1a |
 | `rich` | ≥14.2.0 | CLI rich formatting | Phase 1a |
 | `infisicalsdk` | Latest | Secret management SDK | Phase 3 (003-infisical-secrets) |
+| `anthropic` | ≥0.42.0 | Claude API client (Anthropic SDK) | Phase 012 (Multi-LLM) |
+| `openai` | ≥1.60.0 | OpenAI API client | Phase 012 (Multi-LLM) |
+| `Jaro-Winkler` | Latest | Fuzzy string matching for consensus | Phase 012 (Multi-LLM) |
 
 ### Development Tools
 
@@ -127,9 +130,29 @@ class Settings(BaseSettings):
 
 **Commands Available**:
 ```bash
-collabiq fetch --batch-size 50  # Fetch emails
-collabiq clean-emails --all     # Clean emails
-collabiq verify                 # Verify configuration
+# Email operations
+collabiq email fetch --limit 10
+collabiq email list
+collabiq email process
+
+# LLM operations
+collabiq llm status --detailed
+collabiq llm compare --detailed
+collabiq llm set-quality-routing --enabled
+collabiq llm test "email text"
+
+# Notion operations
+collabiq notion verify
+collabiq notion schema
+collabiq notion test-write
+
+# Error management
+collabiq errors list
+collabiq errors retry --all
+
+# System status
+collabiq status
+collabiq config show
 ```
 
 **UI Features**:
@@ -137,6 +160,59 @@ collabiq verify                 # Verify configuration
 - Color-coded output (errors=red, success=green)
 - Structured tables for results
 - Spinner animations for long operations
+
+### Multi-LLM Support (`anthropic`, `openai`, `google-generativeai`)
+
+**Implementation**: `src/llm_orchestrator/`
+
+**Supported Providers**:
+- **Gemini 2.0 Flash**: Free tier, fast inference (~1.8s avg)
+- **Claude Sonnet 4.5**: Highest quality, moderate cost (~4.0s avg)
+- **OpenAI GPT-4o Mini**: Low cost, good quality (~3.2s avg)
+
+**Orchestration Strategies**:
+```python
+# Failover: Sequential provider attempts
+orchestrator.extract_entities(strategy="failover")
+
+# Consensus: Parallel calls with majority voting
+orchestrator.extract_entities(strategy="consensus")
+
+# Best-Match: Parallel calls selecting highest confidence
+orchestrator.extract_entities(strategy="best_match")
+```
+
+**Quality Metrics Tracking**:
+- **Per-provider confidence**: Overall + per-field averages
+- **Field completeness**: Percentage of extracted fields
+- **Validation success rate**: Successful vs failed validations
+- **Cost tracking**: Token usage and per-email costs
+- **Quality score**: 40% confidence + 30% completeness + 30% validation
+- **Value score**: Quality-to-cost ratio optimization
+
+**Health Monitoring**:
+```python
+# Circuit breaker states
+CLOSED    # Provider healthy, requests allowed
+OPEN      # Provider unhealthy, requests blocked
+HALF_OPEN # Testing provider recovery
+```
+
+**Persistent Storage**:
+- `data/llm_health/health_metrics.json` - Circuit breaker state
+- `data/llm_health/cost_metrics.json` - Token usage & costs
+- `data/llm_health/quality_metrics.json` - Quality metrics per provider
+
+**Quality-Based Routing**:
+```python
+# Enable intelligent provider selection
+config = OrchestrationConfig(
+    enable_quality_routing=True,
+    provider_priority=["gemini", "claude", "openai"]
+)
+# Automatically selects provider with highest quality score
+# Falls back to priority order if no metrics or routing disabled
+```
 
 ---
 
@@ -150,7 +226,8 @@ CollabIQ/
 │   ├── email_receiver/     # Email ingestion
 │   ├── content_normalizer/ # Text cleaning
 │   ├── llm_provider/       # LLM abstraction
-│   ├── llm_adapters/       # LLM implementations
+│   ├── llm_adapters/       # LLM implementations (Gemini, Claude, OpenAI)
+│   ├── llm_orchestrator/   # Multi-LLM orchestration & quality tracking
 │   ├── notion_integrator/  # Notion API
 │   ├── verification_queue/ # Manual review queue
 │   ├── reporting/          # Report generation
@@ -169,7 +246,10 @@ CollabIQ/
 ├── data/                   # Runtime data (gitignored)
 │   ├── raw_emails/         # Fetched emails
 │   ├── cleaned_emails/     # Normalized text
-│   └── dlq/                # Dead letter queue
+│   ├── dlq/                # Dead letter queue
+│   ├── llm_health/         # LLM health & quality metrics
+│   ├── extractions/        # Extraction results
+│   └── notion_cache/       # Notion data cache
 ├── pyproject.toml          # Dependencies
 ├── .python-version         # Python 3.12
 └── .env                    # Environment variables (gitignored)
@@ -870,6 +950,7 @@ class Settings(BaseSettings):
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.4.0 | 2025-11-09 | Phase 013 completion - Added Multi-LLM Support section (Anthropic, OpenAI, Gemini), quality metrics tracking, health monitoring, intelligent routing. Updated CLI commands, project structure, and core dependencies. |
 | 1.3.0 | 2025-11-08 | Phase 010 completion - Added error handling & retry logic section, documented known technical debt for error classifier and test failures |
 | 1.2.0 | 2025-11-03 | Phase 2c completion - Added classification & summarization patterns |
 | 1.1.0 | 2025-11-01 | Phase 1b completion - Added Gemini entity extraction, CLI tool, accuracy validation |
@@ -877,6 +958,6 @@ class Settings(BaseSettings):
 
 ---
 
-**Document Version**: 1.3.0
-**Last Updated**: 2025-11-08
-**Next Review**: After Phase 3 completion (Verification Queue & Manual Review)
+**Document Version**: 1.4.0
+**Last Updated**: 2025-11-09
+**Next Review**: After Phase 4a completion (Basic Reporting)

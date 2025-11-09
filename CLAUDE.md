@@ -17,6 +17,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-08
 - File-based (existing data/ directory structure for emails, extractions, test results, error records) (011-admin-cli)
 - Python 3.12 (established in project) + anthropic (Claude SDK), openai (OpenAI SDK) (012-multi-llm)
 - File-based JSON for provider health metrics and cost tracking (012-multi-llm)
+- Python 3.12 (established in project) + pydantic (data validation), existing LLM adapters (gemini_adapter, claude_adapter, openai_adapter), existing health_tracker and cost_tracker modules (013-llm-quality-metrics)
+- File-based JSON persistence in `data/llm_health/` directory (consistent with existing health_metrics.json and cost_metrics.json patterns) (013-llm-quality-metrics)
 
 - Python 3.12 (established in project) + Git (for file operations and history preservation), markdown (for documentation) (002-structure-standards)
 - Python 3.12 (002-email-reception)
@@ -37,11 +39,9 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Python 3.12 (established in project): Follow standard conventions
 
 ## Recent Changes
+- 013-llm-quality-metrics: Added Python 3.12 (established in project) + pydantic (data validation), existing LLM adapters (gemini_adapter, claude_adapter, openai_adapter), existing health_tracker and cost_tracker modules
 - 012-multi-llm: Added Python 3.12 (established in project) + anthropic (Claude SDK), openai (OpenAI SDK)
 - 011-admin-cli: Added Python 3.12+ (established in project, using UV package manager) + Typer (CLI framework), rich (terminal formatting), click (command parsing support)
-- 010-error-handling: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
-- 008-mvp-e2e-test: Added Python 3.12 (established in project) + pytest (testing framework), existing MVP components (email_receiver, llm_adapters, notion_integrator, content_normalizer), Gmail/Gemini/Notion APIs
-- 009-notion-write: Added Python 3.12+ (established in project)
 
 
 <!-- MANUAL ADDITIONS START -->

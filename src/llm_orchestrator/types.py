@@ -18,6 +18,10 @@ __all__ = [
     "ProviderStatus",
     "OrchestrationConfig",
     "CostMetricsSummary",
+    "QualityMetricsRecord",
+    "ProviderQualitySummary",
+    "QualityThresholdConfig",
+    "ProviderQualityComparison",
 ]
 
 
@@ -128,9 +132,12 @@ class OrchestrationConfig(BaseModel):
         abstention_confidence_threshold: Min confidence to avoid abstention
         circuit_breaker_timeout_seconds: Time in OPEN before HALF_OPEN
         half_open_max_calls: Max calls in HALF_OPEN state
+        enable_quality_routing: Whether to enable quality-based routing
+        quality_threshold: Optional quality requirements for routing
+        quality_weight: Weight for quality vs other factors (0.0-1.0)
     """
 
-    default_strategy: Literal["failover", "consensus", "best_match"] = "failover"
+    default_strategy: Literal["failover", "consensus", "best_match", "all_providers"] = "failover"
     provider_priority: list[str] = Field(default_factory=list)
     timeout_seconds: float = Field(default=90.0, ge=10.0, le=300.0)
     unhealthy_threshold: int = Field(default=5, ge=1, le=10)
@@ -139,6 +146,9 @@ class OrchestrationConfig(BaseModel):
     abstention_confidence_threshold: float = Field(default=0.25, ge=0.0, le=1.0)
     circuit_breaker_timeout_seconds: float = Field(default=60.0, ge=1.0)
     half_open_max_calls: int = Field(default=3, ge=1)
+    enable_quality_routing: bool = False
+    quality_threshold: "QualityThresholdConfig | None" = None
+    quality_weight: float = Field(default=0.5, ge=0.0, le=1.0)
 
     @field_validator("provider_priority")
     @classmethod
@@ -196,3 +206,148 @@ class CostMetricsSummary(BaseModel):
         if self.total_api_calls == 0:
             return 0.0
         return self.total_cost_usd / self.total_api_calls
+
+
+class QualityMetricsRecord(BaseModel):
+    """Quality measurements for a single email extraction attempt.
+
+    Attributes:
+        email_id: Unique email identifier
+        provider_name: Provider identifier (gemini, claude, openai)
+        extraction_timestamp: UTC timestamp when extraction occurred
+        per_field_confidence: Confidence scores for 5 key entities (person, startup, partner, details, date)
+        overall_confidence: Average of per-field confidence scores (0.0-1.0)
+        field_completeness_percentage: (non-null fields / 5) * 100 (0.0-100.0)
+        fields_extracted: Count of non-null fields (0-5)
+        validation_passed: True if extraction passed validation
+        validation_failure_reasons: List of failure reasons if validation failed
+        notion_matching_attempted: True if Notion entity matching was attempted
+        notion_matching_success: True if matching succeeded, None if not attempted
+    """
+
+    email_id: str
+    provider_name: Literal["gemini", "claude", "openai"]
+    extraction_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    per_field_confidence: dict[str, float] = Field(
+        description="Confidence scores for person, startup, partner, details, date"
+    )
+    overall_confidence: float = Field(ge=0.0, le=1.0)
+    field_completeness_percentage: float = Field(ge=0.0, le=100.0)
+    fields_extracted: int = Field(ge=0, le=5)
+    validation_passed: bool
+    validation_failure_reasons: list[str] | None = None
+    notion_matching_attempted: bool = False
+    notion_matching_success: bool | None = None
+
+    @field_validator("per_field_confidence")
+    @classmethod
+    def validate_confidence_dict(cls, v: dict[str, float]) -> dict[str, float]:
+        """Validate per-field confidence has correct keys and values."""
+        required_fields = {"person", "startup", "partner", "details", "date"}
+        if set(v.keys()) != required_fields:
+            raise ValueError(f"per_field_confidence must have keys: {required_fields}")
+        for field, score in v.items():
+            if not 0.0 <= score <= 1.0:
+                raise ValueError(
+                    f"Confidence score for {field} must be 0.0-1.0, got {score}"
+                )
+        return v
+
+    @field_validator("validation_failure_reasons")
+    @classmethod
+    def validate_failure_reasons(
+        cls, v: list[str] | None, info
+    ) -> list[str] | None:
+        """Ensure validation_failure_reasons is provided when validation_passed is False."""
+        if "validation_passed" in info.data:
+            if not info.data["validation_passed"] and not v:
+                raise ValueError(
+                    "validation_failure_reasons must be non-empty list when validation_passed is False"
+                )
+        return v
+
+
+class ProviderQualitySummary(BaseModel):
+    """Aggregate quality statistics for a provider.
+
+    Attributes:
+        provider_name: Provider identifier
+        total_extractions: Total extraction attempts tracked
+        successful_validations: Extractions that passed validation
+        failed_validations: Extractions that failed validation
+        validation_success_rate: (successful_validations / total_extractions) * 100
+        average_overall_confidence: Mean of all overall_confidence scores
+        confidence_std_deviation: Standard deviation of overall_confidence
+        average_field_completeness: Mean of field_completeness_percentage
+        average_fields_extracted: Mean of fields_extracted counts
+        per_field_confidence_averages: Average confidence per entity field
+        quality_trend: improving/degrading/stable based on recent performance
+        last_50_avg_confidence: Average confidence of last 50 extractions (None if <50)
+        notion_matching_success_rate: (successful matches / attempted matches) * 100
+        updated_at: UTC timestamp of last update
+    """
+
+    provider_name: Literal["gemini", "claude", "openai"]
+    total_extractions: int = Field(default=0, ge=0)
+    successful_validations: int = Field(default=0, ge=0)
+    failed_validations: int = Field(default=0, ge=0)
+    validation_success_rate: float = Field(default=0.0, ge=0.0, le=100.0)
+    average_overall_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    confidence_std_deviation: float = Field(default=0.0, ge=0.0)
+    average_field_completeness: float = Field(default=0.0, ge=0.0, le=100.0)
+    average_fields_extracted: float = Field(default=0.0, ge=0.0, le=5.0)
+    per_field_confidence_averages: dict[str, float] = Field(
+        default_factory=lambda: {
+            "person": 0.0,
+            "startup": 0.0,
+            "partner": 0.0,
+            "details": 0.0,
+            "date": 0.0,
+        }
+    )
+    quality_trend: Literal["improving", "degrading", "stable"] = "stable"
+    last_50_avg_confidence: float | None = None
+    notion_matching_success_rate: float | None = None
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class QualityThresholdConfig(BaseModel):
+    """Configuration defining acceptable quality levels.
+
+    Attributes:
+        threshold_name: Descriptive name for this threshold configuration
+        minimum_average_confidence: Minimum acceptable average confidence (0.0-1.0)
+        minimum_field_completeness: Minimum acceptable field completeness (0.0-100.0)
+        maximum_validation_failure_rate: Maximum acceptable validation failure rate (0.0-100.0)
+        minimum_notion_matching_success_rate: Minimum Notion matching success rate (0.0-100.0)
+        evaluation_window_size: Number of recent extractions to evaluate (≥10)
+        enabled: Whether this threshold configuration is active
+    """
+
+    threshold_name: str
+    minimum_average_confidence: float = Field(default=0.80, ge=0.0, le=1.0)
+    minimum_field_completeness: float = Field(default=80.0, ge=0.0, le=100.0)
+    maximum_validation_failure_rate: float = Field(default=10.0, ge=0.0, le=100.0)
+    minimum_notion_matching_success_rate: float | None = Field(default=None, ge=0.0, le=100.0)
+    evaluation_window_size: int = Field(default=100, ge=10)
+    enabled: bool = True
+
+
+class ProviderQualityComparison(BaseModel):
+    """Cross-provider quality analysis for decision-making.
+
+    Attributes:
+        comparison_timestamp: UTC timestamp when comparison was generated
+        providers_compared: List of provider names in comparison
+        provider_rankings: Providers ranked by overall quality (best to worst)
+        quality_to_cost_rankings: Providers ranked by value score (best to worst)
+        recommended_provider: Provider with best overall quality-to-cost ratio
+        recommendation_reason: Human-readable explanation of recommendation
+    """
+
+    comparison_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    providers_compared: list[str]
+    provider_rankings: list[dict]  # provider_name (str), quality_score (float), rank (int)
+    quality_to_cost_rankings: list[dict]  # provider_name (str), value_score (float), rank (int)
+    recommended_provider: str
+    recommendation_reason: str
