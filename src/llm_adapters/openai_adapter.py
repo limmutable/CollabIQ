@@ -50,7 +50,7 @@ class OpenAIAdapter(LLMProvider):
     def __init__(
         self,
         api_key: str,
-        model: str = "gpt-5-mini",
+        model: str = "gpt-4o-mini",
         timeout: int = 60,
         max_retries: int = 3,
     ):
@@ -58,7 +58,7 @@ class OpenAIAdapter(LLMProvider):
 
         Args:
             api_key: OpenAI API key
-            model: OpenAI model name (default: "gpt-5-mini")
+            model: OpenAI model name (default: "gpt-4o-mini")
             timeout: Request timeout in seconds (default: 60)
             max_retries: Maximum retry attempts (default: 3)
 
@@ -131,10 +131,12 @@ class OpenAIAdapter(LLMProvider):
 
         try:
             # Call OpenAI API
+            # Note: Use max_completion_tokens for newer models (gpt-4o, etc.)
+            # older models like gpt-3.5-turbo use max_tokens
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=1024,
+                max_completion_tokens=1024,
                 timeout=self.timeout,
             )
 
