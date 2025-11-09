@@ -6,6 +6,7 @@ Supports continuous monitoring with --watch mode.
 """
 
 import asyncio
+import logging
 import os
 import sys
 import time
@@ -194,6 +195,37 @@ class SystemHealth:
             "timestamp": self.timestamp.isoformat(),
             "components": [c.to_dict() for c in self.components],
         }
+
+
+# ==============================================================================
+# Logging Suppression
+# ==============================================================================
+
+
+class SuppressLogs:
+    """Context manager to suppress logging and stderr output during health checks."""
+
+    def __enter__(self):
+        """Suppress all logging except CRITICAL and redirect stderr."""
+        # Suppress logging
+        logging.disable(logging.WARNING)
+
+        # Save original stderr and redirect to devnull
+        self._original_stderr = sys.stderr
+        sys.stderr = open(os.devnull, 'w')
+
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Restore logging and stderr."""
+        # Restore logging
+        logging.disable(logging.NOTSET)
+
+        # Close devnull and restore stderr
+        sys.stderr.close()
+        sys.stderr = self._original_stderr
+
+        return False
 
 
 # ==============================================================================
@@ -738,21 +770,23 @@ async def run_health_checks() -> SystemHealth:
     Returns:
         SystemHealth with all component statuses
     """
-    # Run all checks concurrently for performance
-    results = await asyncio.gather(
-        check_gmail_health(),
-        check_notion_health(),
-        check_gemini_health(),
-        check_claude_health(),
-        check_openai_health(),
-        return_exceptions=True,
-    )
+    # Suppress logging output during health checks for clean CLI output
+    with SuppressLogs():
+        # Run all checks concurrently for performance
+        results = await asyncio.gather(
+            check_gmail_health(),
+            check_notion_health(),
+            check_gemini_health(),
+            check_claude_health(),
+            check_openai_health(),
+            return_exceptions=True,
+        )
 
     # Convert any exceptions to error status
     components = []
     for i, result in enumerate(results):
         if isinstance(result, Exception):
-            component_names = ["Gmail", "Notion", "Gemini"]
+            component_names = ["Gmail", "Notion", "Gemini", "Claude", "OpenAI"]
             components.append(ComponentStatus(
                 name=component_names[i],
                 status="offline",
@@ -785,46 +819,28 @@ def get_status_color(status: str) -> str:
 
 def render_basic_status(health: SystemHealth) -> None:
     """
-    Render basic status table (T100).
+    Render basic status in simple text format (T100).
 
     Args:
         health: SystemHealth object with component statuses
     """
-    # Overall health panel
+    # Overall health status
     overall_color = get_status_color(health.overall_status)
-    overall_text = health.overall_status.upper()
-
+    console.print(f"\nSystem Health: [{overall_color}]{health.overall_status.upper()}[/{overall_color}]")
     console.print()
-    console.print(
-        Panel(
-            f"[{overall_color} bold]{overall_text}[/{overall_color} bold]",
-            title="System Health",
-            border_style=overall_color,
-        )
-    )
 
-    # Component status table
-    table = create_table(
-        title="Component Status",
-        columns=[
-            {"name": "Component", "style": "cyan", "no_wrap": True},
-            {"name": "Status", "justify": "center"},
-            {"name": "Message", "style": "white"},
-        ],
-    )
-
+    # Component statuses with simple dots and colors
     for component in health.components:
         status_color = get_status_color(component.status)
-        status_text = f"[{status_color}]{component.status.upper()}[/{status_color}]"
-
-        table.add_row(
-            component.name,
-            status_text,
-            component.message,
+        status_symbol = "●" if component.status == "online" else ("◐" if component.status == "degraded" else "○")
+        console.print(
+            f"  [{status_color}]{status_symbol}[/{status_color}] "
+            f"{component.name:12s} "
+            f"[{status_color}]{component.status.upper():8s}[/{status_color}]  "
+            f"{component.message}"
         )
 
-    console.print(table)
-    console.print(f"\n[dim]Last checked: {health.timestamp.strftime('%Y-%m-%d %H:%M:%S')}[/dim]")
+    console.print(f"\nLast checked: {health.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
 
     # Show remediation for degraded/offline components (T105)
     degraded_components = [c for c in health.components if c.status in ["degraded", "offline"]]
@@ -832,46 +848,27 @@ def render_basic_status(health: SystemHealth) -> None:
         console.print()
         for component in degraded_components:
             if component.remediation:
-                console.print(f"[yellow]Remediation for {component.name}:[/yellow]")
+                console.print(f"\n[yellow]Remediation for {component.name}:[/yellow]")
                 for i, suggestion in enumerate(component.remediation, 1):
                     console.print(f"  {i}. {suggestion}")
-                console.print()
 
 
 def render_detailed_status(health: SystemHealth) -> None:
     """
-    Render detailed status with extended metrics (T101).
+    Render detailed status with extended metrics in simple text format (T101).
 
     Args:
         health: SystemHealth object with component statuses
     """
-    # Overall health panel
+    # Overall health status
     overall_color = get_status_color(health.overall_status)
-    overall_text = health.overall_status.upper()
-
+    console.print(f"\nSystem Health: [{overall_color}]{health.overall_status.upper()}[/{overall_color}]")
     console.print()
-    console.print(
-        Panel(
-            f"[{overall_color} bold]{overall_text}[/{overall_color} bold]",
-            title="System Health",
-            border_style=overall_color,
-        )
-    )
 
-    # Detailed component status table
-    table = create_table(
-        title="Detailed Component Status",
-        columns=[
-            {"name": "Component", "style": "cyan", "no_wrap": True},
-            {"name": "Status", "justify": "center"},
-            {"name": "Response Time", "justify": "right"},
-            {"name": "Message", "style": "white"},
-        ],
-    )
-
+    # Component statuses with response times
     for component in health.components:
         status_color = get_status_color(component.status)
-        status_text = f"[{status_color}]{component.status.upper()}[/{status_color}]"
+        status_symbol = "●" if component.status == "online" else ("◐" if component.status == "degraded" else "○")
 
         response_time = (
             f"{component.response_time_ms:.1f}ms"
@@ -879,36 +876,35 @@ def render_detailed_status(health: SystemHealth) -> None:
             else "N/A"
         )
 
-        table.add_row(
-            component.name,
-            status_text,
-            response_time,
-            component.message,
+        console.print(
+            f"  [{status_color}]{status_symbol}[/{status_color}] "
+            f"{component.name:12s} "
+            f"[{status_color}]{component.status.upper():8s}[/{status_color}]  "
+            f"[dim]{response_time:>8s}[/dim]  "
+            f"{component.message}"
         )
 
-    console.print(table)
-
     # Show detailed information for each component
-    console.print("\n[bold]Component Details:[/bold]")
+    console.print("\nComponent Details:")
     for component in health.components:
-        console.print(f"\n[cyan]{component.name}:[/cyan]")
-        console.print(f"  Status: [{get_status_color(component.status)}]{component.status}[/{get_status_color(component.status)}]")
-        console.print(f"  Message: {component.message}")
+        console.print(f"\n  {component.name}:")
+        console.print(f"    Status:   [{get_status_color(component.status)}]{component.status}[/{get_status_color(component.status)}]")
+        console.print(f"    Message:  {component.message}")
 
         if component.response_time_ms is not None:
-            console.print(f"  Response Time: {component.response_time_ms:.1f}ms")
+            console.print(f"    Response: {component.response_time_ms:.1f}ms")
 
         if component.details:
-            console.print("  Details:")
+            console.print("    Details:")
             for key, value in component.details.items():
-                console.print(f"    - {key}: {value}")
+                console.print(f"      • {key}: {value}")
 
         if component.remediation and component.status in ["degraded", "offline"]:
-            console.print("  [yellow]Remediation:[/yellow]")
+            console.print("    [yellow]Remediation:[/yellow]")
             for i, suggestion in enumerate(component.remediation, 1):
-                console.print(f"    {i}. {suggestion}")
+                console.print(f"      {i}. {suggestion}")
 
-    console.print(f"\n[dim]Last checked: {health.timestamp.strftime('%Y-%m-%d %H:%M:%S')}[/dim]")
+    console.print(f"\nLast checked: {health.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
 
 
 # ==============================================================================
