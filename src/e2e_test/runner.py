@@ -19,6 +19,8 @@ from typing import List, Optional
 from e2e_test.error_collector import ErrorCollector
 from e2e_test.models import PipelineStage, TestRun
 from e2e_test.validators import Validator
+from llm_orchestrator.orchestrator import LLMOrchestrator
+from llm_orchestrator.types import OrchestrationConfig
 from llm_provider.types import ExtractedEntitiesWithClassification
 
 logger = logging.getLogger(__name__)
@@ -46,25 +48,59 @@ class E2ERunner:
     def __init__(
         self,
         gmail_receiver=None,
-        gemini_adapter=None,
+        llm_orchestrator: Optional[LLMOrchestrator] = None,
+        gemini_adapter=None,  # Deprecated: kept for backward compatibility
         classification_service=None,
         notion_writer=None,
         output_dir: str = "data/e2e_test",
         test_mode: bool = True,
+        orchestration_strategy: str = "failover",
+        enable_quality_routing: bool = False,
     ):
         """
         Initialize E2ERunner
 
         Args:
             gmail_receiver: GmailReceiver instance (optional, for email fetching)
-            gemini_adapter: GeminiAdapter instance (optional, for extraction)
+            llm_orchestrator: LLMOrchestrator instance (recommended, for multi-LLM support)
+            gemini_adapter: DEPRECATED - GeminiAdapter instance (for backward compatibility)
             classification_service: ClassificationService instance (optional)
             notion_writer: NotionWriter instance (optional, for writing)
             output_dir: Base directory for E2E test outputs
             test_mode: If True, runs in test mode
+            orchestration_strategy: Strategy for LLM orchestration (failover, consensus, best_match, all_providers)
+            enable_quality_routing: Enable quality-based provider selection
         """
         self.gmail_receiver = gmail_receiver
-        self.gemini_adapter = gemini_adapter
+
+        # Initialize LLM Orchestrator (preferred) or fall back to legacy gemini_adapter
+        if llm_orchestrator is not None:
+            self.llm_orchestrator = llm_orchestrator
+            self.gemini_adapter = None  # Don't use legacy adapter
+        elif gemini_adapter is not None:
+            # Legacy mode: wrap single adapter in orchestrator for consistency
+            logger.warning(
+                "Using legacy gemini_adapter parameter. "
+                "Consider using llm_orchestrator for multi-LLM support and quality tracking."
+            )
+            self.gemini_adapter = gemini_adapter
+            # Create orchestrator with single provider for consistency
+            config = OrchestrationConfig(
+                default_strategy=orchestration_strategy,
+                provider_priority=["gemini"],
+                enable_quality_routing=False,  # Disable for legacy mode
+            )
+            self.llm_orchestrator = LLMOrchestrator.from_config(config)
+        else:
+            # No LLM adapter provided - initialize orchestrator with default config
+            config = OrchestrationConfig(
+                default_strategy=orchestration_strategy,
+                provider_priority=["gemini", "claude", "openai"],
+                enable_quality_routing=enable_quality_routing,
+            )
+            self.llm_orchestrator = LLMOrchestrator.from_config(config)
+            self.gemini_adapter = None
+
         self.classification_service = classification_service
         self.notion_writer = notion_writer
 
@@ -72,6 +108,8 @@ class E2ERunner:
         self.error_collector = ErrorCollector(output_dir=str(self.output_dir))
         self.validator = Validator()
         self.test_mode = test_mode
+        self.orchestration_strategy = orchestration_strategy
+        self.enable_quality_routing = enable_quality_routing
 
         # Ensure output directories exist
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -83,9 +121,12 @@ class E2ERunner:
             extra={
                 "test_mode": test_mode,
                 "output_dir": str(self.output_dir),
+                "orchestration_strategy": orchestration_strategy,
+                "quality_routing_enabled": enable_quality_routing,
                 "components_initialized": {
                     "gmail_receiver": gmail_receiver is not None,
-                    "gemini_adapter": gemini_adapter is not None,
+                    "llm_orchestrator": self.llm_orchestrator is not None,
+                    "gemini_adapter_legacy": gemini_adapter is not None,
                     "classification_service": classification_service is not None,
                     "notion_writer": notion_writer is not None,
                 },
@@ -374,10 +415,15 @@ class E2ERunner:
     def _extract_entities(
         self, email: dict, email_id: str, run_id: str
     ) -> Optional[dict]:
-        """Extract entities from email (Stage 2)"""
+        """Extract entities from email using LLM Orchestrator (Stage 2)
+
+        Uses multi-LLM orchestration with the configured strategy (failover,
+        consensus, best_match, or all_providers). Automatically tracks quality
+        metrics and supports quality-based routing.
+        """
         try:
-            if self.gemini_adapter is None:
-                logger.warning("GeminiAdapter not initialized, skipping extraction")
+            if self.llm_orchestrator is None:
+                logger.warning("LLM Orchestrator not initialized, using mock data")
                 return {
                     "person_in_charge": "Mock Person",
                     "startup_name": "Mock Startup",
@@ -386,13 +432,30 @@ class E2ERunner:
                     "date": "2025-01-01",
                 }
 
-            # Extract entities using GeminiAdapter
-            # Pass the actual Gmail message ID from the email dict
-            entities = self.gemini_adapter.extract_entities(
+            # Extract entities using LLM Orchestrator with multi-LLM support
+            logger.info(
+                f"Extracting entities with strategy={self.orchestration_strategy}, "
+                f"quality_routing={self.enable_quality_routing}"
+            )
+
+            entities = self.llm_orchestrator.extract_entities(
                 email_text=email.get("body", ""),
                 company_context=None,  # Company context would be provided here
                 email_id=email.get("id"),  # Pass actual Gmail message ID
+                strategy=self.orchestration_strategy,  # Use configured strategy
             )
+
+            # Log provider selection if available
+            if hasattr(entities, 'provider_name'):
+                logger.info(f"Entities extracted by provider: {entities.provider_name}")
+
+            # Log quality metrics if quality tracker is available
+            if self.llm_orchestrator.quality_tracker:
+                try:
+                    all_metrics = self.llm_orchestrator.quality_tracker.get_all_metrics()
+                    logger.debug(f"Quality metrics available for {len(all_metrics)} providers")
+                except Exception as metrics_error:
+                    logger.debug(f"Could not retrieve quality metrics: {metrics_error}")
 
             return entities
 
@@ -600,6 +663,58 @@ class E2ERunner:
             result.add_error(f"Validation exception: {str(e)}")
             return result
 
+    def get_quality_metrics_summary(self) -> dict:
+        """Get quality metrics summary from LLM Orchestrator.
+
+        Returns:
+            Dictionary containing quality metrics for all providers, or empty dict if not available.
+        """
+        if not self.llm_orchestrator or not self.llm_orchestrator.quality_tracker:
+            return {}
+
+        try:
+            all_metrics = self.llm_orchestrator.quality_tracker.get_all_metrics()
+
+            summary = {}
+            for provider_name, metrics in all_metrics.items():
+                if metrics.total_extractions > 0:
+                    summary[provider_name] = {
+                        "total_extractions": metrics.total_extractions,
+                        "avg_confidence": metrics.average_overall_confidence,
+                        "field_completeness": metrics.average_field_completeness,
+                        "validation_success_rate": metrics.validation_success_rate,
+                        "per_field_confidence": metrics.per_field_confidence_averages,
+                    }
+
+            return summary
+        except Exception as e:
+            logger.error(f"Failed to get quality metrics summary: {e}")
+            return {}
+
+    def save_quality_metrics_report(self, run_id: str) -> None:
+        """Save quality metrics report to a JSON file.
+
+        Args:
+            run_id: Test run ID for the report filename
+        """
+        try:
+            metrics_summary = self.get_quality_metrics_summary()
+
+            if not metrics_summary:
+                logger.info("No quality metrics available to save")
+                return
+
+            report_path = self.output_dir / "reports" / f"{run_id}_quality_metrics.json"
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+
+            with report_path.open("w", encoding="utf-8") as f:
+                json.dump(metrics_summary, f, indent=2, ensure_ascii=False)
+
+            logger.info(f"Quality metrics report saved to {report_path}")
+
+        except Exception as e:
+            logger.error(f"Failed to save quality metrics report: {e}")
+
     def _save_test_run(self, test_run: TestRun):
         """Save test run state to disk"""
         run_file = self.output_dir / "runs" / f"{test_run.run_id}.json"
@@ -608,6 +723,9 @@ class E2ERunner:
 
         with run_file.open("w", encoding="utf-8") as f:
             json.dump(test_run_dict, f, indent=2, ensure_ascii=False)
+
+        # Also save quality metrics if available
+        self.save_quality_metrics_report(test_run.run_id)
 
     def resume_test_run(self, run_id: str) -> TestRun:
         """

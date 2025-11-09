@@ -3,14 +3,21 @@
 Main CLI for E2E Testing
 
 Production CLI with argparse for flexible test execution. Supports running
-tests with all emails, single email, or resuming interrupted runs.
+tests with all emails, single email, or resuming interrupted runs. Now includes
+multi-LLM orchestration and quality-based routing.
 
 Usage:
-    # Process all emails from test_email_ids.json
+    # Process all emails from test_email_ids.json (failover strategy)
     uv run python scripts/run_e2e_tests.py --all
 
-    # Process single email by ID
-    uv run python scripts/run_e2e_tests.py --email-id msg_001
+    # Process with all providers strategy (collects metrics from all LLMs)
+    uv run python scripts/run_e2e_tests.py --all --strategy all_providers
+
+    # Enable quality-based routing
+    uv run python scripts/run_e2e_tests.py --all --quality-routing
+
+    # Process single email by ID with consensus strategy
+    uv run python scripts/run_e2e_tests.py --email-id msg_001 --strategy consensus
 
     # Resume interrupted test run
     uv run python scripts/run_e2e_tests.py --resume 20251105_143000
@@ -58,17 +65,29 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Process all emails
+  # Process all emails (default: failover strategy)
   %(prog)s --all
 
-  # Process single email
-  %(prog)s --email-id msg_001
+  # Process with all providers strategy (collects metrics from ALL LLMs)
+  %(prog)s --all --strategy all_providers
+
+  # Enable quality-based routing
+  %(prog)s --all --quality-routing
+
+  # Process single email with consensus strategy
+  %(prog)s --email-id msg_001 --strategy consensus
 
   # Resume interrupted run
   %(prog)s --resume 20251105_143000
 
   # Generate detailed error report
   %(prog)s --all --report
+
+Multi-LLM Strategies:
+  failover       - Try providers sequentially (fastest, default)
+  consensus      - Query multiple providers, use majority vote
+  best_match     - Query all providers, select highest confidence
+  all_providers  - Query ALL providers, collect metrics from all (recommended)
         """,
     )
 
@@ -120,16 +139,37 @@ Examples:
         help="Disable test mode (use real components)",
     )
 
+    parser.add_argument(
+        "--strategy",
+        type=str,
+        default="failover",
+        choices=["failover", "consensus", "best_match", "all_providers"],
+        help="LLM orchestration strategy (default: failover)",
+    )
+
+    parser.add_argument(
+        "--quality-routing",
+        action="store_true",
+        help="Enable quality-based provider selection",
+    )
+
     args = parser.parse_args()
 
-    # Initialize runner
+    # Initialize runner with multi-LLM support
     print("Initializing E2E runner...")
+    print(f"  Strategy: {args.strategy}")
+    print(f"  Quality routing: {args.quality_routing}")
+    print(f"  Test mode: {args.test_mode}")
+
     runner = E2ERunner(
         gmail_receiver=None,  # Components will be initialized based on test_mode
-        gemini_adapter=None,
+        llm_orchestrator=None,  # Will be auto-initialized with config
+        gemini_adapter=None,  # Deprecated
         classification_service=None,
         notion_writer=None,
         test_mode=args.test_mode,
+        orchestration_strategy=args.strategy,
+        enable_quality_routing=args.quality_routing,
     )
 
     # Initialize report generator
@@ -183,6 +223,22 @@ Examples:
         print(f"Failures: {test_run.failure_count}")
         print(f"Errors: {test_run.error_summary}")
         print(f"\nSummary report saved to: {summary_path}")
+
+        # Show quality metrics if available
+        quality_metrics = runner.get_quality_metrics_summary()
+        if quality_metrics:
+            print("\n" + "=" * 70)
+            print("Quality Metrics Summary")
+            print("=" * 70)
+            for provider, metrics in quality_metrics.items():
+                print(f"\n{provider.upper()}:")
+                print(f"  Extractions: {metrics['total_extractions']}")
+                print(f"  Avg Confidence: {metrics['avg_confidence']:.2%}")
+                print(f"  Field Completeness: {metrics['field_completeness']:.1f}%")
+                print(f"  Validation Rate: {metrics['validation_success_rate']:.1f}%")
+            print("=" * 70)
+            quality_report_path = Path(f"data/e2e_test/reports/{test_run.run_id}_quality_metrics.json")
+            print(f"\nQuality metrics saved to: {quality_report_path}")
 
         # Generate error report if requested
         if args.report:
