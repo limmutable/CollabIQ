@@ -38,6 +38,16 @@ jobs:
 
     - name: Run tests
       run: uv run pytest --cov=src --cov-report=xml --cov-report=term
+      env:
+        # LLM Model Configuration (use defaults from settings.py)
+        GEMINI_MODEL: gemini-2.5-flash
+        CLAUDE_MODEL: claude-sonnet-4-5-20250929
+        OPENAI_MODEL: gpt-4o-mini
+        # API keys not needed for unit tests (mocked)
+        GEMINI_API_KEY: mock-key-for-testing
+        ANTHROPIC_API_KEY: mock-key-for-testing
+        OPENAI_API_KEY: mock-key-for-testing
+        NOTION_API_KEY: mock-key-for-testing
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
