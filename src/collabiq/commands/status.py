@@ -31,6 +31,8 @@ from collabiq.utils.logging import log_cli_operation, log_cli_error
 from email_receiver.gmail_receiver import GmailReceiver
 from notion_integrator.integrator import NotionIntegrator
 from llm_adapters.gemini_adapter import GeminiAdapter
+from llm_adapters.claude_adapter import ClaudeAdapter
+from llm_adapters.openai_adapter import OpenAIAdapter
 
 app = typer.Typer(
     name="status",
@@ -517,6 +519,210 @@ async def check_gemini_health() -> ComponentStatus:
         )
 
 
+async def check_claude_health() -> ComponentStatus:
+    """
+    Check Claude API connectivity and health.
+
+    Returns:
+        ComponentStatus for Claude
+    """
+    start_time = time.time()
+
+    try:
+        # Get configuration
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+
+        if not api_key:
+            return ComponentStatus(
+                name="Claude",
+                status="offline",
+                message="ANTHROPIC_API_KEY not configured",
+                response_time_ms=None,
+                remediation=[
+                    "Set ANTHROPIC_API_KEY environment variable",
+                    "Or configure Infisical secrets",
+                    "Get API key from Anthropic Console",
+                ]
+            )
+
+        # Initialize adapter and test with minimal request
+        adapter = ClaudeAdapter(api_key=api_key)
+
+        # Test by extracting from a minimal test string
+        try:
+            test_email = "Test email for health check"
+            result = adapter.extract_entities(test_email)
+
+            response_time = (time.time() - start_time) * 1000
+
+            return ComponentStatus(
+                name="Claude",
+                status="online",
+                message="Connected successfully",
+                response_time_ms=response_time,
+                details={
+                    "model": adapter.model,
+                }
+            )
+        except Exception as e:
+            error_msg = str(e)
+            response_time = (time.time() - start_time) * 1000
+
+            # Determine status based on error type
+            if "authentication" in error_msg.lower() or "api key" in error_msg.lower():
+                status = "offline"
+                remediation = [
+                    "Check ANTHROPIC_API_KEY is valid",
+                    "Get new API key from Anthropic Console",
+                    "Verify API key format",
+                ]
+            elif "quota" in error_msg.lower() or "rate limit" in error_msg.lower():
+                status = "degraded"
+                remediation = [
+                    "Wait for rate limit to reset",
+                    "Check Anthropic Console usage limits",
+                    "Consider upgrading API tier",
+                ]
+            elif "timeout" in error_msg.lower():
+                status = "degraded"
+                remediation = [
+                    "Check network connectivity",
+                    "Claude API may be experiencing delays",
+                    "Try again in a few moments",
+                ]
+            else:
+                status = "degraded"
+                remediation = [
+                    "Check network connectivity",
+                    "Verify Claude API availability",
+                    "Try again with --debug flag for details",
+                ]
+
+            return ComponentStatus(
+                name="Claude",
+                status=status,
+                message=f"Error: {error_msg}",
+                response_time_ms=response_time,
+                remediation=remediation,
+            )
+
+    except Exception as e:
+        response_time = (time.time() - start_time) * 1000
+        return ComponentStatus(
+            name="Claude",
+            status="offline",
+            message=f"Unexpected error: {str(e)}",
+            response_time_ms=response_time,
+            remediation=[
+                "Check Claude configuration",
+                "Run: collabiq llm test claude",
+                "Try again with --debug flag for details",
+            ]
+        )
+
+
+async def check_openai_health() -> ComponentStatus:
+    """
+    Check OpenAI API connectivity and health.
+
+    Returns:
+        ComponentStatus for OpenAI
+    """
+    start_time = time.time()
+
+    try:
+        # Get configuration
+        api_key = os.getenv("OPENAI_API_KEY")
+
+        if not api_key:
+            return ComponentStatus(
+                name="OpenAI",
+                status="offline",
+                message="OPENAI_API_KEY not configured",
+                response_time_ms=None,
+                remediation=[
+                    "Set OPENAI_API_KEY environment variable",
+                    "Or configure Infisical secrets",
+                    "Get API key from OpenAI Platform",
+                ]
+            )
+
+        # Initialize adapter and test with minimal request
+        adapter = OpenAIAdapter(api_key=api_key)
+
+        # Test by extracting from a minimal test string
+        try:
+            test_email = "Test email for health check"
+            result = adapter.extract_entities(test_email)
+
+            response_time = (time.time() - start_time) * 1000
+
+            return ComponentStatus(
+                name="OpenAI",
+                status="online",
+                message="Connected successfully",
+                response_time_ms=response_time,
+                details={
+                    "model": adapter.model,
+                }
+            )
+        except Exception as e:
+            error_msg = str(e)
+            response_time = (time.time() - start_time) * 1000
+
+            # Determine status based on error type
+            if "authentication" in error_msg.lower() or "api key" in error_msg.lower():
+                status = "offline"
+                remediation = [
+                    "Check OPENAI_API_KEY is valid",
+                    "Get new API key from OpenAI Platform",
+                    "Verify API key format (starts with 'sk-')",
+                ]
+            elif "quota" in error_msg.lower() or "rate limit" in error_msg.lower():
+                status = "degraded"
+                remediation = [
+                    "Wait for rate limit to reset",
+                    "Check OpenAI Platform usage limits",
+                    "Consider upgrading API tier",
+                ]
+            elif "timeout" in error_msg.lower():
+                status = "degraded"
+                remediation = [
+                    "Check network connectivity",
+                    "OpenAI API may be experiencing delays",
+                    "Try again in a few moments",
+                ]
+            else:
+                status = "degraded"
+                remediation = [
+                    "Check network connectivity",
+                    "Verify OpenAI API availability",
+                    "Try again with --debug flag for details",
+                ]
+
+            return ComponentStatus(
+                name="OpenAI",
+                status=status,
+                message=f"Error: {error_msg}",
+                response_time_ms=response_time,
+                remediation=remediation,
+            )
+
+    except Exception as e:
+        response_time = (time.time() - start_time) * 1000
+        return ComponentStatus(
+            name="OpenAI",
+            status="offline",
+            message=f"Unexpected error: {str(e)}",
+            response_time_ms=response_time,
+            remediation=[
+                "Check OpenAI configuration",
+                "Run: collabiq llm test openai",
+                "Try again with --debug flag for details",
+            ]
+        )
+
+
 async def run_health_checks() -> SystemHealth:
     """
     Run all health checks in parallel (T099, T107).
@@ -529,6 +735,8 @@ async def run_health_checks() -> SystemHealth:
         check_gmail_health(),
         check_notion_health(),
         check_gemini_health(),
+        check_claude_health(),
+        check_openai_health(),
         return_exceptions=True,
     )
 
