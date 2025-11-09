@@ -74,15 +74,18 @@ class E2ERunner:
         # Auto-initialize GmailReceiver if not in test mode and not provided
         if not test_mode and gmail_receiver is None:
             try:
+                from pathlib import Path as PathLib
                 from email_receiver.gmail_receiver import GmailReceiver
 
                 self.gmail_receiver = GmailReceiver(
-                    credentials_path="credentials.json",
-                    token_path="token.json"
+                    credentials_path=PathLib("credentials.json"),
+                    token_path=PathLib("token.json")
                 )
+                # Connect to Gmail API
+                self.gmail_receiver.connect()
                 logger.info("Auto-initialized GmailReceiver for production mode")
             except Exception as e:
-                logger.warning(f"Failed to auto-initialize GmailReceiver: {e}")
+                logger.warning(f"Failed to auto-initialize GmailReceiver: {str(e)}")
                 self.gmail_receiver = None
         else:
             self.gmail_receiver = gmail_receiver
@@ -120,17 +123,21 @@ class E2ERunner:
         # Auto-initialize NotionWriter if not in test mode and not provided
         if not test_mode and notion_writer is None:
             try:
-                import os
+                from config.settings import get_settings
                 from notion_integrator.integrator import NotionIntegrator
                 from notion_integrator.writer import NotionWriter
 
-                # Initialize Notion components
-                notion_integrator = NotionIntegrator()
-                # Get database ID from environment variable
-                collabiq_db_id = os.getenv("COLLABIQ_DB")
+                # Get settings for Infisical support
+                settings = get_settings()
+
+                # Get database ID from Infisical (with .env fallback)
+                collabiq_db_id = settings.get_secret_or_env("NOTION_DATABASE_ID_COLLABIQ")
 
                 if not collabiq_db_id:
-                    raise ValueError("COLLABIQ_DB environment variable not set")
+                    raise ValueError("NOTION_DATABASE_ID_COLLABIQ not found in Infisical or .env")
+
+                # Initialize Notion components
+                notion_integrator = NotionIntegrator()
 
                 self.notion_writer = NotionWriter(
                     notion_integrator=notion_integrator,
@@ -139,7 +146,7 @@ class E2ERunner:
                 )
                 logger.info("Auto-initialized NotionWriter for production mode")
             except Exception as e:
-                logger.warning(f"Failed to auto-initialize NotionWriter: {e}")
+                logger.warning(f"Failed to auto-initialize NotionWriter: {str(e)}")
                 self.notion_writer = None
         else:
             self.notion_writer = notion_writer
@@ -325,10 +332,12 @@ class E2ERunner:
 
             # Stage 2: Extraction - Extract entities
             logger.debug(f"Stage 2: Extracting entities from email {email_id}")
-            entities = self._extract_entities(email, email_id, run_id)
+            extraction_result = self._extract_entities(email, email_id, run_id)
 
-            if entities is None:
+            if extraction_result is None:
                 return False
+
+            entities_dict, entities_model = extraction_result
 
             # Stage 3: Matching - Match companies (part of extraction in current implementation)
             logger.debug(f"Stage 3: Company matching for email {email_id}")
@@ -338,7 +347,7 @@ class E2ERunner:
             # Stage 4: Classification - Determine collaboration type and intensity
             logger.debug(f"Stage 4: Classifying collaboration for email {email_id}")
             classified_entities = self._classify_collaboration(
-                email, entities, email_id, run_id
+                email, entities_dict, entities_model, email_id, run_id
             )
 
             if classified_entities is None:
@@ -462,18 +471,19 @@ class E2ERunner:
         metrics and supports quality-based routing.
 
         Returns:
-            Dictionary with extracted entities, or None on failure
+            Tuple of (entities_dict, entities_model) or None on failure
         """
         try:
             if self.llm_orchestrator is None:
                 logger.warning("LLM Orchestrator not initialized, using mock data")
-                return {
+                mock_dict = {
                     "person_in_charge": "Mock Person",
                     "startup_name": "Mock Startup",
                     "partner_org": "Mock Partner",
                     "details": "Mock details",
                     "date": "2025-01-01",
                 }
+                return (mock_dict, None)
 
             # Extract entities using LLM Orchestrator with multi-LLM support
             logger.info(
@@ -514,7 +524,7 @@ class E2ERunner:
             # Save extraction to file for later analysis
             self._save_extraction(run_id, email_id, entities_dict, entities)
 
-            return entities_dict
+            return (entities_dict, entities)
 
         except Exception as e:
             error = self.error_collector.collect_error(
@@ -528,23 +538,59 @@ class E2ERunner:
             return None
 
     def _classify_collaboration(
-        self, email: dict, entities: dict, email_id: str, run_id: str
+        self, email: dict, entities: dict, entities_model, email_id: str, run_id: str
     ) -> Optional[dict]:
-        """Classify collaboration type and intensity (Stage 4)"""
+        """Classify collaboration type and intensity (Stage 4)
+
+        Args:
+            email: Raw email data
+            entities: Extracted entities as dict
+            entities_model: Original ExtractedEntities model with confidence scores
+            email_id: Email identifier
+            run_id: Test run identifier
+        """
         try:
             if self.classification_service is None:
                 logger.warning(
                     "ClassificationService not initialized, skipping classification"
                 )
+                # Preserve confidence scores and email_id from original extraction
+                # Need to convert date string back to datetime for Pydantic model
+                from datetime import datetime as dt
+                date_value = entities.get("date")
+                if isinstance(date_value, str):
+                    try:
+                        date_value = dt.fromisoformat(date_value.replace(" ", "T"))
+                    except:
+                        date_value = None
+
                 return {
                     **entities,
                     "collaboration_type": "[A]PortCoXSSG",
                     "collaboration_intensity": "협력",
+                    "confidence": entities_model.confidence,
+                    "email_id": email_id,
+                    "extracted_at": entities_model.extracted_at,
+                    "date": date_value,
                 }
 
             # Classify using ClassificationService
             # This would require async implementation in practice
-            classified = entities  # Placeholder
+            from datetime import datetime as dt
+            date_value = entities.get("date")
+            if isinstance(date_value, str):
+                try:
+                    date_value = dt.fromisoformat(date_value.replace(" ", "T"))
+                except:
+                    date_value = None
+
+            classified = {
+                **entities,
+                "confidence": entities_model.confidence,
+                "email_id": email_id,
+                "extracted_at": entities_model.extracted_at,
+                "date": date_value,
+            }
 
             return classified
 
