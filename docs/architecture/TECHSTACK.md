@@ -44,7 +44,7 @@
 | `dateparser` | ≥1.2.0 | Multi-language date parsing | Phase 1b |
 | `notion-client` | ≥2.6.0 | Notion API client | Phase 2a |
 | `email-validator` | ≥2.3.0 | Email address validation | Phase 1a |
-| `rapidfuzz` | ≥3.14.1 | Fuzzy string matching (fallback) | Phase 1a |
+| `rapidfuzz` | ≥3.14.1 | Fuzzy string matching (company matching, person matching) | Phase 1a, Phase 3d (014) |
 | `typer` | ≥0.20.0 | CLI framework | Phase 1a |
 | `rich` | ≥14.2.0 | CLI rich formatting | Phase 1a |
 | `infisicalsdk` | Latest | Secret management SDK | Phase 3 (003-infisical-secrets) |
