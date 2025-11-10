@@ -60,8 +60,8 @@ class FieldMapper:
     ) -> Dict[str, Any]:
         """Map ExtractedEntitiesWithClassification to Notion properties format with async fuzzy matching.
 
-        This async version performs fuzzy matching for company names before mapping.
-        Use this when company_matcher and companies_cache are provided.
+        This async version performs fuzzy matching for company names and person names before mapping.
+        Use this when company_matcher/person_matcher and companies_cache are provided.
 
         Args:
             extracted_data: ExtractedEntitiesWithClassification instance
@@ -72,6 +72,10 @@ class FieldMapper:
         # Perform fuzzy matching for companies if matcher is available
         if self.company_matcher and self.companies_cache:
             await self._match_and_populate_companies(extracted_data)
+
+        # Perform person matching if matcher is available
+        if self.person_matcher:
+            self._match_and_populate_person(extracted_data)
 
         # Use sync version for the actual mapping
         return self.map_to_notion_properties(extracted_data)
@@ -187,6 +191,51 @@ class FieldMapper:
                             f"Failed to create partner: '{match_result.company_name}'"
                         )
 
+    def _match_and_populate_person(self, extracted_data) -> None:
+        """Match extracted person name to Notion workspace users and populate ID.
+
+        Args:
+            extracted_data: ExtractedEntitiesWithClassification instance (modified in place)
+        """
+        # Match person_in_charge to 담당자
+        if extracted_data.person_in_charge and not extracted_data.matched_person_id:
+            match_result = self.person_matcher.match(
+                person_name=extracted_data.person_in_charge,
+                similarity_threshold=0.70,
+            )
+
+            # Handle match result
+            if match_result.match_type in ["exact", "fuzzy"]:
+                # Match found
+                extracted_data.matched_person_id = match_result.user_id
+                logger.info(
+                    f"Person matched: '{extracted_data.person_in_charge}' → '{match_result.user_name}' "
+                    f"(similarity: {match_result.similarity_score:.2f}, type: {match_result.match_type})"
+                )
+
+                # Log low-confidence or ambiguous matches for manual review
+                if match_result.confidence_level in ["low", "medium"] or match_result.is_ambiguous:
+                    warning_msg = (
+                        f"Person match requires review: '{extracted_data.person_in_charge}' → '{match_result.user_name}' "
+                        f"(similarity: {match_result.similarity_score:.2f}, confidence: {match_result.confidence_level}"
+                    )
+                    if match_result.is_ambiguous:
+                        warning_msg += f", ambiguous: {len(match_result.alternative_matches)} alternatives"
+                        # Log alternative matches
+                        for alt in match_result.alternative_matches:
+                            logger.info(
+                                f"  Alternative: {alt.get('user_name')} (similarity: {alt.get('similarity_score')})"
+                            )
+                    warning_msg += "). Manual review recommended."
+                    logger.warning(warning_msg)
+            else:
+                # No match found
+                logger.warning(
+                    f"No match found for person: '{extracted_data.person_in_charge}' "
+                    f"(best similarity: {match_result.similarity_score:.2f}). "
+                    f"담당자 field will be left empty."
+                )
+
     def map_to_notion_properties(self, extracted_data) -> Dict[str, Any]:
         """Map ExtractedEntitiesWithClassification to Notion properties format.
 
@@ -207,15 +256,11 @@ class FieldMapper:
         )
         properties["협력주체"] = self._format_title(collaboration_subject)
 
-        # Rich text fields
-        # NOTE: 담당자 field is type "people" in Notion, not "rich_text"
-        # Skipping for now - requires mapping person names to Notion user IDs
-        # TODO: Implement user name→ID matching (see techstack.md technical debt)
-        # if extracted_data.person_in_charge:
-        #     properties["담당자"] = self._format_rich_text(
-        #         extracted_data.person_in_charge
-        #     )
+        # People field: 담당자
+        if extracted_data.matched_person_id:
+            properties["담당자"] = self._format_people(extracted_data.matched_person_id)
 
+        # Rich text fields
         if extracted_data.details:
             properties["협업내용"] = self._format_rich_text(extracted_data.details)
 
@@ -351,3 +396,14 @@ class FieldMapper:
             Notion number property format
         """
         return {"number": value}
+
+    def _format_people(self, user_id: str) -> Dict[str, Any]:
+        """Format user ID as Notion people property.
+
+        Args:
+            user_id: Notion user UUID (32-36 character UUID)
+
+        Returns:
+            Notion people property format
+        """
+        return {"people": [{"id": user_id}]}

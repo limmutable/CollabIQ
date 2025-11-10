@@ -295,6 +295,14 @@ class ExtractedEntitiesWithClassification(ExtractedEntities):
         description="ISO 8601 timestamp of classification",
     )
 
+    # Phase 3 person matching field (US3)
+    matched_person_id: Optional[str] = Field(
+        None,
+        min_length=32,
+        max_length=36,
+        description="Notion user UUID for matched person_in_charge (32 or 36 chars)",
+    )
+
     @field_validator("collaboration_type")
     @classmethod
     def validate_type_format(cls, v: Optional[str]) -> Optional[str]:
