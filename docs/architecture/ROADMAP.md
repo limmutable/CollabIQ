@@ -9,11 +9,11 @@
 
 ## Executive Summary
 
-This roadmap breaks the CollabIQ system into **14 sequential phases** (branches 002-016), each delivering incremental value. Work proceeds at your own pace without deadlines - just complete phases step-by-step.
+This roadmap breaks the CollabIQ system into **15 sequential phases** (branches 002-017), each delivering incremental value. Work proceeds at your own pace without deadlines - just complete phases step-by-step.
 
-**Total Effort**: 35-49 days across 14 phases (including Gmail OAuth2 setup)
+**Total Effort**: 38-53 days across 15 phases (including Gmail OAuth2 setup)
 **MVP Target**: Phases 1a+1b (6-9 days) deliver extraction → JSON output for manual review ✅ **COMPLETE**
-**Current Progress**: 12/14 phases complete (Phases 1a, 1b, 005, 2a, 2b, 2c, 2d, 2e, 3a, 3b, 3c, 013)
+**Current Progress**: 12/15 phases complete (Phases 1a, 1b, 005, 2a, 2b, 2c, 2d, 2e, 3a, 3b, 3c, 013)
 
 ---
 
@@ -402,9 +402,105 @@ This roadmap breaks the CollabIQ system into **14 sequential phases** (branches 
 
 ---
 
+**Phase 3d - Enhanced Notion Field Mapping** (Branch: `014-enhanced-field-mapping`)
+**Timeline**: 3-4 days
+**Complexity**: Medium
+**Status**: Planned
+
+**Problem Statement**:
+Currently, the LLM extracts key values for three critical fields:
+- 담당자 (Person in Charge) - extracted as name string
+- 스타트업명 (Startup Name) - extracted as company name
+- 협력기관 (Partner Org) - extracted as organization name
+
+However, these fields are not being populated in the Notion database because:
+1. **스타트업명 and 협력기관** are relation fields linking to the Companies database, requiring exact name matches
+2. **담당자** is a people (multi-select) field requiring Notion user UUIDs, not name strings
+3. LLM-extracted names may have slight variations (e.g., "웨이크(산스)" vs "웨이크")
+
+**Deliverables**:
+- ✅ **Fuzzy Company Matching Service**:
+  - Search Companies database for fuzzy matches (handle variations, abbreviations, parenthetical info)
+  - Use similarity scoring (Jaro-Winkler or similar) with configurable threshold (≥0.85)
+  - Match extracted names to actual Notion database entries
+  - Return page_id for exact/fuzzy matches, or null if no match found
+
+- ✅ **Auto-Create Missing Companies**:
+  - When extracted company name has no match in Companies database (similarity < 0.85)
+  - Create new entry in Companies database with extracted name
+  - Return newly created page_id for relation field population
+  - Handle both 스타트업명 (Startup Name) and 협력기관 (Partner Org) fields
+
+- ✅ **Person Matching Service**:
+  - List all Notion workspace users via Notion API
+  - Fuzzy match extracted 담당자 name to Notion user names
+  - Use similarity scoring with Korean name handling (family name + given name variations)
+  - Return best matching user UUID(s) for people field population
+  - Handle cases where no match found (log warning, leave field empty)
+
+- ✅ **Enhanced FieldMapper**:
+  - Integrate FuzzyCompanyMatcher for 스타트업명 and 협력기관 fields
+  - Integrate PersonMatcher for 담당자 field
+  - Add confidence scores for matches (log low-confidence matches for review)
+  - Preserve existing field mapping logic (backward compatible)
+
+- ✅ **CLI Commands**:
+  - `collabiq notion match-company <name>` - Test company matching
+  - `collabiq notion match-person <name>` - Test person matching
+  - `collabiq notion list-users` - List all workspace users
+  - Add `--dry-run` flag to test matching without creating entries
+
+**Tests**:
+- Unit tests for fuzzy matching algorithms (Jaro-Winkler, similarity scoring)
+- Integration tests for Companies database search
+- Integration tests for Notion user listing
+- E2E tests verifying field population with fuzzy matching
+- Edge case tests (ambiguous names, multiple matches, no matches)
+
+**Success Criteria**:
+- ✅ **SC-001**: ≥90% of extracted company names successfully matched to Companies database entries (exact + fuzzy)
+- ✅ **SC-002**: ≥85% of extracted person names successfully matched to Notion users
+- ✅ **SC-003**: Auto-created companies are properly formatted and linkable
+- ✅ **SC-004**: Low-confidence matches (0.70-0.85) are logged for manual review
+- ✅ **SC-005**: No false positives in company matching (wrong company linked)
+- ✅ **SC-006**: All three fields (담당자, 스타트업명, 협력기관) populated in ≥90% of test emails
+
+**Why Priority**: These three fields are critical for Notion database usability. Without proper field mapping, extracted data cannot be effectively queried, filtered, or analyzed in Notion. Relation fields enable powerful cross-database queries and reporting.
+
+**Examples**:
+
+**Company Matching**:
+```
+Extracted: "웨이크(산스)"
+Database entries: ["웨이크", "산스앤컴퍼니", "스타트업A"]
+→ Match: "웨이크" (similarity: 0.87)
+→ Action: Use page_id of "웨이크" for relation field
+
+Extracted: "새로운회사"
+Database entries: ["기존회사A", "기존회사B"]
+→ Match: None (all similarities < 0.85)
+→ Action: Create new entry "새로운회사" in Companies database
+→ Return: page_id of newly created entry
+```
+
+**Person Matching**:
+```
+Extracted: "김철수"
+Notion users: ["김철수 (Cheolsu Kim)", "이영희 (Younghee Lee)", "박지민 (Jimin Park)"]
+→ Match: "김철수 (Cheolsu Kim)" (similarity: 1.00)
+→ Action: Use user UUID for 담당자 people field
+
+Extracted: "최민수"
+Notion users: ["김철수", "이영희", "박지민"]
+→ Match: None (all similarities < 0.70)
+→ Action: Log warning, leave 담당자 field empty
+```
+
+---
+
 ### Analytics Track (Phases 4a-4c)
 
-**Phase 4a - Basic Reporting** (Branch: `014-basic-reporting`)
+**Phase 4a - Basic Reporting** (Branch: `015-basic-reporting`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -422,7 +518,7 @@ This roadmap breaks the CollabIQ system into **14 sequential phases** (branches 
 
 ---
 
-**Phase 4b - Advanced Analytics** (Branch: `015-advanced-analytics`)
+**Phase 4b - Advanced Analytics** (Branch: `016-advanced-analytics`)
 **Timeline**: 3-4 days
 **Complexity**: Medium
 
@@ -440,7 +536,7 @@ This roadmap breaks the CollabIQ system into **14 sequential phases** (branches 
 
 ---
 
-**Phase 4c - Automated Admin Reporting** (Branch: `016-admin-reporting`)
+**Phase 4c - Automated Admin Reporting** (Branch: `017-admin-reporting`)
 **Timeline**: 3-4 days
 **Complexity**: Low-Medium
 
@@ -495,15 +591,17 @@ This roadmap breaks the CollabIQ system into **14 sequential phases** (branches 
     │       ↓
     ├─→ ✅ Phase 3b (012-multi-llm) - COMPLETE ← depends on 2e (needs existing LLM interface)
     │       ↓
-    └─→ Phase 3c (013-llm-quality-metrics) ← depends on 3b (needs multi-LLM processing), 2d (Notion write)
+    ├─→ ✅ Phase 3c (013-llm-quality-metrics) - COMPLETE ← depends on 3b (needs multi-LLM processing), 2d (Notion write)
+    │       ↓
+    └─→ Phase 3d (014-enhanced-field-mapping) ← depends on 2d (Notion write), 2a (Notion read), 3a (CLI for testing)
             ↓
-        → 🎯 Production-Ready ✅ (Phases 3a+3b+3c)
+        → 🎯 Production-Ready with Full Field Mapping (Phases 3a+3b+3c+3d)
             ↓
-Phase 4a (014-basic-reporting) ← depends on 2d (needs Notion data)
+Phase 4a (015-basic-reporting) ← depends on 3d (needs complete field population), 2d (Notion data)
     ↓
-Phase 4b (015-advanced-analytics) ← depends on 4a, 3b (multi-LLM for insights)
+Phase 4b (016-advanced-analytics) ← depends on 4a, 3b (multi-LLM for insights)
     ↓
-Phase 4c (016-admin-reporting) ← depends on 3a (uses CLI for metrics), 3b (LLM provider usage)
+Phase 4c (017-admin-reporting) ← depends on 3a (uses CLI for metrics), 3b (LLM provider usage)
     ↓
 → 🎯 Complete System ✅
 ```
@@ -524,6 +622,7 @@ Phase 4c (016-admin-reporting) ← depends on 3a (uses CLI for metrics), 3b (LLM
 | **3a** | Unit + Integration + E2E | Command parsing, execution, workflows | pytest, typer.testing |
 | **3b** | Contract + Integration + Failure | Provider interface, orchestrator strategies, failover | pytest, pytest-mock |
 | **3c** | Unit + Integration | Metrics calculation, Notion field population, quality reports | pytest, notion-client |
+| **3d** | Unit + Integration + E2E | Fuzzy matching, Notion API, field population | pytest, notion-client, jellyfish |
 | **4a** | Data accuracy | Stats vs manual calculation | pytest |
 | **4b** | Data quality + Integration | Insights quality, Notion page formatting | pytest, notion-client |
 | **4c** | Unit + Integration | Report generation, email delivery, template rendering | pytest, email testing |
@@ -545,13 +644,14 @@ After each milestone, **STOP and VALIDATE**:
 1. **After Phase 1b (MVP)**: Test JSON output quality, verify manual Notion entry creation works
 2. **After Phase 2e (Full Automation)**: Test end-to-end email → Notion flow without manual steps
 3. **After Phase 3c (Production-Ready)**: Test multi-LLM resilience, verify quality metrics tracking
-4. **After Phase 4c (Complete System)**: Review final reports and monitoring, validate insights quality
+4. **After Phase 3d (Complete Field Mapping)**: Verify all relation fields populated, test fuzzy matching accuracy
+5. **After Phase 4c (Complete System)**: Review final reports and monitoring, validate insights quality
 
 ### Timeline Flexibility
 
 **No deadlines** - work at your own pace. Effort estimates (3-4 days, 2-3 days) are for planning only, not due dates.
 
-**Total Effort**: 35-49 days if working full-time sequentially. Actual calendar time will vary based on:
+**Total Effort**: 38-53 days if working full-time sequentially. Actual calendar time will vary based on:
 - API testing results (may need additional validation)
 - Debugging time (errors, edge cases)
 - Code review cycles
@@ -615,24 +715,29 @@ After each milestone, **STOP and VALIDATE**:
 9. ✅ **Phase 2d Complete** (branch 009-notion-write merged to main)
 10. ✅ **Phase 2e Complete** (branch 010-error-handling merged to main) → **🎯 FULL AUTOMATION COMPLETE**
 11. ✅ **Phase 3a Complete** (branch 011-admin-cli ready for merge) → **🎯 PRODUCTION CLI READY**
-12. ✅ **Phase 3c Complete** (013-llm-quality-metrics)
-13. → **Ready for Phase 4a** (014-basic-reporting) - **NEXT**
+12. ✅ **Phase 3b Complete** (012-multi-llm)
+13. ✅ **Phase 3c Complete** (013-llm-quality-metrics)
+14. → **Ready for Phase 3d** (014-enhanced-field-mapping) - **NEXT**
 
-**Current Status**: Full automation complete (Email → Notion without manual intervention). Admin CLI complete with 30+ commands. Multi-LLM Provider Support complete with failover, consensus, and best-match strategies. Quality Metrics & Intelligent Routing complete with provider comparison and automatic quality-based routing. Ready for Phase 4a (Basic Reporting).
+**Current Status**: Full automation complete (Email → Notion without manual intervention). Admin CLI complete with 30+ commands. Multi-LLM Provider Support complete with failover, consensus, and best-match strategies. Quality Metrics & Intelligent Routing complete with provider comparison and automatic quality-based routing. **However, three critical fields (담당자, 스타트업명, 협력기관) are not being populated due to missing fuzzy matching and relation field handling.** Ready for Phase 3d (Enhanced Notion Field Mapping).
 
-**Phase 4a (014-basic-reporting) Next Actions**:
-1. → Create branch `014-basic-reporting`
+**Phase 3d (014-enhanced-field-mapping) Next Actions**:
+1. → Create branch `014-enhanced-field-mapping`
 2. → Run `/speckit.specify` to create feature specification
 3. → Run `/speckit.plan` to create implementation plan
-4. → Implement ReportGenerator component
-5. → Query Notion for collaboration records
-6. → Calculate basic stats (count by type, intensity, top companies)
-7. → Generate markdown report output
-8. → Add `collabiq report generate` CLI command
-9. → Test reporting on real Notion data
+4. → Implement FuzzyCompanyMatcher service (Jaro-Winkler similarity)
+5. → Implement PersonMatcher service (Notion user UUID lookup)
+6. → Enhance FieldMapper to use fuzzy matching for relation fields
+7. → Add auto-create logic for missing companies in Companies database
+8. → Add CLI commands: `match-company`, `match-person`, `list-users`
+9. → Write unit tests for fuzzy matching algorithms
+10. → Write integration tests for Notion API interactions
+11. → Run E2E tests with real emails to verify field population
+12. → Validate ≥90% success rate for company matching (SC-001)
+13. → Validate ≥85% success rate for person matching (SC-002)
 
 ---
 
-**Document Version**: 2.2.0
-**Last Updated**: 2025-11-09 (Phase 3c complete - Quality Metrics & Intelligent Routing)
-**Next Review**: After Phase 4a (Basic Reporting) completion
+**Document Version**: 2.3.0
+**Last Updated**: 2025-11-10 (Added Phase 3d - Enhanced Notion Field Mapping)
+**Next Review**: After Phase 3d (Enhanced Field Mapping) completion
