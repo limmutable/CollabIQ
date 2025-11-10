@@ -201,9 +201,15 @@ class NotionWriter:
                         f"existing_page_id={existing_page_id}. Updating entry (duplicate_behavior=update)."
                     )
                     # Map extracted data to Notion properties format
-                    properties = self.field_mapper.map_to_notion_properties(
-                        extracted_data
-                    )
+                    # Use async version if available, otherwise fall back to sync
+                    if hasattr(self.field_mapper, "map_to_notion_properties_async"):
+                        properties = await self.field_mapper.map_to_notion_properties_async(
+                            extracted_data
+                        )
+                    else:
+                        properties = self.field_mapper.map_to_notion_properties(
+                            extracted_data
+                        )
 
                     # Update existing page
                     await self.notion_integrator.client.client.pages.update(
@@ -221,7 +227,13 @@ class NotionWriter:
 
             # No duplicate - proceed with creation
             # Map extracted data to Notion properties format
-            properties = self.field_mapper.map_to_notion_properties(extracted_data)
+            # Use async version if available, otherwise fall back to sync
+            if hasattr(self.field_mapper, "map_to_notion_properties_async"):
+                properties = await self.field_mapper.map_to_notion_properties_async(
+                    extracted_data
+                )
+            else:
+                properties = self.field_mapper.map_to_notion_properties(extracted_data)
 
             # Create page (retry logic handled by decorator)
             page_response = await self._create_page(properties)

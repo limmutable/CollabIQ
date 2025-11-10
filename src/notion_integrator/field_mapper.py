@@ -4,20 +4,43 @@ This module provides schema-aware field mapping functionality to convert
 Pydantic models to Notion API property format.
 """
 
+import logging
 from typing import Dict, Any, Optional
 from datetime import datetime
+
+
+logger = logging.getLogger(__name__)
 
 
 class FieldMapper:
     """Maps ExtractedEntitiesWithClassification to Notion property format."""
 
-    def __init__(self, schema):
-        """Initialize FieldMapper with database schema.
+    def __init__(
+        self,
+        schema,
+        company_matcher=None,
+        person_matcher=None,
+        companies_cache=None,
+        notion_writer=None,
+        companies_db_id: Optional[str] = None,
+    ):
+        """Initialize FieldMapper with database schema and optional matchers.
 
         Args:
             schema: DatabaseSchema from NotionIntegrator.discover_database_schema()
+            company_matcher: Optional CompanyMatcher for fuzzy matching company names
+            person_matcher: Optional PersonMatcher for matching person names to users
+            companies_cache: Optional CompaniesCache for loading company candidates
+            notion_writer: Optional NotionWriter for creating companies when no match
+            companies_db_id: Companies database ID (required if company_matcher provided)
         """
         self.schema = schema
+        self.company_matcher = company_matcher
+        self.person_matcher = person_matcher
+        self.companies_cache = companies_cache
+        self.notion_writer = notion_writer
+        self.companies_db_id = companies_db_id
+
         # Build property type map for quick lookups
         # DatabaseSchema.database.properties contains the actual property definitions
         properties_dict = (
@@ -32,8 +55,143 @@ class FieldMapper:
             for name, prop in properties_dict.items()
         }
 
+    async def map_to_notion_properties_async(
+        self, extracted_data
+    ) -> Dict[str, Any]:
+        """Map ExtractedEntitiesWithClassification to Notion properties format with async fuzzy matching.
+
+        This async version performs fuzzy matching for company names before mapping.
+        Use this when company_matcher and companies_cache are provided.
+
+        Args:
+            extracted_data: ExtractedEntitiesWithClassification instance
+
+        Returns:
+            Dict of Notion properties ready for API submission
+        """
+        # Perform fuzzy matching for companies if matcher is available
+        if self.company_matcher and self.companies_cache:
+            await self._match_and_populate_companies(extracted_data)
+
+        # Use sync version for the actual mapping
+        return self.map_to_notion_properties(extracted_data)
+
+    async def _match_and_populate_companies(self, extracted_data) -> None:
+        """Match extracted company names to Companies database and populate IDs.
+
+        Args:
+            extracted_data: ExtractedEntitiesWithClassification instance (modified in place)
+        """
+        # Get company candidates from cache
+        candidates = await self.companies_cache.get_companies()
+
+        # Match startup_name to 스타트업명
+        if extracted_data.startup_name and not extracted_data.matched_company_id:
+            match_result = self.company_matcher.match(
+                company_name=extracted_data.startup_name,
+                candidates=candidates,
+                auto_create=True,
+                similarity_threshold=0.85,
+            )
+
+            # Handle match result
+            if match_result.match_type in ["exact", "fuzzy"]:
+                # Match found
+                extracted_data.matched_company_id = match_result.page_id
+                logger.info(
+                    f"Company matched: '{extracted_data.startup_name}' → '{match_result.company_name}' "
+                    f"(similarity: {match_result.similarity_score:.2f}, type: {match_result.match_type})"
+                )
+
+                # Log low-confidence matches (T038)
+                if match_result.confidence_level in ["low", "medium"]:
+                    logger.warning(
+                        f"Low-confidence company match: '{extracted_data.startup_name}' → '{match_result.company_name}' "
+                        f"(similarity: {match_result.similarity_score:.2f}, confidence: {match_result.confidence_level}). "
+                        f"Manual review recommended."
+                    )
+
+            elif match_result.match_type == "none" and match_result.company_name:
+                # No match found - auto-create new company
+                logger.info(
+                    f"No match found for '{extracted_data.startup_name}'. Creating new company entry."
+                )
+
+                if self.notion_writer and self.companies_db_id:
+                    new_page_id = await self.notion_writer.create_company(
+                        company_name=match_result.company_name,
+                        companies_db_id=self.companies_db_id,
+                    )
+
+                    if new_page_id:
+                        extracted_data.matched_company_id = new_page_id
+                        logger.info(
+                            f"New company created: '{match_result.company_name}' (page_id: {new_page_id})"
+                        )
+
+                        # Invalidate cache so next fetch includes new company
+                        self.companies_cache.invalidate_cache()
+                    else:
+                        logger.error(
+                            f"Failed to create company: '{match_result.company_name}'"
+                        )
+                else:
+                    logger.warning(
+                        f"Cannot auto-create company '{match_result.company_name}': "
+                        f"notion_writer or companies_db_id not configured"
+                    )
+
+        # Match partner_org to 협업기관 (same logic)
+        if extracted_data.partner_org and not extracted_data.matched_partner_id:
+            match_result = self.company_matcher.match(
+                company_name=extracted_data.partner_org,
+                candidates=candidates,
+                auto_create=True,
+                similarity_threshold=0.85,
+            )
+
+            if match_result.match_type in ["exact", "fuzzy"]:
+                extracted_data.matched_partner_id = match_result.page_id
+                logger.info(
+                    f"Partner matched: '{extracted_data.partner_org}' → '{match_result.company_name}' "
+                    f"(similarity: {match_result.similarity_score:.2f}, type: {match_result.match_type})"
+                )
+
+                # Log low-confidence matches (T038)
+                if match_result.confidence_level in ["low", "medium"]:
+                    logger.warning(
+                        f"Low-confidence partner match: '{extracted_data.partner_org}' → '{match_result.company_name}' "
+                        f"(similarity: {match_result.similarity_score:.2f}, confidence: {match_result.confidence_level}). "
+                        f"Manual review recommended."
+                    )
+
+            elif match_result.match_type == "none" and match_result.company_name:
+                logger.info(
+                    f"No match found for '{extracted_data.partner_org}'. Creating new company entry."
+                )
+
+                if self.notion_writer and self.companies_db_id:
+                    new_page_id = await self.notion_writer.create_company(
+                        company_name=match_result.company_name,
+                        companies_db_id=self.companies_db_id,
+                    )
+
+                    if new_page_id:
+                        extracted_data.matched_partner_id = new_page_id
+                        logger.info(
+                            f"New partner created: '{match_result.company_name}' (page_id: {new_page_id})"
+                        )
+                        self.companies_cache.invalidate_cache()
+                    else:
+                        logger.error(
+                            f"Failed to create partner: '{match_result.company_name}'"
+                        )
+
     def map_to_notion_properties(self, extracted_data) -> Dict[str, Any]:
         """Map ExtractedEntitiesWithClassification to Notion properties format.
+
+        This is the synchronous version that maps already-matched company IDs.
+        Use map_to_notion_properties_async() if you need fuzzy matching.
 
         Args:
             extracted_data: ExtractedEntitiesWithClassification instance
