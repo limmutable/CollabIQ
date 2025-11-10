@@ -25,15 +25,20 @@ from ..formatters.tables import create_table
 from ..utils.logging import log_cli_operation, log_cli_error
 
 # Import E2E test infrastructure
+# Ensure src directory is in path for absolute imports
+_src_path = Path(__file__).parent.parent.parent
+if str(_src_path) not in sys.path:
+    sys.path.insert(0, str(_src_path))
+
 try:
     from e2e_test.runner import E2ERunner
     from e2e_test.report_generator import ReportGenerator
     from email_receiver.gmail_receiver import GmailReceiver
     from llm_adapters.gemini_adapter import GeminiAdapter
-    from llm_provider.classification_service import ClassificationService
-    from notion_integrator.notion_writer import NotionWriter
-except ImportError:
-    # Services may not be available in all environments
+    from models.classification_service import ClassificationService
+    from notion_integrator.writer import NotionWriter
+except ImportError as e:
+    # Services may not be available in all environments - this is expected
     E2ERunner = None
     ReportGenerator = None
     GmailReceiver = None
@@ -238,7 +243,7 @@ def e2e(
 
                 # Run tests
                 try:
-                    test_run = runner.run_tests(email_ids, test_mode=True)
+                    test_run = runner.run_tests(email_ids, test_mode=not production_mode)
                 except KeyboardInterrupt:
                     console.print("\n[yellow]Test run interrupted by user[/yellow]")
                     console.print("Run with --resume to continue from where you left off")
@@ -248,7 +253,7 @@ def e2e(
 
             console.print()
         else:
-            test_run = runner.run_tests(email_ids, test_mode=True)
+            test_run = runner.run_tests(email_ids, test_mode=not production_mode)
 
         # Display stage-by-stage results (T081)
         if not quiet and not json_output:
