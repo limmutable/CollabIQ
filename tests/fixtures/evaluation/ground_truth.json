@@ -1,0 +1,263 @@
+{
+  "version": "1.0",
+  "description": "Ground truth dataset for fuzzy matching algorithm evaluation",
+  "created_at": "2025-11-10",
+  "test_cases": [
+    {
+      "id": "GT001",
+      "extracted_name": "웨이크",
+      "correct_match": "웨이크",
+      "match_type": "exact",
+      "category": "exact_match",
+      "difficulty": "easy",
+      "notes": "Simple exact match case"
+    },
+    {
+      "id": "GT002",
+      "extracted_name": "웨이크(산스)",
+      "correct_match": "웨이크",
+      "match_type": "fuzzy",
+      "category": "parenthetical_removal",
+      "difficulty": "medium",
+      "notes": "Company name with parenthetical - should match base name"
+    },
+    {
+      "id": "GT003",
+      "extracted_name": "네트워크",
+      "correct_match": "네트워크",
+      "match_type": "exact",
+      "category": "exact_match",
+      "difficulty": "easy",
+      "notes": "Common Korean company name"
+    },
+    {
+      "id": "GT004",
+      "extracted_name": "현대카드",
+      "correct_match": "현대카드",
+      "match_type": "exact",
+      "category": "exact_match",
+      "difficulty": "easy",
+      "notes": "Major Korean company"
+    },
+    {
+      "id": "GT005",
+      "extracted_name": "신세계푸드",
+      "correct_match": "신세계푸드",
+      "match_type": "exact",
+      "category": "exact_match",
+      "difficulty": "easy",
+      "notes": "Conglomerate subsidiary"
+    },
+    {
+      "id": "GT006",
+      "extracted_name": "KDT다이아몬드",
+      "correct_match": "KDT다이아몬드",
+      "match_type": "exact",
+      "category": "mixed_alphanumeric",
+      "difficulty": "easy",
+      "notes": "Mixed Korean and English/numbers"
+    },
+    {
+      "id": "GT007",
+      "extracted_name": "채널톡",
+      "correct_match": "채널톡",
+      "match_type": "exact",
+      "category": "exact_match",
+      "difficulty": "easy",
+      "notes": "Tech startup"
+    },
+    {
+      "id": "GT008",
+      "extracted_name": "에이블리",
+      "correct_match": "에이블리",
+      "match_type": "exact",
+      "category": "exact_match",
+      "difficulty": "easy",
+      "notes": "E-commerce company"
+    },
+    {
+      "id": "GT009",
+      "extracted_name": "시그나이트",
+      "correct_match": "시그나이트",
+      "match_type": "exact",
+      "category": "exact_match",
+      "difficulty": "easy",
+      "notes": "Venture capital firm"
+    },
+    {
+      "id": "GT010",
+      "extracted_name": "브레이크앤컴퍼니",
+      "correct_match": "브레이크앤컴퍼니",
+      "match_type": "exact",
+      "category": "exact_match",
+      "difficulty": "easy",
+      "notes": "Company with ampersand in Korean"
+    },
+    {
+      "id": "GT011",
+      "extracted_name": "로보톰",
+      "correct_match": "로보톰",
+      "match_type": "exact",
+      "category": "exact_match",
+      "difficulty": "easy",
+      "notes": "Robotics startup"
+    },
+    {
+      "id": "GT012",
+      "extracted_name": "스위트스팟",
+      "correct_match": "스위트스팟",
+      "match_type": "exact",
+      "category": "exact_match",
+      "difficulty": "easy",
+      "notes": "Retail tech company"
+    },
+    {
+      "id": "GT013",
+      "extracted_name": "신세계백화점",
+      "correct_match": "신세계백화점",
+      "match_type": "exact",
+      "category": "exact_match",
+      "difficulty": "easy",
+      "notes": "Major retail chain"
+    },
+    {
+      "id": "GT014",
+      "extracted_name": "웨이크 ",
+      "correct_match": "웨이크",
+      "match_type": "fuzzy",
+      "category": "whitespace_variation",
+      "difficulty": "easy",
+      "notes": "Trailing whitespace should be normalized"
+    },
+    {
+      "id": "GT015",
+      "extracted_name": " 네트워크",
+      "correct_match": "네트워크",
+      "match_type": "fuzzy",
+      "category": "whitespace_variation",
+      "difficulty": "easy",
+      "notes": "Leading whitespace should be normalized"
+    },
+    {
+      "id": "GT016",
+      "extracted_name": "웨이크 (산스)",
+      "correct_match": "웨이크",
+      "match_type": "fuzzy",
+      "category": "parenthetical_with_space",
+      "difficulty": "medium",
+      "notes": "Parenthetical with space before opening paren"
+    },
+    {
+      "id": "GT017",
+      "extracted_name": "완전히새로운회사123",
+      "correct_match": null,
+      "match_type": "none",
+      "category": "no_match_new_company",
+      "difficulty": "hard",
+      "notes": "Should trigger auto-create (no match in database)"
+    },
+    {
+      "id": "GT018",
+      "extracted_name": "SFNW",
+      "correct_match": "SFNW",
+      "match_type": "exact",
+      "category": "english_acronym",
+      "difficulty": "easy",
+      "notes": "English acronym company name"
+    },
+    {
+      "id": "GT019",
+      "extracted_name": "프랙시스",
+      "correct_match": "프랙시스",
+      "match_type": "exact",
+      "category": "exact_match",
+      "difficulty": "easy",
+      "notes": "Consulting/advisory firm"
+    },
+    {
+      "id": "GT020",
+      "extracted_name": "웨이크(SANS)",
+      "correct_match": "웨이크",
+      "match_type": "fuzzy",
+      "category": "parenthetical_english",
+      "difficulty": "medium",
+      "notes": "English text in parenthetical"
+    },
+    {
+      "id": "GT021",
+      "extracted_name": "네이버",
+      "correct_match": "네이버",
+      "match_type": "exact",
+      "category": "exact_match",
+      "difficulty": "easy",
+      "notes": "Major tech company"
+    },
+    {
+      "id": "GT022",
+      "extracted_name": "카카오",
+      "correct_match": "카카오",
+      "match_type": "exact",
+      "category": "exact_match",
+      "difficulty": "easy",
+      "notes": "Major tech company"
+    },
+    {
+      "id": "GT023",
+      "extracted_name": "테스트회사XYZ789",
+      "correct_match": null,
+      "match_type": "none",
+      "category": "no_match_test_case",
+      "difficulty": "hard",
+      "notes": "Test case for no-match scenario"
+    },
+    {
+      "id": "GT024",
+      "extracted_name": "신세계 푸드",
+      "correct_match": "신세계푸드",
+      "match_type": "fuzzy",
+      "category": "spacing_variation",
+      "difficulty": "medium",
+      "notes": "Extra space in compound name"
+    },
+    {
+      "id": "GT025",
+      "extracted_name": "채널 톡",
+      "correct_match": "채널톡",
+      "match_type": "fuzzy",
+      "category": "spacing_variation",
+      "difficulty": "medium",
+      "notes": "Space in two-syllable company name"
+    }
+  ],
+  "statistics": {
+    "total_cases": 25,
+    "exact_matches": 17,
+    "fuzzy_matches": 6,
+    "no_matches": 2,
+    "difficulty_breakdown": {
+      "easy": 19,
+      "medium": 5,
+      "hard": 2
+    },
+    "category_breakdown": {
+      "exact_match": 17,
+      "parenthetical_removal": 1,
+      "parenthetical_with_space": 1,
+      "parenthetical_english": 1,
+      "whitespace_variation": 2,
+      "spacing_variation": 2,
+      "no_match_new_company": 1,
+      "no_match_test_case": 1,
+      "mixed_alphanumeric": 1,
+      "english_acronym": 1
+    }
+  },
+  "evaluation_criteria": {
+    "accuracy_threshold": 0.90,
+    "precision_threshold": 0.95,
+    "recall_threshold": 0.90,
+    "f1_threshold": 0.90,
+    "latency_threshold_ms": 2000,
+    "cost_considerations": "LLM-based approaches may have higher cost per match"
+  }
+}

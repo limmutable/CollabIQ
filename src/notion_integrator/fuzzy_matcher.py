@@ -342,3 +342,311 @@ class RapidfuzzMatcher(CompanyMatcher):
                 was_created=False,
                 match_method="character",
             )
+
+
+class LLMMatcher(CompanyMatcher):
+    """
+    LLM-based semantic company name matcher.
+
+    Uses LLM for semantic understanding to handle:
+    - Name variations and synonyms
+    - Abbreviated company names
+    - Different naming conventions
+    - Complex name transformations
+
+    Trade-offs:
+    - Higher accuracy on ambiguous cases
+    - Slower than character-based matching
+    - Higher cost per match (LLM API calls)
+    - Requires LLM orchestrator
+
+    Example:
+        >>> from llm_orchestrator.orchestrator import LLMOrchestrator
+        >>> orchestrator = LLMOrchestrator()
+        >>> matcher = LLMMatcher(orchestrator)
+        >>> result = matcher.match("SANS Group", candidates, similarity_threshold=0.70)
+    """
+
+    def __init__(self, llm_orchestrator):
+        """
+        Initialize LLMMatcher with LLM orchestrator.
+
+        Args:
+            llm_orchestrator: LLMOrchestrator instance for semantic matching
+        """
+        self.llm_orchestrator = llm_orchestrator
+
+    def match(
+        self,
+        company_name: str,
+        candidates: List[tuple[str, str]],
+        *,
+        auto_create: bool = True,
+        similarity_threshold: float = 0.70,
+    ) -> CompanyMatch:
+        """
+        Match company name using LLM semantic understanding.
+
+        Algorithm:
+        1. Validate inputs and normalize
+        2. Check exact match first (fast path)
+        3. Use LLM to rank candidates by semantic similarity
+        4. Return best match if ≥ threshold
+        5. Signal creation if auto_create and no match
+
+        Args:
+            company_name: Extracted company name
+            candidates: List of (page_id, company_name) from database
+            auto_create: Create new company if no match (default: True)
+            similarity_threshold: Minimum similarity (default: 0.70, more lenient than rapidfuzz)
+
+        Returns:
+            CompanyMatch with match_method="semantic"
+
+        Raises:
+            ValueError: If company_name is empty or threshold is invalid
+        """
+        import logging
+        
+        # Validate threshold
+        if not (0.0 <= similarity_threshold <= 1.0):
+            raise ValueError(
+                f"similarity_threshold must be between 0.0 and 1.0, got {similarity_threshold}"
+            )
+
+        # Normalize company name
+        normalized_name = normalize_company_name(company_name)
+
+        # Fast path: Check exact match
+        for page_id, candidate_name in candidates:
+            if normalized_name == candidate_name:
+                return CompanyMatch(
+                    page_id=page_id,
+                    company_name=candidate_name,
+                    similarity_score=1.0,
+                    match_type="exact",
+                    confidence_level="high",
+                    was_created=False,
+                    match_method="semantic",
+                )
+
+        # Use LLM for semantic ranking
+        prompt = self._build_ranking_prompt(normalized_name, candidates)
+
+        # Call LLM to rank candidates
+        try:
+            # Simple text response parsing (no structured response needed for evaluation)
+            response_text = self.llm_orchestrator.generate_text(prompt)
+            
+            # Parse response to extract best match
+            # Format: "Best match: <company_name> (score: 0.XX)"
+            import re
+            match = re.search(r'Best match: (.+?) \(score: (0\.\d+)\)', response_text)
+            
+            if match:
+                best_name = match.group(1).strip()
+                score = float(match.group(2))
+                
+                if score >= similarity_threshold:
+                    # Find matching page_id
+                    page_id = next(
+                        (pid for pid, name in candidates if name == best_name),
+                        None
+                    )
+                    
+                    if page_id:
+                        confidence = self._compute_confidence_level(score)
+                        return CompanyMatch(
+                            page_id=page_id,
+                            company_name=best_name,
+                            similarity_score=score,
+                            match_type="fuzzy",
+                            confidence_level=confidence,
+                            was_created=False,
+                            match_method="semantic",
+                        )
+
+        except Exception as e:
+            # LLM call failed - fallback to no match
+            logging.warning(f"LLM matching failed for '{normalized_name}': {str(e)}")
+
+        # No match found
+        if auto_create:
+            return CompanyMatch(
+                page_id=None,
+                company_name=normalized_name,
+                similarity_score=0.0,
+                match_type="none",
+                confidence_level="none",
+                was_created=False,
+                match_method="semantic",
+            )
+        else:
+            return CompanyMatch(
+                page_id=None,
+                company_name="",
+                similarity_score=0.0,
+                match_type="none",
+                confidence_level="none",
+                was_created=False,
+                match_method="semantic",
+            )
+
+    def _build_ranking_prompt(
+        self, company_name: str, candidates: List[tuple[str, str]]
+    ) -> str:
+        """
+        Build prompt for LLM to rank candidates by semantic similarity.
+
+        Args:
+            company_name: Extracted company name to match
+            candidates: List of (page_id, company_name) tuples
+
+        Returns:
+            Prompt string for LLM
+        """
+        candidates_list = "\n".join(
+            [f"{i+1}. {name}" for i, (page_id, name) in enumerate(candidates[:10])]  # Limit to top 10
+        )
+
+        return f"""You are a company name matching expert. Match the extracted company name to the most similar candidate.
+
+Extracted Company Name: "{company_name}"
+
+Candidate Companies:
+{candidates_list}
+
+Respond with ONLY:
+Best match: <company_name> (score: 0.XX)
+
+Or if no good match:
+No match (score: 0.00)
+
+Consider name variations, abbreviations, and Korean/English equivalents. Score from 0.00 to 1.00."""
+
+    def _compute_confidence_level(self, similarity_score: float) -> str:
+        """Compute confidence level from similarity score."""
+        if similarity_score >= 0.90:
+            return "high"
+        elif similarity_score >= 0.70:
+            return "medium"
+        elif similarity_score >= 0.50:
+            return "low"
+        else:
+            return "none"
+
+
+class HybridMatcher(CompanyMatcher):
+    """
+    Hybrid matcher combining rapidfuzz (fast) with LLM fallback (accurate).
+
+    Strategy:
+    1. Try rapidfuzz first with high threshold (≥0.85) - fast, high precision
+    2. If no match, try LLM with lower threshold (≥0.70) - slower, handles edge cases
+    3. If still no match, signal auto-creation
+
+    Benefits:
+    - Fast path for most cases (exact and high-confidence fuzzy matches)
+    - LLM fallback handles complex variations
+    - Balanced speed/accuracy/cost trade-off
+
+    Trade-offs:
+    - More complex implementation
+    - Still incurs LLM cost on difficult cases
+    - Best of both approaches
+    """
+
+    def __init__(self, llm_orchestrator):
+        """
+        Initialize HybridMatcher with both rapidfuzz and LLM.
+
+        Args:
+            llm_orchestrator: LLMOrchestrator instance for semantic fallback
+        """
+        self.rapidfuzz_matcher = RapidfuzzMatcher()
+        self.llm_matcher = LLMMatcher(llm_orchestrator)
+
+    def match(
+        self,
+        company_name: str,
+        candidates: List[tuple[str, str]],
+        *,
+        auto_create: bool = True,
+        similarity_threshold: float = 0.85,
+    ) -> CompanyMatch:
+        """
+        Match using hybrid approach: rapidfuzz first, LLM fallback.
+
+        Algorithm:
+        1. Try rapidfuzz with threshold 0.85 (fast path)
+        2. If match found → return immediately
+        3. If no match and score ≥ 0.70 → try LLM for semantic understanding
+        4. If LLM finds match ≥ 0.70 → return LLM result
+        5. Otherwise → signal auto-creation or none
+
+        Args:
+            company_name: Extracted company name
+            candidates: List of (page_id, company_name) from database
+            auto_create: Create new company if no match (default: True)
+            similarity_threshold: Minimum similarity for rapidfuzz (default: 0.85)
+
+        Returns:
+            CompanyMatch with match_method="hybrid-character" or "hybrid-semantic"
+
+        Raises:
+            ValueError: If company_name is empty or threshold is invalid
+        """
+        # Step 1: Try rapidfuzz (fast path)
+        rapidfuzz_result = self.rapidfuzz_matcher.match(
+            company_name,
+            candidates,
+            auto_create=False,  # Don't auto-create yet
+            similarity_threshold=similarity_threshold,
+        )
+
+        # If rapidfuzz found a match, return it
+        if rapidfuzz_result.match_type in ["exact", "fuzzy"]:
+            # Update match_method to indicate hybrid approach
+            rapidfuzz_result.match_method = "hybrid-character"
+            return rapidfuzz_result
+
+        # Step 2: Rapidfuzz failed - try LLM fallback with lower threshold
+        # Only use LLM if rapidfuzz got close but not quite (≥0.70 but <0.85)
+        use_llm_fallback = rapidfuzz_result.similarity_score >= 0.70
+
+        if use_llm_fallback:
+            llm_result = self.llm_matcher.match(
+                company_name,
+                candidates,
+                auto_create=False,  # Don't auto-create yet
+                similarity_threshold=0.70,  # Lower threshold for LLM
+            )
+
+            # If LLM found a match, return it
+            if llm_result.match_type in ["exact", "fuzzy"]:
+                # Update match_method to indicate hybrid approach
+                llm_result.match_method = "hybrid-semantic"
+                return llm_result
+
+        # Step 3: Both approaches failed - signal auto-creation
+        if auto_create:
+            normalized_name = normalize_company_name(company_name)
+            return CompanyMatch(
+                page_id=None,
+                company_name=normalized_name,
+                similarity_score=0.0,
+                match_type="none",
+                confidence_level="none",
+                was_created=False,
+                match_method="hybrid",
+            )
+        else:
+            return CompanyMatch(
+                page_id=None,
+                company_name="",
+                similarity_score=0.0,
+                match_type="none",
+                confidence_level="none",
+                was_created=False,
+                match_method="hybrid",
+            )
