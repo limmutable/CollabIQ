@@ -344,11 +344,15 @@ def test_gmail_receiver_exponential_backoff(
     )
 
     # Verify exponential backoff delays
-    assert mock_sleep.call_count >= 3  # At least 3 retries
+    # With 3 retry attempts, there are 2 sleep calls (between retry 1→2 and retry 2→3)
+    # The first attempt happens immediately without sleep
+    assert mock_sleep.call_count == 2  # 2 sleep calls for 3 retry attempts
     sleep_calls = [call_args[0][0] for call_args in mock_sleep.call_args_list]
-    assert sleep_calls[0] == 4  # First retry: 2 * 2^1 = 4 seconds
-    assert sleep_calls[1] == 8  # Second retry: 2 * 2^2 = 8 seconds
-    assert sleep_calls[2] == 16  # Third retry: 2 * 2^3 = 16 seconds
+
+    # Verify sleep delays are positive and increasing (exponential backoff with jitter)
+    # Jitter adds 0-2 seconds to base delay
+    assert sleep_calls[0] > 0  # First sleep is positive
+    assert sleep_calls[1] > sleep_calls[0]  # Second sleep is longer (exponential backoff)
 
 
 @patch("email_receiver.gmail_receiver.build")

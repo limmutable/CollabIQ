@@ -165,7 +165,7 @@ class TestInfisicalClientSecretRetrieval:
         # Mock SDK instance and secret retrieval
         mock_sdk_instance = MagicMock()
         mock_sdk_instance.secrets.get_secret_by_name.return_value = MagicMock(
-            secret_value="api-secret-value"
+            secretValue="api-secret-value"  # Fixed: Use camelCase to match SDK
         )
         mock_sdk_class.return_value = mock_sdk_instance
 
@@ -248,9 +248,9 @@ class TestInfisicalClientBulkRetrieval:
         """Test bulk retrieval of all secrets from Infisical."""
         # Mock SDK instance and bulk secret retrieval
         mock_sdk_instance = MagicMock()
-        mock_secret_1 = MagicMock(secret_key="GEMINI_API_KEY", secret_value="secret-1")
-        mock_secret_2 = MagicMock(secret_key="NOTION_API_KEY", secret_value="secret-2")
-        mock_secret_3 = MagicMock(secret_key="GMAIL_TOKEN", secret_value="secret-3")
+        mock_secret_1 = MagicMock(secretKey="GEMINI_API_KEY", secretValue="secret-1")
+        mock_secret_2 = MagicMock(secretKey="NOTION_API_KEY", secretValue="secret-2")
+        mock_secret_3 = MagicMock(secretKey="GMAIL_TOKEN", secretValue="secret-3")
         mock_sdk_instance.secrets.list_secrets.return_value = MagicMock(
             secrets=[mock_secret_1, mock_secret_2, mock_secret_3]
         )
@@ -272,8 +272,8 @@ class TestInfisicalClientBulkRetrieval:
         """Test get_all_secrets() updates cache with timestamps."""
         # Mock SDK instance and bulk secret retrieval
         mock_sdk_instance = MagicMock()
-        mock_secret_1 = MagicMock(secret_key="KEY1", secret_value="value1")
-        mock_secret_2 = MagicMock(secret_key="KEY2", secret_value="value2")
+        mock_secret_1 = MagicMock(secretKey="KEY1", secretValue="value1")
+        mock_secret_2 = MagicMock(secretKey="KEY2", secretValue="value2")
         mock_sdk_instance.secrets.list_secrets.return_value = MagicMock(
             secrets=[mock_secret_1, mock_secret_2]
         )
@@ -297,7 +297,7 @@ class TestInfisicalClientCacheManagement:
         """Test manual cache refresh via refresh_cache()."""
         # Mock SDK to return new secrets
         mock_sdk_instance = MagicMock()
-        mock_secret = MagicMock(secret_key="KEY", secret_value="new-value")
+        mock_secret = MagicMock(secretKey="KEY", secretValue="new-value")
         mock_sdk_instance.secrets.list_secrets.return_value = MagicMock(
             secrets=[mock_secret]
         )
