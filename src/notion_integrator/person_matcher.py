@@ -5,10 +5,19 @@ This module provides interfaces and implementations for matching extracted
 person names to Notion workspace users.
 """
 
+import json
+import logging
 from abc import ABC, abstractmethod
-from typing import List
+from datetime import datetime
+from pathlib import Path
+from typing import List, Optional, Tuple
+
+from rapidfuzz import fuzz
 
 from src.models.matching import PersonMatch
+
+
+logger = logging.getLogger(__name__)
 
 
 class NotionUser:
@@ -100,6 +109,30 @@ class NotionPersonMatcher(PersonMatcher):
     - More lenient threshold (0.70) than company matching
     """
 
+    def __init__(
+        self,
+        notion_client,
+        cache_dir: Optional[str] = None,
+        cache_ttl_hours: int = 24,
+    ):
+        """
+        Initialize NotionPersonMatcher.
+
+        Args:
+            notion_client: NotionClient instance for API access
+            cache_dir: Cache directory (defaults to data/notion_cache)
+            cache_ttl_hours: Cache TTL in hours (default: 24)
+        """
+        self.notion_client = notion_client
+        self.cache_dir = Path(cache_dir or "data/notion_cache")
+        self.cache_ttl_hours = cache_ttl_hours
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+
+        logger.info(
+            "NotionPersonMatcher initialized",
+            extra={"cache_dir": str(self.cache_dir), "cache_ttl_hours": cache_ttl_hours},
+        )
+
     def list_users(self, *, force_refresh: bool = False) -> List[NotionUser]:
         """
         List Notion workspace users with caching.
@@ -113,8 +146,21 @@ class NotionPersonMatcher(PersonMatcher):
         Returns:
             List of NotionUser objects
         """
-        # Implementation will be added in T024
-        raise NotImplementedError("NotionPersonMatcher.list_users() not yet implemented")
+        # Try cache first unless force refresh
+        if not force_refresh:
+            cached_users = self._get_from_cache()
+            if cached_users is not None:
+                logger.info("Users loaded from cache", extra={"user_count": len(cached_users)})
+                return cached_users
+
+        # Cache miss or force refresh - fetch from API
+        logger.info("Fetching users from Notion API")
+        users = self._fetch_from_api()
+
+        # Save to cache
+        self._save_to_cache(users)
+
+        return users
 
     def match(
         self,
@@ -145,5 +191,245 @@ class NotionPersonMatcher(PersonMatcher):
 
             is_ambiguous=True if multiple users have similar scores
         """
-        # Implementation will be added in T025
-        raise NotImplementedError("NotionPersonMatcher.match() not yet implemented")
+        # Validate inputs
+        if not (0.0 <= similarity_threshold <= 1.0):
+            raise ValueError(
+                f"similarity_threshold must be between 0.0 and 1.0, got {similarity_threshold}"
+            )
+
+        normalized_name = person_name.strip()
+        if not normalized_name:
+            raise ValueError("Person name cannot be empty or whitespace-only")
+
+        # Load users from cache
+        users = self.list_users()
+
+        # Convert to candidates format
+        candidates = [(user.id, user.name) for user in users]
+
+        # Step 1: Search for exact match
+        exact_match = self._find_exact_match(normalized_name, candidates)
+        if exact_match:
+            user_id, matched_name = exact_match
+            return PersonMatch(
+                user_id=user_id,
+                user_name=matched_name,
+                similarity_score=1.0,
+                match_type="exact",
+                confidence_level="high",
+                is_ambiguous=False,
+                alternative_matches=[],
+                match_method="character",
+            )
+
+        # Step 2: Compute fuzzy similarity for all candidates
+        scored_matches = []
+        for user_id, user_name in candidates:
+            similarity = fuzz.ratio(normalized_name, user_name) / 100.0
+            scored_matches.append((user_id, user_name, similarity))
+
+        # Sort by similarity (descending)
+        scored_matches.sort(key=lambda x: x[2], reverse=True)
+
+        # Step 3: Check if best match meets threshold
+        if not scored_matches or scored_matches[0][2] < similarity_threshold:
+            # No match found
+            return PersonMatch(
+                user_id=None,
+                user_name="",
+                similarity_score=scored_matches[0][2] if scored_matches else 0.0,
+                match_type="none",
+                confidence_level="none",
+                is_ambiguous=False,
+                alternative_matches=[],
+                match_method="character",
+            )
+
+        # Step 4: Check for ambiguity
+        best_match = scored_matches[0]
+        user_id, matched_name, similarity = best_match
+
+        is_ambiguous = False
+        alternative_matches = []
+
+        if len(scored_matches) >= 2:
+            second_best = scored_matches[1]
+            score_difference = similarity - second_best[2]
+
+            # Ambiguous if top 2 scores differ by < 0.10
+            if score_difference < 0.10:
+                is_ambiguous = True
+                # Include top matches as alternatives
+                alternative_matches = [
+                    {
+                        "user_id": uid,
+                        "user_name": uname,
+                        "similarity_score": f"{sim:.2f}",  # Convert to string
+                    }
+                    for uid, uname, sim in scored_matches[:3]  # Top 3
+                    if sim >= similarity_threshold
+                ]
+
+        # Compute confidence level
+        confidence = self._compute_confidence_level(similarity, is_ambiguous)
+
+        return PersonMatch(
+            user_id=user_id,
+            user_name=matched_name,
+            similarity_score=similarity,
+            match_type="fuzzy" if similarity < 1.0 else "exact",
+            confidence_level=confidence,
+            is_ambiguous=is_ambiguous,
+            alternative_matches=alternative_matches,
+            match_method="character",
+        )
+
+    def _find_exact_match(
+        self, normalized_name: str, candidates: List[Tuple[str, str]]
+    ) -> Optional[Tuple[str, str]]:
+        """Search for exact match (case-sensitive)."""
+        for user_id, user_name in candidates:
+            if normalized_name == user_name:
+                return (user_id, user_name)
+        return None
+
+    def _compute_confidence_level(
+        self, similarity_score: float, is_ambiguous: bool
+    ) -> str:
+        """
+        Compute confidence level from similarity score and ambiguity.
+
+        Thresholds:
+        - high: similarity ≥ 0.95 and not ambiguous
+        - medium: 0.85 ≤ similarity < 0.95 or ambiguous
+        - low: 0.70 ≤ similarity < 0.85
+        - none: similarity < 0.70
+        """
+        if is_ambiguous:
+            return "medium"  # Ambiguous matches are medium confidence
+
+        if similarity_score >= 0.95:
+            return "high"
+        elif similarity_score >= 0.85:
+            return "medium"
+        elif similarity_score >= 0.70:
+            return "low"
+        else:
+            return "none"
+
+    def _fetch_from_api(self) -> List[NotionUser]:
+        """Fetch users from Notion API synchronously."""
+        # Note: This is a sync method that will be called from async context
+        # The actual API call is wrapped by the caller
+        raise NotImplementedError("Sync API fetching not yet implemented - use async wrapper")
+
+    def _get_from_cache(self) -> Optional[List[NotionUser]]:
+        """
+        Get users from cache if valid.
+
+        Returns:
+            List of NotionUser objects or None if cache invalid
+        """
+        cache_path = self.cache_dir / "users_list.json"
+
+        if not cache_path.exists():
+            return None
+
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                cache_data = json.load(f)
+
+            # Validate cache structure
+            if not isinstance(cache_data, dict):
+                logger.warning("Invalid cache format (not a dict)")
+                return None
+
+            # Check expiration
+            cached_at_str = cache_data.get("cached_at")
+            if not cached_at_str:
+                logger.warning("Cache missing cached_at timestamp")
+                return None
+
+            cached_at = datetime.fromisoformat(cached_at_str)
+            age_hours = (datetime.now() - cached_at).total_seconds() / 3600
+
+            if age_hours > self.cache_ttl_hours:
+                logger.info(
+                    "Cache expired",
+                    extra={"age_hours": age_hours, "ttl_hours": self.cache_ttl_hours},
+                )
+                return None
+
+            # Extract users
+            users_data = cache_data.get("users", [])
+            if not isinstance(users_data, list):
+                logger.warning("Invalid cache format (users not a list)")
+                return None
+
+            users = [
+                NotionUser(
+                    id=user["id"],
+                    name=user["name"],
+                    email=user.get("email"),
+                    type=user.get("type", "person"),
+                )
+                for user in users_data
+                if "id" in user and "name" in user
+            ]
+
+            if not users:
+                logger.warning("Cache contains no valid users")
+                return None
+
+            return users
+
+        except Exception as e:
+            logger.warning("Error reading users from cache", extra={"error": str(e)})
+            return None
+
+    def _save_to_cache(self, users: List[NotionUser]) -> None:
+        """
+        Save users to cache.
+
+        Args:
+            users: List of NotionUser objects
+        """
+        cache_path = self.cache_dir / "users_list.json"
+
+        try:
+            cache_data = {
+                "version": 1,
+                "cached_at": datetime.now().isoformat(),
+                "ttl_seconds": self.cache_ttl_hours * 3600,
+                "users": [
+                    {
+                        "id": user.id,
+                        "name": user.name,
+                        "email": user.email,
+                        "type": user.type,
+                    }
+                    for user in users
+                ],
+            }
+
+            # Write atomically using temp file
+            temp_path = cache_path.with_suffix(".tmp")
+            with open(temp_path, "w", encoding="utf-8") as f:
+                json.dump(cache_data, f, indent=2, ensure_ascii=False)
+
+            # Atomic rename
+            temp_path.replace(cache_path)
+
+            logger.info("Users saved to cache", extra={"user_count": len(users)})
+
+        except Exception as e:
+            logger.warning("Failed to save users to cache", extra={"error": str(e)})
+            # Don't raise - cache write failure is not critical
+
+    def invalidate_cache(self) -> None:
+        """Invalidate user cache without fetching new data."""
+        cache_path = self.cache_dir / "users_list.json"
+
+        if cache_path.exists():
+            cache_path.unlink()
+            logger.info("User cache invalidated")
