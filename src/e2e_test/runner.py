@@ -130,8 +130,9 @@ class E2ERunner:
                 # Get settings for Infisical support
                 settings = get_settings()
 
-                # Get database ID from Infisical (with .env fallback)
+                # Get database IDs from Infisical (with .env fallback)
                 collabiq_db_id = settings.get_secret_or_env("NOTION_DATABASE_ID_COLLABIQ")
+                companies_db_id = settings.get_secret_or_env("NOTION_DATABASE_ID_COMPANIES")
 
                 if not collabiq_db_id:
                     raise ValueError("NOTION_DATABASE_ID_COLLABIQ not found in Infisical or .env")
@@ -142,9 +143,10 @@ class E2ERunner:
                 self.notion_writer = NotionWriter(
                     notion_integrator=notion_integrator,
                     collabiq_db_id=collabiq_db_id,
-                    duplicate_behavior="skip"
+                    duplicate_behavior="skip",
+                    companies_db_id=companies_db_id,
                 )
-                logger.info("Auto-initialized NotionWriter for production mode")
+                logger.info(f"Auto-initialized NotionWriter for production mode (companies_db_id={'set' if companies_db_id else 'not set'})")
             except Exception as e:
                 logger.warning(f"Failed to auto-initialize NotionWriter: {str(e)}")
                 self.notion_writer = None

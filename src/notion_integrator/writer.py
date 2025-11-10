@@ -29,6 +29,7 @@ class NotionWriter:
         collabiq_db_id: str,
         duplicate_behavior: str = "skip",
         dlq_manager=None,
+        companies_db_id: Optional[str] = None,
     ):
         """Initialize NotionWriter with Notion integrator and database ID.
 
@@ -37,9 +38,11 @@ class NotionWriter:
             collabiq_db_id: CollabIQ database ID
             duplicate_behavior: Behavior for duplicates - "skip" or "update" (default: "skip")
             dlq_manager: Optional DLQManager for failed write handling
+            companies_db_id: Optional Companies database ID for fuzzy matching
         """
         self.notion_integrator = notion_integrator
         self.collabiq_db_id = collabiq_db_id
+        self.companies_db_id = companies_db_id
         self.duplicate_behavior = duplicate_behavior
         self.dlq_manager = dlq_manager
         self.field_mapper: Optional[FieldMapper] = None
@@ -179,7 +182,41 @@ class NotionWriter:
                 schema = await self.notion_integrator.discover_database_schema(
                     self.collabiq_db_id
                 )
-                self.field_mapper = FieldMapper(schema)
+
+                # Initialize matchers and cache for field mapping
+                company_matcher = None
+                person_matcher = None
+                companies_cache = None
+
+                if self.companies_db_id:
+                    # Import here to avoid circular dependencies
+                    from .fuzzy_matcher import RapidfuzzMatcher
+                    from .person_matcher import NotionPersonMatcher
+                    from .cache import CompaniesCache
+
+                    # Initialize company matcher
+                    company_matcher = RapidfuzzMatcher()
+
+                    # Initialize person matcher
+                    person_matcher = NotionPersonMatcher(
+                        notion_client=self.notion_integrator.client
+                    )
+
+                    # Initialize companies cache
+                    companies_cache = CompaniesCache(
+                        notion_integrator=self.notion_integrator,
+                        companies_db_id=self.companies_db_id,
+                    )
+
+                # Create FieldMapper with all components
+                self.field_mapper = FieldMapper(
+                    schema=schema,
+                    company_matcher=company_matcher,
+                    person_matcher=person_matcher,
+                    companies_cache=companies_cache,
+                    notion_writer=self,
+                    companies_db_id=self.companies_db_id,
+                )
 
             # Check for duplicate entry
             existing_page_id = await self.check_duplicate(extracted_data.email_id)
