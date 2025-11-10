@@ -23,16 +23,18 @@ Represents the result of fuzzy matching a company name to the Companies database
 | `page_id` | str \| None | Yes | Notion page ID format if present | Matched company's Notion page ID, None if no match |
 | `company_name` | str | Yes | Non-empty string | Name of matched company from database |
 | `similarity_score` | float | Yes | 0.0 ≤ score ≤ 1.0 | Jaro-Winkler similarity (0.0-1.0) |
-| `match_type` | Enum | Yes | "exact" \| "fuzzy" \| "created" \| "none" | How the match was determined |
+| `match_type` | Enum | Yes | "exact" \| "fuzzy" \| "created" \| "none" \| "semantic" | How the match was determined |
 | `confidence_level` | Enum | Yes | "high" \| "medium" \| "low" \| "none" | Confidence in the match |
 | `was_created` | bool | Yes | True if new entry created | Whether company was auto-created |
+| `match_method` | Enum | No | "character" \| "llm" \| "hybrid" | Algorithm used (for evaluation/monitoring) |
 
 **Validation Rules**:
 - If `page_id` is None, then `match_type` must be "none"
 - If `was_created` is True, then `match_type` must be "created"
 - If `match_type` is "exact", then `similarity_score` must be 1.0
 - If `match_type` is "fuzzy", then 0.85 ≤ `similarity_score` < 1.0
-- If `match_type` is "none", then `similarity_score` < 0.85
+- If `match_type` is "semantic", then 0.70 ≤ `similarity_score` < 1.0 (LLM-based)
+- If `match_type` is "none", then `similarity_score` < threshold
 
 **Confidence Levels**:
 - **high**: similarity_score ≥ 0.95 or exact match
@@ -43,13 +45,24 @@ Represents the result of fuzzy matching a company name to the Companies database
 **State Transitions**:
 ```
 Input: Extracted company name
-  → Search exact match → EXACT (similarity=1.0, high confidence)
-  → Search fuzzy match → FUZZY (similarity≥0.85, medium/high confidence)
+
+MVP (Character-based only):
+  → Search exact match → EXACT (similarity=1.0, high confidence, method="character")
+  → Search fuzzy match → FUZZY (similarity≥0.85, medium/high, method="character")
   → Auto-create → CREATED (new page_id, high confidence)
   → No match → NONE (page_id=None, no confidence)
+
+Optional Hybrid (P4):
+  → Search exact match → EXACT (similarity=1.0, method="character")
+  → Character fuzzy match (≥0.85) → FUZZY (method="character")
+  → LLM semantic match (≥0.70) → SEMANTIC (method="llm")
+  → Auto-create → CREATED
+  → No match → NONE
 ```
 
-**Example**:
+**Examples**:
+
+MVP (Character-based):
 ```python
 CompanyMatch(
     page_id="abc123def456",
@@ -57,7 +70,22 @@ CompanyMatch(
     similarity_score=0.87,
     match_type="fuzzy",
     confidence_level="medium",
-    was_created=False
+    was_created=False,
+    match_method="character"  # MVP uses character-based only
+)
+```
+
+Optional Hybrid (P4):
+```python
+# Semantic match via LLM (abbreviation case)
+CompanyMatch(
+    page_id="xyz789def012",
+    company_name="신세계그룹",
+    similarity_score=0.92,
+    match_type="semantic",  # LLM matched "SSG" → "신세계"
+    confidence_level="high",
+    was_created=False,
+    match_method="llm"  # Used LLM semantic matching
 )
 ```
 
@@ -287,10 +315,13 @@ class CompanyMatch(BaseModel):
     """Result of fuzzy company matching."""
     page_id: Optional[str] = Field(None, description="Notion page ID of matched company")
     company_name: str = Field(..., description="Name of matched company")
-    similarity_score: float = Field(..., ge=0.0, le=1.0, description="Jaro-Winkler similarity")
-    match_type: Literal["exact", "fuzzy", "created", "none"]
+    similarity_score: float = Field(..., ge=0.0, le=1.0, description="Similarity score")
+    match_type: Literal["exact", "fuzzy", "created", "none", "semantic"]
     confidence_level: Literal["high", "medium", "low", "none"]
     was_created: bool = Field(False, description="Whether company was auto-created")
+    match_method: Optional[Literal["character", "llm", "hybrid"]] = Field(
+        None, description="Algorithm used (for evaluation/monitoring)"
+    )
 
     @field_validator("similarity_score")
     def validate_similarity(cls, v, info):
@@ -299,6 +330,8 @@ class CompanyMatch(BaseModel):
             raise ValueError("Exact match must have similarity 1.0")
         if match_type == "fuzzy" and not (0.85 <= v < 1.0):
             raise ValueError("Fuzzy match must have similarity 0.85-0.99")
+        if match_type == "semantic" and not (0.70 <= v < 1.0):
+            raise ValueError("Semantic match must have similarity 0.70-0.99")
         return v
 
 class PersonMatch(BaseModel):

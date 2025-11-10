@@ -222,8 +222,15 @@ x-contract-tests:
     6. Performance: completes in <2 seconds for 1000+ company database
 
 x-implementation-notes:
-  algorithm: "Jaro-Winkler similarity via rapidfuzz library"
+  algorithm: "Jaro-Winkler similarity via rapidfuzz library (MVP)"
   normalization: "Minimal - trim whitespace only"
   caching: "Companies list cached in memory for duration of matching operation"
   rate-limiting: "Respects Notion API rate limits (3 req/s), uses existing retry logic"
   duplicate-prevention: "Exact match check before fuzzy matching prevents duplicates"
+  optional-enhancement: |
+    P4 user story: Comparative evaluation framework to test LLM-based and hybrid approaches.
+    If evaluation shows ≥5% accuracy improvement, migrate to hybrid approach:
+    - Phase 1: rapidfuzz (fast path for high similarity ≥0.85)
+    - Phase 2: LLM fallback for semantic matching (abbreviations, multi-language)
+    Architecture supports swapping via dependency injection (CompanyMatcher interface).
+    See research.md section "Comparative Evaluation Framework" for details.
