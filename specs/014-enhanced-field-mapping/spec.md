@@ -18,9 +18,9 @@ However, these fields are **not being populated** in the Notion database because
 
 2. **People Field Constraint**: 담당자 is a people (multi-select) field that requires Notion user UUIDs, not plain text names.
 
-3. **Name Variation Issue**: LLM-extracted names often have spelling variations:
+3. **Name Variation Issue**: LLM-extracted names often have slight variations:
    - Parenthetical info: "웨이크(산스)" vs "웨이크"
-   - Character alternatives: "스마트푸드네트워크" vs "스마트푸드네트웍스" (워크 vs 웍)
+   - Spelling Variations: "스마트푸드네트워크" vs "스마트푸드네트웍스"
    - Abbreviations: "SSG" vs "에스에스지" or "신세계"
    - Spacing differences: "스타트업 A" vs "스타트업A"
 
@@ -114,26 +114,6 @@ Administrators need CLI commands to test company and person matching without run
 3. **Given** an administrator runs `collabiq notion list-users`, **When** the command executes, **Then** the system displays all Notion workspace users with their UUIDs
 
 4. **Given** an administrator adds `--dry-run` flag, **When** testing company creation, **Then** the system simulates the creation without actually writing to Notion
-
----
-
-### User Story 5 - Matching Algorithm Evaluation (Priority: P4 - OPTIONAL)
-
-Administrators need empirical data to determine whether LLM-based semantic matching outperforms character-based fuzzy matching for Korean company names, enabling data-driven decisions for production deployment.
-
-**Why this priority**: Optional post-MVP enhancement. Rapidfuzz (character-based) is sufficient for MVP (90% accuracy achievable). LLM evaluation adds value only if we want to optimize beyond MVP baseline or handle complex semantic cases (abbreviations, multi-language names).
-
-**Independent Test**: Can be tested by running comparative evaluation on 20+ labeled emails with ground truth company matches, measuring accuracy/precision/recall/latency/cost for rapidfuzz vs LLM vs hybrid approaches. Delivers value by providing empirical evidence for production optimization decisions.
-
-**Acceptance Scenarios**:
-
-1. **Given** an evaluation dataset with 20+ emails and ground truth company matches, **When** the comparison test runs, **Then** the system generates an evaluation report comparing rapidfuzz, LLM, and hybrid approaches across accuracy, precision, recall, latency, and cost metrics
-
-2. **Given** the evaluation completes, **When** reviewing results, **Then** the report shows which approach achieves ≥90% accuracy, identifies failure cases for each approach, and recommends the optimal algorithm for production
-
-3. **Given** the hybrid approach is selected, **When** the system processes an email with high character similarity (≥0.85), **Then** only rapidfuzz is used (no LLM call), minimizing latency and cost
-
-4. **Given** the hybrid approach is selected, **When** the system processes an email with low character similarity (<0.85), **Then** the LLM fallback is invoked for semantic matching (abbreviations, multi-language cases)
 
 ---
 
