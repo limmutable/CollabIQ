@@ -7,6 +7,7 @@ TDD: This test is written FIRST and should FAIL before implementation.
 
 import pytest
 import json
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch
 
@@ -31,29 +32,43 @@ class TestNotionWriteE2E:
     @pytest.fixture
     def mock_notion_integrator(self):
         """Create a mock NotionIntegrator with schema."""
+        from notion_integrator.models import NotionProperty, DatabaseSchema, NotionDatabase
+
         mock = Mock(spec=NotionIntegrator)
 
-        # Mock schema discovery
-        mock_schema = Mock()
-        mock_schema.properties = {
-            "협력주체": {"type": "title", "id": "title"},
-            "담당자": {"type": "rich_text", "id": "담당자_id"},
-            "스타트업명": {"type": "relation", "id": "스타트업명_id"},
-            "협업기관": {"type": "relation", "id": "협업기관_id"},
-            "협업내용": {"type": "rich_text", "id": "협업내용_id"},
-            "날짜": {"type": "date", "id": "날짜_id"},
-            "협업형태": {"type": "select", "id": "협업형태_id"},
-            "협업강도": {"type": "select", "id": "협업강도_id"},
-            "요약": {"type": "rich_text", "id": "요약_id"},
-            "type_confidence": {"type": "number", "id": "type_conf_id"},
-            "intensity_confidence": {"type": "number", "id": "intensity_conf_id"},
-            "email_id": {"type": "rich_text", "id": "email_id"},
-            "classification_timestamp": {"type": "date", "id": "class_time_id"},
+        # Create proper DatabaseSchema with NotionProperty objects
+        properties = {
+            "협력주체": NotionProperty(name="협력주체", type="title", id="title"),
+            "담당자": NotionProperty(name="담당자", type="people", id="담당자_id"),
+            "스타트업명": NotionProperty(name="스타트업명", type="relation", id="스타트업명_id"),
+            "협업기관": NotionProperty(name="협업기관", type="relation", id="협업기관_id"),
+            "협업내용": NotionProperty(name="협업내용", type="rich_text", id="협업내용_id"),
+            "날짜": NotionProperty(name="날짜", type="date", id="날짜_id"),
+            "협업형태": NotionProperty(name="협업형태", type="select", id="협업형태_id"),
+            "협업강도": NotionProperty(name="협업강도", type="select", id="협업강도_id"),
+            "요약": NotionProperty(name="요약", type="rich_text", id="요약_id"),
+            "type_confidence": NotionProperty(name="type_confidence", type="number", id="type_conf_id"),
+            "intensity_confidence": NotionProperty(name="intensity_confidence", type="number", id="intensity_conf_id"),
+            "email_id": NotionProperty(name="email_id", type="rich_text", id="email_id"),
+            "classification_timestamp": NotionProperty(name="classification_timestamp", type="date", id="class_time_id"),
         }
+
+        database_info = NotionDatabase(
+            id="test-database-id",
+            title="Test Database",
+            description="",
+            url="https://notion.so/test",
+            properties=properties,
+            created_time=datetime.now(),
+            last_edited_time=datetime.now()
+        )
+
+        mock_schema = DatabaseSchema(database=database_info, properties=properties, classification_fields=[], relations=[])
         mock.discover_database_schema = AsyncMock(return_value=mock_schema)
 
         # Mock Notion API client
-        mock.notion_client = Mock()
+        mock.client = Mock()
+        mock.client.client = Mock()
 
         return mock
 
@@ -105,7 +120,7 @@ class TestNotionWriteE2E:
             }
         }
 
-        mock_notion_integrator.notion_client.pages.create = AsyncMock(
+        mock_notion_integrator.client.client.pages.create = AsyncMock(
             return_value=mock_response
         )
 
@@ -122,7 +137,7 @@ class TestNotionWriteE2E:
         assert isinstance(result, WriteResult), \
             "E2E workflow must return WriteResult"
         assert result.success is True, \
-            "E2E workflow must succeed for valid data"
+            f"E2E workflow must succeed for valid data, got error: {result.error_message}"
         assert result.page_id == created_page_id, \
             "WriteResult must contain created page ID"
         assert result.email_id == "sample-001", \
@@ -137,8 +152,8 @@ class TestNotionWriteE2E:
             "Successful write should have no error_message"
 
         # Step 4: Verify Notion API was called with correct payload
-        mock_notion_integrator.notion_client.pages.create.assert_called_once()
-        call_args = mock_notion_integrator.notion_client.pages.create.call_args
+        mock_notion_integrator.client.client.pages.create.assert_called_once()
+        call_args = mock_notion_integrator.client.client.pages.create.call_args
 
         # Verify database_id parameter
         assert call_args.kwargs["parent"]["database_id"] == "test-collabiq-db-id", \
@@ -239,7 +254,7 @@ class TestNotionWriteE2E:
                     "properties": {}
                 }
 
-        mock_notion_integrator.notion_client.pages.create = AsyncMock(
+        mock_notion_integrator.client.client.pages.create = AsyncMock(
             side_effect=side_effect
         )
 
@@ -295,7 +310,7 @@ class TestNotionWriteE2E:
         )
 
         # Mock successful Notion API response
-        mock_notion_integrator.notion_client.pages.create = AsyncMock(
+        mock_notion_integrator.client.client.pages.create = AsyncMock(
             return_value={"id": "all-fields-page-id", "object": "page", "properties": {}}
         )
 
@@ -307,11 +322,11 @@ class TestNotionWriteE2E:
         result = await writer.create_collabiq_entry(data)
 
         # Verify success
-        assert result.success is True
+        assert result.success is True, f"Expected success, got error: {result.error_message}"
         assert result.page_id == "all-fields-page-id"
 
         # Extract properties from API call
-        properties = mock_notion_integrator.notion_client.pages.create.call_args.kwargs["properties"]
+        properties = mock_notion_integrator.client.client.pages.create.call_args.kwargs["properties"]
 
         # Verify title field
         assert properties["협력주체"]["title"][0]["text"]["content"] == "완전한스타트업-완전한파트너"
@@ -362,7 +377,7 @@ class TestNotionWriteE2E:
         )
 
         # Mock successful Notion API response
-        mock_notion_integrator.notion_client.pages.create = AsyncMock(
+        mock_notion_integrator.client.client.pages.create = AsyncMock(
             return_value={"id": "partial-fields-page-id", "object": "page", "properties": {}}
         )
 
@@ -375,11 +390,11 @@ class TestNotionWriteE2E:
 
         # Verify success despite missing optionals
         assert result.success is True, \
-            "Entry creation should succeed even with missing optional fields"
+            f"Entry creation should succeed even with missing optional fields, got error: {result.error_message}"
         assert result.page_id == "partial-fields-page-id"
 
         # Extract properties from API call
-        properties = mock_notion_integrator.notion_client.pages.create.call_args.kwargs["properties"]
+        properties = mock_notion_integrator.client.client.pages.create.call_args.kwargs["properties"]
 
         # Required fields should be present
         assert "협력주체" in properties, "Title field is required"
@@ -430,7 +445,7 @@ class TestNotionWriteE2E:
         mock_error.message = "Invalid property value for 협업형태"
         mock_error.code = "validation_error"
 
-        mock_notion_integrator.notion_client.pages.create = AsyncMock(
+        mock_notion_integrator.client.client.pages.create = AsyncMock(
             side_effect=mock_error
         )
 

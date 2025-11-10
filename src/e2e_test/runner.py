@@ -339,10 +339,11 @@ class E2ERunner:
 
             entities_dict, entities_model = extraction_result
 
-            # Stage 3: Matching - Match companies (part of extraction in current implementation)
-            logger.debug(f"Stage 3: Company matching for email {email_id}")
-            # In current MVP, matching is integrated in extraction via company_context
-            # This stage is a logical placeholder for future enhancements
+            # Stage 3: Matching - Match companies and persons
+            logger.debug(f"Stage 3: Company and person matching for email {email_id}")
+            # Company and person matching is now handled by FieldMapper during Notion write (Stage 5)
+            # FieldMapper uses RapidfuzzMatcher for company names and NotionPersonMatcher for persons
+            # This stage serves as a logical marker in the pipeline
 
             # Stage 4: Classification - Determine collaboration type and intensity
             logger.debug(f"Stage 4: Classifying collaboration for email {email_id}")
