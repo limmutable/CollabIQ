@@ -192,7 +192,7 @@ class NotionWriter:
                     # Import here to avoid circular dependencies
                     from .fuzzy_matcher import RapidfuzzMatcher
                     from .person_matcher import NotionPersonMatcher
-                    from .cache import CompaniesCache
+                    from .companies_cache import CompaniesCache
 
                     # Initialize company matcher
                     company_matcher = RapidfuzzMatcher()
@@ -204,7 +204,7 @@ class NotionWriter:
 
                     # Initialize companies cache
                     companies_cache = CompaniesCache(
-                        notion_integrator=self.notion_integrator,
+                        client=self.notion_integrator.client,
                         companies_db_id=self.companies_db_id,
                     )
 
