@@ -82,6 +82,82 @@ class NotionWriter:
             logger.warning(f"Error checking for duplicate email_id={email_id}: {e}")
             return None  # On error, assume no duplicate and allow write attempt
 
+    async def create_company(
+        self, company_name: str, companies_db_id: str
+    ) -> Optional[str]:
+        """Create a new company entry in the Companies database.
+
+        This method is called by the fuzzy matcher when no match is found
+        (similarity < threshold) and auto_create=True. It creates a new
+        Companies database entry with the extracted company name.
+
+        Args:
+            company_name: Company name to create (already normalized)
+            companies_db_id: Companies database ID
+
+        Returns:
+            page_id of the newly created company entry (32-character UUID)
+            Returns None if creation fails
+
+        Raises:
+            APIResponseError: If Notion API call fails after retries
+        """
+        try:
+            logger.info(f"Creating new company: {company_name}")
+
+            # Build properties for Companies database
+            # Companies database typically has a "Name" title property
+            properties = {
+                "Name": {
+                    "title": [
+                        {
+                            "text": {
+                                "content": company_name
+                            }
+                        }
+                    ]
+                }
+            }
+
+            # Create page in Companies database (with retry logic)
+            response = await self._create_company_page(companies_db_id, properties)
+
+            page_id = response["id"]
+            logger.info(
+                f"Successfully created company: {company_name}, page_id={page_id}"
+            )
+
+            return page_id
+
+        except Exception as e:
+            logger.error(
+                f"Failed to create company: {company_name}: {e}",
+                exc_info=True,
+            )
+            return None
+
+    @retry_with_backoff(NOTION_RETRY_CONFIG)
+    async def _create_company_page(
+        self, companies_db_id: str, properties: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Create company page with retry logic handled by decorator.
+
+        Args:
+            companies_db_id: Companies database ID
+            properties: Notion properties dict for company
+
+        Returns:
+            Notion API response dict
+
+        Raises:
+            APIResponseError: If page creation fails after retries
+        """
+        response = await self.notion_integrator.client.client.pages.create(
+            parent={"database_id": companies_db_id},
+            properties=properties,
+        )
+        return response
+
     async def create_collabiq_entry(
         self, extracted_data: ExtractedEntitiesWithClassification
     ) -> WriteResult:

@@ -291,3 +291,59 @@ class TestPerformance:
 
         assert elapsed < 2.0, f"Match took {elapsed:.2f}s, expected <2s"
         assert isinstance(result, CompanyMatch)
+
+
+class TestCompanyCreation:
+    """Test company creation in Companies database (T015 - US2)."""
+
+    @pytest.mark.asyncio
+    async def test_create_company_returns_valid_page_id(self):
+        """
+        Contract: NotionWriter.create_company() must create new entry and return valid page_id.
+
+        Given: Company name "신규회사" does not exist in Companies database
+        When: NotionWriter.create_company("신규회사") is called
+        Then: Returns valid page_id (32-character UUID)
+        And: Company entry is created with title property set to "신규회사"
+
+        Note: This is a contract test that requires actual Notion API access.
+        It will be marked as @pytest.mark.integration and requires:
+        - NOTION_API_KEY environment variable
+        - NOTION_DATABASE_ID_COMPANIES environment variable
+        - Valid Notion integration with write access to Companies database
+        """
+        pytest.skip(
+            "Contract test for NotionWriter.create_company() requires Notion API credentials. "
+            "Implementation pending: T019 will add the async create_company() method. "
+            "This test serves as specification for the expected behavior."
+        )
+
+        # Expected implementation (to be tested when T019 is complete):
+        # from src.notion_integrator.writer import NotionWriter
+        # from src.notion_integrator.integrator import NotionIntegrator
+        # from src.config.settings import Settings
+        #
+        # settings = Settings()
+        # integrator = NotionIntegrator(...)
+        # writer = NotionWriter(integrator, collabiq_db_id="...")
+        # companies_db_id = settings.get_notion_companies_db_id()
+        #
+        # # Create new company
+        # page_id = await writer.create_company(
+        #     company_name="신규회사",
+        #     companies_db_id=companies_db_id
+        # )
+        #
+        # # Verify page_id format (32-character UUID without hyphens)
+        # assert page_id is not None
+        # assert isinstance(page_id, str)
+        # assert len(page_id) == 32
+        # assert page_id.replace("-", "").isalnum()  # UUID format
+        #
+        # # Verify entry exists in Notion (optional - could query back)
+        # # response = await integrator.client.query_database(
+        # #     database_id=companies_db_id,
+        # #     filter_conditions={"property": "Name", "title": {"equals": "신규회사"}}
+        # # )
+        # # assert len(response["results"]) == 1
+        # # assert response["results"][0]["id"] == page_id

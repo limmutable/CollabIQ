@@ -82,6 +82,10 @@ class RapidfuzzMatcher(CompanyMatcher):
     Handles spelling variations, spacing, character substitutions.
 
     Does not handle: abbreviations (SSG), multi-language (Samsung/삼성), semantic.
+
+    Note: This matcher signals when company creation is needed (returns match_type="none"
+    with company_name set). The actual creation is handled by NotionWriter.create_company()
+    which should be called by the integration layer (FieldMapper) when it detects this signal.
     """
 
     def _find_exact_match(
@@ -246,16 +250,16 @@ class RapidfuzzMatcher(CompanyMatcher):
 
         # Step 3: No match found
         if auto_create:
-            # Signal that creation is needed (actual creation in Phase 4/T018)
-            # For now, return a marker indicating creation should happen
-            # The actual Notion API call will be in NotionWriter.create_company()
+            # Signal that creation is needed
+            # The actual Notion API call is handled by the caller (FieldMapper/integration layer)
+            # which will call NotionWriter.create_company() and update the result
             return CompanyMatch(
-                page_id=None,  # Will be set after creation
+                page_id=None,  # Will be set after creation by caller
                 company_name=normalized_name,
                 similarity_score=0.0,
-                match_type="none",  # Will be updated to "created" after creation
+                match_type="none",  # Caller will check this and create
                 confidence_level="none",
-                was_created=False,  # Will be updated after creation
+                was_created=False,  # Will be True after caller creates
                 match_method="character",
             )
         else:
