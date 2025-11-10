@@ -713,8 +713,8 @@ def match_person(
                     similarity_threshold=threshold,
                 )
 
-                # Get user count from cache
-                users = matcher.list_users()
+                # Get user count from cache (async version)
+                users = await matcher.list_users_async()
 
                 return {
                     "input_name": person_name,
@@ -806,8 +806,8 @@ def list_users(
                     notion_client=integrator.client,
                 )
 
-                # Get users (force refresh if requested)
-                users = matcher.list_users(force_refresh=refresh)
+                # Get users (force refresh if requested) - async version
+                users = await matcher.list_users_async(force_refresh=refresh)
 
                 # Convert to dict format
                 users_list = [

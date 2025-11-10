@@ -5,6 +5,7 @@ This module provides interfaces and implementations for matching extracted
 person names to Notion workspace users.
 """
 
+import asyncio
 import json
 import logging
 from abc import ABC, abstractmethod
@@ -14,7 +15,7 @@ from typing import List, Optional, Tuple
 
 from rapidfuzz import fuzz
 
-from src.models.matching import PersonMatch
+from models.matching import PersonMatch
 
 
 logger = logging.getLogger(__name__)
@@ -135,7 +136,46 @@ class NotionPersonMatcher(PersonMatcher):
 
     def list_users(self, *, force_refresh: bool = False) -> List[NotionUser]:
         """
-        List Notion workspace users with caching.
+        List Notion workspace users with caching (synchronous version).
+
+        Cache Location: data/notion_cache/users_list.json
+        Cache TTL: 24 hours (86400 seconds)
+
+        Args:
+            force_refresh: Bypass cache and fetch fresh from API
+
+        Returns:
+            List of NotionUser objects
+
+        Note: This is a sync wrapper. Use list_users_async() from async contexts.
+        """
+        # Try cache first unless force refresh
+        if not force_refresh:
+            cached_users = self._get_from_cache()
+            if cached_users is not None:
+                logger.info("Users loaded from cache", extra={"user_count": len(cached_users)})
+                return cached_users
+
+        # Cache miss or force refresh - fetch from API
+        logger.info("Fetching users from Notion API")
+
+        # Run async fetch
+        try:
+            users = asyncio.run(self._fetch_from_api_async())
+        except RuntimeError:
+            # Already in async context - this shouldn't be called from async
+            raise RuntimeError(
+                "list_users() called from async context. Use list_users_async() instead."
+            )
+
+        # Save to cache
+        self._save_to_cache(users)
+
+        return users
+
+    async def list_users_async(self, *, force_refresh: bool = False) -> List[NotionUser]:
+        """
+        List Notion workspace users with caching (async version).
 
         Cache Location: data/notion_cache/users_list.json
         Cache TTL: 24 hours (86400 seconds)
@@ -155,7 +195,7 @@ class NotionPersonMatcher(PersonMatcher):
 
         # Cache miss or force refresh - fetch from API
         logger.info("Fetching users from Notion API")
-        users = self._fetch_from_api()
+        users = await self._fetch_from_api_async()
 
         # Save to cache
         self._save_to_cache(users)
@@ -317,11 +357,61 @@ class NotionPersonMatcher(PersonMatcher):
         else:
             return "none"
 
-    def _fetch_from_api(self) -> List[NotionUser]:
-        """Fetch users from Notion API synchronously."""
-        # Note: This is a sync method that will be called from async context
-        # The actual API call is wrapped by the caller
-        raise NotImplementedError("Sync API fetching not yet implemented - use async wrapper")
+    async def _fetch_from_api_async(self) -> List[NotionUser]:
+        """Fetch users from Notion API asynchronously.
+
+        Note: This uses the Notion SDK's async users.list() API.
+        The notion_client parameter should be a NotionClient instance.
+
+        Returns:
+            List of NotionUser objects
+        """
+        try:
+            # Access the underlying Notion SDK client
+            # NotionClient wraps the official notion-client SDK
+            sdk_client = self.notion_client.client
+
+            # Call Notion SDK users.list() API (async)
+            # Returns: {"results": [{"id": "...", "name": "...", "person": {"email": "..."}, "type": "person"}]}
+            response = await sdk_client.users.list()
+
+            # Extract users from response
+            users = []
+            for user_data in response.get("results", []):
+                user_id = user_data.get("id")
+                user_type = user_data.get("type", "person")
+
+                # Get name from name field
+                name = user_data.get("name", "")
+
+                # Get email from person.email
+                email = None
+                if user_type == "person":
+                    person_data = user_data.get("person", {})
+                    email = person_data.get("email")
+
+                if user_id:
+                    users.append(NotionUser(
+                        id=user_id,
+                        name=name,
+                        email=email,
+                        type=user_type,
+                    ))
+
+            logger.info(
+                "Users fetched from API",
+                extra={"user_count": len(users)},
+            )
+
+            return users
+
+        except Exception as e:
+            logger.error(
+                "Failed to fetch users from API",
+                extra={"error": str(e)},
+                exc_info=True,
+            )
+            raise
 
     def _get_from_cache(self) -> Optional[List[NotionUser]]:
         """

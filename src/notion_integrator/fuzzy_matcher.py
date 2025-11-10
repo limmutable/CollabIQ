@@ -10,7 +10,7 @@ from typing import List, Optional
 
 from rapidfuzz import fuzz
 
-from src.models.matching import CompanyMatch
+from models.matching import CompanyMatch
 
 
 def normalize_company_name(name: str) -> str:
