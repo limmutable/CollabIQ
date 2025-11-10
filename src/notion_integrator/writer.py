@@ -110,9 +110,9 @@ class NotionWriter:
             logger.info(f"Creating new company: {company_name}")
 
             # Build properties for Companies database
-            # Companies database typically has a "Name" title property
+            # Companies database uses "Known Name" as the title property
             properties = {
-                "Name": {
+                "Known Name": {
                     "title": [
                         {
                             "text": {
