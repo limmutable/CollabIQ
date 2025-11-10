@@ -18,9 +18,10 @@ However, these fields are **not being populated** in the Notion database because
 
 2. **People Field Constraint**: 담당자 is a people (multi-select) field that requires Notion user UUIDs, not plain text names.
 
-3. **Name Variation Issue**: LLM-extracted names often have slight variations:
+3. **Name Variation Issue**: LLM-extracted names often have spelling variations:
    - Parenthetical info: "웨이크(산스)" vs "웨이크"
-   - Abbreviations: "SSG" vs "에스에스지"
+   - Character alternatives: "스마트푸드네트워크" vs "스마트푸드네트웍스" (워크 vs 웍)
+   - Abbreviations: "SSG" vs "에스에스지" or "신세계"
    - Spacing differences: "스타트업 A" vs "스타트업A"
 
 Without proper field mapping, these three critical fields remain empty, severely limiting the database's utility for querying, filtering, and reporting.
