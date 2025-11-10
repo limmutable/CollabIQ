@@ -6,6 +6,9 @@ Commands:
 - schema: Display database schema
 - test-write: Create and cleanup test entry
 - cleanup-tests: Remove all test entries
+- match-company: Test company name fuzzy matching
+- match-person: Test person name fuzzy matching
+- list-users: List all Notion workspace users
 """
 
 import asyncio
@@ -40,7 +43,7 @@ from llm_provider.types import ExtractedEntitiesWithClassification
 
 app = typer.Typer(
     name="notion",
-    help="Notion integration management (verify, schema, test-write, cleanup-tests)",
+    help="Notion integration management (verify, schema, test-write, cleanup-tests, match-company, match-person, list-users)",
 )
 
 
@@ -555,3 +558,314 @@ def cleanup_tests(
         if isinstance(e, typer.Exit):
             raise  # Re-raise typer.Exit (from cancellation)
         handle_notion_error(e, "notion_cleanup_tests", json_mode=json)
+
+
+@app.command(name="match-company")
+def match_company(
+    ctx: typer.Context,
+    company_name: str = typer.Argument(..., help="Company name to match"),
+    threshold: float = typer.Option(0.85, "--threshold", "-t", help="Similarity threshold (0.0-1.0)"),
+    json: bool = typer.Option(False, "--json", help="Output in JSON format"),
+    debug: bool = typer.Option(False, "--debug", help="Enable debug logging"),
+) -> None:
+    """
+    Test company name fuzzy matching against Companies database.
+
+    Performs fuzzy matching on the provided company name and displays
+    the best match along with similarity score and confidence level.
+
+    Examples:
+        $ collabiq notion match-company "웨이크"
+        $ collabiq notion match-company "네트워크" --threshold 0.90
+        $ collabiq notion match-company "스타트업" --json
+    """
+    start_time = datetime.now()
+
+    try:
+        # Get configuration
+        config = get_notion_config(json_mode=json)
+        companies_db_id = os.getenv("NOTION_DATABASE_ID_COMPANIES")
+
+        if not companies_db_id:
+            if json:
+                output_json(
+                    data={},
+                    status="failure",
+                    errors=[{"error_type": "ConfigurationError", "message": "NOTION_DATABASE_ID_COMPANIES not set"}]
+                )
+            else:
+                console.print("[red]Error: NOTION_DATABASE_ID_COMPANIES not set in environment[/red]")
+            raise typer.Exit(1)
+
+        async def match_async():
+            async with NotionIntegrator(
+                api_key=config["api_key"],
+                use_cache=True,
+            ) as integrator:
+                # Import matchers
+                from notion_integrator.companies_cache import CompaniesCache
+                from notion_integrator.fuzzy_matcher import RapidfuzzMatcher
+
+                # Initialize cache and matcher
+                cache = CompaniesCache(
+                    client=integrator.client,
+                    companies_db_id=companies_db_id,
+                )
+                matcher = RapidfuzzMatcher()
+
+                # Get company candidates
+                candidates = await cache.get_companies(use_cache=True)
+
+                # Perform matching
+                match_result = matcher.match(
+                    company_name=company_name,
+                    candidates=candidates,
+                    auto_create=False,
+                    similarity_threshold=threshold,
+                )
+
+                return {
+                    "input_name": company_name,
+                    "match_type": match_result.match_type,
+                    "matched_company": match_result.company_name if match_result.page_id else None,
+                    "page_id": match_result.page_id,
+                    "similarity_score": round(match_result.similarity_score, 2),
+                    "confidence_level": match_result.confidence_level,
+                    "match_method": match_result.match_method,
+                    "threshold": threshold,
+                    "total_candidates": len(candidates),
+                }
+
+        # Run async operation
+        result = asyncio.run(match_async())
+
+        # Calculate duration
+        duration_ms = int((datetime.now() - start_time).total_seconds() * 1000)
+
+        # Log success
+        log_cli_operation("notion match-company", success=True, duration_ms=duration_ms)
+
+        # Output result
+        if json:
+            output_json(data=result, status="success")
+        else:
+            console.print(f"\n[cyan]Input:[/cyan] {result['input_name']}")
+            console.print(f"[cyan]Match Type:[/cyan] {result['match_type']}")
+
+            if result['match_type'] in ['exact', 'fuzzy']:
+                console.print(f"[green]✓ Match Found![/green]")
+                console.print(f"[cyan]Matched Company:[/cyan] {result['matched_company']}")
+                console.print(f"[cyan]Similarity:[/cyan] {result['similarity_score']}")
+                console.print(f"[cyan]Confidence:[/cyan] {result['confidence_level']}")
+                console.print(f"[cyan]Page ID:[/cyan] {result['page_id']}")
+            else:
+                console.print(f"[yellow]No match found (similarity: {result['similarity_score']} < {result['threshold']})[/yellow]")
+
+            console.print(f"\n[dim]Searched {result['total_candidates']} companies in {duration_ms}ms[/dim]")
+
+    except typer.Exit:
+        raise
+    except Exception as e:
+        handle_notion_error(e, "notion_match_company", json_mode=json)
+
+
+@app.command(name="match-person")
+def match_person(
+    ctx: typer.Context,
+    person_name: str = typer.Argument(..., help="Person name to match"),
+    threshold: float = typer.Option(0.70, "--threshold", "-t", help="Similarity threshold (0.0-1.0)"),
+    json: bool = typer.Option(False, "--json", help="Output in JSON format"),
+    debug: bool = typer.Option(False, "--debug", help="Enable debug logging"),
+) -> None:
+    """
+    Test person name fuzzy matching against Notion workspace users.
+
+    Performs fuzzy matching on the provided person name and displays
+    the best match along with similarity score and ambiguity detection.
+
+    Examples:
+        $ collabiq notion match-person "김철수"
+        $ collabiq notion match-person "John Smith" --threshold 0.80
+        $ collabiq notion match-person "이영희" --json
+    """
+    start_time = datetime.now()
+
+    try:
+        # Get configuration
+        config = get_notion_config(json_mode=json)
+
+        async def match_async():
+            async with NotionIntegrator(
+                api_key=config["api_key"],
+                use_cache=True,
+            ) as integrator:
+                # Import matcher
+                from notion_integrator.person_matcher import NotionPersonMatcher
+
+                # Initialize matcher
+                matcher = NotionPersonMatcher(
+                    notion_client=integrator.client,
+                )
+
+                # Perform matching
+                match_result = matcher.match(
+                    person_name=person_name,
+                    similarity_threshold=threshold,
+                )
+
+                # Get user count from cache
+                users = matcher.list_users()
+
+                return {
+                    "input_name": person_name,
+                    "match_type": match_result.match_type,
+                    "matched_user": match_result.user_name if match_result.user_id else None,
+                    "user_id": match_result.user_id,
+                    "similarity_score": round(match_result.similarity_score, 2),
+                    "confidence_level": match_result.confidence_level,
+                    "is_ambiguous": match_result.is_ambiguous,
+                    "alternative_matches": match_result.alternative_matches,
+                    "threshold": threshold,
+                    "total_users": len(users),
+                }
+
+        # Run async operation
+        result = asyncio.run(match_async())
+
+        # Calculate duration
+        duration_ms = int((datetime.now() - start_time).total_seconds() * 1000)
+
+        # Log success
+        log_cli_operation("notion match-person", success=True, duration_ms=duration_ms)
+
+        # Output result
+        if json:
+            output_json(data=result, status="success")
+        else:
+            console.print(f"\n[cyan]Input:[/cyan] {result['input_name']}")
+            console.print(f"[cyan]Match Type:[/cyan] {result['match_type']}")
+
+            if result['match_type'] in ['exact', 'fuzzy']:
+                console.print(f"[green]✓ Match Found![/green]")
+                console.print(f"[cyan]Matched User:[/cyan] {result['matched_user']}")
+                console.print(f"[cyan]Similarity:[/cyan] {result['similarity_score']}")
+                console.print(f"[cyan]Confidence:[/cyan] {result['confidence_level']}")
+
+                if result['is_ambiguous']:
+                    console.print(f"[yellow]⚠ Ambiguous match detected![/yellow]")
+                    console.print(f"[yellow]Alternative matches:[/yellow]")
+                    for alt in result['alternative_matches']:
+                        console.print(f"  - {alt['user_name']} (similarity: {alt['similarity_score']})")
+
+                console.print(f"[cyan]User ID:[/cyan] {result['user_id']}")
+            else:
+                console.print(f"[yellow]No match found (similarity: {result['similarity_score']} < {result['threshold']})[/yellow]")
+
+            console.print(f"\n[dim]Searched {result['total_users']} users in {duration_ms}ms[/dim]")
+
+    except typer.Exit:
+        raise
+    except Exception as e:
+        handle_notion_error(e, "notion_match_person", json_mode=json)
+
+
+@app.command(name="list-users")
+def list_users(
+    ctx: typer.Context,
+    json: bool = typer.Option(False, "--json", help="Output in JSON format"),
+    debug: bool = typer.Option(False, "--debug", help="Enable debug logging"),
+    refresh: bool = typer.Option(False, "--refresh", "-r", help="Force refresh from API"),
+) -> None:
+    """
+    List all Notion workspace users.
+
+    Displays all users in the Notion workspace with their names, emails,
+    and user IDs. Uses cache by default (24h TTL), use --refresh to fetch fresh data.
+
+    Examples:
+        $ collabiq notion list-users
+        $ collabiq notion list-users --refresh
+        $ collabiq notion list-users --json
+    """
+    start_time = datetime.now()
+
+    try:
+        # Get configuration
+        config = get_notion_config(json_mode=json)
+
+        async def list_async():
+            async with NotionIntegrator(
+                api_key=config["api_key"],
+                use_cache=True,
+            ) as integrator:
+                # Import matcher
+                from notion_integrator.person_matcher import NotionPersonMatcher
+
+                # Initialize matcher
+                matcher = NotionPersonMatcher(
+                    notion_client=integrator.client,
+                )
+
+                # Get users (force refresh if requested)
+                users = matcher.list_users(force_refresh=refresh)
+
+                # Convert to dict format
+                users_list = [
+                    {
+                        "id": user.id,
+                        "name": user.name,
+                        "email": user.email,
+                        "type": user.type,
+                    }
+                    for user in users
+                ]
+
+                return {
+                    "user_count": len(users_list),
+                    "users": users_list,
+                    "from_cache": not refresh,
+                }
+
+        # Run async operation
+        result = asyncio.run(list_async())
+
+        # Calculate duration
+        duration_ms = int((datetime.now() - start_time).total_seconds() * 1000)
+
+        # Log success
+        log_cli_operation("notion list-users", success=True, duration_ms=duration_ms, user_count=result["user_count"])
+
+        # Output result
+        if json:
+            output_json(data=result, status="success")
+        else:
+            console.print(f"\n[cyan]Total Users:[/cyan] {result['user_count']}")
+            console.print(f"[cyan]Source:[/cyan] {'Cache (24h TTL)' if result['from_cache'] else 'Fresh from API'}\n")
+
+            # Create table for users
+            table = create_table(
+                title="Notion Workspace Users",
+                columns=[
+                    {"name": "Name", "style": "cyan", "field": "name"},
+                    {"name": "Email", "style": "magenta", "field": "email"},
+                    {"name": "Type", "style": "green", "field": "type"},
+                    {"name": "User ID", "style": "dim", "field": "id", "no_wrap": False},
+                ],
+                show_lines=True,
+            )
+
+            for user in result["users"]:
+                table.add_row(
+                    user["name"] or "(no name)",
+                    user["email"] or "(no email)",
+                    user["type"],
+                    user["id"]
+                )
+
+            console.print(table)
+            console.print(f"\n[dim]Completed in {duration_ms}ms[/dim]")
+
+    except typer.Exit:
+        raise
+    except Exception as e:
+        handle_notion_error(e, "notion_list_users", json_mode=json)
