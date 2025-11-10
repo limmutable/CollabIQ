@@ -43,6 +43,7 @@ class NotionWriter:
         self.duplicate_behavior = duplicate_behavior
         self.dlq_manager = dlq_manager
         self.field_mapper: Optional[FieldMapper] = None
+        self._retry_count = 0  # Track retry attempts for current operation
 
     async def check_duplicate(self, email_id: str) -> Optional[str]:
         """Check if an entry with the given email_id already exists.
@@ -169,6 +170,9 @@ class NotionWriter:
         Returns:
             WriteResult with success status, page_id, or error details
         """
+        # Reset retry counter for this operation
+        self._retry_count = 0
+
         try:
             # Initialize FieldMapper with schema discovery (lazy load)
             if self.field_mapper is None:
@@ -239,11 +243,13 @@ class NotionWriter:
             page_response = await self._create_page(properties)
 
             # Return success result
+            # retry_count: subtract 1 because first attempt is not a retry
+            actual_retries = max(0, self._retry_count - 1)
             return WriteResult(
                 success=True,
                 page_id=page_response["id"],
                 email_id=extracted_data.email_id,
-                retry_count=0,
+                retry_count=actual_retries,
                 is_duplicate=False,
             )
 
@@ -313,6 +319,11 @@ class NotionWriter:
         Raises:
             APIResponseError: If page creation fails after retries
         """
+        # Track retry attempts (incremented on each call by decorator)
+        if self._retry_count > 0:
+            logger.debug(f"Retry attempt {self._retry_count} for page creation")
+        self._retry_count += 1
+
         # Call Notion API to create page
         # Retry logic is handled by the decorator
         response = await self.notion_integrator.client.client.pages.create(

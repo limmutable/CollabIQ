@@ -34,6 +34,7 @@ def create_valid_extracted_data(**overrides) -> ExtractedEntitiesWithClassificat
         # Phase 2b fields - Notion page IDs must be 32 characters minimum
         "matched_company_id": "abc123def456ghi789jkl012mno345pq",  # 32 chars
         "matched_partner_id": "stu901vwx234yz056abc123def456ghi",  # 32 chars
+        "matched_person_id": "user456789abc012def345ghi678jkl90",  # 32 chars (Notion user UUID)
         "startup_match_confidence": 0.93,
         "partner_match_confidence": 0.91,
         # Phase 2c classification fields

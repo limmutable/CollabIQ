@@ -33,6 +33,7 @@ class TestNotionWriteE2E:
     def mock_notion_integrator(self):
         """Create a mock NotionIntegrator with schema."""
         from notion_integrator.models import NotionProperty, DatabaseSchema, NotionDatabase
+        from notion_integrator.client import NotionClient
 
         mock = Mock(spec=NotionIntegrator)
 
@@ -49,7 +50,7 @@ class TestNotionWriteE2E:
             "요약": NotionProperty(name="요약", type="rich_text", id="요약_id"),
             "type_confidence": NotionProperty(name="type_confidence", type="number", id="type_conf_id"),
             "intensity_confidence": NotionProperty(name="intensity_confidence", type="number", id="intensity_conf_id"),
-            "email_id": NotionProperty(name="email_id", type="rich_text", id="email_id"),
+            "Email ID": NotionProperty(name="Email ID", type="rich_text", id="email_id"),
             "classification_timestamp": NotionProperty(name="classification_timestamp", type="date", id="class_time_id"),
         }
 
@@ -63,12 +64,40 @@ class TestNotionWriteE2E:
             last_edited_time=datetime.now()
         )
 
-        mock_schema = DatabaseSchema(database=database_info, properties=properties, classification_fields=[], relations=[])
+        # Group properties by type for DatabaseSchema
+        properties_by_type = {}
+        relation_properties = []
+        for name, prop in properties.items():
+            prop_type = prop.type
+            if prop_type not in properties_by_type:
+                properties_by_type[prop_type] = []
+            properties_by_type[prop_type].append(prop)
+            if prop_type == "relation":
+                relation_properties.append(prop)
+
+        # Create classification_fields mapping
+        classification_fields = {
+            "collaboration_type": "협업형태_id",
+            "collaboration_intensity": "협업강도_id"
+        }
+
+        mock_schema = DatabaseSchema(
+            database=database_info,
+            properties_by_type=properties_by_type,
+            relation_properties=relation_properties,
+            classification_fields=classification_fields
+        )
         mock.discover_database_schema = AsyncMock(return_value=mock_schema)
 
-        # Mock Notion API client
-        mock.client = Mock()
-        mock.client.client = Mock()
+        # Mock NotionClient with proper hierarchy
+        mock_notion_client = Mock(spec=NotionClient)
+        mock_notion_client.client = Mock()  # The actual notion_client SDK client
+        mock_notion_client.client.pages = Mock()
+        mock_notion_client.client.pages.create = AsyncMock()
+        mock_notion_client.client.pages.update = AsyncMock()
+        mock_notion_client.query_database = AsyncMock(return_value={"results": []})
+
+        mock.client = mock_notion_client
 
         return mock
 
@@ -168,11 +197,11 @@ class TestNotionWriteE2E:
         assert properties["협력주체"]["title"][0]["text"]["content"] == "브레이크앤컴퍼니-신세계푸드", \
             "협력주체 must be auto-generated as '{startup}-{partner}'"
 
-        # Verify 담당자 (rich_text field - Korean text)
+        # Verify 담당자 (people field - matched person ID)
         assert "담당자" in properties, \
             "담당자 field must be present"
-        assert properties["담당자"]["rich_text"][0]["text"]["content"] == "김철수", \
-            "Korean text must be preserved without encoding errors"
+        assert properties["담당자"]["people"][0]["id"] == "user456789abc012def345ghi678jkl90", \
+            "Person ID must be populated from matched_person_id"
 
         # Verify 스타트업명 (relation field - matched company ID)
         assert "스타트업명" in properties, \
@@ -301,6 +330,7 @@ class TestNotionWriteE2E:
             collaboration_summary="완전한스타트업과 완전한파트너의 투자 협력 관계가 성사되었습니다. 김완전 담당자가 주도하고 있습니다.",  # 50+ chars
             matched_company_id="co123456789012345678901234567890",  # 33 chars (valid UUID length)
             matched_partner_id="pa123456789012345678901234567890",  # 33 chars (valid UUID length)
+            matched_person_id="user123456789012345678901234567890",  # Add person ID for 담당자 field
             collaboration_type="[A]완전한협업",
             collaboration_intensity="투자",
             date="2025-10-29",
@@ -331,11 +361,13 @@ class TestNotionWriteE2E:
         # Verify title field
         assert properties["협력주체"]["title"][0]["text"]["content"] == "완전한스타트업-완전한파트너"
 
+        # Verify people field (담당자 uses people format when matched_person_id is set)
+        assert properties["담당자"]["people"][0]["id"] == "user123456789012345678901234567890"
+
         # Verify rich_text fields
-        assert properties["담당자"]["rich_text"][0]["text"]["content"] == "김완전"
         assert properties["협업내용"]["rich_text"][0]["text"]["content"] == "완전한 협업 내용 설명"
         assert properties["요약"]["rich_text"][0]["text"]["content"] == "완전한스타트업과 완전한파트너의 투자 협력 관계가 성사되었습니다. 김완전 담당자가 주도하고 있습니다."
-        assert properties["email_id"]["rich_text"][0]["text"]["content"] == "complete-fields-test"
+        assert properties["Email ID"]["rich_text"][0]["text"]["content"] == "complete-fields-test"
 
         # Verify relation fields
         assert properties["스타트업명"]["relation"][0]["id"] == "co123456789012345678901234567890"
@@ -370,6 +402,7 @@ class TestNotionWriteE2E:
         data = create_valid_extracted_data(
             email_id="missing-optionals-test",
             person_in_charge=None,  # Missing
+            matched_person_id=None,  # Person matching failed
             collaboration_summary=None,  # Missing
             matched_company_id=None,  # Company matching failed
             matched_partner_id=None,  # Partner matching failed
@@ -398,7 +431,7 @@ class TestNotionWriteE2E:
 
         # Required fields should be present
         assert "협력주체" in properties, "Title field is required"
-        assert "email_id" in properties, "email_id is required"
+        assert "Email ID" in properties, "Email ID is required"
         assert "협업내용" in properties, "details is required"
         assert "협업형태" in properties, "collaboration_type is required"
         assert "협업강도" in properties, "collaboration_intensity is required"
