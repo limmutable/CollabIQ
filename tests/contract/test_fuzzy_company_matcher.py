@@ -178,16 +178,16 @@ class TestFuzzyMatch:
 
     def test_fuzzy_match_with_korean_character_alternatives(self):
         """
-        Contract: Korean character alternatives score below threshold (known limitation).
+        Contract: Korean character alternatives are normalized and matched.
 
         Given: Extracted name "스마트푸드네트워크"
-        And: Database has "스마트푸드네트웍스" (워크 → 웍, 스 appended)
+        And: Database has "스마트푸드네트웍스" (워크 → 웍, common variant)
         When: match() is called with threshold=0.85
-        Then: Returns no match (similarity ≈0.78, below 0.85)
+        Then: Returns exact match after Korean character normalization
 
-        Note: This is a known limitation of character-based matching.
-        Cases like this score ≈0.78 and will trigger auto-creation.
-        The hybrid approach (P4) with LLM may handle this better.
+        Note: The matcher normalizes common Korean variants like "워크" ↔ "웍"
+        to handle cases where people use different but equivalent spellings.
+        Both "네트워크" and "네트웍스" normalize to "네트웍" for matching.
         """
         matcher = RapidfuzzMatcher()
         extracted_name = "스마트푸드네트워크"
@@ -195,13 +195,13 @@ class TestFuzzyMatch:
             ("page1" + "0" * 26, "스마트푸드네트웍스"),
         ]
 
-        # Use default threshold 0.85 (scores ≈0.78, below threshold)
         result = matcher.match(extracted_name, candidates, auto_create=False)
 
-        # Should NOT match (below 0.85 threshold)
-        assert result.match_type == "none"
-        assert result.similarity_score < 0.85
-        assert result.page_id is None
+        # Should match after Korean character normalization
+        assert result.match_type == "exact"
+        assert result.similarity_score == 1.0
+        assert result.page_id == "page1" + "0" * 26
+        assert result.confidence_level == "high"
 
 
 class TestValidation:

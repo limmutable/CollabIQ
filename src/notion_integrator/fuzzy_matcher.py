@@ -17,7 +17,7 @@ def normalize_company_name(name: str) -> str:
     """
     Normalize company name for matching.
 
-    Normalization rules (MVP - minimal):
+    Normalization rules:
     1. Trim leading/trailing whitespace
     2. No other transformations (preserve case, punctuation, internal spacing)
 
@@ -34,6 +34,38 @@ def normalize_company_name(name: str) -> str:
 
     if not normalized:
         raise ValueError("Company name cannot be empty or whitespace-only")
+
+    return normalized
+
+
+def normalize_for_matching(name: str) -> str:
+    """
+    Additional normalization for fuzzy matching.
+
+    Handles common Korean company name variations:
+    1. Removes parentheticals: "웨이크(산스)" → "웨이크"
+    2. Normalizes Korean character variants: "네트워크" ↔ "네트웍"
+
+    Args:
+        name: Normalized company name
+
+    Returns:
+        Name with normalization applied for better matching
+    """
+    import re
+
+    # Remove parenthetical content like (산스), (주), etc.
+    without_parens = re.sub(r'\([^)]*\)', '', name).strip()
+
+    # Normalize Korean character variants
+    # Common substitutions in Korean company names:
+    # ㅓ vs ㅕ variants, ㅗ vs ㅜ variants, final consonant variants
+    normalized = without_parens
+
+    # 워크 (work) ↔ 웍 (same pronunciation, different spelling)
+    # Common in "네트워크" (network) variations
+    normalized = normalized.replace('워크', '웍')
+    normalized = normalized.replace('웍스', '웍')  # 웍스 → 웍 for matching
 
     return normalized
 
@@ -114,9 +146,14 @@ class RapidfuzzMatcher(CompanyMatcher):
         threshold: float,
     ) -> Optional[tuple[str, str, float]]:
         """
-        Search for fuzzy match using rapidfuzz.fuzz.ratio().
+        Search for fuzzy match using hybrid rapidfuzz approach.
 
-        Computes similarity for all candidates and returns best match if ≥ threshold.
+        Uses multiple scoring strategies to handle Korean text variations:
+        1. Standard fuzz.ratio() for general similarity
+        2. partial_ratio() for parenthetical cases like "웨이크(산스)" → "웨이크"
+        3. Parenthetical normalization for exact matching after removal
+
+        Takes the maximum score across all strategies.
 
         Args:
             normalized_name: Normalized extracted company name
@@ -129,12 +166,30 @@ class RapidfuzzMatcher(CompanyMatcher):
         best_match = None
         best_score = 0.0
 
+        # Normalize for matching (remove parentheticals)
+        matching_name = normalize_for_matching(normalized_name)
+
         for page_id, candidate_name in candidates:
             normalized_candidate = normalize_company_name(candidate_name)
+            matching_candidate = normalize_for_matching(normalized_candidate)
 
-            # Compute similarity using rapidfuzz.fuzz.ratio()
-            # Returns 0-100, we normalize to 0.0-1.0
-            similarity = fuzz.ratio(normalized_name, normalized_candidate) / 100.0
+            # Strategy 1: Standard ratio (handles spacing, minor variations)
+            score_ratio = fuzz.ratio(normalized_name, normalized_candidate) / 100.0
+
+            # Strategy 2: Partial ratio (ONLY for parentheticals)
+            # Only use if one string has parentheses (indicates likely parenthetical case)
+            # This prevents "스타트업" matching "스타트업A" at 1.0
+            use_partial = '(' in normalized_name or ')' in normalized_name or '(' in normalized_candidate or ')' in normalized_candidate
+            score_partial = fuzz.partial_ratio(normalized_name, normalized_candidate) / 100.0 if use_partial else 0.0
+
+            # Strategy 3: Exact match after parenthetical removal
+            score_normalized = 1.0 if matching_name == matching_candidate else 0.0
+
+            # Strategy 4: Ratio on normalized forms (for Korean variants)
+            score_normalized_fuzzy = fuzz.ratio(matching_name, matching_candidate) / 100.0
+
+            # Take the maximum score across all strategies
+            similarity = max(score_ratio, score_partial, score_normalized, score_normalized_fuzzy)
 
             if similarity > best_score:
                 best_score = similarity
@@ -237,6 +292,20 @@ class RapidfuzzMatcher(CompanyMatcher):
         )
         if fuzzy_match:
             page_id, matched_name, similarity = fuzzy_match
+
+            # If fuzzy matching found perfect match (1.0), treat as exact
+            # This can happen when normalization (parenthetical removal, Korean variants) creates exact match
+            if similarity == 1.0:
+                return CompanyMatch(
+                    page_id=page_id,
+                    company_name=matched_name,
+                    similarity_score=1.0,
+                    match_type="exact",
+                    confidence_level="high",
+                    was_created=False,
+                    match_method="character",
+                )
+
             confidence = self._compute_confidence_level(similarity)
             return CompanyMatch(
                 page_id=page_id,
