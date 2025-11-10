@@ -1,0 +1,229 @@
+openapi: 3.0.3
+info:
+  title: FuzzyCompanyMatcher API Contract
+  description: |
+    Service contract for fuzzy company name matching against the Notion Companies database.
+
+    This service enables field population for relation fields (스타트업명, 협력기관) by
+    finding the best matching company page_id or auto-creating new companies when no match exists.
+  version: 1.0.0
+  contact:
+    name: CollabIQ Development Team
+    email: jlim@prorata.vc
+
+paths:
+  /match:
+    post:
+      summary: Match company name to Companies database
+      description: |
+        Performs fuzzy string matching to find the best company match in the Notion Companies database.
+
+        **Matching Logic**:
+        1. Search for exact match (case-sensitive) → return immediately with similarity 1.0
+        2. Compute Jaro-Winkler similarity for all companies
+        3. If best match ≥ 0.85 → return CompanyMatch with page_id
+        4. If best match < 0.85 → auto-create new company and return CompanyMatch
+
+        **Performance**: Must complete in <2 seconds for databases with 1000+ companies.
+      operationId: matchCompany
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - company_name
+              properties:
+                company_name:
+                  type: string
+                  description: Extracted company name from LLM (may contain spelling variations)
+                  example: "웨이크(산스)"
+                  minLength: 1
+                  maxLength: 200
+                auto_create:
+                  type: boolean
+                  description: Whether to auto-create company if no match found (default true)
+                  default: true
+                  example: true
+                similarity_threshold:
+                  type: number
+                  format: float
+                  description: Minimum similarity score for match (default 0.85)
+                  default: 0.85
+                  minimum: 0.0
+                  maximum: 1.0
+                  example: 0.85
+      responses:
+        '200':
+          description: Company match result (success or no match)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyMatch'
+              examples:
+                exactMatch:
+                  summary: Exact match found
+                  value:
+                    page_id: "abc123def456"
+                    company_name: "웨이크"
+                    similarity_score: 1.0
+                    match_type: "exact"
+                    confidence_level: "high"
+                    was_created: false
+                fuzzyMatch:
+                  summary: Fuzzy match found (similarity ≥ 0.85)
+                  value:
+                    page_id: "abc123def456"
+                    company_name: "웨이크"
+                    similarity_score: 0.87
+                    match_type: "fuzzy"
+                    confidence_level: "medium"
+                    was_created: false
+                autoCreated:
+                  summary: No match found, company auto-created
+                  value:
+                    page_id: "xyz789new012"
+                    company_name: "웨이크(산스)"
+                    similarity_score: 1.0
+                    match_type: "created"
+                    confidence_level: "high"
+                    was_created: true
+                noMatch:
+                  summary: No match found and auto_create=false
+                  value:
+                    page_id: null
+                    company_name: ""
+                    similarity_score: 0.0
+                    match_type: "none"
+                    confidence_level: "none"
+                    was_created: false
+        '400':
+          description: Invalid input (empty company name, invalid threshold)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error_code: "INVALID_INPUT"
+                message: "company_name must be non-empty"
+                details: {"field": "company_name", "value": ""}
+        '429':
+          description: Notion API rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error_code: "RATE_LIMIT_EXCEEDED"
+                message: "Notion API rate limit exceeded, retry after 1s"
+                details: {"retry_after_seconds": 1}
+        '500':
+          description: Internal server error (Notion API failure, matching algorithm error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error_code: "MATCHING_ERROR"
+                message: "Failed to compute similarity scores"
+                details: {"exception": "ZeroDivisionError"}
+
+components:
+  schemas:
+    CompanyMatch:
+      type: object
+      required:
+        - page_id
+        - company_name
+        - similarity_score
+        - match_type
+        - confidence_level
+        - was_created
+      properties:
+        page_id:
+          type: string
+          nullable: true
+          description: Notion page ID of matched company (null if no match and auto_create=false)
+          example: "abc123def456"
+          pattern: '^[a-f0-9]{32}$|^[a-f0-9-]{36}$'
+        company_name:
+          type: string
+          description: Name of matched/created company
+          example: "웨이크"
+        similarity_score:
+          type: number
+          format: float
+          description: Jaro-Winkler similarity score (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.87
+        match_type:
+          type: string
+          enum: ["exact", "fuzzy", "created", "none"]
+          description: |
+            How the match was determined:
+            - exact: company_name matched exactly (similarity 1.0)
+            - fuzzy: company_name matched with similarity ≥ threshold
+            - created: no match found, new company created
+            - none: no match found and auto_create=false
+          example: "fuzzy"
+        confidence_level:
+          type: string
+          enum: ["high", "medium", "low", "none"]
+          description: |
+            Confidence in the match:
+            - high: similarity ≥ 0.95 or exact/created
+            - medium: 0.85 ≤ similarity < 0.95
+            - low: 0.70 ≤ similarity < 0.85 (logged but not used)
+            - none: similarity < 0.70 or no match
+          example: "medium"
+        was_created:
+          type: boolean
+          description: Whether a new company entry was created in Notion
+          example: false
+
+    Error:
+      type: object
+      required:
+        - error_code
+        - message
+      properties:
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: "INVALID_INPUT"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "company_name must be non-empty"
+        details:
+          type: object
+          description: Additional error context
+          additionalProperties: true
+          example: {"field": "company_name"}
+
+tags:
+  - name: matching
+    description: Company name matching operations
+
+externalDocs:
+  description: Feature specification and data model
+  url: ../spec.md
+
+x-contract-tests:
+  description: |
+    Contract tests must verify:
+    1. Exact match returns similarity 1.0 and match_type "exact"
+    2. Fuzzy match with similarity ≥ 0.85 returns match_type "fuzzy" and valid page_id
+    3. No match with auto_create=true creates new company and returns match_type "created"
+    4. No match with auto_create=false returns match_type "none" and page_id null
+    5. Invalid input (empty string, invalid threshold) returns 400 error
+    6. Performance: completes in <2 seconds for 1000+ company database
+
+x-implementation-notes:
+  algorithm: "Jaro-Winkler similarity via rapidfuzz library"
+  normalization: "Minimal - trim whitespace only"
+  caching: "Companies list cached in memory for duration of matching operation"
+  rate-limiting: "Respects Notion API rate limits (3 req/s), uses existing retry logic"
+  duplicate-prevention: "Exact match check before fuzzy matching prevents duplicates"
