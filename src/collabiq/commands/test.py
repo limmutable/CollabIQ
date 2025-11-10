@@ -73,6 +73,7 @@ def e2e(
     limit: Optional[int] = typer.Option(None, "--limit", help="Limit number of emails to test"),
     email_id: Optional[str] = typer.Option(None, "--email-id", help="Test specific email by ID"),
     resume: Optional[str] = typer.Option(None, "--resume", help="Resume interrupted test run by run ID"),
+    production_mode: bool = typer.Option(False, "--production-mode", help="Run in production mode (writes to real Notion database)"),
     debug: bool = typer.Option(False, help="Enable debug logging"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
     quiet: bool = typer.Option(False, help="Suppress non-error output"),
@@ -83,10 +84,14 @@ def e2e(
     Tests the complete email → Notion pipeline with detailed progress tracking,
     stage-by-stage results, and comprehensive error reporting.
 
+    By default, runs in test mode (mocked services). Use --production-mode to
+    test with real Gmail/Gemini/Notion APIs and write to production database.
+
     Examples:
         collabiq test e2e --limit 3
         collabiq test e2e --all
         collabiq test e2e --email-id abc123
+        collabiq test e2e --production-mode --limit 1  # Test 1 email in production
         collabiq test e2e --resume 20250108_120000
     """
     global _current_test_run, _interrupted
@@ -115,14 +120,14 @@ def e2e(
             if not quiet and not json_output:
                 console.print(f"[bold]Resuming test run: {resume}[/bold]\n")
 
-            # Initialize runner
+            # Initialize runner (resume always uses test_mode from saved run)
             runner = E2ERunner(
                 gmail_receiver=None,
                 gemini_adapter=None,
                 classification_service=None,
                 notion_writer=None,
                 output_dir=str(DATA_DIR),
-                test_mode=True,
+                test_mode=True,  # Resume inherits test_mode from saved run
             )
 
             # Resume test run
@@ -176,16 +181,31 @@ def e2e(
         if len(email_ids) == 0:
             raise ValueError("No emails to test")
 
-        # Initialize E2E runner with real services
+        # Warning for production mode
+        if production_mode and not quiet and not json_output:
+            console.print("[bold yellow]⚠️  PRODUCTION MODE ENABLED[/bold yellow]")
+            console.print("[yellow]This will write to your production Notion database![/yellow]")
+            console.print(f"[yellow]Processing {len(email_ids)} email(s)...[/yellow]\n")
+
+        # Initialize E2E runner with real or mocked services
         if not quiet and not json_output:
-            with create_spinner("Initializing E2E runner...") as progress:
+            mode_str = "production mode" if production_mode else "test mode"
+            with create_spinner(f"Initializing E2E runner ({mode_str})...") as progress:
                 task = progress.add_task("", total=None)
 
-                # Initialize services (would be real instances in production)
-                gmail_receiver = None  # GmailReceiver(CREDENTIALS_PATH, TOKEN_PATH)
-                gemini_adapter = None  # GeminiAdapter()
-                classification_service = None  # ClassificationService()
-                notion_writer = None  # NotionWriter()
+                if production_mode:
+                    # Production mode: Initialize real services
+                    # E2ERunner will auto-initialize services when test_mode=False
+                    gmail_receiver = None
+                    gemini_adapter = None
+                    classification_service = None
+                    notion_writer = None
+                else:
+                    # Test mode: Use mocked services
+                    gmail_receiver = None
+                    gemini_adapter = None
+                    classification_service = None
+                    notion_writer = None
 
                 runner = E2ERunner(
                     gmail_receiver=gmail_receiver,
@@ -193,14 +213,14 @@ def e2e(
                     classification_service=classification_service,
                     notion_writer=notion_writer,
                     output_dir=str(DATA_DIR),
-                    test_mode=True,
+                    test_mode=not production_mode,  # test_mode=False when production_mode=True
                 )
 
                 progress.update(task, description="[green]✓ Runner initialized[/green]")
         else:
             runner = E2ERunner(
                 output_dir=str(DATA_DIR),
-                test_mode=True,
+                test_mode=not production_mode,  # test_mode=False when production_mode=True
             )
 
         # Run E2E tests with progress tracking (T079)
