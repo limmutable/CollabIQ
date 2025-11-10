@@ -117,6 +117,26 @@ Administrators need CLI commands to test company and person matching without run
 
 ---
 
+### User Story 5 - Matching Algorithm Evaluation (Priority: P4 - OPTIONAL)
+
+Administrators need empirical data to determine whether LLM-based semantic matching outperforms character-based fuzzy matching for Korean company names, enabling data-driven decisions for production deployment.
+
+**Why this priority**: Optional post-MVP enhancement. Rapidfuzz (character-based) is sufficient for MVP (90% accuracy achievable). LLM evaluation adds value only if we want to optimize beyond MVP baseline or handle complex semantic cases (abbreviations, multi-language names).
+
+**Independent Test**: Can be tested by running comparative evaluation on 20+ labeled emails with ground truth company matches, measuring accuracy/precision/recall/latency/cost for rapidfuzz vs LLM vs hybrid approaches. Delivers value by providing empirical evidence for production optimization decisions.
+
+**Acceptance Scenarios**:
+
+1. **Given** an evaluation dataset with 20+ emails and ground truth company matches, **When** the comparison test runs, **Then** the system generates an evaluation report comparing rapidfuzz, LLM, and hybrid approaches across accuracy, precision, recall, latency, and cost metrics
+
+2. **Given** the evaluation completes, **When** reviewing results, **Then** the report shows which approach achieves ≥90% accuracy, identifies failure cases for each approach, and recommends the optimal algorithm for production
+
+3. **Given** the hybrid approach is selected, **When** the system processes an email with high character similarity (≥0.85), **Then** only rapidfuzz is used (no LLM call), minimizing latency and cost
+
+4. **Given** the hybrid approach is selected, **When** the system processes an email with low character similarity (<0.85), **Then** the LLM fallback is invoked for semantic matching (abbreviations, multi-language cases)
+
+---
+
 ### Edge Cases
 
 - **What happens when a company name has special characters or emojis?**
