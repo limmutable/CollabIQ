@@ -26,8 +26,12 @@ from rich.table import Table
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from collabiq.utils.logging import log_cli_operation
+from collabiq.utils.logging import log_cli_operation, log_cli_error
 from collabiq.formatters.tables import create_table
+from collabiq.formatters.json_output import output_json, format_json_error
+from notion_integrator.integrator import NotionIntegrator
+from notion_integrator.client import NotionAuthenticationError, NotionObjectNotFoundError, NotionPermissionError
+from llm_provider.types import ExtractedEntitiesWithClassification, ConfidenceScores
 
 notion_app = typer.Typer(
     name="notion",
@@ -367,6 +371,13 @@ def test_write(
                     sender="test@collabiq-cli.test",
                     subject="CLI Test Entry - Safe to Delete",
                     received_date=datetime.now().isoformat(),
+                    confidence=ConfidenceScores(
+                        person=1.0,
+                        startup=1.0,
+                        partner=1.0,
+                        details=1.0,
+                        date=1.0,
+                    ),
                     companies=[],
                     people=[],
                     opportunities=[],
@@ -469,7 +480,7 @@ def cleanup_tests(
 
                 # If no entries, return early
                 if entry_count == 0:
-                    return {"cleaned": 0, "entries": []}
+                    return {"cleaned": 0, "entries": [], "entry_count": 0}
 
                 # Collect entry info
                 entries = []
