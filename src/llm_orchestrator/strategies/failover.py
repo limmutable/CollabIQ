@@ -91,6 +91,7 @@ class FailoverStrategy:
 
         # Determine provider order: quality-based or priority-based
         provider_order = self.priority_order.copy()
+        logger.debug(f"Initial provider_order: {provider_order}")
 
         # If quality routing is enabled, try quality-ranked providers first
         if self.quality_tracker:
@@ -120,8 +121,10 @@ class FailoverStrategy:
                     "Quality routing enabled but no quality metrics available, "
                     "falling back to priority order"
                 )
+                logger.debug(f"Fallback provider_order (no quality metrics): {provider_order}")
 
         for provider_name in provider_order:
+            logger.debug(f"Attempting provider: {provider_name}")
             # Skip if provider not available
             if provider_name not in providers:
                 logger.warning(
@@ -130,7 +133,9 @@ class FailoverStrategy:
                 continue
 
             # Skip if provider is unhealthy
-            if not health_tracker.is_healthy(provider_name):
+            is_provider_healthy = health_tracker.is_healthy(provider_name)
+            logger.debug(f"Provider {provider_name} health status: {is_provider_healthy}")
+            if not is_provider_healthy:
                 logger.info(
                     f"Skipping unhealthy provider: {provider_name} "
                     f"(circuit_breaker={health_tracker.get_metrics(provider_name).circuit_breaker_state})"

@@ -13,7 +13,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from e2e_test.models import ErrorRecord, TestRun
+from e2e_test.models import ErrorRecord, E2ETestRun
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ class ReportGenerator:
 
         logger.info(f"ReportGenerator initialized with output_dir={output_dir}")
 
-    def generate_summary(self, test_run: TestRun) -> str:
+    def generate_summary(self, test_run: E2ETestRun) -> str:
         """
         Generate test run summary report in markdown format
 
@@ -58,7 +58,7 @@ class ReportGenerator:
         - Failed email details
 
         Args:
-            test_run: TestRun object with completed test data
+            test_run: E2ETestRun object with completed test data
 
         Returns:
             str: Markdown-formatted summary report

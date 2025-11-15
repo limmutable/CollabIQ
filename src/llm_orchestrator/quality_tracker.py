@@ -10,7 +10,7 @@ import logging
 import os
 import shutil
 import tempfile
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Literal
 
@@ -341,7 +341,7 @@ class QualityTracker:
             )
 
         # Update timestamp
-        summary.updated_at = datetime.utcnow()
+        summary.updated_at = datetime.now(UTC)
 
     def record_extraction(
         self,

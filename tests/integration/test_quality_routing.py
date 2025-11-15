@@ -154,10 +154,10 @@ def test_quality_routing_disabled_uses_priority_order(health_tracker):
     assert provider_used == "gemini"
 
 
-def test_quality_routing_falls_back_to_priority_when_no_metrics(health_tracker):
+def test_quality_routing_falls_back_to_priority_when_no_metrics(health_tracker, tmp_path):
     """Test fallback to priority order when no quality metrics available."""
     # Create empty quality tracker (no metrics)
-    empty_quality_tracker = QualityTracker()
+    empty_quality_tracker = QualityTracker(data_dir=tmp_path / "empty_metrics")
 
     # Create providers
     providers = {

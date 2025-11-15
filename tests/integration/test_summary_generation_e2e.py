@@ -50,8 +50,8 @@ class TestSummaryGenerationE2E:
         self, sample_email_dir, mock_notion_schema
     ):
         """Test: sample-001.txt summary preserves startup, partner, activity, date, person."""
-        from src.models.classification_service import ClassificationService
-        from src.llm_provider.types import ExtractedEntities, ConfidenceScores
+        from models.classification_service import ClassificationService
+        from llm_provider.types import ExtractedEntities, ConfidenceScores
         from datetime import datetime
 
         # Load sample email
@@ -147,8 +147,8 @@ class TestSummaryGenerationE2E:
         self, sample_email_dir, mock_notion_schema
     ):
         """Test: sample-003.txt summary omits email signature (이성범 이사)."""
-        from src.models.classification_service import ClassificationService
-        from src.llm_provider.types import ExtractedEntities, ConfidenceScores
+        from models.classification_service import ClassificationService
+        from llm_provider.types import ExtractedEntities, ConfidenceScores
         from datetime import datetime
 
         # Load sample email
@@ -240,8 +240,8 @@ class TestSummaryGenerationE2E:
         self, sample_email_dir, mock_notion_schema
     ):
         """Test: sample-005.txt summary has word count in 50-150 range."""
-        from src.models.classification_service import ClassificationService
-        from src.llm_provider.types import ExtractedEntities, ConfidenceScores
+        from models.classification_service import ClassificationService
+        from llm_provider.types import ExtractedEntities, ConfidenceScores
         from datetime import datetime
 
         # Load sample email

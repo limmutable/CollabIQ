@@ -17,13 +17,13 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.notion_integrator.exceptions import (
+from notion_integrator.exceptions import (
     NotionAuthenticationError,
     NotionObjectNotFoundError,
     NotionPermissionError,
     SchemaValidationError,
 )
-from src.notion_integrator.models import DatabaseSchema
+from notion_integrator.models import DatabaseSchema
 
 
 # ==============================================================================
@@ -45,6 +45,20 @@ def mock_notion_api_response():
         "last_edited_time": "2025-11-01T10:30:00.000Z",
         "title": [{"type": "text", "text": {"content": "Companies"}}],
         "url": "https://www.notion.so/workspace/abc123",
+        "data_sources": [{"id": "ds_abc123", "type": "database_source"}],
+    }
+
+
+@pytest.fixture
+def mock_notion_data_source_response():
+    """
+    Mock Notion API response for data source retrieval.
+
+    Simulates the response structure from Notion's data_sources.retrieve endpoint.
+    """
+    return {
+        "object": "data_source",
+        "id": "ds_abc123",
         "properties": {
             "Name": {
                 "id": "title",
@@ -94,6 +108,7 @@ def mock_notion_client():
     """Mock Notion client with async methods."""
     client = MagicMock()
     client.retrieve_database = AsyncMock()
+    client.retrieve_data_source = AsyncMock()
     return client
 
 
@@ -103,7 +118,7 @@ def mock_notion_client():
 
 
 @pytest.mark.asyncio
-async def test_discover_schema_success(mock_notion_client, mock_notion_api_response):
+async def test_discover_schema_success(mock_notion_client, mock_notion_api_response, mock_notion_data_source_response):
     """
     Test successful schema discovery from Notion API.
 
@@ -116,9 +131,10 @@ async def test_discover_schema_success(mock_notion_client, mock_notion_api_respo
     """
     # Mock API response
     mock_notion_client.retrieve_database.return_value = mock_notion_api_response
+    mock_notion_client.retrieve_data_source.return_value = mock_notion_data_source_response
 
     # Import after mock setup to avoid import errors
-    from src.notion_integrator.schema import discover_schema
+    from notion_integrator.schema import discover_schema
 
     # Execute schema discovery (without caching for test)
     schema = await discover_schema(
@@ -168,15 +184,16 @@ async def test_discover_schema_success(mock_notion_client, mock_notion_api_respo
 
 
 @pytest.mark.asyncio
-async def test_discover_schema_authentication_error(mock_notion_client):
+async def test_discover_schema_authentication_error(mock_notion_client, mock_notion_data_source_response):
     """Test schema discovery with invalid API key."""
     # Mock authentication error (client should raise translated exception)
     mock_notion_client.retrieve_database.side_effect = NotionAuthenticationError(
         "Notion API authentication failed. Check your API key.",
         details={"database_id": "abc123-def456-ghi789"},
     )
+    mock_notion_client.retrieve_data_source.return_value = mock_notion_data_source_response
 
-    from src.notion_integrator.schema import discover_schema
+    from notion_integrator.schema import discover_schema
 
     # Verify authentication error raised
     with pytest.raises(NotionAuthenticationError) as exc_info:
@@ -190,7 +207,7 @@ async def test_discover_schema_authentication_error(mock_notion_client):
 
 
 @pytest.mark.asyncio
-async def test_discover_schema_object_not_found(mock_notion_client):
+async def test_discover_schema_object_not_found(mock_notion_client, mock_notion_data_source_response):
     """Test schema discovery with non-existent or unshared database."""
     # Mock object not found error (client should raise translated exception)
     mock_notion_client.retrieve_database.side_effect = NotionObjectNotFoundError(
@@ -198,8 +215,9 @@ async def test_discover_schema_object_not_found(mock_notion_client):
         object_id="invalid-id",
         message="Database not found or not shared with integration.",
     )
+    mock_notion_client.retrieve_data_source.return_value = mock_notion_data_source_response
 
-    from src.notion_integrator.schema import discover_schema
+    from notion_integrator.schema import discover_schema
 
     # Verify not found error raised
     with pytest.raises(NotionObjectNotFoundError) as exc_info:
@@ -214,15 +232,16 @@ async def test_discover_schema_object_not_found(mock_notion_client):
 
 
 @pytest.mark.asyncio
-async def test_discover_schema_permission_error(mock_notion_client):
+async def test_discover_schema_permission_error(mock_notion_client, mock_notion_data_source_response):
     """Test schema discovery with insufficient permissions."""
     # Mock permission error (client should raise translated exception)
     mock_notion_client.retrieve_database.side_effect = NotionPermissionError(
         message="Insufficient permissions. Ensure database is shared with integration.",
         details={"database_id": "abc123-def456-ghi789"},
     )
+    mock_notion_client.retrieve_data_source.return_value = mock_notion_data_source_response
 
-    from src.notion_integrator.schema import discover_schema
+    from notion_integrator.schema import discover_schema
 
     # Verify permission error raised
     with pytest.raises(NotionPermissionError) as exc_info:
@@ -236,7 +255,7 @@ async def test_discover_schema_permission_error(mock_notion_client):
 
 
 @pytest.mark.asyncio
-async def test_discover_schema_no_properties(mock_notion_client):
+async def test_discover_schema_no_properties(mock_notion_client, mock_notion_data_source_response):
     """Test schema discovery with empty database (validation should fail)."""
     # Mock database with no properties
     mock_response = {
@@ -246,11 +265,12 @@ async def test_discover_schema_no_properties(mock_notion_client):
         "last_edited_time": "2025-01-01T00:00:00.000Z",
         "title": [{"type": "text", "text": {"content": "Empty DB"}}],
         "url": "https://www.notion.so/workspace/abc123",
-        "properties": {},
+        "data_sources": [{"id": "ds_abc123", "type": "database_source"}],
     }
     mock_notion_client.retrieve_database.return_value = mock_response
+    mock_notion_client.retrieve_data_source.return_value = {"object": "data_source", "id": "ds_abc123", "properties": {}}
 
-    from src.notion_integrator.schema import discover_schema
+    from notion_integrator.schema import discover_schema
 
     # Verify validation error raised
     with pytest.raises(SchemaValidationError) as exc_info:
@@ -264,7 +284,7 @@ async def test_discover_schema_no_properties(mock_notion_client):
 
 
 @pytest.mark.asyncio
-async def test_discover_schema_missing_classification_fields(mock_notion_client):
+async def test_discover_schema_missing_classification_fields(mock_notion_client, mock_notion_data_source_response):
     """
     Test schema discovery when classification fields are missing.
 
@@ -275,9 +295,15 @@ async def test_discover_schema_missing_classification_fields(mock_notion_client)
         "object": "database",
         "id": "abc123",
         "created_time": "2025-01-01T00:00:00.000Z",
-        "last_edited_time": "2025-01-01T00:00:00.000Z",
+        "last_edited_time": "2025-01-01T10:30:00.000Z",
         "title": [{"type": "text", "text": {"content": "CollabIQ"}}],
         "url": "https://www.notion.so/workspace/abc123",
+        "data_sources": [{"id": "ds_abc123", "type": "database_source"}],
+    }
+    mock_notion_client.retrieve_database.return_value = mock_response
+    mock_notion_client.retrieve_data_source.return_value = {
+        "object": "data_source",
+        "id": "ds_abc123",
         "properties": {
             "Name": {
                 "id": "title",
@@ -293,9 +319,8 @@ async def test_discover_schema_missing_classification_fields(mock_notion_client)
             },
         },
     }
-    mock_notion_client.retrieve_database.return_value = mock_response
 
-    from src.notion_integrator.schema import discover_schema
+    from notion_integrator.schema import discover_schema
 
     # Execute schema discovery
     schema = await discover_schema(
@@ -330,9 +355,8 @@ async def test_discover_schema_real_api():
     - NOTION_DATABASE_ID_COMPANIES environment variable
     - Database shared with integration
     """
-    from notion_client import AsyncClient
-
-    from src.notion_integrator.schema import discover_schema
+    from notion_integrator.client import NotionClient
+    from notion_integrator.schema import discover_schema
 
     # Initialize real Notion client
     api_key = os.getenv("NOTION_API_KEY")
@@ -341,7 +365,7 @@ async def test_discover_schema_real_api():
     if not database_id:
         pytest.skip("NOTION_DATABASE_ID_COMPANIES not set")
 
-    client = AsyncClient(auth=api_key)
+    client = NotionClient(api_key=api_key)
 
     # Execute real schema discovery
     schema = await discover_schema(
@@ -351,7 +375,7 @@ async def test_discover_schema_real_api():
 
     # Verify real schema
     assert isinstance(schema, DatabaseSchema)
-    assert schema.database.id == database_id
+    assert schema.database.id.replace("-", "") == database_id.replace("-", "")
     assert schema.database.title  # Has a title
     assert len(schema.database.properties) > 0  # Has properties
 

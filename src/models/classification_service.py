@@ -494,7 +494,7 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
             0.95
         """
         from llm_provider.types import ExtractedEntitiesWithClassification
-        from datetime import datetime
+        from datetime import datetime, UTC
 
         logger.info(
             "Starting extraction with classification",
@@ -546,7 +546,7 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
             partner_org=entities.partner_org,
             details=entities.details,
             date=entities.date,
-            confidence=entities.confidence,
+            confidence=entities.confidence.model_dump(),
             email_id=email_id,
             extracted_at=entities.extracted_at,
             # Phase 2b fields
@@ -561,7 +561,7 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
             # Phase 2c type classification fields
             collaboration_type=collaboration_type,
             type_confidence=type_confidence,
-            classification_timestamp=datetime.utcnow().isoformat(),
+            classification_timestamp=datetime.now(UTC).isoformat(),
             # Phase 2c intensity classification fields
             collaboration_intensity=collaboration_intensity,
             intensity_confidence=intensity_confidence,

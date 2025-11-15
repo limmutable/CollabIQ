@@ -8,7 +8,7 @@ using OAuth2 and retrieves emails from portfolioupdates@signite.co inbox.
 import base64
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import List, Optional
@@ -268,7 +268,7 @@ class GmailReceiver(EmailReceiver):
                         f"Validation error for message {msg['id']}, skipping: {e}"
                     )
                     error_record = ErrorRecord(
-                        timestamp=datetime.utcnow(),
+                        timestamp=datetime.now(UTC),
                         severity=ErrorSeverity.WARNING,
                         category=ErrorCategory.PERMANENT,
                         message=f"Email validation failed for message {msg['id']}",
@@ -350,10 +350,10 @@ class GmailReceiver(EmailReceiver):
             # Parse received date
             try:
                 received_at = (
-                    parsedate_to_datetime(date_str) if date_str else datetime.utcnow()
+                    parsedate_to_datetime(date_str) if date_str else datetime.now(UTC)
                 )
             except Exception:
-                received_at = datetime.utcnow()
+                received_at = datetime.now(UTC)
 
             # Extract body
             body = self._extract_body(payload)
@@ -438,7 +438,7 @@ class GmailReceiver(EmailReceiver):
                 # Fallback to latin-1 (never fails but may not be semantically correct)
                 logger.warning("UTF-8 decode failed, falling back to latin-1")
                 error_record = ErrorRecord(
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(UTC),
                     severity=ErrorSeverity.WARNING,
                     category=ErrorCategory.PERMANENT,
                     message="Email encoding issue: UTF-8 decode failed, using fallback",
@@ -456,7 +456,7 @@ class GmailReceiver(EmailReceiver):
         except Exception as e:
             logger.warning(f"Failed to decode base64 data: {e}")
             error_record = ErrorRecord(
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 severity=ErrorSeverity.WARNING,
                 category=ErrorCategory.PERMANENT,
                 message=f"Base64 decode failed: {str(e)}",

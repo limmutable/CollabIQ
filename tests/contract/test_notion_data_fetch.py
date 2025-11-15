@@ -17,7 +17,7 @@ from datetime import datetime
 from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock
 
-from src.notion_integrator.exceptions import (
+from notion_integrator.exceptions import (
     NotionAuthenticationError,
     NotionObjectNotFoundError,
 )
@@ -184,7 +184,7 @@ async def test_fetch_all_records_with_pagination(
     mock_notion_client, mock_companies_page_1, mock_companies_page_2
 ):
     """Test fetching all records with pagination handling."""
-    from src.notion_integrator.fetcher import fetch_all_records
+    from notion_integrator.fetcher import fetch_all_records
 
     # Setup mock to return two pages
     mock_notion_client.query_database.side_effect = [
@@ -220,7 +220,7 @@ async def test_fetch_all_records_with_pagination(
 @pytest.mark.asyncio
 async def test_fetch_all_records_single_page(mock_notion_client, mock_companies_page_2):
     """Test fetching records when only one page exists."""
-    from src.notion_integrator.fetcher import fetch_all_records
+    from notion_integrator.fetcher import fetch_all_records
 
     # Setup mock to return single page
     mock_notion_client.query_database.return_value = mock_companies_page_2
@@ -242,7 +242,7 @@ async def test_fetch_all_records_single_page(mock_notion_client, mock_companies_
 @pytest.mark.asyncio
 async def test_fetch_all_records_empty_database(mock_notion_client):
     """Test fetching from empty database."""
-    from src.notion_integrator.fetcher import fetch_all_records
+    from notion_integrator.fetcher import fetch_all_records
 
     # Setup mock to return empty results
     mock_notion_client.query_database.return_value = {
@@ -273,9 +273,9 @@ async def test_resolve_relationships_simple(
     mock_notion_client, mock_companies_page_1, mock_collabiq_page
 ):
     """Test resolving simple one-level relationships."""
-    from src.notion_integrator.fetcher import resolve_relationships
-    from src.notion_integrator.schema import create_database_schema
-    from src.notion_integrator.models import NotionDatabase, NotionProperty
+    from notion_integrator.fetcher import resolve_relationships
+    from notion_integrator.schema import create_database_schema
+    from notion_integrator.models import NotionDatabase, NotionProperty
 
     # Create schema with relation property
     companies_db = NotionDatabase(
@@ -335,9 +335,9 @@ async def test_resolve_relationships_simple(
 @pytest.mark.asyncio
 async def test_resolve_relationships_depth_limit(mock_notion_client):
     """Test relationship resolution respects depth limit."""
-    from src.notion_integrator.fetcher import resolve_relationships
-    from src.notion_integrator.schema import create_database_schema
-    from src.notion_integrator.models import NotionDatabase, NotionProperty
+    from notion_integrator.fetcher import resolve_relationships
+    from notion_integrator.schema import create_database_schema
+    from notion_integrator.models import NotionDatabase, NotionProperty
 
     # Create schema with relation
     db = NotionDatabase(
@@ -395,9 +395,9 @@ async def test_resolve_relationships_depth_limit(mock_notion_client):
 @pytest.mark.asyncio
 async def test_resolve_relationships_circular_detection(mock_notion_client):
     """Test circular reference detection in relationship resolution."""
-    from src.notion_integrator.fetcher import resolve_relationships
-    from src.notion_integrator.schema import create_database_schema
-    from src.notion_integrator.models import NotionDatabase, NotionProperty
+    from notion_integrator.fetcher import resolve_relationships
+    from notion_integrator.schema import create_database_schema
+    from notion_integrator.models import NotionDatabase, NotionProperty
 
     # Create schema with self-referencing relation
     db = NotionDatabase(
@@ -463,7 +463,7 @@ async def test_resolve_relationships_circular_detection(mock_notion_client):
 @pytest.mark.asyncio
 async def test_fetch_all_records_authentication_error(mock_notion_client):
     """Test handling authentication error during fetch."""
-    from src.notion_integrator.fetcher import fetch_all_records
+    from notion_integrator.fetcher import fetch_all_records
 
     # Setup mock to raise authentication error
     mock_notion_client.query_database.side_effect = NotionAuthenticationError(
@@ -484,7 +484,7 @@ async def test_fetch_all_records_authentication_error(mock_notion_client):
 @pytest.mark.asyncio
 async def test_fetch_all_records_not_found_error(mock_notion_client):
     """Test handling not found error during fetch."""
-    from src.notion_integrator.fetcher import fetch_all_records
+    from notion_integrator.fetcher import fetch_all_records
 
     # Setup mock to raise not found error
     mock_notion_client.query_database.side_effect = NotionObjectNotFoundError(
@@ -508,9 +508,9 @@ async def test_resolve_relationships_page_not_found(
     mock_notion_client, mock_companies_page_1
 ):
     """Test handling missing related page gracefully."""
-    from src.notion_integrator.fetcher import resolve_relationships
-    from src.notion_integrator.schema import create_database_schema
-    from src.notion_integrator.models import NotionDatabase, NotionProperty
+    from notion_integrator.fetcher import resolve_relationships
+    from notion_integrator.schema import create_database_schema
+    from notion_integrator.models import NotionDatabase, NotionProperty
 
     # Create schema
     db = NotionDatabase(

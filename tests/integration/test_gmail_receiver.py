@@ -12,7 +12,7 @@ To run these tests:
 """
 
 import json
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -47,7 +47,7 @@ def valid_token_content():
         "client_id": "123456789-abcdefg.apps.googleusercontent.com",
         "client_secret": "GOCSPX-mock_secret",
         "scopes": ["https://www.googleapis.com/auth/gmail.readonly"],
-        "expiry": (datetime.utcnow() + timedelta(hours=1)).isoformat() + "Z"
+        "expiry": (datetime.now(UTC) + timedelta(hours=1)).isoformat() + "Z"
     }
 
 

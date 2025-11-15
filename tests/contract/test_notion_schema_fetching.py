@@ -99,7 +99,7 @@ class TestNotionSchemaFetching:
         self, mock_notion_integrator, mock_database_schema
     ):
         """Verify schema is cached to avoid repeated API calls."""
-        from src.models.classification_service import ClassificationService
+        from models.classification_service import ClassificationService
 
         mock_gemini = Mock()
         mock_notion_integrator.discover_database_schema.return_value = (
@@ -130,7 +130,7 @@ class TestNotionSchemaFetching:
         self, mock_notion_integrator
     ):
         """Verify missing 협업형태 property raises ValueError."""
-        from src.models.classification_service import ClassificationService
+        from models.classification_service import ClassificationService
 
         # Schema without 협업형태 property
         schema = Mock()
@@ -150,7 +150,7 @@ class TestNotionSchemaFetching:
     @pytest.mark.asyncio
     async def test_invalid_property_type_raises_error(self, mock_notion_integrator):
         """Verify 협업형태 property with wrong type raises ValueError."""
-        from src.models.classification_service import ClassificationService
+        from models.classification_service import ClassificationService
 
         # Schema with 협업형태 as text property instead of select
         schema = Mock()

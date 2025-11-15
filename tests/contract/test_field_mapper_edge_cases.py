@@ -23,7 +23,7 @@ class TestFieldMapperEdgeCases:
         properties = {}
         property_defs = {
             "협력주체": {"type": "title"},
-            "담당자": {"type": "rich_text"},
+            "담당자": {"type": "people"},
             "스타트업명": {"type": "relation"},
             "협업기관": {"type": "relation"},
             "협업내용": {"type": "rich_text"},
@@ -82,7 +82,7 @@ class TestFieldMapperEdgeCases:
 
         # Required fields should always be present
         assert "협력주체" in properties, "Title field must be present"
-        assert "email_id" in properties, "email_id must be present"
+        assert "Email ID" in properties, "Email ID must be present"
 
         # Optional null fields should be omitted
         assert "담당자" not in properties, "person_in_charge (None) should be omitted"
@@ -176,7 +176,7 @@ class TestFieldMapperEdgeCases:
 
         # Other fields should still be present
         assert "협력주체" in properties, "Title field should still be present"
-        assert "email_id" in properties, "email_id should still be present"
+        assert "Email ID" in properties, "Email ID should still be present"
 
     def test_valid_relation_id_formats(self, field_mapper):
         """T045b: Test that valid relation ID formats are accepted.
@@ -226,6 +226,7 @@ class TestFieldMapperEdgeCases:
             details=special_text,
             collaboration_summary=special_summary,
             person_in_charge="김철수 🧑‍💼",
+            matched_person_id="12345678-1234-5678-1234-567812345678"
         )
 
         properties = field_mapper.map_to_notion_properties(data)
@@ -241,7 +242,7 @@ class TestFieldMapperEdgeCases:
             "Korean text in summary must be preserved exactly"
         )
 
-        person_content = properties["담당자"]["rich_text"][0]["text"]["content"]
-        assert person_content == "김철수 🧑‍💼", (
-            "Korean name with emoji must be preserved exactly"
+        person_content_id = properties["담당자"]["people"][0]["id"]
+        assert person_content_id == "12345678-1234-5678-1234-567812345678", (
+            "Person ID must be preserved exactly"
         )

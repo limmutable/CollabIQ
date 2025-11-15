@@ -14,7 +14,7 @@ from datetime import datetime
 import pytest
 from pydantic import ValidationError
 
-from src.e2e_test.models import (
+from e2e_test.models import (
     ErrorRecord,
     PerformanceMetric,
     PipelineStage,
@@ -22,17 +22,17 @@ from src.e2e_test.models import (
     RunStatus,
     SelectionReason,
     Severity,
-    TestEmailMetadata,
-    TestRun,
+    E2ETestEmailMetadata,
+    E2ETestRun,
 )
 
 
-class TestTestRunModel:
-    """Test TestRun Pydantic model validation"""
+class TestE2ETestRunModel:
+    """Test E2ETestRun Pydantic model validation"""
 
     def test_valid_test_run(self):
-        """Test creating a valid TestRun"""
-        run = TestRun(
+        """Test creating a valid E2ETestRun"""
+        run = E2ETestRun(
             run_id="2025-11-04T14:30:00",
             start_time=datetime.fromisoformat("2025-11-04T14:30:00"),
             end_time=datetime.fromisoformat("2025-11-04T14:45:23"),
@@ -63,7 +63,7 @@ class TestTestRunModel:
     def test_email_count_must_be_positive(self):
         """Test that email_count must be greater than 0"""
         with pytest.raises(ValidationError, match="greater than 0"):
-            TestRun(
+            E2ETestRun(
                 run_id="2025-11-04T14:30:00",
                 start_time=datetime.now(),
                 status=RunStatus.RUNNING,
@@ -79,7 +79,7 @@ class TestTestRunModel:
 
     def test_optional_fields_can_be_none(self):
         """Test that end_time, total_duration, avg_time can be None"""
-        run = TestRun(
+        run = E2ETestRun(
             run_id="2025-11-04T14:30:00",
             start_time=datetime.now(),
             end_time=None,  # Optional
@@ -103,7 +103,7 @@ class TestTestRunModel:
     def test_test_email_ids_cannot_be_empty(self):
         """Test that test_email_ids list must have at least one element"""
         with pytest.raises(ValidationError, match="at least 1 item"):
-            TestRun(
+            E2ETestRun(
                 run_id="2025-11-04T14:30:00",
                 start_time=datetime.now(),
                 status=RunStatus.RUNNING,
@@ -246,12 +246,12 @@ class TestPerformanceMetricModel:
         assert metric.memory_mb is None
 
 
-class TestTestEmailMetadataModel:
-    """Test TestEmailMetadata Pydantic model validation"""
+class TestE2ETestEmailMetadataModel:
+    """Test E2ETestEmailMetadata Pydantic model validation"""
 
     def test_valid_test_email_metadata(self):
-        """Test creating valid TestEmailMetadata"""
-        metadata = TestEmailMetadata(
+        """Test creating valid E2ETestEmailMetadata"""
+        metadata = E2ETestEmailMetadata(
             email_id="msg_001",
             subject="브레이크앤컴퍼니 x 신세계푸드",
             received_date="2025-10-28",
@@ -268,7 +268,7 @@ class TestTestEmailMetadataModel:
     def test_email_id_cannot_be_empty(self):
         """Test that email_id must be non-empty"""
         with pytest.raises(ValidationError, match="at least 1 character"):
-            TestEmailMetadata(
+            E2ETestEmailMetadata(
                 email_id="",  # Invalid: empty string
                 subject="Test",
                 received_date="2025-11-04",
@@ -279,7 +279,7 @@ class TestTestEmailMetadataModel:
     def test_subject_cannot_be_empty(self):
         """Test that subject must be non-empty"""
         with pytest.raises(ValidationError, match="at least 1 character"):
-            TestEmailMetadata(
+            E2ETestEmailMetadata(
                 email_id="msg_001",
                 subject="",  # Invalid: empty string
                 received_date="2025-11-04",
@@ -289,7 +289,7 @@ class TestTestEmailMetadataModel:
 
     def test_optional_collaboration_type(self):
         """Test that collaboration_type can be None"""
-        metadata = TestEmailMetadata(
+        metadata = E2ETestEmailMetadata(
             email_id="msg_042",
             subject="Test email",
             received_date="2025-11-04",
@@ -308,7 +308,7 @@ class TestEnumValuesExport:
 
     def test_enum_values_exported_as_strings(self):
         """Test that enum fields are serialized as string values"""
-        run = TestRun(
+        run = E2ETestRun(
             run_id="2025-11-04T14:30:00",
             start_time=datetime.now(),
             status=RunStatus.RUNNING,

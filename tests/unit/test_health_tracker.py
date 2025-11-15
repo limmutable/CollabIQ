@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from src.llm_adapters.health_tracker import HealthTracker
+from llm_adapters.health_tracker import HealthTracker
 
 
 @pytest.fixture

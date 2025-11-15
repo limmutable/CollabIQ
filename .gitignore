@@ -50,6 +50,7 @@ htmlcov/
 .tox/
 .mypy_cache/
 .ruff_cache/
+tests/coverage_reports/
 
 # Environment variables
 .env
@@ -77,4 +78,5 @@ specs/001-feasibility-architecture/samples/emails/*.txt
 
 # Email Reception Feature - Raw and cleaned email data
 data/
+data/test_metrics/
 token.*.json

@@ -9,7 +9,7 @@ import signal
 import json
 from pathlib import Path
 from typing import Any, Dict, Optional, Callable
-from ..formatters.colors import console
+from ..formatters.colors import get_console
 
 
 class InterruptHandler:
@@ -27,6 +27,7 @@ class InterruptHandler:
                 # ... process item
                 if handler.interrupted:
                     handler.save_state({"processed": processed_ids, "pending": pending_ids})
+                    console = get_console()
                     console.print("[cyan]Resume with: collabiq test e2e --resume run_id[/cyan]")
                     raise typer.Exit(1)
     """
@@ -46,6 +47,7 @@ class InterruptHandler:
     def _handle_interrupt(self, signum: int, frame: Any) -> None:
         """Handle interrupt signal."""
         self.interrupted = True
+        console = get_console()
         console.print("\n[yellow]⚠ Operation interrupted - saving progress...[/yellow]")
 
     def __enter__(self) -> "InterruptHandler":
@@ -76,6 +78,7 @@ class InterruptHandler:
 
         # Write state as JSON
         self.state_file.write_text(json.dumps(state, indent=2))
+        console = get_console()
         console.print(f"[dim]State saved to: {self.state_file}[/dim]")
 
     def load_state(self) -> Optional[Dict[str, Any]]:

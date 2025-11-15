@@ -9,8 +9,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.email_receiver.gmail_receiver import GmailReceiver
-from src.error_handling import gmail_circuit_breaker, CircuitState
+from email_receiver.gmail_receiver import GmailReceiver
+from error_handling import gmail_circuit_breaker, CircuitState
 
 
 class TestGmailRetryFlow:
@@ -95,7 +95,7 @@ class TestGmailRetryFlow:
         Scenario: 401 auth error → no retry → immediate failure with EmailReceiverError
         """
         from googleapiclient.errors import HttpError
-        from src.email_receiver.gmail_receiver import EmailReceiverError
+        from email_receiver.gmail_receiver import EmailReceiverError
 
         # Create receiver with mock paths
         receiver = GmailReceiver(

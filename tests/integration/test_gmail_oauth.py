@@ -17,7 +17,7 @@ To run these tests:
 
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
@@ -54,7 +54,7 @@ def mock_token_content():
         "client_id": "123456789-abcdefg.apps.googleusercontent.com",
         "client_secret": "GOCSPX-mock_secret",
         "scopes": ["https://www.googleapis.com/auth/gmail.readonly"],
-        "expiry": (datetime.utcnow() + timedelta(hours=1)).isoformat() + "Z"
+        "expiry": (datetime.now(UTC) + timedelta(hours=1)).isoformat() + "Z"
     }
 
 
@@ -68,7 +68,7 @@ def expired_token_content():
         "client_id": "123456789-abcdefg.apps.googleusercontent.com",
         "client_secret": "GOCSPX-mock_secret",
         "scopes": ["https://www.googleapis.com/auth/gmail.readonly"],
-        "expiry": (datetime.utcnow() - timedelta(hours=1)).isoformat() + "Z"
+        "expiry": (datetime.now(UTC) - timedelta(hours=1)).isoformat() + "Z"
     }
 
 
@@ -161,7 +161,7 @@ def test_oauth_token_refresh(mock_credentials_cls, mock_request_cls, mock_build,
     mock_creds.to_json.return_value = json.dumps({
         "token": "ya29.new_refreshed_token",
         "refresh_token": "1//0gZ1xYz_mock_refresh_token",
-        "expiry": (datetime.utcnow() + timedelta(hours=1)).isoformat() + "Z"
+        "expiry": (datetime.now(UTC) + timedelta(hours=1)).isoformat() + "Z"
     })
 
     mock_credentials_cls.from_authorized_user_file.return_value = mock_creds
@@ -255,7 +255,7 @@ def test_oauth_first_time_flow_simulation(mock_installed_flow_cls, mock_build, t
     mock_creds.to_json.return_value = json.dumps({
         "token": "ya29.new_token_from_oauth",
         "refresh_token": "1//0gZ1xYz_new_refresh_token",
-        "expiry": (datetime.utcnow() + timedelta(hours=1)).isoformat() + "Z"
+        "expiry": (datetime.now(UTC) + timedelta(hours=1)).isoformat() + "Z"
     })
     mock_flow.run_local_server.return_value = mock_creds
 

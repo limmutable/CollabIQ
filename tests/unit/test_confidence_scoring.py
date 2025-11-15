@@ -10,7 +10,7 @@ Tests cover:
 import pytest
 from pydantic import ValidationError
 
-from src.llm_provider.types import ConfidenceScores, ExtractedEntities
+from llm_provider.types import ConfidenceScores, ExtractedEntities
 
 
 def test_confidence_scores_valid_range():

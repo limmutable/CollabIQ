@@ -9,14 +9,14 @@ Tests:
 
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from src.error_handling.models import ErrorCategory, ErrorRecord, ErrorSeverity
-from src.error_handling.structured_logger import JSONFormatter, StructuredLogger
+from error_handling.models import ErrorCategory, ErrorRecord, ErrorSeverity
+from error_handling.structured_logger import JSONFormatter, StructuredLogger
 
 
 class TestJSONFormatter:
@@ -140,7 +140,7 @@ class TestStructuredLogger:
         logger = StructuredLogger("test")
 
         error_record = ErrorRecord(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             severity=ErrorSeverity.ERROR,
             category=ErrorCategory.TRANSIENT,
             message="Connection timeout",
@@ -251,7 +251,7 @@ class TestStructuredLogger:
 
         for severity, expected_level in severity_to_level.items():
             error_record = ErrorRecord(
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 severity=severity,
                 category=ErrorCategory.TRANSIENT,
                 message=f"Message with {severity.value}",
@@ -305,7 +305,7 @@ class TestStructuredLoggerIntegration:
     def test_error_record_to_json_serialization(self):
         """Test that ErrorRecord can be serialized to JSON for logging."""
         error_record = ErrorRecord(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             severity=ErrorSeverity.ERROR,
             category=ErrorCategory.TRANSIENT,
             message="Test error",
@@ -335,7 +335,7 @@ class TestStructuredLoggerIntegration:
 
     def test_global_logger_instance_exists(self):
         """Test that global logger instance is available."""
-        from src.error_handling.structured_logger import logger
+        from error_handling.structured_logger import logger
 
         assert isinstance(logger, StructuredLogger)
         assert logger.logger.name == "collabiq.error_handling"
@@ -349,7 +349,7 @@ class TestStructuredLoggerActionableLogging:
         logger = StructuredLogger("test")
 
         error_record = ErrorRecord(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             severity=ErrorSeverity.ERROR,
             category=ErrorCategory.TRANSIENT,
             message="Gmail API timeout during fetch_messages",

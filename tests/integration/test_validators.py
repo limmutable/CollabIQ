@@ -9,7 +9,7 @@ Tests validate:
 
 import pytest
 
-from src.e2e_test.validators import Validator
+from e2e_test.validators import Validator
 
 
 class TestValidateNotionEntry:
@@ -27,7 +27,7 @@ class TestValidateNotionEntry:
                 "스타트업명": {"rich_text": [{"text": {"content": "브레이크앤컴퍼니"}}]},
                 "협력기관": {"rich_text": [{"text": {"content": "신세계푸드"}}]},
                 "협력유형": {"select": {"name": "[A] 포트폴리오 x SSG"}},
-                "Date": {"date": {"start": "2025-10-28"}},
+                "날짜": {"date": {"start": "2025-10-28"}},
                 "Company ID": {"rich_text": [{"text": {"content": "comp_123"}}]},
             }
         }
@@ -81,7 +81,7 @@ class TestValidateNotionEntry:
                 "Email ID": {"rich_text": [{"text": {"content": "msg_004"}}]},
                 "담당자": {"title": [{"text": {"content": "김철수"}}]},
                 "스타트업명": {"rich_text": [{"text": {"content": "Test Corp"}}]},
-                "Date": {"date": {"start": "invalid-date"}},  # Invalid format
+                "날짜": {"date": {"start": "invalid-date"}},  # Invalid format
             }
         }
 
@@ -275,7 +275,7 @@ class TestValidationResult:
                 "스타트업명": {"rich_text": [{"text": {"content": "Test Corp"}}]},
                 "협력기관": {"rich_text": [{"text": {"content": "신세계"}}]},
                 "협력유형": {"select": {"name": "[A]"}},
-                "Date": {"date": {"start": "2025-10-28"}},
+                "날짜": {"date": {"start": "2025-10-28"}},
                 "Company ID": {"rich_text": [{"text": {"content": "comp_123"}}]},
             }
         }

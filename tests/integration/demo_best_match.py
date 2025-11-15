@@ -8,12 +8,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from src.llm_adapters.health_tracker import HealthTracker
-from src.llm_orchestrator.strategies.best_match import (
+from llm_adapters.health_tracker import HealthTracker
+from llm_orchestrator.strategies.best_match import (
     BestMatchStrategy,
     calculate_aggregate_confidence,
 )
-from src.llm_provider.types import ConfidenceScores, ExtractedEntities
+from llm_provider.types import ConfidenceScores, ExtractedEntities
 
 
 def create_mock_provider(
@@ -200,7 +200,7 @@ def demo_scenario_4_partial_failures():
     print("SCENARIO 4: Partial Failures (Gemini fails, best-match selects from remaining)")
     print("=" * 80)
 
-    from src.llm_provider.exceptions import LLMAPIError
+    from llm_provider.exceptions import LLMAPIError
 
     providers = {
         "gemini": MagicMock(),

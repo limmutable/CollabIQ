@@ -7,7 +7,7 @@ when --json flag is used.
 
 import json
 from typing import Any, Dict, List, Optional
-from .colors import console
+from .colors import get_console
 
 
 def output_json(
@@ -39,6 +39,7 @@ def output_json(
             errors=[]
         )
     """
+    console = get_console()
     output = {
         "status": status,
         "data": data if data is not None else {},

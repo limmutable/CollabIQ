@@ -4,7 +4,7 @@ E2ERunner: Orchestrates complete MVP pipeline testing
 Responsibilities:
 - Coordinate complete email → Notion pipeline for each test email
 - Integrate ErrorCollector, Validator, PerformanceTracker (future)
-- Generate TestRun metadata with success/failure tracking
+- Generate E2ETestRun metadata with success/failure tracking
 - Handle interruptions with resume capability
 - Provide progress reporting during execution
 """
@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from e2e_test.error_collector import ErrorCollector
-from e2e_test.models import PipelineStage, TestRun
+from e2e_test.models import PipelineStage, E2ETestRun
 from e2e_test.validators import Validator
 from llm_orchestrator.orchestrator import LLMOrchestrator
 from llm_orchestrator.types import OrchestrationConfig
@@ -184,7 +184,7 @@ class E2ERunner:
 
     def run_tests(
         self, email_ids: List[str], test_mode: Optional[bool] = None
-    ) -> TestRun:
+    ) -> E2ETestRun:
         """
         Execute E2E tests for a list of email IDs
 
@@ -201,7 +201,7 @@ class E2ERunner:
             test_mode: Override instance test_mode setting (optional)
 
         Returns:
-            TestRun: Test run metadata with success/failure counts and error summary
+            E2ETestRun: Test run metadata with success/failure counts and error summary
         """
         if test_mode is None:
             test_mode = self.test_mode
@@ -219,7 +219,7 @@ class E2ERunner:
         )
 
         # Initialize test run tracking
-        test_run = TestRun(
+        test_run = E2ETestRun(
             run_id=run_id,
             start_time=datetime.now(),
             end_time=None,
@@ -855,7 +855,7 @@ class E2ERunner:
 
         logger.debug(f"Saved extraction to {extraction_file}")
 
-    def _save_test_run(self, test_run: TestRun):
+    def _save_test_run(self, test_run: E2ETestRun):
         """Save test run state to disk"""
         run_file = self.output_dir / "runs" / f"{test_run.run_id}.json"
 
@@ -867,7 +867,7 @@ class E2ERunner:
         # Also save quality metrics if available
         self.save_quality_metrics_report(test_run.run_id)
 
-    def resume_test_run(self, run_id: str) -> TestRun:
+    def resume_test_run(self, run_id: str) -> E2ETestRun:
         """
         Resume an interrupted test run
 
@@ -875,7 +875,7 @@ class E2ERunner:
             run_id: Test run ID to resume
 
         Returns:
-            TestRun: Completed or updated test run
+            E2ETestRun: Completed or updated test run
 
         Raises:
             FileNotFoundError: If test run file not found
@@ -889,7 +889,7 @@ class E2ERunner:
         with run_file.open("r", encoding="utf-8") as f:
             test_run_data = json.load(f)
 
-        test_run = TestRun(**test_run_data)
+        test_run = E2ETestRun(**test_run_data)
 
         if test_run.status == "completed":
             logger.info(f"Test run {run_id} already completed")

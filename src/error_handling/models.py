@@ -1,7 +1,7 @@
 """Data models for error handling and retry logic."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any, Dict, Optional
 
@@ -124,7 +124,7 @@ class CircuitBreakerState:
         elif self.state == CircuitState.OPEN:
             # Check if timeout elapsed
             if self.open_timestamp:
-                elapsed = (datetime.utcnow() - self.open_timestamp).total_seconds()
+                elapsed = (datetime.now(UTC) - self.open_timestamp).total_seconds()
                 if elapsed >= self.timeout:
                     self.state = CircuitState.HALF_OPEN
                     return True
@@ -144,16 +144,16 @@ class CircuitBreakerState:
 
     def record_failure(self):
         """Record failed request."""
-        self.last_failure_time = datetime.utcnow()
+        self.last_failure_time = datetime.now(UTC)
 
         if self.state == CircuitState.CLOSED:
             self.failure_count += 1
             if self.failure_count >= self.failure_threshold:
                 self.state = CircuitState.OPEN
-                self.open_timestamp = datetime.utcnow()
+                self.open_timestamp = datetime.now(UTC)
 
         elif self.state == CircuitState.HALF_OPEN:
             # Failed during test → back to OPEN
             self.state = CircuitState.OPEN
-            self.open_timestamp = datetime.utcnow()
+            self.open_timestamp = datetime.now(UTC)
             self.success_count = 0

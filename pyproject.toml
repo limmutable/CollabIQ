@@ -1,47 +1,16 @@
 [project]
 name = "collabiq"
 version = "0.1.0"
-description = "Email-based collaboration tracking system"
-readme = "README.md"
-authors = [
-    { name = "Jeffrey Lim", email = "jlim@prorata.vc" }
-]
-requires-python = ">=3.12"
-dependencies = [
-    "anthropic>=0.40.0",
-    "dateparser>=1.2.0",
-    "email-validator>=2.3.0",
-    "google-api-python-client>=2.185.0",
-    "google-auth>=2.41.1",
-    "google-auth-httplib2>=0.2.0",
-    "google-auth-oauthlib>=1.2.2",
-    "google-cloud-pubsub>=2.32.0",
-    "google-generativeai>=0.8.5",
-    "infisicalsdk>=1.0.12",
-    "notion-client>=2.6.0",
-    "openai>=1.60.0",
-    "pydantic>=2.12.3",
-    "pydantic-settings>=2.11.0",
-    "python-dotenv>=1.2.1",
-    "rapidfuzz>=3.14.1",
-    "rich>=14.2.0",
-    "tenacity>=9.1.2",
-    "typer>=0.20.0",
-]
 
 [project.scripts]
-collabiq = "collabiq:app"
+collabiq = "collabiq.cli:app"
 
-[build-system]
-requires = ["uv_build>=0.9.5,<0.10.0"]
-build-backend = "uv_build"
-
-[dependency-groups]
-dev = [
-    "mypy>=1.18.2",
-    "pytest>=8.4.2",
-    "pytest-asyncio>=1.2.0",
-    "pytest-cov>=7.0.0",
-    "pytest-mock>=3.15.1",
-    "ruff>=0.14.2",
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "notion: marks tests that interact with Notion API (deselect with '-m \"not notion\"')",
 ]
+# Prevent Pydantic models from being collected as test classes
+norecursedirs = [".*", "build", "dist", "CVS", "_darcs", "{arch}", "*.egg", "venv", ".venv", "src"]

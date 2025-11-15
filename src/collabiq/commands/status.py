@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import typer
+from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
@@ -23,7 +24,6 @@ from rich.text import Text
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from collabiq.formatters.colors import console
 from collabiq.formatters.json_output import output_json
 from collabiq.formatters.tables import create_table
 from collabiq.utils.logging import log_cli_operation, log_cli_error
@@ -35,14 +35,14 @@ from llm_adapters.gemini_adapter import GeminiAdapter
 from llm_adapters.claude_adapter import ClaudeAdapter
 from llm_adapters.openai_adapter import OpenAIAdapter
 
-app = typer.Typer(
+status_app = typer.Typer(
     name="status",
     help="System health monitoring",
     invoke_without_command=True,
 )
 
 
-@app.callback()
+@status_app.callback()
 def main(
     ctx: typer.Context,
     detailed: bool = typer.Option(False, "--detailed", help="Show detailed metrics and extended information"),
@@ -68,6 +68,7 @@ def main(
         # JSON output for automation
         collabiq status --json
     """
+    console = Console()
     # Only run status check if no subcommand was invoked
     if ctx.invoked_subcommand is not None:
         return
@@ -824,6 +825,7 @@ def render_basic_status(health: SystemHealth) -> None:
     Args:
         health: SystemHealth object with component statuses
     """
+    console = Console()
     # Overall health status
     overall_color = get_status_color(health.overall_status)
     console.print(f"\nSystem Health: [{overall_color}]{health.overall_status.upper()}[/{overall_color}]")
@@ -860,6 +862,7 @@ def render_detailed_status(health: SystemHealth) -> None:
     Args:
         health: SystemHealth object with component statuses
     """
+    console = Console()
     # Overall health status
     overall_color = get_status_color(health.overall_status)
     console.print(f"\nSystem Health: [{overall_color}]{health.overall_status.upper()}[/{overall_color}]")
@@ -921,6 +924,7 @@ def _run_watch_mode(detailed: bool, json_output: bool, debug: bool) -> None:
         json_output: Whether to output JSON
         debug: Debug mode flag
     """
+    console = Console()
     if json_output:
         console.print("[yellow]Watch mode not supported with --json flag[/yellow]")
         console.print("[dim]Falling back to single status check[/dim]")

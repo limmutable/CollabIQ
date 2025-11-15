@@ -9,20 +9,20 @@ Tests graceful degradation when emails have invalid/malformed data:
 
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from pydantic import ValidationError
 
-from src.email_receiver.gmail_receiver import GmailReceiver
-from src.error_handling.error_classifier import ErrorClassifier
-from src.error_handling.models import ErrorCategory, ErrorRecord, ErrorSeverity
-from src.error_handling.structured_logger import StructuredLogger
-from src.llm_adapters.gemini_adapter import GeminiAdapter
-from src.llm_provider.types import ConfidenceScores, ExtractedEntities
-from src.models.raw_email import EmailMetadata, RawEmail
+from email_receiver.gmail_receiver import GmailReceiver
+from error_handling.error_classifier import ErrorClassifier
+from error_handling.models import ErrorCategory, ErrorRecord, ErrorSeverity
+from error_handling.structured_logger import StructuredLogger
+from llm_adapters.gemini_adapter import GeminiAdapter
+from llm_provider.types import ConfidenceScores, ExtractedEntities
+from models.raw_email import EmailMetadata, RawEmail
 
 
 class TestValidationErrorHandling:
@@ -37,7 +37,7 @@ class TestValidationErrorHandling:
                 message_id="",  # Invalid: empty message_id
                 sender="test@example.com",
                 subject="Test",
-                received_at=datetime.utcnow()
+                received_at=datetime.now(UTC)
             )
             pytest.fail("Should have raised ValidationError")
         except ValidationError as e:
@@ -165,7 +165,7 @@ class TestValidationErrorHandling:
                 message_id="",  # Invalid: empty message_id
                 sender="invalid-email",  # Invalid: not an email
                 subject="Test",
-                received_at=datetime.utcnow()
+                received_at=datetime.now(UTC)
             )
             pytest.fail("Should have raised ValidationError")
         except ValidationError as e:

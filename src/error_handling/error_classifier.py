@@ -1,7 +1,7 @@
 """Error classification system for retry logic."""
 
 import socket
-from datetime import datetime
+from datetime import datetime, UTC
 from email.utils import parsedate_to_datetime
 from typing import Optional
 
@@ -138,12 +138,11 @@ class ErrorClassifier:
         # Try parsing as HTTP date
         try:
             retry_datetime = parsedate_to_datetime(retry_after)
-            now = datetime.utcnow()
-            # Make now offset-aware if retry_datetime is offset-aware
-            if retry_datetime.tzinfo:
-                from datetime import timezone
+            if retry_datetime and retry_datetime.tzinfo is None:
+                # Assume naive datetime is UTC if no timezone info
+                retry_datetime = retry_datetime.replace(tzinfo=UTC)
 
-                now = now.replace(tzinfo=timezone.utc)
+            now = datetime.now(UTC)
             delta = (retry_datetime - now).total_seconds()
             return max(0, delta)  # Don't return negative values
         except (ValueError, TypeError):

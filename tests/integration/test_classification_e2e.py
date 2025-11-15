@@ -25,7 +25,7 @@ class TestClassificationE2E:
     @pytest.mark.asyncio
     async def test_sample_001_poc_kickoff_classification(self, sample_email_dir):
         """Test: sample-001.txt (브레이크앤컴퍼니 × 신세계푸드 PoC) → type '[A]PortCoXSSG', intensity '협력'."""
-        from src.models.classification_service import ClassificationService
+        from models.classification_service import ClassificationService
         from unittest.mock import AsyncMock, Mock
 
         # Load sample email
@@ -56,7 +56,7 @@ class TestClassificationE2E:
         mock_notion.discover_database_schema.return_value = mock_schema
 
         # Mock Gemini adapter
-        from src.llm_provider.types import ExtractedEntities, ConfidenceScores
+        from llm_provider.types import ExtractedEntities, ConfidenceScores
         from datetime import datetime
 
         mock_gemini = Mock()
@@ -118,7 +118,7 @@ class TestClassificationE2E:
     @pytest.mark.asyncio
     async def test_sample_003_investment_classification(self, sample_email_dir):
         """Test: sample-003.txt (투자 유치) → intensity '투자'."""
-        from src.models.classification_service import ClassificationService
+        from models.classification_service import ClassificationService
         from unittest.mock import AsyncMock, Mock
         import json
 
@@ -144,7 +144,7 @@ class TestClassificationE2E:
         mock_notion.discover_database_schema.return_value = mock_schema
 
         # Mock Gemini adapter
-        from src.llm_provider.types import ExtractedEntities, ConfidenceScores
+        from llm_provider.types import ExtractedEntities, ConfidenceScores
         from datetime import datetime
 
         mock_gemini = Mock()
@@ -199,7 +199,7 @@ class TestClassificationE2E:
     @pytest.mark.asyncio
     async def test_sample_005_initial_meeting_classification(self, sample_email_dir):
         """Test: sample-005.txt (첫 미팅) → intensity '이해'."""
-        from src.models.classification_service import ClassificationService
+        from models.classification_service import ClassificationService
         from unittest.mock import AsyncMock, Mock
         import json
 
@@ -225,7 +225,7 @@ class TestClassificationE2E:
         mock_notion.discover_database_schema.return_value = mock_schema
 
         # Mock Gemini adapter
-        from src.llm_provider.types import ExtractedEntities, ConfidenceScores
+        from llm_provider.types import ExtractedEntities, ConfidenceScores
         from datetime import datetime
 
         mock_gemini = Mock()

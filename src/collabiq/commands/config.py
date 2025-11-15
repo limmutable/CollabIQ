@@ -16,13 +16,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import typer
+from rich.console import Console # Import Console directly
 from rich.panel import Panel
 from rich.table import Table
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from collabiq.formatters.colors import console
+from .common import console
 from collabiq.formatters.json_output import output_json, format_json_error
 from collabiq.formatters.tables import create_table, render_table
 from collabiq.utils.logging import log_cli_operation, log_cli_error
@@ -31,7 +32,7 @@ from collabiq.utils.logging import log_cli_operation, log_cli_error
 from config.settings import get_settings
 from config.infisical_client import InfisicalClient
 
-app = typer.Typer(
+config_app = typer.Typer(
     name="config",
     help="Configuration management (show, validate, test-secrets, get)",
 )
@@ -297,7 +298,7 @@ def validate_required_settings(settings: Any) -> Tuple[bool, List[Dict[str, str]
 # ==============================================================================
 
 
-@app.command(name="show")
+@config_app.command(name="show")
 def show_config(
     json: bool = typer.Option(False, "--json", help="Output in JSON format"),
     ctx: typer.Context = typer.Context,
@@ -312,6 +313,7 @@ def show_config(
         collabiq config show
         collabiq config show --json
     """
+    console = Console() # Initialize Console locally
     try:
         settings = get_settings()
         categories = categorize_config_keys()
@@ -385,7 +387,7 @@ def show_config(
         raise typer.Exit(1)
 
 
-@app.command(name="validate")
+@config_app.command(name="validate")
 def validate_config(
     json: bool = typer.Option(False, "--json", help="Output in JSON format"),
     ctx: typer.Context = typer.Context,
@@ -400,6 +402,7 @@ def validate_config(
         collabiq config validate
         collabiq config validate --json
     """
+    console = Console() # Initialize Console locally
     try:
         settings = get_settings()
         is_valid, errors = validate_required_settings(settings)
@@ -461,7 +464,7 @@ def validate_config(
         raise typer.Exit(1)
 
 
-@app.command(name="test-secrets")
+@config_app.command(name="test-secrets")
 def test_secrets(
     json: bool = typer.Option(False, "--json", help="Output in JSON format"),
     ctx: typer.Context = typer.Context,
@@ -476,6 +479,7 @@ def test_secrets(
         collabiq config test-secrets
         collabiq config test-secrets --json
     """
+    console = Console() # Initialize Console locally
     try:
         settings = get_settings()
 
@@ -605,7 +609,7 @@ def test_secrets(
         raise typer.Exit(1)
 
 
-@app.command(name="get")
+@config_app.command(name="get")
 def get_config_key(
     key: str = typer.Argument(..., help="Configuration key to retrieve"),
     json: bool = typer.Option(False, "--json", help="Output in JSON format"),
@@ -621,6 +625,7 @@ def get_config_key(
         collabiq config get GEMINI_API_KEY
         collabiq config get LOG_LEVEL --json
     """
+    console = Console() # Initialize Console locally
     try:
         settings = get_settings()
         value = get_config_value(key, settings)

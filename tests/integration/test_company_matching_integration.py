@@ -23,8 +23,8 @@ from typing import Dict, List
 
 import pytest
 
-from src.llm_adapters.gemini_adapter import GeminiAdapter
-from src.llm_provider.types import ExtractedEntities
+from llm_adapters.gemini_adapter import GeminiAdapter
+from llm_provider.types import ExtractedEntities
 
 
 # Fixture: Load mock Notion data

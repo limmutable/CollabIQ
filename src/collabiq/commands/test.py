@@ -16,37 +16,21 @@ from pathlib import Path
 from typing import Optional, List
 
 import typer
+from rich.console import Console
 from rich.table import Table
 
-from ..formatters.colors import get_console
-from ..formatters.progress import create_progress, create_spinner
-from ..formatters.json_output import output_json
-from ..formatters.tables import create_table
-from ..utils.logging import log_cli_operation, log_cli_error
+from collabiq.utils.logging import log_cli_error
+from collabiq.formatters.progress import create_spinner
 
-# Import E2E test infrastructure
-# Ensure src directory is in path for absolute imports
-_src_path = Path(__file__).parent.parent.parent
-if str(_src_path) not in sys.path:
-    sys.path.insert(0, str(_src_path))
-
+# Import E2E test infrastructure (conditional, as it's optional)
 try:
     from e2e_test.runner import E2ERunner
     from e2e_test.report_generator import ReportGenerator
-    from email_receiver.gmail_receiver import GmailReceiver
-    from llm_adapters.gemini_adapter import GeminiAdapter
-    from models.classification_service import ClassificationService
-    from notion_integrator.writer import NotionWriter
-except ImportError as e:
-    # Services may not be available in all environments - this is expected
+except ImportError:
     E2ERunner = None
     ReportGenerator = None
-    GmailReceiver = None
-    GeminiAdapter = None
-    ClassificationService = None
-    NotionWriter = None
 
-app = typer.Typer(
+test_app = typer.Typer(
     name="test",
     help="Testing and validation (e2e, select-emails, validate)",
 )
@@ -68,11 +52,11 @@ def _signal_handler(sig, frame):
     """Handle Ctrl+C gracefully during E2E tests"""
     global _interrupted
     _interrupted = True
-    console = get_console()
+    console = Console()
     console.print("\n[yellow]Interrupt received. Saving state...[/yellow]")
 
 
-@app.command()
+@test_app.command()
 def e2e(
     all_emails: bool = typer.Option(False, "--all", help="Run tests on all available test emails"),
     limit: Optional[int] = typer.Option(None, "--limit", help="Limit number of emails to test"),
@@ -102,7 +86,7 @@ def e2e(
     global _current_test_run, _interrupted
 
     start_time = time.time()
-    console = get_console()
+    console = Console()
 
     try:
         # Register interrupt handler (T080)
@@ -292,7 +276,7 @@ def e2e(
         raise typer.Exit(code=1)
 
 
-@app.command()
+@test_app.command()
 def select_emails(
     limit: int = typer.Option(50, help="Maximum number of emails to select"),
     from_date: Optional[str] = typer.Option(None, "--from-date", help="Select emails from this date onwards (YYYY-MM-DD)"),
@@ -311,7 +295,7 @@ def select_emails(
         collabiq test select-emails --from-date 2025-01-01
     """
     start_time = time.time()
-    console = get_console()
+    console = Console()
 
     try:
         # Validate service availability
@@ -407,7 +391,7 @@ def select_emails(
         raise typer.Exit(code=1)
 
 
-@app.command()
+@test_app.command()
 def validate(
     debug: bool = typer.Option(False, help="Enable debug logging"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
@@ -426,7 +410,7 @@ def validate(
         collabiq test validate --json
     """
     start_time = time.time()
-    console = get_console()
+    console = Console()
 
     try:
         checks = []

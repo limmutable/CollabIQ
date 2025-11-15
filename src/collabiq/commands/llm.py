@@ -21,21 +21,18 @@ from rich.table import Table
 from llm_orchestrator.orchestrator import LLMOrchestrator
 from llm_orchestrator.types import OrchestrationConfig, ProviderQualityComparison
 
-app = typer.Typer(
+# Create the llm subcommand app
+llm_app = typer.Typer(
     name="llm",
-    help="LLM provider management (status, test, set-strategy)",
+    help="LLM provider management (status, test, strategy, routing)",
 )
-
-console = Console()
-logger = logging.getLogger(__name__)
-
 
 # ==============================================================================
 # T083-T087: llm status - View provider health status
 # ==============================================================================
 
 
-@app.command()
+@llm_app.command()
 def status(
     detailed: bool = typer.Option(
         False,
@@ -57,6 +54,7 @@ def status(
         collabiq llm status
         collabiq llm status --detailed
     """
+    console = Console()
     try:
         # Create orchestrator with default config
         config = OrchestrationConfig(
@@ -94,6 +92,7 @@ def _display_basic_status(provider_status: dict):
     T086: Average response time
     T087: Last success/failure timestamps
     """
+    console = Console()
     console.print("\n[bold cyan]LLM Provider Health Status[/bold cyan]\n")
 
     table = Table(show_header=True, header_style="bold magenta")
@@ -171,6 +170,7 @@ def _display_detailed_status(orchestrator: LLMOrchestrator, provider_status: dic
     T091: Orchestration strategy display
     T094: Rich formatted tables
     """
+    console = Console()
     console.print("\n[bold cyan]LLM Provider Detailed Status[/bold cyan]\n")
 
     # Health Metrics Table
@@ -444,7 +444,7 @@ def _format_timestamp(dt: datetime) -> str:
 # ==============================================================================
 
 
-@app.command()
+@llm_app.command()
 def test(
     provider: str = typer.Argument(
         ..., help="Provider name (gemini, claude, openai)"
@@ -460,6 +460,7 @@ def test(
         collabiq llm test gemini
         collabiq llm test claude
     """
+    console = Console()
     try:
         # Validate provider name
         valid_providers = {"gemini", "claude", "openai"}
@@ -506,7 +507,7 @@ def test(
 # ==============================================================================
 
 
-@app.command()
+@llm_app.command()
 def set_strategy(
     strategy: str = typer.Argument(
         ..., help="Orchestration strategy (failover, consensus, best_match, all_providers)"
@@ -529,6 +530,7 @@ def set_strategy(
         collabiq llm set-strategy failover
         collabiq llm set-strategy consensus
     """
+    console = Console()
     try:
         # Validate strategy
         valid_strategies = {"failover", "consensus", "best_match", "all_providers"}
@@ -564,7 +566,7 @@ def set_strategy(
 # ==============================================================================
 
 
-@app.command()
+@llm_app.command()
 def set_quality_routing(
     enable: bool = typer.Option(
         None,
@@ -606,6 +608,7 @@ def set_quality_routing(
         collabiq llm set-quality-routing --enable --min-confidence 0.85
         collabiq llm set-quality-routing --enable --min-completeness 90.0
     """
+    console = Console()
     try:
         if enable is None:
             console.print(
@@ -673,7 +676,7 @@ def set_quality_routing(
 # ==============================================================================
 
 
-@app.command()
+@llm_app.command()
 def compare(
     detailed: bool = typer.Option(
         False,
@@ -696,6 +699,7 @@ def compare(
         collabiq llm compare
         collabiq llm compare --detailed
     """
+    console = Console()
     try:
         # Create orchestrator with quality_tracker and cost_tracker
         config = OrchestrationConfig(
@@ -741,6 +745,7 @@ def _display_basic_comparison(comparison: "ProviderQualityComparison"):
 
     T022: Display comparison table with rank, provider, quality score, value score
     """
+    console = Console()
     console.print("\n[bold cyan]LLM Provider Performance Comparison[/bold cyan]\n")
 
     # Quality Rankings Table
@@ -820,6 +825,7 @@ def _display_detailed_comparison(
 
     T022: Show per-metric breakdown (confidence, completeness, validation rate, cost)
     """
+    console = Console()
     console.print("\n[bold cyan]LLM Provider Detailed Comparison[/bold cyan]\n")
 
     # Per-Provider Metrics Table
@@ -958,7 +964,7 @@ def _display_detailed_comparison(
     console.print(f"\n[bold green]Recommendation[/bold green]\n")
     console.print(f"[cyan]{comparison.recommended_provider.title()}[/cyan]: {comparison.recommendation_reason}\n")
 
-@app.command()
+@llm_app.command()
 def export_metrics(
     output_path: str = typer.Option(
         "llm_metrics_export.json",

@@ -13,11 +13,11 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.llm_adapters.health_tracker import HealthTracker
-from src.llm_orchestrator.exceptions import AllProvidersFailedError
-from src.llm_orchestrator.strategies.best_match import BestMatchStrategy
-from src.llm_provider.exceptions import LLMAPIError, LLMTimeoutError
-from src.llm_provider.types import ConfidenceScores, ExtractedEntities
+from llm_adapters.health_tracker import HealthTracker
+from llm_orchestrator.exceptions import AllProvidersFailedError
+from llm_orchestrator.strategies.best_match import BestMatchStrategy
+from llm_provider.exceptions import LLMAPIError, LLMTimeoutError
+from llm_provider.types import ConfidenceScores, ExtractedEntities
 
 
 @pytest.fixture

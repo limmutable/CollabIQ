@@ -10,7 +10,7 @@ Tests cover:
 import pytest
 from datetime import datetime
 
-from src.llm_provider.date_utils import parse_date, _parse_korean_week
+from llm_provider.date_utils import parse_date, _parse_korean_week
 
 
 def test_parse_absolute_date_iso_format():

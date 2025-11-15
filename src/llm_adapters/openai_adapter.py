@@ -7,7 +7,7 @@ using OpenAI's GPT API for entity extraction from emails.
 import hashlib
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Optional
 
@@ -208,7 +208,7 @@ class OpenAIAdapter(LLMProvider):
                     date=get_confidence(date_field, 0.0),
                 ),
                 email_id=email_id,
-                extracted_at=datetime.utcnow(),
+                extracted_at=datetime.now(UTC),
                 # Phase 2: Company matching fields (if context provided)
                 matched_startup_id=data.get("matched_startup_id"),
                 matched_startup_name=data.get("matched_startup_name"),

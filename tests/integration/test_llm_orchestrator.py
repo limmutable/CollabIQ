@@ -12,16 +12,16 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.llm_adapters.health_tracker import HealthTracker
-from src.llm_orchestrator.exceptions import (
+from llm_adapters.health_tracker import HealthTracker
+from llm_orchestrator.exceptions import (
     AllProvidersFailedError,
     InvalidProviderError,
     InvalidStrategyError,
 )
-from src.llm_orchestrator.orchestrator import LLMOrchestrator
-from src.llm_orchestrator.types import OrchestrationConfig
-from src.llm_provider.exceptions import LLMAPIError
-from src.llm_provider.types import ConfidenceScores, ExtractedEntities
+from llm_orchestrator.orchestrator import LLMOrchestrator
+from llm_orchestrator.types import OrchestrationConfig
+from llm_provider.exceptions import LLMAPIError
+from llm_provider.types import ConfidenceScores, ExtractedEntities
 
 
 @pytest.fixture
@@ -218,8 +218,8 @@ class TestProviderTesting:
 class TestOrchestratorFromConfig:
     """Test orchestrator creation from configuration."""
 
-    @patch("src.llm_adapters.gemini_adapter.GeminiAdapter")
-    @patch("src.llm_adapters.claude_adapter.ClaudeAdapter")
+    @patch("llm_adapters.gemini_adapter.GeminiAdapter")
+    @patch("llm_adapters.claude_adapter.ClaudeAdapter")
     @patch.dict(
         "os.environ",
         {
@@ -254,12 +254,16 @@ class TestOrchestratorFromConfig:
         },
         clear=True,
     )
+    @patch("config.settings.Settings.get_secret_or_env")
     def test_from_config_skips_providers_without_api_keys(
-        self, orchestration_config, tmp_path
+        self, mock_get_secret_or_env, orchestration_config, tmp_path
     ):
         """Test that providers without API keys are skipped."""
+        # Configure mock_get_secret_or_env to return None for API keys
+        mock_get_secret_or_env.side_effect = lambda key, default=None: None if "API_KEY" in key else os.getenv(key, default)
+
         # Clear settings cache to ensure test isolation
-        from src.config.settings import get_settings
+        from config.settings import get_settings
         get_settings.cache_clear()
 
         orchestrator = LLMOrchestrator.from_config(

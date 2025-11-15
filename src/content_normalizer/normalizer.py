@@ -7,7 +7,7 @@ quoted threads, and disclaimers from email body text.
 
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Optional
 
@@ -352,7 +352,7 @@ class ContentNormalizer:
             original_message_id=raw_email.metadata.message_id,
             cleaned_body=cleaning_result.cleaned_body,
             removed_content=cleaning_result.removed_content,
-            processed_at=datetime.utcnow(),
+            processed_at=datetime.now(UTC),
             status=status,
             is_empty=is_empty,
         )

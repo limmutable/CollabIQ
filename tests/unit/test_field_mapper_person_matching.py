@@ -9,10 +9,10 @@ import pytest
 from unittest.mock import MagicMock
 from datetime import datetime
 
-from src.notion_integrator.field_mapper import FieldMapper
-from src.notion_integrator.person_matcher import NotionPersonMatcher
-from src.llm_provider.types import ExtractedEntitiesWithClassification, ConfidenceScores
-from src.models.matching import PersonMatch
+from notion_integrator.field_mapper import FieldMapper
+from notion_integrator.person_matcher import NotionPersonMatcher
+from llm_provider.types import ExtractedEntitiesWithClassification, ConfidenceScores
+from models.matching import PersonMatch
 
 
 class TestFieldMapperPersonMatching:

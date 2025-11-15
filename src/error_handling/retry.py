@@ -5,7 +5,7 @@ import functools
 import random
 import socket
 import time
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Callable, Optional, TypeVar
 
 from .circuit_breaker import (
@@ -242,7 +242,7 @@ def retry_with_backoff(
                         )
 
                         error_record = ErrorRecord(
-                            timestamp=datetime.utcnow(),
+                            timestamp=datetime.now(UTC),
                             severity=severity,
                             category=category,
                             message=f"Retry attempt {attempt}/{config.max_attempts} failed: {str(e)}",
@@ -329,7 +329,7 @@ def retry_with_backoff(
                         )
 
                         error_record = ErrorRecord(
-                            timestamp=datetime.utcnow(),
+                            timestamp=datetime.now(UTC),
                             severity=severity,
                             category=category,
                             message=f"Retry attempt {attempt}/{config.max_attempts} failed: {str(e)}",

@@ -64,4 +64,8 @@ def create_valid_extracted_data(**overrides) -> ExtractedEntitiesWithClassificat
     # Apply overrides
     default_data.update(overrides)
 
+    # If person_in_charge is explicitly set to None, matched_person_id should also be None
+    if "person_in_charge" in overrides and overrides["person_in_charge"] is None:
+        default_data["matched_person_id"] = None
+
     return ExtractedEntitiesWithClassification(**default_data)

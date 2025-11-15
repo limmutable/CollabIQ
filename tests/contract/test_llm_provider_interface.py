@@ -14,9 +14,9 @@ Contract Test Cases:
 import pytest
 from unittest.mock import Mock
 
-from src.llm_provider.base import LLMProvider
-from src.llm_provider.types import ExtractedEntities, ConfidenceScores
-from src.llm_provider.exceptions import LLMAPIError
+from llm_provider.base import LLMProvider
+from llm_provider.types import ExtractedEntities, ConfidenceScores
+from llm_provider.exceptions import LLMAPIError
 
 
 class MockLLMProvider(LLMProvider):

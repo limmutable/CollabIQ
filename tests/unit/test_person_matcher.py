@@ -10,8 +10,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from src.notion_integrator.person_matcher import NotionPersonMatcher, NotionUser
-from src.models.matching import PersonMatch
+from notion_integrator.person_matcher import NotionPersonMatcher, NotionUser
+from models.matching import PersonMatch
 
 
 class TestPersonMatcherExactMatch:

@@ -68,7 +68,7 @@ class SelectionReason(str, Enum):
 # ==================== Main Entities ====================
 
 
-class TestRun(BaseModel):
+class E2ETestRun(BaseModel):
     """
     Represents a single execution of the E2E test suite
 
@@ -158,7 +158,7 @@ class PerformanceMetric(BaseModel):
     model_config = ConfigDict(use_enum_values=True)
 
 
-class TestEmailMetadata(BaseModel):
+class E2ETestEmailMetadata(BaseModel):
     """
     Metadata about emails selected for testing
 

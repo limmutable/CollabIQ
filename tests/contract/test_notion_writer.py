@@ -23,12 +23,14 @@ class TestNotionWriterContract:
         """Create a mock NotionIntegrator instance."""
         mock = Mock()
         mock.notion_client = Mock()
+        mock.notion_client.client = Mock()
+        mock.notion_client.client.pages.create = AsyncMock()
 
         # Mock schema discovery (async)
-        mock_schema = Mock()
-        mock_schema.properties = {
+        # This needs to replicate the nested structure: schema -> database -> properties
+        mock_schema_properties = {
             "협력주체": {"type": "title"},
-            "담당자": {"type": "rich_text"},
+            "담당자": {"type": "people"},
             "스타트업명": {"type": "relation"},
             "협업기관": {"type": "relation"},
             "협업내용": {"type": "rich_text"},
@@ -38,10 +40,14 @@ class TestNotionWriterContract:
             "요약": {"type": "rich_text"},
             "type_confidence": {"type": "number"},
             "intensity_confidence": {"type": "number"},
-            "email_id": {"type": "rich_text"},
+            "Email ID": {"type": "rich_text"},
             "classification_timestamp": {"type": "date"},
         }
-        mock.discover_database_schema = AsyncMock(return_value=mock_schema)
+        mock.schema = Mock()
+        mock.schema.database = Mock()
+        mock.schema.database.properties = mock_schema_properties
+        
+        mock.discover_database_schema = AsyncMock(return_value=mock.schema)
 
         return mock
 

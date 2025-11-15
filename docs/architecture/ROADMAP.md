@@ -13,7 +13,7 @@ This roadmap breaks the CollabIQ system into **15 sequential phases** (branches 
 
 **Total Effort**: 38-53 days across 15 phases (including Gmail OAuth2 setup)
 **MVP Target**: Phases 1a+1b (6-9 days) deliver extraction → JSON output for manual review ✅ **COMPLETE**
-**Current Progress**: 13/15 phases complete (Phases 1a, 1b, 005, 2a, 2b, 2c, 2d, 2e, 3a, 3b, 3c, 013, 3d)
+**Current Progress**: 15/18 phases complete (Phases 1a, 1b, 005, 2a, 2b, 2c, 2d, 2e, 3a, 3b, 3c, 013, 3d, 3e)
 
 ---
 
@@ -498,9 +498,41 @@ Notion users: ["김철수", "이영희", "박지민"]
 
 ---
 
+**Phase 3e - Test Suites Improvements** (Branch: `015-test-suite-improvements`)
+**Timeline**: 5-7 days
+**Complexity**: High
+**Status**: Planned
+
+**Deliverables**:
+- **Integrate Real GmailReceiver into Automated E2E**: Develop a `pytest` fixture or a dedicated test suite that initializes `GmailReceiver` with test credentials (e.g., from a secure, ephemeral test account) and fetches real emails.
+- **Automate Notion Write Validation**: Extend the automated E2E tests to perform real Notion writes (to a dedicated test database) and then validate the created entries. This would require a robust cleanup mechanism (e.g., using the existing `cleanup_test_entries.py` script as a `pytest` finalizer or fixture).
+- **Dedicated Date Parsing Module**: Create a dedicated module for date parsing and normalization, potentially leveraging a specialized library. This module should have its own comprehensive unit and integration tests covering various date formats (especially Korean), edge cases, and ambiguity.
+- **Targeted Date Extraction Tests**: Implement specific unit and integration tests that focus solely on date extraction performance across different LLMs and prompt variations. These tests should use a diverse dataset of emails with various date formats.
+- **Benchmarking Suite for Language Performance**: Develop a dedicated benchmarking suite to systematically evaluate LLM performance on Korean (and English) text for entity extraction. This suite should track metrics like confidence, completeness, and accuracy for each field.
+- **Prompt Optimization Tests**: Implement tests to evaluate different prompt engineering strategies specifically for Korean text with OpenAI and other LLMs. This could involve A/B testing prompts and tracking their impact on quality metrics.
+- **Separate Coverage Reports**: Configure `pytest-cov` to generate separate coverage reports for `src/` modules based on which test suite is run (e.g., `pytest tests/unit/ --cov=src --cov-report=html:htmlcov/unit_coverage`).
+- **Performance Test Suite**: Introduce a dedicated performance test suite that measures key metrics (e.g., average processing time per email, LLM response times, Notion write latency) under various conditions.
+- **Performance Thresholds**: Define acceptable performance thresholds and integrate assertions into the performance tests to fail if these thresholds are exceeded. This can be part of CI/CD.
+- **Systematic Negative Test Cases**: Develop a comprehensive set of negative test cases for each module and the overall pipeline. This should include invalid input formats, external API errors, and missing/incomplete data.
+- **Fuzz Testing**: Incorporate fuzz testing for input parsing and data validation to uncover unexpected vulnerabilities or bugs.
+
+**Tests**: Unit, Integration, E2E, Performance, and Fuzz tests for all deliverables.
+
+**Success Criteria**:
+- **SC-001**: Automated E2E tests successfully fetch real emails and write to a test Notion database with cleanup.
+- **SC-002**: Date extraction robustness significantly improved, with dedicated tests covering various formats.
+- **SC-003**: LLM performance on Korean text systematically benchmarked and optimized through prompt engineering.
+- **SC-004**: Granular test coverage reports available for unit, integration, and E2E tests.
+- **SC-005**: Performance test suite with defined thresholds integrated into CI/CD.
+- **SC-006**: Comprehensive negative test cases and fuzz testing implemented to improve robustness.
+
+**Why Priority**: Elevates overall quality assurance, ensures greater robustness and reliability, and provides deeper insights into system performance and LLM behavior.
+
+---
+
 ### Analytics Track (Phases 4a-4c)
 
-**Phase 4a - Basic Reporting** (Branch: `015-basic-reporting`)
+**Phase 4a - Basic Reporting** (Branch: `016-basic-reporting`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -518,7 +550,7 @@ Notion users: ["김철수", "이영희", "박지민"]
 
 ---
 
-**Phase 4b - Advanced Analytics** (Branch: `016-advanced-analytics`)
+**Phase 4b - Advanced Analytics** (Branch: `017-advanced-analytics`)
 **Timeline**: 3-4 days
 **Complexity**: Medium
 
@@ -536,7 +568,7 @@ Notion users: ["김철수", "이영희", "박지민"]
 
 ---
 
-**Phase 4c - Automated Admin Reporting** (Branch: `017-admin-reporting`)
+**Phase 4c - Automated Admin Reporting** (Branch: `018-admin-reporting`)
 **Timeline**: 3-4 days
 **Complexity**: Low-Medium
 
@@ -597,11 +629,13 @@ Notion users: ["김철수", "이영희", "박지민"]
             ↓
         → 🎯 Production-Ready with Full Field Mapping (Phases 3a+3b+3c+3d)
             ↓
-Phase 4a (015-basic-reporting) ← depends on 3d (needs complete field population), 2d (Notion data)
+        → Phase 3e (015-test-suite-improvements) ← depends on 3d (needs full system for E2E testing)
+            ↓
+Phase 4a (016-basic-reporting) ← depends on 3e (needs robust testing for reporting), 3d (needs complete field population), 2d (Notion data)
     ↓
-Phase 4b (016-advanced-analytics) ← depends on 4a, 3b (multi-LLM for insights)
+Phase 4b (017-advanced-analytics) ← depends on 4a, 3b (multi-LLM for insights)
     ↓
-Phase 4c (017-admin-reporting) ← depends on 3a (uses CLI for metrics), 3b (LLM provider usage)
+Phase 4c (018-admin-reporting) ← depends on 3a (uses CLI for metrics), 3b (LLM provider usage)
     ↓
 → 🎯 Complete System ✅
 ```
@@ -623,6 +657,7 @@ Phase 4c (017-admin-reporting) ← depends on 3a (uses CLI for metrics), 3b (LLM
 | **3b** | Contract + Integration + Failure | Provider interface, orchestrator strategies, failover | pytest, pytest-mock |
 | **3c** | Unit + Integration | Metrics calculation, Notion field population, quality reports | pytest, notion-client |
 | **3d** | Unit + Integration + E2E | Fuzzy matching, Notion API, field population | pytest, notion-client, jellyfish |
+| **3e** | Unit + Integration + E2E + Performance + Fuzz | End-to-end automation, date extraction, LLM performance, coverage, negative testing | pytest, pytest-cov, tenacity, rapidfuzz |
 | **4a** | Data accuracy | Stats vs manual calculation | pytest |
 | **4b** | Data quality + Integration | Insights quality, Notion page formatting | pytest, notion-client |
 | **4c** | Unit + Integration | Report generation, email delivery, template rendering | pytest, email testing |
@@ -717,27 +752,12 @@ After each milestone, **STOP and VALIDATE**:
 11. ✅ **Phase 3a Complete** (branch 011-admin-cli ready for merge) → **🎯 PRODUCTION CLI READY**
 12. ✅ **Phase 3b Complete** (012-multi-llm)
 13. ✅ **Phase 3c Complete** (013-llm-quality-metrics)
-14. → **Ready for Phase 3d** (014-enhanced-field-mapping) - **NEXT**
+14. ✅ **Phase 3d Complete** (014-enhanced-field-mapping)
 
-**Current Status**: Full automation complete (Email → Notion without manual intervention). Admin CLI complete with 30+ commands. Multi-LLM Provider Support complete with failover, consensus, and best-match strategies. Quality Metrics & Intelligent Routing complete with provider comparison and automatic quality-based routing. **However, three critical fields (담당자, 스타트업명, 협력기관) are not being populated due to missing fuzzy matching and relation field handling.** Ready for Phase 3d (Enhanced Notion Field Mapping).
-
-**Phase 3d (014-enhanced-field-mapping) Next Actions**:
-1. → Create branch `014-enhanced-field-mapping`
-2. → Run `/speckit.specify` to create feature specification
-3. → Run `/speckit.plan` to create implementation plan
-4. → Implement FuzzyCompanyMatcher service (Jaro-Winkler similarity)
-5. → Implement PersonMatcher service (Notion user UUID lookup)
-6. → Enhance FieldMapper to use fuzzy matching for relation fields
-7. → Add auto-create logic for missing companies in Companies database
-8. → Add CLI commands: `match-company`, `match-person`, `list-users`
-9. → Write unit tests for fuzzy matching algorithms
-10. → Write integration tests for Notion API interactions
-11. → Run E2E tests with real emails to verify field population
-12. → Validate ≥90% success rate for company matching (SC-001)
-13. → Validate ≥85% success rate for person matching (SC-002)
+**Current Status**: Full automation complete (Email → Notion without manual intervention). Admin CLI complete with 30+ commands. Multi-LLM Provider Support complete with failover, consensus, and best-match strategies. Quality Metrics & Intelligent Routing complete with provider comparison and automatic quality-based routing. Enhanced Notion Field Mapping complete with fuzzy matching for companies and people.
 
 ---
 
-**Document Version**: 2.3.0
-**Last Updated**: 2025-11-10 (Added Phase 3d - Enhanced Notion Field Mapping)
-**Next Review**: After Phase 3d (Enhanced Field Mapping) completion
+**Document Version**: 2.5.0
+**Last Updated**: 2025-11-11 (Renumbered Phases)
+**Next Review**: After Phase 3e (Test Suites Improvements) completion

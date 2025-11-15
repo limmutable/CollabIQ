@@ -12,17 +12,25 @@ from pathlib import Path
 
 import pytest
 
-from src.llm_adapters.gemini_adapter import GeminiAdapter
-from src.error_handling import gemini_circuit_breaker, CircuitState
+from llm_adapters.gemini_adapter import GeminiAdapter
+from error_handling import gemini_circuit_breaker, CircuitState
+
+
+@pytest.fixture(autouse=True)
+def reset_circuit_breaker():
+    """Reset circuit breaker state before each test."""
+    # Re-import to ensure we are always resetting the current module-level instance
+    from error_handling import gemini_circuit_breaker, CircuitState
+
+    gemini_circuit_breaker.state_obj.state = CircuitState.CLOSED
+    gemini_circuit_breaker.state_obj.failure_count = 0
+    gemini_circuit_breaker.state_obj.success_count = 0
+    gemini_circuit_breaker.state_obj.last_failure_time = None
+    yield
 
 
 class TestGeminiRetryFlow:
     """Test Gemini extract_entities with retry on rate limits and transient failures."""
-
-    def setup_method(self):
-        """Reset circuit breaker before each test."""
-        gemini_circuit_breaker.state_obj.state = CircuitState.CLOSED
-        gemini_circuit_breaker.state_obj.failure_count = 0
 
     @patch('builtins.open', new_callable=mock_open, read_data="Mock prompt template")
     @patch('src.llm_adapters.gemini_adapter.genai')

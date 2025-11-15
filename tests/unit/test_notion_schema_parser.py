@@ -14,7 +14,7 @@ These tests use minimal fixtures and don't require API calls.
 import pytest
 from datetime import datetime
 
-from src.notion_integrator.models import (
+from notion_integrator.models import (
     DatabaseSchema,
     NotionDatabase,
     NotionProperty,
@@ -133,7 +133,7 @@ def sample_database(sample_properties):
 
 def test_group_properties_by_type(sample_properties):
     """Test grouping properties by type."""
-    from src.notion_integrator.schema import group_properties_by_type
+    from notion_integrator.schema import group_properties_by_type
 
     grouped = group_properties_by_type(sample_properties)
 
@@ -165,7 +165,7 @@ def test_group_properties_by_type(sample_properties):
 
 def test_identify_relation_properties(sample_properties):
     """Test identifying relation properties."""
-    from src.notion_integrator.schema import identify_relation_properties
+    from notion_integrator.schema import identify_relation_properties
 
     relations = identify_relation_properties(sample_properties)
 
@@ -182,7 +182,7 @@ def test_identify_relation_properties(sample_properties):
 
 def test_identify_relation_properties_none():
     """Test identifying relation properties when none exist."""
-    from src.notion_integrator.schema import identify_relation_properties
+    from notion_integrator.schema import identify_relation_properties
 
     properties = {
         "Name": NotionProperty(id="title", name="Name", type="title", config={}),
@@ -203,7 +203,7 @@ def test_identify_relation_properties_none():
 
 def test_identify_classification_fields_both_present(sample_properties):
     """Test identifying both classification fields."""
-    from src.notion_integrator.schema import identify_classification_fields
+    from notion_integrator.schema import identify_classification_fields
 
     classification = identify_classification_fields(sample_properties)
 
@@ -215,7 +215,7 @@ def test_identify_classification_fields_both_present(sample_properties):
 
 def test_identify_classification_fields_only_ssg():
     """Test identifying only Shinsegae affiliate field."""
-    from src.notion_integrator.schema import identify_classification_fields
+    from notion_integrator.schema import identify_classification_fields
 
     properties = {
         "Name": NotionProperty(id="title", name="Name", type="title", config={}),
@@ -236,7 +236,7 @@ def test_identify_classification_fields_only_ssg():
 
 def test_identify_classification_fields_only_portfolio():
     """Test identifying only portfolio field."""
-    from src.notion_integrator.schema import identify_classification_fields
+    from notion_integrator.schema import identify_classification_fields
 
     properties = {
         "Name": NotionProperty(id="title", name="Name", type="title", config={}),
@@ -257,7 +257,7 @@ def test_identify_classification_fields_only_portfolio():
 
 def test_identify_classification_fields_none():
     """Test when no classification fields present."""
-    from src.notion_integrator.schema import identify_classification_fields
+    from notion_integrator.schema import identify_classification_fields
 
     properties = {
         "Name": NotionProperty(id="title", name="Name", type="title", config={}),
@@ -273,7 +273,7 @@ def test_identify_classification_fields_none():
 
 def test_identify_classification_fields_case_insensitive():
     """Test classification field detection is case-insensitive."""
-    from src.notion_integrator.schema import identify_classification_fields
+    from notion_integrator.schema import identify_classification_fields
 
     properties = {
         "shinsegae affiliates?": NotionProperty(
@@ -303,7 +303,7 @@ def test_identify_classification_fields_case_insensitive():
 
 def test_create_database_schema(sample_database):
     """Test creating DatabaseSchema from NotionDatabase."""
-    from src.notion_integrator.schema import create_database_schema
+    from notion_integrator.schema import create_database_schema
 
     schema = create_database_schema(sample_database)
 
@@ -321,7 +321,7 @@ def test_create_database_schema(sample_database):
 
 def test_create_database_schema_no_relations():
     """Test creating schema for database without relations."""
-    from src.notion_integrator.schema import create_database_schema
+    from notion_integrator.schema import create_database_schema
 
     db = NotionDatabase(
         id="abc123",
@@ -347,7 +347,7 @@ def test_create_database_schema_no_relations():
 
 def test_build_relationship_graph_single_relation():
     """Test building relationship graph with one relation."""
-    from src.notion_integrator.schema import (
+    from notion_integrator.schema import (
         build_relationship_graph,
         create_database_schema,
     )
@@ -513,7 +513,7 @@ def test_relationship_graph_no_circular():
 
 def test_validate_schema_success(sample_database):
     """Test successful schema validation."""
-    from src.notion_integrator.schema import validate_schema, create_database_schema
+    from notion_integrator.schema import validate_schema, create_database_schema
 
     schema = create_database_schema(sample_database)
 

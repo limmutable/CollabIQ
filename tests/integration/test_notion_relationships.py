@@ -17,11 +17,11 @@ import pytest
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
 
-from src.notion_integrator.models import (
+from notion_integrator.models import (
     NotionDatabase,
     NotionProperty,
 )
-from src.notion_integrator.exceptions import NotionObjectNotFoundError
+from notion_integrator.exceptions import NotionObjectNotFoundError
 
 
 # ==============================================================================
@@ -138,7 +138,7 @@ def collabiq_database():
 @pytest.fixture
 def companies_schema(companies_database):
     """DatabaseSchema for Companies database."""
-    from src.notion_integrator.schema import create_database_schema
+    from notion_integrator.schema import create_database_schema
 
     return create_database_schema(companies_database)
 
@@ -146,7 +146,7 @@ def companies_schema(companies_database):
 @pytest.fixture
 def collabiq_schema(collabiq_database):
     """DatabaseSchema for CollabIQ database."""
-    from src.notion_integrator.schema import create_database_schema
+    from notion_integrator.schema import create_database_schema
 
     return create_database_schema(collabiq_database)
 
@@ -154,7 +154,7 @@ def collabiq_schema(collabiq_database):
 @pytest.fixture
 def relationship_graph(companies_schema, collabiq_schema):
     """RelationshipGraph for both databases."""
-    from src.notion_integrator.schema import build_relationship_graph
+    from notion_integrator.schema import build_relationship_graph
 
     schemas = {
         "companies-db-id": companies_schema,
@@ -334,7 +334,7 @@ async def test_resolve_bidirectional_relationships(
     collabiq_record_2,
 ):
     """Test resolving bidirectional relationships between Companies and CollabIQ."""
-    from src.notion_integrator.fetcher import resolve_relationships
+    from notion_integrator.fetcher import resolve_relationships
 
     # Setup mock to return related CollabIQ records and partner company
     def mock_retrieve_page(page_id):
@@ -405,7 +405,7 @@ async def test_resolve_circular_relationships_with_depth_limit(
     collabiq_record_1,
 ):
     """Test circular relationships stop at depth limit."""
-    from src.notion_integrator.fetcher import resolve_relationships
+    from notion_integrator.fetcher import resolve_relationships
 
     # Setup mock to return records with circular references
     def mock_retrieve_page(page_id):
@@ -446,7 +446,7 @@ async def test_resolve_self_referencing_relationships(
     partner_company_record,
 ):
     """Test self-referencing relationships (Partners) within same database."""
-    from src.notion_integrator.fetcher import resolve_relationships
+    from notion_integrator.fetcher import resolve_relationships
 
     # Setup mock to return partner company
     def mock_retrieve_page(page_id):
@@ -496,7 +496,7 @@ async def test_visited_pages_prevents_infinite_loops(
     collabiq_record_1,
 ):
     """Test visited_pages set prevents infinite loops in circular references."""
-    from src.notion_integrator.fetcher import resolve_relationships
+    from notion_integrator.fetcher import resolve_relationships
 
     # Create circular reference: company-1 -> collabiq-1 -> company-1
     # Modify collabiq_record_1 to reference back to company-1
@@ -563,7 +563,7 @@ async def test_resolve_multi_level_relationships(
     partner_company_record,
 ):
     """Test resolving relationships at multiple depth levels."""
-    from src.notion_integrator.fetcher import resolve_relationships
+    from notion_integrator.fetcher import resolve_relationships
 
     # Setup mock to return all related records
     def mock_retrieve_page(page_id):
@@ -609,7 +609,7 @@ async def test_resolve_relationships_handles_missing_pages_gracefully(
     company_record,
 ):
     """Test graceful handling of missing related pages."""
-    from src.notion_integrator.fetcher import resolve_relationships
+    from notion_integrator.fetcher import resolve_relationships
 
     # Setup mock to raise not found for all related pages
     mock_notion_client.retrieve_page.side_effect = NotionObjectNotFoundError(
@@ -648,7 +648,7 @@ async def test_resolve_relationships_partial_success(
     collabiq_record_1,
 ):
     """Test partial success when some related pages found, others not."""
-    from src.notion_integrator.fetcher import resolve_relationships
+    from notion_integrator.fetcher import resolve_relationships
 
     # Setup mock to return one record, fail on another
     def mock_retrieve_page(page_id):
@@ -699,7 +699,7 @@ async def test_fetch_with_relationship_graph(
     collabiq_record_1,
 ):
     """Test using RelationshipGraph to guide relationship resolution."""
-    from src.notion_integrator.fetcher import resolve_relationships
+    from notion_integrator.fetcher import resolve_relationships
 
     # Setup mock
     mock_notion_client.retrieve_page.return_value = collabiq_record_1

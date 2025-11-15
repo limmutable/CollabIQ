@@ -8,11 +8,11 @@ This module defines the data models used for entity extraction:
 """
 
 import re
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class ConfidenceScores(BaseModel):
@@ -66,9 +66,7 @@ class ConfidenceScores(BaseModel):
             ]
         )
 
-    class Config:
-        """Pydantic configuration."""
-
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "person": 0.95,
@@ -78,7 +76,7 @@ class ConfidenceScores(BaseModel):
                 "date": 0.85,
             }
         }
-
+    )
 
 class ExtractedEntities(BaseModel):
     """Entity extraction results from a single email.
@@ -133,7 +131,7 @@ class ExtractedEntities(BaseModel):
         description="Unique email identifier (from Phase 1a duplicate tracker)",
     )
     extracted_at: datetime = Field(
-        default_factory=lambda: datetime.utcnow(),
+        default_factory=lambda: datetime.now(UTC),
         description="UTC timestamp when extraction occurred",
     )
 
@@ -189,9 +187,7 @@ class ExtractedEntities(BaseModel):
                 )
         return v
 
-    class Config:
-        """Pydantic configuration."""
-
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "person_in_charge": "김철수",
@@ -214,6 +210,7 @@ class ExtractedEntities(BaseModel):
                 "partner_match_confidence": 0.92,
             }
         }
+    )
 
 
 class ExtractedEntitiesWithClassification(ExtractedEntities):
@@ -342,9 +339,7 @@ class ExtractedEntitiesWithClassification(ExtractedEntities):
             return True
         return False
 
-    class Config:
-        """Pydantic configuration."""
-
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 # Phase 1b fields
@@ -384,6 +379,7 @@ class ExtractedEntitiesWithClassification(ExtractedEntities):
                 "classification_timestamp": "2025-11-03T10:30:00Z",
             }
         }
+    )
 
 
 class BatchSummary(BaseModel):
@@ -413,9 +409,7 @@ class BatchSummary(BaseModel):
             )
         return v
 
-    class Config:
-        """Pydantic configuration."""
-
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "total_count": 20,
@@ -424,6 +418,7 @@ class BatchSummary(BaseModel):
                 "processing_time_seconds": 45.3,
             }
         }
+    )
 
 
 class ExtractionBatch(BaseModel):
@@ -467,9 +462,7 @@ class ExtractionBatch(BaseModel):
                 )
         return v
 
-    class Config:
-        """Pydantic configuration."""
-
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "batch_id": "550e8400-e29b-41d4-a716-446655440000",
@@ -486,6 +479,7 @@ class ExtractionBatch(BaseModel):
                 },
             }
         }
+    )
 
 
 class WriteResult(BaseModel):
@@ -533,7 +527,7 @@ class DLQEntry(BaseModel):
 
     email_id: str = Field(..., description="Email identifier")
     failed_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Failure timestamp"
+        default_factory=lambda: datetime.now(UTC), description="Failure timestamp"
     )
     retry_count: int = Field(0, ge=0, description="Number of retries attempted")
     error: Dict[str, Any] = Field(..., description="Error details")
@@ -545,7 +539,16 @@ class DLQEntry(BaseModel):
     )
     dlq_file_path: Optional[str] = Field(None, description="DLQ file path")
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_encoders = {datetime: lambda v: v.isoformat()}
+    model_config = ConfigDict(
+        json_schema_extra = {
+            "example": {
+                "email_id": "msg_abc123",
+                "failed_at": "2025-11-01T10:30:00Z",
+                "retry_count": 3,
+                "error": {"type": "LLMAPIError", "message": "API call failed"},
+                "extracted_data": {"email_id": "msg_abc123", "person_in_charge": "김철수"},
+                "original_email_content": "Original email content...",
+                "dlq_file_path": "/path/to/dlq/file.json",
+            }
+        }
+    )

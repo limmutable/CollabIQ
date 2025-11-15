@@ -19,29 +19,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import typer
+from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from collabiq.formatters.colors import console
-from collabiq.formatters.json_output import output_json, format_json_error
-from collabiq.formatters.tables import create_table, render_table
-from collabiq.utils.logging import log_cli_operation, log_cli_error
-from collabiq.utils.validation import validate_email_id
-
-# Import Notion integrator
-from notion_integrator.integrator import NotionIntegrator
-from notion_integrator.exceptions import (
-    NotionAuthenticationError,
-    NotionObjectNotFoundError,
-    NotionPermissionError,
-    NotionAPIError,
-)
-from llm_provider.types import ExtractedEntitiesWithClassification
-
-app = typer.Typer(
+notion_app = typer.Typer(
     name="notion",
     help="Notion integration management (verify, schema, test-write, cleanup-tests, match-company, match-person, list-users)",
 )
@@ -65,6 +50,7 @@ def get_notion_config(json_mode: bool = False) -> Dict[str, str]:
     Raises:
         typer.Exit: If required configuration is missing
     """
+    console = Console() # Initialize Console locally
     api_key = os.getenv("NOTION_API_KEY")
     collabiq_db_id = os.getenv("NOTION_DATABASE_ID_COLLABIQ")
 
@@ -108,6 +94,7 @@ def handle_notion_error(error: Exception, context: str, json_mode: bool = False)
         context: Context string (e.g., "notion_verify")
         json_mode: Whether to output JSON format
     """
+    console = Console() # Initialize Console locally
     error_type = type(error).__name__
     error_message = str(error)
 
@@ -155,7 +142,7 @@ def handle_notion_error(error: Exception, context: str, json_mode: bool = False)
 # ==============================================================================
 
 
-@app.command()
+@notion_app.command()
 def verify(
     ctx: typer.Context,
     json: bool = typer.Option(False, "--json", help="Output in JSON format"),
@@ -175,6 +162,7 @@ def verify(
         $ collabiq notion verify --json
         $ collabiq notion verify --debug
     """
+    console = Console() # Initialize Console locally
     start_time = datetime.now()
 
     try:
@@ -233,7 +221,7 @@ def verify(
         handle_notion_error(e, "notion_verify", json_mode=json)
 
 
-@app.command()
+@notion_app.command()
 def schema(
     ctx: typer.Context,
     json: bool = typer.Option(False, "--json", help="Output in JSON format"),
@@ -248,6 +236,7 @@ def schema(
         $ collabiq notion schema
         $ collabiq notion schema --json
     """
+    console = Console() # Initialize Console locally
     start_time = datetime.now()
 
     try:
@@ -330,7 +319,7 @@ def schema(
         handle_notion_error(e, "notion_schema", json_mode=json)
 
 
-@app.command(name="test-write")
+@notion_app.command(name="test-write")
 def test_write(
     ctx: typer.Context,
     json: bool = typer.Option(False, "--json", help="Output in JSON format"),
@@ -346,6 +335,7 @@ def test_write(
         $ collabiq notion test-write
         $ collabiq notion test-write --json
     """
+    console = Console() # Initialize Console locally
     start_time = datetime.now()
 
     try:
@@ -427,7 +417,7 @@ def test_write(
         handle_notion_error(e, "notion_test_write", json_mode=json)
 
 
-@app.command(name="cleanup-tests")
+@notion_app.command(name="cleanup-tests")
 def cleanup_tests(
     ctx: typer.Context,
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
@@ -445,6 +435,7 @@ def cleanup_tests(
         $ collabiq notion cleanup-tests --yes
         $ collabiq notion cleanup-tests --json
     """
+    console = Console() # Initialize Console locally
     start_time = datetime.now()
 
     try:
@@ -560,7 +551,7 @@ def cleanup_tests(
         handle_notion_error(e, "notion_cleanup_tests", json_mode=json)
 
 
-@app.command(name="match-company")
+@notion_app.command(name="match-company")
 def match_company(
     ctx: typer.Context,
     company_name: str = typer.Argument(..., help="Company name to match"),
@@ -579,6 +570,7 @@ def match_company(
         $ collabiq notion match-company "네트워크" --threshold 0.90
         $ collabiq notion match-company "스타트업" --json
     """
+    console = Console() # Initialize Console locally
     start_time = datetime.now()
 
     try:
@@ -669,7 +661,7 @@ def match_company(
         handle_notion_error(e, "notion_match_company", json_mode=json)
 
 
-@app.command(name="match-person")
+@notion_app.command(name="match-person")
 def match_person(
     ctx: typer.Context,
     person_name: str = typer.Argument(..., help="Person name to match"),
@@ -688,6 +680,7 @@ def match_person(
         $ collabiq notion match-person "John Smith" --threshold 0.80
         $ collabiq notion match-person "이영희" --json
     """
+    console = Console() # Initialize Console locally
     start_time = datetime.now()
 
     try:
@@ -769,7 +762,7 @@ def match_person(
         handle_notion_error(e, "notion_match_person", json_mode=json)
 
 
-@app.command(name="list-users")
+@notion_app.command(name="list-users")
 def list_users(
     ctx: typer.Context,
     json: bool = typer.Option(False, "--json", help="Output in JSON format"),
@@ -787,6 +780,7 @@ def list_users(
         $ collabiq notion list-users --refresh
         $ collabiq notion list-users --json
     """
+    console = Console() # Initialize Console locally
     start_time = datetime.now()
 
     try:

@@ -10,9 +10,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.llm_provider.base import LLMProvider
-from src.llm_provider.exceptions import LLMAPIError
-from src.llm_provider.types import ExtractedEntities
+from llm_provider.base import LLMProvider
+from llm_provider.exceptions import LLMAPIError
+from llm_provider.types import ExtractedEntities
 
 
 @pytest.fixture
@@ -22,11 +22,11 @@ def mock_api_key():
 
 
 @pytest.fixture
-@patch("src.llm_adapters.openai_adapter.openai.OpenAI")
+@patch("llm_adapters.openai_adapter.openai.OpenAI")
 def openai_adapter(mock_openai_class, mock_api_key):
     """Create OpenAIAdapter instance for testing."""
     # Import here to avoid issues if module doesn't exist yet
-    from src.llm_adapters.openai_adapter import OpenAIAdapter
+    from llm_adapters.openai_adapter import OpenAIAdapter
 
     # Mock the OpenAI client
     mock_openai_class.return_value = MagicMock()

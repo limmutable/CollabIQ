@@ -3,7 +3,7 @@
 import json
 import logging
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -96,17 +96,17 @@ class StructuredLogger:
 
         for key, value in context.items():
             if isinstance(value, str):
-                # Redact API keys
-                if self.API_KEY_PATTERN.fullmatch(value):
-                    sanitized[key] = "[REDACTED]"
-                # Truncate email content
-                elif (
+                # Truncate email content (check BEFORE API key redaction)
+                if (
                     key == "email_content"
                     and len(value) > self.EMAIL_CONTENT_MAX_LENGTH
                 ):
                     sanitized[key] = (
                         value[: self.EMAIL_CONTENT_MAX_LENGTH] + "... [truncated]"
                     )
+                # Redact API keys
+                elif self.API_KEY_PATTERN.fullmatch(value):
+                    sanitized[key] = "[REDACTED]"
                 else:
                     sanitized[key] = value
             else:
@@ -202,7 +202,7 @@ class StructuredLogger:
 
         # Create and log error record
         error_record = ErrorRecord(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             severity=ErrorSeverity.WARNING,
             category=ErrorCategory.PERMANENT,
             message=message,

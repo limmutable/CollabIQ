@@ -7,8 +7,8 @@ Tests caching logic, API fetching, and cache invalidation.
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.notion_integrator.companies_cache import CompaniesCache
-from src.notion_integrator.exceptions import NotionAPIError
+from notion_integrator.companies_cache import CompaniesCache
+from notion_integrator.exceptions import NotionAPIError
 
 
 class TestCompaniesCacheFetch:
@@ -60,7 +60,7 @@ class TestCompaniesCacheFetch:
         ]
 
         with patch(
-            "src.notion_integrator.companies_cache.fetch_all_records",
+            "notion_integrator.companies_cache.fetch_all_records",
             new_callable=AsyncMock,
             return_value=mock_records,
         ):
@@ -112,7 +112,7 @@ class TestCompaniesCacheFetch:
         ]
 
         with patch(
-            "src.notion_integrator.companies_cache.fetch_all_records",
+            "notion_integrator.companies_cache.fetch_all_records",
             new_callable=AsyncMock,
             return_value=mock_records,
         ):
@@ -136,7 +136,7 @@ class TestCompaniesCacheFetch:
         cache = CompaniesCache(mock_client, companies_db_id)
 
         with patch(
-            "src.notion_integrator.companies_cache.fetch_all_records",
+            "notion_integrator.companies_cache.fetch_all_records",
             new_callable=AsyncMock,
             side_effect=Exception("API error"),
         ):
@@ -169,7 +169,7 @@ class TestCompaniesCacheCaching:
         cache = CompaniesCache(mock_client, companies_db_id, mock_cache_manager)
 
         with patch(
-            "src.notion_integrator.companies_cache.fetch_all_records",
+            "notion_integrator.companies_cache.fetch_all_records",
             new_callable=AsyncMock,
         ) as mock_fetch:
             companies = await cache.get_companies(use_cache=True)
@@ -213,7 +213,7 @@ class TestCompaniesCacheCaching:
         ]
 
         with patch(
-            "src.notion_integrator.companies_cache.fetch_all_records",
+            "notion_integrator.companies_cache.fetch_all_records",
             new_callable=AsyncMock,
             return_value=mock_records,
         ):
@@ -255,7 +255,7 @@ class TestCompaniesCacheCaching:
         ]
 
         with patch(
-            "src.notion_integrator.companies_cache.fetch_all_records",
+            "notion_integrator.companies_cache.fetch_all_records",
             new_callable=AsyncMock,
             return_value=mock_records,
         ):
@@ -300,7 +300,7 @@ class TestCompaniesCacheRefresh:
         ]
 
         with patch(
-            "src.notion_integrator.companies_cache.fetch_all_records",
+            "notion_integrator.companies_cache.fetch_all_records",
             new_callable=AsyncMock,
             return_value=mock_records,
         ):
@@ -352,7 +352,7 @@ class TestCompaniesCacheEdgeCases:
         cache = CompaniesCache(mock_client, companies_db_id)
 
         with patch(
-            "src.notion_integrator.companies_cache.fetch_all_records",
+            "notion_integrator.companies_cache.fetch_all_records",
             new_callable=AsyncMock,
             return_value=[],
         ):
@@ -391,7 +391,7 @@ class TestCompaniesCacheEdgeCases:
         ]
 
         with patch(
-            "src.notion_integrator.companies_cache.fetch_all_records",
+            "notion_integrator.companies_cache.fetch_all_records",
             new_callable=AsyncMock,
             return_value=mock_records,
         ):
@@ -433,7 +433,7 @@ class TestCompaniesCacheEdgeCases:
         ]
 
         with patch(
-            "src.notion_integrator.companies_cache.fetch_all_records",
+            "notion_integrator.companies_cache.fetch_all_records",
             new_callable=AsyncMock,
             return_value=mock_records,
         ):

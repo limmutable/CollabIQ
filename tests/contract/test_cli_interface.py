@@ -8,8 +8,29 @@ help text, and exit codes remain stable across changes.
 import pytest
 from typer.testing import CliRunner
 from collabiq import app
+from unittest.mock import patch
 
 runner = CliRunner()
+
+
+@pytest.fixture(autouse=True)
+def mock_setup_logging(monkeypatch):
+    """Prevent setup_logging from running and interfering with CliRunner's I/O capture, and redirect stdout/stderr."""
+    import sys
+    import io
+
+    with patch("config.logging_config.setup_logging") as mock_log_setup:
+        # Redirect stdout and stderr to StringIO objects
+        original_stdout = sys.stdout
+        original_stderr = sys.stderr
+        monkeypatch.setattr(sys, "stdout", io.StringIO())
+        monkeypatch.setattr(sys, "stderr", io.StringIO())
+        try:
+            yield mock_log_setup
+        finally:
+            # Restore original stdout and stderr
+            sys.stderr = original_stderr
+            sys.stdout = original_stdout
 
 
 # ==============================================================================

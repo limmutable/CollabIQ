@@ -8,7 +8,7 @@ This module validates the summary generation contracts:
 
 import pytest
 from pydantic import ValidationError
-from src.llm_provider.types import ExtractedEntitiesWithClassification, ConfidenceScores
+from llm_provider.types import ExtractedEntitiesWithClassification, ConfidenceScores
 from datetime import datetime
 
 

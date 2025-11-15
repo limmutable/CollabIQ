@@ -35,9 +35,9 @@ async def main():
 
     # Step 1: Load dependencies
     print("Step 1: Loading dependencies...")
-    from src.models.classification_service import ClassificationService
-    from src.notion_integrator.client import NotionIntegrator
-    from src.llm_provider.gemini_adapter import GeminiAdapter
+    from models.classification_service import ClassificationService
+    from notion_integrator.client import NotionIntegrator
+    from llm_provider.gemini_adapter import GeminiAdapter
     import os
 
     # Verify environment variables

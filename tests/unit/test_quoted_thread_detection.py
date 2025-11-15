@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 try:
-    from src.content_normalizer.normalizer import ContentNormalizer
+    from content_normalizer.normalizer import ContentNormalizer
 except ImportError:
     from content_normalizer.normalizer import ContentNormalizer
 

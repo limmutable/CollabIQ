@@ -6,13 +6,13 @@ Tests that the system can process a batch of emails where some are malformed:
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
 
-from src.email_receiver.gmail_receiver import GmailReceiver
+from email_receiver.gmail_receiver import GmailReceiver
 
 
 class TestBatchProcessingWithMalformedData:
@@ -242,7 +242,7 @@ class TestBatchProcessingWithMalformedData:
                     }
                 }
             else:  # msg_002_no_date
-                # Missing Date header (will use datetime.utcnow() as fallback)
+                # Missing Date header (will use datetime.now(UTC) as fallback)
                 response_data = {
                     'id': 'msg_002_no_date',
                     'payload': {
@@ -275,7 +275,7 @@ class TestBatchProcessingWithMalformedData:
             "Email without date should have fallback received_at timestamp"
 
         # Verify fallback timestamp is recent (within last minute)
-        time_diff = (datetime.utcnow() - msg_002.metadata.received_at).total_seconds()
+        time_diff = (datetime.now(UTC) - msg_002.metadata.received_at).total_seconds()
         assert time_diff < 60, \
             f"Fallback timestamp should be recent (within 60s), got {time_diff}s ago"
 

@@ -10,9 +10,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.llm_provider.base import LLMProvider
-from src.llm_provider.exceptions import LLMAPIError
-from src.llm_provider.types import ExtractedEntities
+from llm_provider.base import LLMProvider
+from llm_provider.exceptions import LLMAPIError
+from llm_provider.types import ExtractedEntities
 
 
 @pytest.fixture
@@ -22,11 +22,11 @@ def mock_api_key():
 
 
 @pytest.fixture
-@patch("src.llm_adapters.claude_adapter.anthropic.Anthropic")
+@patch("llm_adapters.claude_adapter.anthropic.Anthropic")
 def claude_adapter(mock_anthropic_class, mock_api_key):
     """Create ClaudeAdapter instance for testing."""
     # Import here to avoid issues if module doesn't exist yet
-    from src.llm_adapters.claude_adapter import ClaudeAdapter
+    from llm_adapters.claude_adapter import ClaudeAdapter
 
     # Mock the Anthropic client
     mock_anthropic_class.return_value = MagicMock()

@@ -6,8 +6,8 @@ a weighted average across all entity fields.
 
 import pytest
 
-from src.llm_provider.types import ConfidenceScores
-from src.llm_orchestrator.strategies.best_match import calculate_aggregate_confidence
+from llm_provider.types import ConfidenceScores
+from llm_orchestrator.strategies.best_match import calculate_aggregate_confidence
 
 
 class TestCalculateAggregateConfidence:

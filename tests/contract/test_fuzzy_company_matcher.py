@@ -12,8 +12,8 @@ Test coverage:
 
 import pytest
 
-from src.models.matching import CompanyMatch
-from src.notion_integrator.fuzzy_matcher import RapidfuzzMatcher
+from models.matching import CompanyMatch
+from notion_integrator.fuzzy_matcher import RapidfuzzMatcher
 
 
 class TestExactMatch:

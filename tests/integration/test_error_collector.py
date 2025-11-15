@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pytest
 
-from src.e2e_test.error_collector import ErrorCollector
-from src.e2e_test.models import ErrorRecord, PipelineStage, Severity
+from e2e_test.error_collector import ErrorCollector
+from e2e_test.models import ErrorRecord, PipelineStage, Severity
 
 
 class TestCollectError:

@@ -54,10 +54,16 @@ def setup_logging(
 
     # Console handler
     if console:
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(numeric_level)
-        console_handler.setFormatter(formatter)
-        root_logger.addHandler(console_handler)
+        # Check if sys.stdout is closed before adding a handler
+        if hasattr(sys.stdout, 'closed') and sys.stdout.closed:
+            # If closed, log a warning and skip adding console handler
+            # This can happen in test environments like Typer's CliRunner
+            logging.getLogger(__name__).warning("sys.stdout is closed, skipping console logging setup.")
+        else:
+            console_handler = logging.StreamHandler(sys.stdout)
+            console_handler.setLevel(numeric_level)
+            console_handler.setFormatter(formatter)
+            root_logger.addHandler(console_handler)
 
     # File handler
     if log_dir or log_file:

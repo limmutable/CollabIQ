@@ -338,9 +338,9 @@ class Settings(BaseSettings):
         self.log_dir.mkdir(parents=True, exist_ok=True)
 
         # Create monthly subdirectories for current month
-        from datetime import datetime
+        from datetime import UTC, datetime
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         year_month_raw = self.raw_email_dir / str(now.year) / f"{now.month:02d}"
         year_month_cleaned = self.cleaned_email_dir / str(now.year) / f"{now.month:02d}"
         year_month_raw.mkdir(parents=True, exist_ok=True)

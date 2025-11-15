@@ -10,7 +10,7 @@ This module validates the Pydantic model contracts:
 import pytest
 from datetime import datetime
 from pydantic import ValidationError
-from src.llm_provider.types import (
+from llm_provider.types import (
     ExtractedEntities,
     ExtractedEntitiesWithClassification,
     ConfidenceScores,

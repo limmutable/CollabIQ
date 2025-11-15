@@ -9,7 +9,7 @@ import logging
 import random
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -383,7 +383,7 @@ class GeminiAdapter(LLMProvider):
 
             if error_logger and ErrorRecord and ErrorSeverity and ErrorCategory:
                 error_record = ErrorRecord(
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(UTC),
                     severity=ErrorSeverity.WARNING,
                     category=ErrorCategory.PERMANENT,
                     message="Entity extraction validation failed - marked for manual review",

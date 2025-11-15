@@ -7,7 +7,7 @@ matching operations for company names and person names.
 
 from typing import Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict
 
 
 class CompanyMatch(BaseModel):
@@ -72,9 +72,7 @@ class CompanyMatch(BaseModel):
 
         return self
 
-    class Config:
-        """Pydantic model configuration with example."""
-
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "page_id": "abc123def456",
@@ -86,6 +84,7 @@ class CompanyMatch(BaseModel):
                 "match_method": "character",
             }
         }
+    )
 
 
 class PersonMatch(BaseModel):
@@ -151,9 +150,7 @@ class PersonMatch(BaseModel):
 
         return self
 
-    class Config:
-        """Pydantic model configuration with example."""
-
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "user_id": "user-uuid-789",
@@ -165,3 +162,4 @@ class PersonMatch(BaseModel):
                 "alternative_matches": [],
             }
         }
+    )

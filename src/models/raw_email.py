@@ -5,11 +5,11 @@ This module defines Pydantic models for representing unprocessed emails
 retrieved from the portfolioupdates@signite.co inbox.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 
 
 class EmailAttachment(BaseModel):
@@ -53,7 +53,7 @@ class EmailMetadata(BaseModel):
         ..., description="Timestamp when email was received by server"
     )
     retrieved_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
         description="Timestamp when email was retrieved by EmailReceiver",
     )
     has_attachments: bool = Field(
@@ -102,9 +102,7 @@ class RawEmail(BaseModel):
             raise ValueError("Email body cannot be empty")
         return v
 
-    class Config:
-        """Pydantic model configuration with example."""
-
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "metadata": {
@@ -119,3 +117,4 @@ class RawEmail(BaseModel):
                 "attachments": [],
             }
         }
+    )

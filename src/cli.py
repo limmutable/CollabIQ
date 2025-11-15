@@ -32,7 +32,6 @@ app = typer.Typer(
     help="CollabIQ Email Reception Pipeline CLI",
     add_completion=False,
 )
-console = Console()
 
 
 @app.command()
@@ -46,6 +45,7 @@ def fetch(
     debug: bool = typer.Option(False, "--debug", "-d", help="Enable debug logging"),
 ) -> None:
     """Fetch emails from Gmail and optionally clean them."""
+    console = Console()
     # Setup
     settings = get_settings()
     setup_logging(level="DEBUG" if debug else settings.log_level)
@@ -145,6 +145,7 @@ def clean_emails(
     debug: bool = typer.Option(False, "--debug", "-d", help="Enable debug logging"),
 ) -> None:
     """Clean existing raw emails from directory."""
+    console = Console()
     settings = get_settings()
     setup_logging(level="DEBUG" if debug else settings.log_level)
     settings.create_directories()
@@ -200,6 +201,7 @@ def clean_emails(
 @app.command()
 def verify() -> None:
     """Verify setup and configuration."""
+    console = Console()
     console.print("\n[bold cyan]CollabIQ Setup Verification[/bold cyan]\n")
 
     settings = get_settings()

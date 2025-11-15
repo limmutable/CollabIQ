@@ -16,13 +16,13 @@ Tests all 12 scenarios from contracts/error_classifier.md:
 """
 
 import socket
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock
 
 import pytest
 
-from src.error_handling.error_classifier import ErrorClassifier
-from src.error_handling.models import ErrorCategory
+from error_handling.error_classifier import ErrorClassifier
+from error_handling.models import ErrorCategory
 
 
 # Mock exception classes for testing
@@ -295,7 +295,7 @@ class TestErrorClassifierContract:
         classifier = ErrorClassifier()
 
         # Create future time (5 minutes from now)
-        future_time = datetime.utcnow() + timedelta(minutes=5)
+        future_time = datetime.now(UTC) + timedelta(minutes=5)
         http_date = future_time.strftime("%a, %d %b %Y %H:%M:%S GMT")
 
         rate_limit_error = MockAPIResponseError(

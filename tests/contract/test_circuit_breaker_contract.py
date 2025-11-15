@@ -14,19 +14,19 @@ Tests all 9 scenarios from contracts/circuit_breaker.md:
 
 import socket
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.error_handling.circuit_breaker import (
+from error_handling.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
     gmail_circuit_breaker,
     gemini_circuit_breaker,
     notion_circuit_breaker,
 )
-from src.error_handling.models import CircuitState
+from error_handling.models import CircuitState
 
 
 class TestCircuitBreakerContract:
@@ -183,7 +183,7 @@ class TestCircuitBreakerContract:
         # Manually set to HALF_OPEN
         cb.state_obj.state = CircuitState.HALF_OPEN
         cb.state_obj.success_count = 0
-        old_timestamp = datetime.utcnow() - timedelta(seconds=10)
+        old_timestamp = datetime.now(UTC) - timedelta(seconds=10)
         cb.state_obj.open_timestamp = old_timestamp
 
         # Test request fails
@@ -310,7 +310,7 @@ class TestCircuitBreakerContract:
         def failing_function():
             raise socket.timeout("Connection timeout")
 
-        with patch("src.error_handling.circuit_breaker.logger") as mock_logger:
+        with patch("error_handling.circuit_breaker.logger") as mock_logger:
             # Trigger state change (CLOSED → OPEN)
             for _ in range(5):
                 try:

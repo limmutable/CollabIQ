@@ -10,7 +10,7 @@ This module provides consistent formatting utilities for:
 
 from .tables import create_table, render_table
 from .progress import create_progress, create_spinner
-from .colors import console, get_console, disable_colors
+from .colors import get_console, disable_colors
 from .json_output import output_json
 
 __all__ = [
@@ -18,7 +18,6 @@ __all__ = [
     "render_table",
     "create_progress",
     "create_spinner",
-    "console",
     "get_console",
     "disable_colors",
     "output_json",

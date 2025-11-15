@@ -13,8 +13,8 @@ import json
 import pytest
 from pathlib import Path
 
-from src.e2e_test.runner import E2ERunner
-from src.e2e_test.report_generator import ReportGenerator
+from e2e_test.runner import E2ERunner
+from e2e_test.report_generator import ReportGenerator
 
 
 @pytest.fixture

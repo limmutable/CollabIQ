@@ -16,10 +16,11 @@ from pathlib import Path
 from typing import Optional
 
 import typer
+from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
-from ..formatters.colors import get_console
+from .common import console
 from ..formatters.progress import create_progress
 from ..formatters.json_output import output_json, format_json_error
 from ..formatters.tables import create_table
@@ -33,7 +34,7 @@ except ImportError:
     DLQManager = None
     DLQEntry = None
 
-app = typer.Typer(
+errors_app = typer.Typer(
     name="errors",
     help="Error management and DLQ operations (list, show, retry, clear)",
 )
@@ -97,7 +98,7 @@ def _get_remediation_suggestion(error_details: dict) -> str:
     return "Review error details below and retry with `collabiq errors retry --id <error-id>` if appropriate."
 
 
-@app.command()
+@errors_app.command()
 def list(
     severity: Optional[str] = typer.Option(
         None, help="Filter by severity (error, warning, info)"
@@ -121,7 +122,7 @@ def list(
         collabiq errors list --since 2024-01-01
         collabiq errors list --json
     """
-    console = get_console()
+    console = Console() # Initialize Console locally
 
     try:
         # Validate service availability
@@ -249,7 +250,7 @@ def list(
         raise typer.Exit(1)
 
 
-@app.command()
+@errors_app.command()
 def show(
     error_id: str = typer.Argument(..., help="Error ID to display"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
@@ -264,7 +265,7 @@ def show(
         collabiq errors show email001_20240101_120000
         collabiq errors show email001_20240101_120000 --json
     """
-    console = get_console()
+    console = Console() # Initialize Console locally
 
     try:
         # Validate service availability
@@ -375,7 +376,7 @@ def show(
         raise typer.Exit(1)
 
 
-@app.command()
+@errors_app.command()
 def retry(
     all: bool = typer.Option(False, "--all", help="Retry all failed operations"),
     id: Optional[str] = typer.Option(None, "--id", help="Retry specific error ID"),
@@ -395,7 +396,7 @@ def retry(
         collabiq errors retry --all
         collabiq errors retry --since 2024-01-01
     """
-    console = get_console()
+    console = Console() # Initialize Console locally
 
     try:
         # Validate service availability
@@ -531,7 +532,7 @@ def retry(
         raise typer.Exit(1)
 
 
-@app.command()
+@errors_app.command()
 def clear(
     resolved: bool = typer.Option(False, "--resolved", help="Clear only resolved errors (already processed)"),
     before: Optional[str] = typer.Option(None, "--before", help="Clear errors before date (YYYY-MM-DD)"),
@@ -550,7 +551,7 @@ def clear(
         collabiq errors clear --before 2024-01-01
         collabiq errors clear --resolved --before 2024-01-01 -y
     """
-    console = get_console()
+    console = Console() # Initialize Console locally
 
     try:
         # Validate service availability

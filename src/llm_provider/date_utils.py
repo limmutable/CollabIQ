@@ -10,7 +10,7 @@ Uses dateparser library for robust multi-format parsing.
 """
 
 import re
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 
 import dateparser
@@ -49,7 +49,7 @@ def parse_date(
 
     # Set reference date (default to now)
     if reference_date is None:
-        reference_date = datetime.utcnow()
+        reference_date = datetime.now(UTC)
 
     # Handle Korean week notation: "11월 1주" (November 1st week)
     week_match = re.match(r"(\d{1,2})월\s*(\d{1})주", date_str)

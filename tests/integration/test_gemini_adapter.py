@@ -10,9 +10,9 @@ from pathlib import Path
 from unittest.mock import patch, Mock
 from datetime import datetime
 
-from src.llm_adapters.gemini_adapter import GeminiAdapter
-from src.llm_provider.types import ExtractedEntities
-from src.llm_provider.exceptions import (
+from llm_adapters.gemini_adapter import GeminiAdapter
+from llm_provider.types import ExtractedEntities
+from llm_provider.exceptions import (
     LLMAPIError,
     LLMRateLimitError,
     LLMTimeoutError,

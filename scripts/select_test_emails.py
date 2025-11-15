@@ -20,7 +20,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.email_receiver.gmail_receiver import GmailReceiver
-from src.e2e_test.models import TestEmailMetadata, SelectionReason
+from src.e2e_test.models import E2EE2ETestEmailMetadata, SelectionReason
 
 
 def main():
@@ -136,7 +136,7 @@ def main():
                 )
 
                 # Create metadata using Gmail's internal message ID
-                metadata = TestEmailMetadata(
+                metadata = E2ETestEmailMetadata(
                     email_id=msg["id"],  # Use Gmail's internal message ID, not Message-ID header
                     subject=subject,
                     received_date=received_date.isoformat(),

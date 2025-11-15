@@ -17,8 +17,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.e2e_test.runner import E2ERunner
-from src.e2e_test.report_generator import ReportGenerator
+from e2e_test.runner import E2ERunner
+from e2e_test.report_generator import ReportGenerator
 
 
 def print_header():

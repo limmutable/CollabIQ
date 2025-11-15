@@ -9,7 +9,7 @@ This module tests the classify_collaboration_type() method:
 """
 
 import pytest
-from src.models.classification_service import ClassificationService
+from models.classification_service import ClassificationService
 
 
 class TestTypeClassification:

@@ -6,7 +6,7 @@ This module provides functionality to capture, store, and retry failed write ope
 import json
 import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Dict, Any, List
 
 from llm_provider.types import DLQEntry, ExtractedEntitiesWithClassification
@@ -44,7 +44,7 @@ class DLQManager:
         # Create DLQ entry
         dlq_entry = DLQEntry(
             email_id=extracted_data.email_id,
-            failed_at=datetime.utcnow(),
+            failed_at=datetime.now(UTC),
             retry_count=error_details.get("retry_count", 0),
             error=error_details,
             extracted_data=extracted_data,
@@ -133,7 +133,7 @@ class DLQManager:
         else:
             # Failed - increment retry_count and save updated entry
             dlq_entry.retry_count += 1
-            dlq_entry.failed_at = datetime.utcnow()
+            dlq_entry.failed_at = datetime.now(UTC)
 
             # Update error details
             dlq_entry.error = {

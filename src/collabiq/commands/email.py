@@ -17,9 +17,10 @@ from pathlib import Path
 from typing import Optional
 
 import typer
+from rich.console import Console
 from rich.table import Table
 
-from ..formatters.colors import get_console
+from .common import console
 from ..formatters.progress import create_progress, create_spinner
 from ..formatters.json_output import output_json, format_json_error
 from ..formatters.tables import create_table
@@ -37,7 +38,7 @@ except ImportError:
     ContentNormalizer = None
     RawEmail = None
 
-app = typer.Typer(
+email_app = typer.Typer(
     name="email",
     help="Email pipeline operations (fetch, clean, list, verify, process)",
 )
@@ -50,7 +51,7 @@ CREDENTIALS_PATH = Path("credentials.json")
 TOKEN_PATH = Path("token.json")
 
 
-@app.command()
+@email_app.command()
 def fetch(
     limit: int = typer.Option(10, help="Maximum number of emails to fetch"),
     debug: bool = typer.Option(False, help="Enable debug logging"),
@@ -68,7 +69,7 @@ def fetch(
         collabiq email fetch --json
     """
     start_time = time.time()
-    console = get_console()
+    console = Console() # Initialize Console locally
 
     try:
         # Validate service availability
@@ -175,7 +176,7 @@ def fetch(
         raise typer.Exit(code=1)
 
 
-@app.command()
+@email_app.command()
 def clean(
     debug: bool = typer.Option(False, help="Enable debug logging"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
@@ -192,7 +193,7 @@ def clean(
         collabiq email clean --json
     """
     start_time = time.time()
-    console = get_console()
+    console = Console() # Initialize Console locally
 
     try:
         # Validate service availability
@@ -321,7 +322,7 @@ def clean(
         raise typer.Exit(code=1)
 
 
-@app.command()
+@email_app.command()
 def list(
     limit: int = typer.Option(20, help="Maximum number of emails to display"),
     since: Optional[str] = typer.Option(None, help="Filter by date (e.g., 'yesterday', '2025-11-01')"),
@@ -339,7 +340,7 @@ def list(
         collabiq email list --since yesterday
         collabiq email list --status cleaned --json
     """
-    console = get_console()
+    console = Console() # Initialize Console locally
 
     try:
         # Validate date if provided
@@ -467,7 +468,7 @@ def list(
         raise typer.Exit(code=1)
 
 
-@app.command()
+@email_app.command()
 def verify(
     debug: bool = typer.Option(False, help="Enable debug logging"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
@@ -481,7 +482,7 @@ def verify(
         collabiq email verify
         collabiq email verify --json
     """
-    console = get_console()
+    console = Console() # Initialize Console locally
 
     try:
         # Validate service availability
@@ -595,7 +596,7 @@ def verify(
         raise typer.Exit(code=1)
 
 
-@app.command()
+@email_app.command()
 def process(
     limit: int = typer.Option(10, help="Maximum number of emails to process"),
     debug: bool = typer.Option(False, help="Enable debug logging"),
@@ -613,7 +614,7 @@ def process(
         collabiq email process --json
     """
     start_time = time.time()
-    console = get_console()
+    console = Console() # Initialize Console locally
 
     # Track stage results
     stages = {

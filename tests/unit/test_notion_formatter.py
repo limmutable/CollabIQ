@@ -15,7 +15,7 @@ These tests use minimal fixtures and don't require API calls.
 import pytest
 from datetime import datetime
 
-from src.notion_integrator.models import (
+from notion_integrator.models import (
     CompanyClassification,
     CompanyRecord,
     LLMFormattedData,
@@ -178,7 +178,7 @@ def sample_database_schema():
         },
     )
 
-    from src.notion_integrator.schema import create_database_schema
+    from notion_integrator.schema import create_database_schema
 
     return create_database_schema(db)
 
@@ -190,7 +190,7 @@ def sample_database_schema():
 
 def test_extract_classification_both_true(sample_company_page, sample_database_schema):
     """Test extracting classification when both flags are True."""
-    from src.notion_integrator.formatter import extract_classification
+    from notion_integrator.formatter import extract_classification
 
     classification = extract_classification(sample_company_page, sample_database_schema)
 
@@ -206,7 +206,7 @@ def test_extract_classification_both_true_korean(
     sample_korean_company_page, sample_database_schema
 ):
     """Test extracting classification when both flags are True (Korean company)."""
-    from src.notion_integrator.formatter import extract_classification
+    from notion_integrator.formatter import extract_classification
 
     classification = extract_classification(
         sample_korean_company_page, sample_database_schema
@@ -220,7 +220,7 @@ def test_extract_classification_both_true_korean(
 
 def test_extract_classification_only_ssg():
     """Test extracting classification when only Shinsegae flag is True."""
-    from src.notion_integrator.formatter import extract_classification
+    from notion_integrator.formatter import extract_classification
 
     page = {
         "properties": {
@@ -246,7 +246,7 @@ def test_extract_classification_only_ssg():
         },
     )
 
-    from src.notion_integrator.schema import create_database_schema
+    from notion_integrator.schema import create_database_schema
 
     schema = create_database_schema(db)
 
@@ -259,7 +259,7 @@ def test_extract_classification_only_ssg():
 
 def test_extract_classification_only_portfolio():
     """Test extracting classification when only Portfolio flag is True."""
-    from src.notion_integrator.formatter import extract_classification
+    from notion_integrator.formatter import extract_classification
 
     page = {
         "properties": {
@@ -285,7 +285,7 @@ def test_extract_classification_only_portfolio():
         },
     )
 
-    from src.notion_integrator.schema import create_database_schema
+    from notion_integrator.schema import create_database_schema
 
     schema = create_database_schema(db)
 
@@ -298,7 +298,7 @@ def test_extract_classification_only_portfolio():
 
 def test_extract_classification_neither():
     """Test extracting classification when both flags are False."""
-    from src.notion_integrator.formatter import extract_classification
+    from notion_integrator.formatter import extract_classification
 
     page = {
         "properties": {
@@ -324,7 +324,7 @@ def test_extract_classification_neither():
         },
     )
 
-    from src.notion_integrator.schema import create_database_schema
+    from notion_integrator.schema import create_database_schema
 
     schema = create_database_schema(db)
 
@@ -337,7 +337,7 @@ def test_extract_classification_neither():
 
 def test_extract_classification_missing_fields():
     """Test extracting classification when fields are missing from schema."""
-    from src.notion_integrator.formatter import extract_classification
+    from notion_integrator.formatter import extract_classification
 
     page = {
         "properties": {
@@ -360,7 +360,7 @@ def test_extract_classification_missing_fields():
         },
     )
 
-    from src.notion_integrator.schema import create_database_schema
+    from notion_integrator.schema import create_database_schema
 
     schema = create_database_schema(db)
 
@@ -379,7 +379,7 @@ def test_extract_classification_missing_fields():
 
 def test_format_company_record(sample_company_page, sample_database_schema):
     """Test formatting a company page to CompanyRecord."""
-    from src.notion_integrator.formatter import format_company_record
+    from notion_integrator.formatter import format_company_record
 
     record = format_company_record(sample_company_page, sample_database_schema)
 
@@ -397,7 +397,7 @@ def test_format_company_record_unicode(
     sample_korean_company_page, sample_database_schema
 ):
     """Test formatting preserves Unicode (Korean + emoji)."""
-    from src.notion_integrator.formatter import format_company_record
+    from notion_integrator.formatter import format_company_record
 
     record = format_company_record(sample_korean_company_page, sample_database_schema)
 
@@ -411,7 +411,7 @@ def test_format_company_record_with_relations(
     sample_company_page, sample_database_schema
 ):
     """Test formatting includes resolved relations."""
-    from src.notion_integrator.formatter import format_company_record
+    from notion_integrator.formatter import format_company_record
 
     record = format_company_record(sample_company_page, sample_database_schema)
 
@@ -428,7 +428,7 @@ def test_format_company_record_with_relations(
 
 def test_generate_markdown_summary_single_company(sample_company_page):
     """Test generating Markdown summary for single company."""
-    from src.notion_integrator.formatter import generate_markdown_summary
+    from notion_integrator.formatter import generate_markdown_summary
 
     records = [sample_company_page]
     markdown = generate_markdown_summary(records)
@@ -443,7 +443,7 @@ def test_generate_markdown_summary_multiple_companies(
     sample_company_page, sample_korean_company_page
 ):
     """Test generating Markdown summary for multiple companies with grouping."""
-    from src.notion_integrator.formatter import generate_markdown_summary
+    from notion_integrator.formatter import generate_markdown_summary
 
     records = [sample_company_page, sample_korean_company_page]
     markdown = generate_markdown_summary(records)
@@ -458,7 +458,7 @@ def test_generate_markdown_summary_multiple_companies(
 
 def test_generate_markdown_summary_empty():
     """Test generating Markdown summary with no records."""
-    from src.notion_integrator.formatter import generate_markdown_summary
+    from notion_integrator.formatter import generate_markdown_summary
 
     records = []
     markdown = generate_markdown_summary(records)
@@ -469,7 +469,7 @@ def test_generate_markdown_summary_empty():
 
 def test_generate_markdown_summary_unicode_safe(sample_korean_company_page):
     """Test Markdown generation handles Unicode safely."""
-    from src.notion_integrator.formatter import generate_markdown_summary
+    from notion_integrator.formatter import generate_markdown_summary
 
     records = [sample_korean_company_page]
     markdown = generate_markdown_summary(records)
@@ -488,7 +488,7 @@ def test_generate_markdown_summary_unicode_safe(sample_korean_company_page):
 
 def test_format_for_llm(sample_company_page, sample_database_schema):
     """Test complete LLM formatting pipeline."""
-    from src.notion_integrator.formatter import format_for_llm
+    from notion_integrator.formatter import format_for_llm
 
     records = [sample_company_page]
     formatted = format_for_llm(records, sample_database_schema)
@@ -503,7 +503,7 @@ def test_format_for_llm(sample_company_page, sample_database_schema):
 
 def test_format_for_llm_empty():
     """Test LLM formatting with empty records."""
-    from src.notion_integrator.formatter import format_for_llm
+    from notion_integrator.formatter import format_for_llm
 
     # Create minimal schema
     db = NotionDatabase(
@@ -517,7 +517,7 @@ def test_format_for_llm_empty():
         },
     )
 
-    from src.notion_integrator.schema import create_database_schema
+    from notion_integrator.schema import create_database_schema
 
     schema = create_database_schema(db)
 
@@ -533,7 +533,7 @@ def test_format_for_llm_metadata_counts(
     sample_company_page, sample_korean_company_page, sample_database_schema
 ):
     """Test metadata counts are correct."""
-    from src.notion_integrator.formatter import format_for_llm
+    from notion_integrator.formatter import format_for_llm
 
     records = [sample_company_page, sample_korean_company_page]
     formatted = format_for_llm(records, sample_database_schema)

@@ -25,11 +25,11 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.config.settings import get_settings
-from src.email_receiver.gmail_receiver import GmailReceiver
-from src.content_normalizer.normalizer import ContentNormalizer
-from src.llm_adapters.gemini_adapter import GeminiAdapter
-from src.notion_integrator.integrator import NotionIntegrator
+from config.settings import get_settings
+from email_receiver.gmail_receiver import GmailReceiver
+from content_normalizer.normalizer import ContentNormalizer
+from llm_adapters.gemini_adapter import GeminiAdapter
+from notion_integrator.integrator import NotionIntegrator
 
 
 async def main():

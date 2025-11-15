@@ -9,9 +9,9 @@ from datetime import datetime
 import pytest
 
 try:
-    from src.content_normalizer.normalizer import ContentNormalizer
-    from src.models.raw_email import RawEmail, EmailMetadata
-    from src.models.cleaned_email import CleaningStatus
+    from content_normalizer.normalizer import ContentNormalizer
+    from models.raw_email import RawEmail, EmailMetadata
+    from models.cleaned_email import CleaningStatus
 except ImportError:
     from content_normalizer.normalizer import ContentNormalizer
     from models.raw_email import RawEmail, EmailMetadata

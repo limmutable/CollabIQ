@@ -6,7 +6,7 @@ message IDs to prevent reprocessing (FR-011).
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Set
 
@@ -29,7 +29,7 @@ class DuplicateTracker(BaseModel):
         default_factory=set, description="Set of processed message IDs"
     )
     last_updated: datetime = Field(
-        default_factory=datetime.utcnow, description="Last time tracker was updated"
+        default_factory=lambda: datetime.now(UTC), description="Last time tracker was updated"
     )
 
     def is_duplicate(self, message_id: str) -> bool:
@@ -54,7 +54,7 @@ class DuplicateTracker(BaseModel):
             message_id: Email message ID to mark as processed
         """
         self.processed_message_ids.add(message_id)
-        self.last_updated = datetime.utcnow()
+        self.last_updated = datetime.now(UTC)
 
     @classmethod
     def load(cls, file_path: Path) -> "DuplicateTracker":
