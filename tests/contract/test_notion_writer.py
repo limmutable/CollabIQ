@@ -22,9 +22,19 @@ class TestNotionWriterContract:
     def mock_notion_integrator(self):
         """Create a mock NotionIntegrator instance."""
         mock = Mock()
-        mock.notion_client = Mock()
-        mock.notion_client.client = Mock()
-        mock.notion_client.client.pages.create = AsyncMock()
+
+        # Set up client structure matching writer.py access pattern
+        # writer.py uses: self.notion_integrator.client.client.pages.create
+        mock.client = Mock()
+        mock.client.client = Mock()
+        mock.client.client.pages = Mock()
+        mock.client.client.pages.create = AsyncMock()
+        mock.client.client.pages.update = AsyncMock()
+        mock.client.client.databases = Mock()
+        mock.client.client.databases.query = AsyncMock()
+
+        # Also need query_database method
+        mock.client.query_database = AsyncMock()
 
         # Mock schema discovery (async)
         # This needs to replicate the nested structure: schema -> database -> properties
@@ -46,7 +56,7 @@ class TestNotionWriterContract:
         mock.schema = Mock()
         mock.schema.database = Mock()
         mock.schema.database.properties = mock_schema_properties
-        
+
         mock.discover_database_schema = AsyncMock(return_value=mock.schema)
 
         return mock
@@ -109,8 +119,12 @@ class TestNotionWriterContract:
             "object": "page",
             "properties": {},
         }
-        mock_notion_integrator.notion_client.pages.create = AsyncMock(
+        mock_notion_integrator.client.client.pages.create = AsyncMock(
             return_value=mock_response
+        )
+        # Mock query_database to return no duplicates
+        mock_notion_integrator.client.query_database = AsyncMock(
+            return_value={"results": []}
         )
 
         # Execute method (this WILL FAIL until implementation exists)
@@ -173,8 +187,12 @@ class TestNotionWriterContract:
         mock_error.message = "Invalid property value"
         mock_error.code = "validation_error"
 
-        mock_notion_integrator.notion_client.pages.create = AsyncMock(
+        mock_notion_integrator.client.client.pages.create = AsyncMock(
             side_effect=mock_error
+        )
+        # Mock query_database to return no duplicates
+        mock_notion_integrator.client.query_database = AsyncMock(
+            return_value={"results": []}
         )
 
         # Execute method (this WILL FAIL until implementation exists)
@@ -248,7 +266,7 @@ class TestNotionWriterContract:
         - Returns first matching result
         """
         # Mock query response with existing entry
-        mock_notion_integrator.notion_client.databases.query = AsyncMock(
+        mock_notion_integrator.client.query_database = AsyncMock(
             return_value={
                 "results": [
                     {
@@ -273,12 +291,12 @@ class TestNotionWriterContract:
         )
 
         # Verify query was called with correct filter
-        mock_notion_integrator.notion_client.databases.query.assert_called_once()
+        mock_notion_integrator.client.query_database.assert_called_once()
         call_kwargs = (
-            mock_notion_integrator.notion_client.databases.query.call_args.kwargs
+            mock_notion_integrator.client.query_database.call_args.kwargs
         )
         assert "database_id" in call_kwargs
-        assert "filter" in call_kwargs
+        assert "filter_conditions" in call_kwargs
 
     @pytest.mark.asyncio
     async def test_check_duplicate_when_no_duplicate(
@@ -291,7 +309,7 @@ class TestNotionWriterContract:
         - Handles empty results gracefully
         """
         # Mock query response with no results
-        mock_notion_integrator.notion_client.databases.query = AsyncMock(
+        mock_notion_integrator.client.query_database = AsyncMock(
             return_value={"results": []}
         )
 

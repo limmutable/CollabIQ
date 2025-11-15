@@ -21,6 +21,9 @@ from rich.table import Table
 from llm_orchestrator.orchestrator import LLMOrchestrator
 from llm_orchestrator.types import OrchestrationConfig, ProviderQualityComparison
 
+# Logger
+logger = logging.getLogger(__name__)
+
 # Create the llm subcommand app
 llm_app = typer.Typer(
     name="llm",
@@ -449,6 +452,9 @@ def test(
     provider: str = typer.Argument(
         ..., help="Provider name (gemini, claude, openai)"
     ),
+    json_output: bool = typer.Option(
+        False, "--json", help="Output as JSON"
+    ),
 ):
     """
     Test specific LLM provider connectivity and health.
@@ -459,6 +465,7 @@ def test(
     Examples:
         collabiq llm test gemini
         collabiq llm test claude
+        collabiq llm test claude --json
     """
     console = Console()
     try:
@@ -1065,3 +1072,181 @@ def export_metrics(
     except Exception as e:
         console.print(f"[red]Error exporting metrics: {e}[/red]\n")
         raise typer.Exit(1)
+
+
+# ==============================================================================
+# Contract-required commands
+# ==============================================================================
+
+
+@llm_app.command()
+def policy(
+    json_output: bool = typer.Option(
+        False, "--json", help="Output as JSON"
+    ),
+):
+    """View current orchestration policy and configuration.
+
+    Displays the active orchestration strategy and provider configuration.
+
+    Examples:
+        collabiq llm policy
+        collabiq llm policy --json
+    """
+    console = Console()
+    try:
+        config = OrchestrationConfig(
+            default_strategy="failover",
+            provider_priority=["gemini", "claude", "openai"],
+        )
+        orchestrator = LLMOrchestrator.from_config(config)
+
+        if json_output:
+            policy_data = {
+                "strategy": orchestrator.get_active_strategy(),
+                "provider_priority": orchestrator.config.provider_priority,
+                "available_providers": orchestrator.get_available_providers(),
+            }
+            console.print(json.dumps(policy_data, indent=2))
+        else:
+            console.print(f"\n[bold cyan]Current Orchestration Policy[/bold cyan]\n")
+            console.print(f"Strategy: [green]{orchestrator.get_active_strategy()}[/green]")
+            console.print(f"Provider Priority: {', '.join(orchestrator.config.provider_priority)}")
+            console.print(f"Available Providers: {', '.join(orchestrator.get_available_providers())}\n")
+
+    except Exception as e:
+        console.print(f"\n[red]Error: {e}[/red]\n")
+        raise typer.Exit(1)
+
+
+@llm_app.command(name="set-policy")
+def set_policy_alias(
+    strategy: str = typer.Argument(
+        ..., help="Orchestration strategy (failover, consensus, best_match, all_providers)"
+    ),
+):
+    """Set LLM orchestration policy (alias for set-strategy).
+
+    Available strategies:
+    - failover: Sequential failover through provider priority list
+    - consensus: Query multiple providers and merge results via voting
+    - best_match: Query all providers and select highest confidence result
+    - all_providers: Query ALL providers and collect metrics from all (RECOMMENDED)
+
+    Examples:
+        collabiq llm set-policy failover
+        collabiq llm set-policy all_providers
+    """
+    # Call the existing set_strategy function
+    set_strategy(strategy)
+
+
+@llm_app.command()
+def usage(
+    json_output: bool = typer.Option(
+        False, "--json", help="Output as JSON"
+    ),
+):
+    """View LLM usage statistics and metrics.
+
+    Displays token usage, API call counts, and cost metrics for each provider.
+
+    Examples:
+        collabiq llm usage
+        collabiq llm usage --json
+    """
+    console = Console()
+    try:
+        config = OrchestrationConfig(
+            default_strategy="failover",
+            provider_priority=["gemini", "claude", "openai"],
+        )
+        orchestrator = LLMOrchestrator.from_config(config)
+
+        if not orchestrator.cost_tracker:
+            console.print("\n[yellow]Cost tracking not available[/yellow]\n")
+            raise typer.Exit(1)
+
+        cost_metrics = orchestrator.cost_tracker.get_all_metrics()
+
+        if json_output:
+            usage_data = {
+                provider: {
+                    "api_calls": metrics.total_api_calls,
+                    "input_tokens": metrics.total_input_tokens,
+                    "output_tokens": metrics.total_output_tokens,
+                    "total_cost_usd": metrics.total_cost_usd,
+                    "average_cost_per_email": metrics.average_cost_per_email,
+                }
+                for provider, metrics in cost_metrics.items()
+            }
+            console.print(json.dumps(usage_data, indent=2))
+        else:
+            console.print("\n[bold cyan]LLM Usage Statistics[/bold cyan]\n")
+            table = Table(show_header=True, header_style="bold magenta")
+            table.add_column("Provider", style="cyan")
+            table.add_column("API Calls", justify="right")
+            table.add_column("Input Tokens", justify="right")
+            table.add_column("Output Tokens", justify="right")
+            table.add_column("Total Cost", justify="right")
+            table.add_column("Cost/Email", justify="right")
+
+            for provider, metrics in cost_metrics.items():
+                table.add_row(
+                    provider.title(),
+                    str(metrics.total_api_calls),
+                    f"{metrics.total_input_tokens:,}",
+                    f"{metrics.total_output_tokens:,}",
+                    f"${metrics.total_cost_usd:.4f}",
+                    f"${metrics.average_cost_per_email:.6f}",
+                )
+
+            console.print(table)
+            console.print()
+
+    except Exception as e:
+        console.print(f"\n[red]Error: {e}[/red]\n")
+        logger.error(f"Failed to get usage statistics: {e}", exc_info=True)
+        raise typer.Exit(1)
+
+
+@llm_app.command()
+def disable(
+    provider: str = typer.Argument(
+        ..., help="Provider name to disable (gemini, claude, openai)"
+    ),
+):
+    """Disable a specific LLM provider.
+
+    Temporarily disables a provider from being used in orchestration.
+
+    Examples:
+        collabiq llm disable gemini
+        collabiq llm disable claude
+    """
+    console = Console()
+    console.print(f"\n[yellow]Note: Provider disable/enable not yet implemented[/yellow]")
+    console.print(f"Would disable provider: {provider}\n")
+    # TODO: Implement provider enable/disable functionality
+    raise typer.Exit(0)
+
+
+@llm_app.command()
+def enable(
+    provider: str = typer.Argument(
+        ..., help="Provider name to enable (gemini, claude, openai)"
+    ),
+):
+    """Enable a specific LLM provider.
+
+    Re-enables a previously disabled provider for use in orchestration.
+
+    Examples:
+        collabiq llm enable gemini
+        collabiq llm enable claude
+    """
+    console = Console()
+    console.print(f"\n[yellow]Note: Provider disable/enable not yet implemented[/yellow]")
+    console.print(f"Would enable provider: {provider}\n")
+    # TODO: Implement provider enable/disable functionality
+    raise typer.Exit(0)
