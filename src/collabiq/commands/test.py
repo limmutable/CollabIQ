@@ -19,8 +19,9 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from collabiq.utils.logging import log_cli_error
-from collabiq.formatters.progress import create_spinner
+from collabiq.utils.logging import log_cli_error, log_cli_operation
+from collabiq.formatters.progress import create_spinner, create_progress
+from collabiq.formatters.tables import create_table
 
 # Import E2E test infrastructure (conditional, as it's optional)
 try:

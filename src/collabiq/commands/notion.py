@@ -26,6 +26,9 @@ from rich.table import Table
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+from collabiq.utils.logging import log_cli_operation
+from collabiq.formatters.tables import create_table
+
 notion_app = typer.Typer(
     name="notion",
     help="Notion integration management (verify, schema, test-write, cleanup-tests, match-company, match-person, list-users)",
