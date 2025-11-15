@@ -33,19 +33,20 @@ class TestGeminiRetryFlow:
     """Test Gemini extract_entities with retry on rate limits and transient failures."""
 
     @patch('builtins.open', new_callable=mock_open, read_data="Mock prompt template")
-    @patch('src.llm_adapters.gemini_adapter.genai')
+    @patch('llm_adapters.gemini_adapter.genai')
     def test_gemini_rate_limit_retry_with_header(self, mock_genai, mock_file):
         """
         Test that Gemini extract_entities retries on 429 rate limit with Retry-After header.
 
         Scenario: T026 - Rate limit with Retry-After → wait → retry → success
         """
-        # Create adapter with mock API key
-        adapter = GeminiAdapter(api_key="mock_api_key")
-
         # Mock GenerativeModel and generate_content
         mock_model = Mock()
         mock_genai.GenerativeModel.return_value = mock_model
+        mock_genai.configure = Mock()  # Mock configure to prevent real API call
+
+        # Create adapter with mock API key (after mocking genai)
+        adapter = GeminiAdapter(api_key="mock_api_key")
 
         # Create rate limit error with Retry-After header
         rate_limit_error = Exception("429 Resource Exhausted")
@@ -56,10 +57,11 @@ class TestGeminiRetryFlow:
         # Second call: success
         mock_response = Mock()
         mock_response.text = """{
-            "people": [{"name": "John Doe", "email": "john@example.com"}],
-            "companies": [{"name": "Acme Corp"}],
-            "dates": [],
-            "action_items": []
+            "person_in_charge": {"value": "John Doe", "confidence": 0.95},
+            "startup_name": {"value": "Acme Corp", "confidence": 0.90},
+            "partner_org": {"value": null, "confidence": 0.0},
+            "details": {"value": "Meeting discussion", "confidence": 0.85},
+            "date": {"value": null, "confidence": 0.0}
         }"""
 
         mock_model.generate_content.side_effect = [
@@ -77,10 +79,8 @@ class TestGeminiRetryFlow:
             assert mock_model.generate_content.call_count == 2
 
             # Verify successful extraction
-            assert len(result.people) == 1
-            assert result.people[0].name == "John Doe"
-            assert len(result.companies) == 1
-            assert result.companies[0].name == "Acme Corp"
+            assert result.person_in_charge == "John Doe"
+            assert result.startup_name == "Acme Corp"
 
             # Verify circuit breaker recorded success
             assert gemini_circuit_breaker.state_obj.failure_count == 0
@@ -89,19 +89,20 @@ class TestGeminiRetryFlow:
             pytest.fail(f"Unexpected exception: {e}")
 
     @patch('builtins.open', new_callable=mock_open, read_data="Mock prompt template")
-    @patch('src.llm_adapters.gemini_adapter.genai')
+    @patch('llm_adapters.gemini_adapter.genai')
     def test_gemini_all_retries_exhausted(self, mock_genai, mock_file):
         """
         Test that Gemini extract_entities exhausts retries after all attempts fail.
 
         Scenario: All attempts fail → exception raised → circuit breaker trips
         """
-        # Create adapter with mock API key
-        adapter = GeminiAdapter(api_key="mock_api_key")
-
         # Mock GenerativeModel
         mock_model = Mock()
         mock_genai.GenerativeModel.return_value = mock_model
+        mock_genai.configure = Mock()  # Mock configure to prevent real API call
+
+        # Create adapter with mock API key (after mocking genai)
+        adapter = GeminiAdapter(api_key="mock_api_key")
 
         # Create persistent rate limit error
         rate_limit_error = Exception("429 Resource Exhausted")
@@ -117,28 +118,30 @@ class TestGeminiRetryFlow:
         assert mock_model.generate_content.call_count == 3
 
     @patch('builtins.open', new_callable=mock_open, read_data="Mock prompt template")
-    @patch('src.llm_adapters.gemini_adapter.genai')
+    @patch('llm_adapters.gemini_adapter.genai')
     def test_gemini_transient_error_retry_success(self, mock_genai, mock_file):
         """
         Test that Gemini extract_entities retries on transient connection errors.
 
         Scenario: Connection timeout → retry → success
         """
-        # Create adapter with mock API key
-        adapter = GeminiAdapter(api_key="mock_api_key")
-
         # Mock GenerativeModel
         mock_model = Mock()
         mock_genai.GenerativeModel.return_value = mock_model
+        mock_genai.configure = Mock()  # Mock configure to prevent real API call
+
+        # Create adapter with mock API key (after mocking genai)
+        adapter = GeminiAdapter(api_key="mock_api_key")
 
         # First call: timeout
         # Second call: success
         mock_response = Mock()
         mock_response.text = """{
-            "people": [],
-            "companies": [{"name": "Test Co"}],
-            "dates": [],
-            "action_items": [{"task": "Follow up", "deadline": null}]
+            "person_in_charge": {"value": null, "confidence": 0.0},
+            "startup_name": {"value": "Test Co", "confidence": 0.85},
+            "partner_org": {"value": null, "confidence": 0.0},
+            "details": {"value": "Follow up meeting", "confidence": 0.80},
+            "date": {"value": null, "confidence": 0.0}
         }"""
 
         import socket
@@ -157,28 +160,27 @@ class TestGeminiRetryFlow:
             assert mock_model.generate_content.call_count == 2
 
             # Verify successful extraction
-            assert len(result.companies) == 1
-            assert result.companies[0].name == "Test Co"
-            assert len(result.action_items) == 1
-            assert result.action_items[0].task == "Follow up"
+            assert result.startup_name == "Test Co"
+            assert result.details == "Follow up meeting"
 
         except Exception as e:
             pytest.fail(f"Unexpected exception: {e}")
 
     @patch('builtins.open', new_callable=mock_open, read_data="Mock prompt template")
-    @patch('src.llm_adapters.gemini_adapter.genai')
+    @patch('llm_adapters.gemini_adapter.genai')
     def test_gemini_circuit_breaker_opens_on_repeated_failures(self, mock_genai, mock_file):
         """
         Test that circuit breaker opens after threshold failures.
 
         Scenario: 5 consecutive failures → circuit opens → subsequent calls fail fast
         """
-        # Create adapter with mock API key
-        adapter = GeminiAdapter(api_key="mock_api_key")
-
         # Mock GenerativeModel
         mock_model = Mock()
         mock_genai.GenerativeModel.return_value = mock_model
+        mock_genai.configure = Mock()  # Mock configure to prevent real API call
+
+        # Create adapter with mock API key (after mocking genai)
+        adapter = GeminiAdapter(api_key="mock_api_key")
 
         # All calls fail
         rate_limit_error = Exception("429 Resource Exhausted")

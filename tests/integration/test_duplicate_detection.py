@@ -20,13 +20,23 @@ class TestDuplicateDetection:
     def mock_notion_integrator(self):
         """Create a mock NotionIntegrator instance."""
         mock = Mock()
-        mock.notion_client = Mock()
+
+        # Set up client structure matching writer.py access pattern
+        mock.client = Mock()
+        mock.client.client = Mock()
+        mock.client.client.pages = Mock()
+        mock.client.client.pages.create = AsyncMock()
+        mock.client.client.pages.update = AsyncMock()
+        mock.client.client.databases = Mock()
+        mock.client.client.databases.query = AsyncMock()
+        mock.client.query_database = AsyncMock()
 
         # Mock schema discovery (async)
         mock_schema = Mock()
-        mock_schema.properties = {
+        mock_schema.database = Mock()
+        mock_schema.database.properties = {
             "협력주체": {"type": "title"},
-            "담당자": {"type": "rich_text"},
+            "담당자": {"type": "people"},
             "스타트업명": {"type": "relation"},
             "협업기관": {"type": "relation"},
             "협업내용": {"type": "rich_text"},
@@ -36,9 +46,10 @@ class TestDuplicateDetection:
             "요약": {"type": "rich_text"},
             "type_confidence": {"type": "number"},
             "intensity_confidence": {"type": "number"},
-            "email_id": {"type": "rich_text"},
+            "Email ID": {"type": "rich_text"},
             "classification_timestamp": {"type": "date"},
         }
+        mock.schema = mock_schema
         mock.discover_database_schema = AsyncMock(return_value=mock_schema)
 
         return mock
@@ -78,10 +89,10 @@ class TestDuplicateDetection:
         sample_data = create_valid_extracted_data(email_id="duplicate-test-001")
 
         # First write - succeeds
-        mock_notion_integrator.notion_client.pages.create = AsyncMock(
+        mock_notion_integrator.client.client.pages.create = AsyncMock(
             return_value={"id": "first-page-id-123", "object": "page", "properties": {}}
         )
-        mock_notion_integrator.notion_client.databases.query = AsyncMock(
+        mock_notion_integrator.client.query_database = AsyncMock(
             return_value={"results": []}  # No duplicate on first write
         )
 
@@ -92,7 +103,7 @@ class TestDuplicateDetection:
         assert result1.is_duplicate is False, "First write is not a duplicate"
 
         # Second write - detects duplicate, skips
-        mock_notion_integrator.notion_client.databases.query = AsyncMock(
+        mock_notion_integrator.client.query_database = AsyncMock(
             return_value={
                 "results": [
                     {
@@ -118,7 +129,7 @@ class TestDuplicateDetection:
             "page_id should be None for skipped duplicate"
 
         # Verify only ONE create call was made (first write only)
-        assert mock_notion_integrator.notion_client.pages.create.call_count == 1, \
+        assert mock_notion_integrator.client.client.pages.create.call_count == 1, \
             "Only one entry should be created (skip behavior)"
 
     @pytest.mark.asyncio
@@ -136,10 +147,10 @@ class TestDuplicateDetection:
         sample_data = create_valid_extracted_data(email_id="update-test-001")
 
         # First write - succeeds
-        mock_notion_integrator.notion_client.pages.create = AsyncMock(
+        mock_notion_integrator.client.client.pages.create = AsyncMock(
             return_value={"id": "original-page-id-456", "object": "page", "properties": {}}
         )
-        mock_notion_integrator.notion_client.databases.query = AsyncMock(
+        mock_notion_integrator.client.query_database = AsyncMock(
             return_value={"results": []}  # No duplicate on first write
         )
 
@@ -149,7 +160,7 @@ class TestDuplicateDetection:
         assert result1.page_id == "original-page-id-456"
 
         # Second write - detects duplicate, updates
-        mock_notion_integrator.notion_client.databases.query = AsyncMock(
+        mock_notion_integrator.client.query_database = AsyncMock(
             return_value={
                 "results": [
                     {
@@ -163,7 +174,7 @@ class TestDuplicateDetection:
                 ]
             }
         )
-        mock_notion_integrator.notion_client.pages.update = AsyncMock(
+        mock_notion_integrator.client.client.pages.update = AsyncMock(
             return_value={"id": "original-page-id-456", "object": "page", "properties": {}}
         )
 
@@ -178,7 +189,7 @@ class TestDuplicateDetection:
             "existing_page_id should match original entry"
 
         # Verify update API was called
-        mock_notion_integrator.notion_client.pages.update.assert_called_once()
+        mock_notion_integrator.client.client.pages.update.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_duplicate_detection_logging(
@@ -194,16 +205,16 @@ class TestDuplicateDetection:
         sample_data = create_valid_extracted_data(email_id="log-test-001")
 
         # First write
-        mock_notion_integrator.notion_client.pages.create = AsyncMock(
+        mock_notion_integrator.client.client.pages.create = AsyncMock(
             return_value={"id": "logged-page-id-789", "object": "page", "properties": {}}
         )
-        mock_notion_integrator.notion_client.databases.query = AsyncMock(
+        mock_notion_integrator.client.query_database = AsyncMock(
             return_value={"results": []}
         )
         await notion_writer_skip.create_collabiq_entry(sample_data)
 
         # Second write - should log skip
-        mock_notion_integrator.notion_client.databases.query = AsyncMock(
+        mock_notion_integrator.client.query_database = AsyncMock(
             return_value={
                 "results": [
                     {
