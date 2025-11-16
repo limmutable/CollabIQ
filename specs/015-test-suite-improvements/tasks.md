@@ -87,14 +87,14 @@
 
 ### Implementation for User Story 1
 
-- [ ] T014 [P] [US1] Implement `pytest` fixture for test Gmail account setup and teardown in `tests/conftest.py`
-- [ ] T015 [P] [US1] Implement `pytest` fixture for test Notion database setup and teardown in `tests/conftest.py`
-- [ ] T016 [US1] Integrate `GmailReceiver` with E2E tests to fetch real emails in `tests/e2e/test_full_pipeline.py`
-- [ ] T017 [US1] Implement Notion write validation in E2E tests in `tests/e2e/test_full_pipeline.py`
-- [ ] T018 [US1] Develop robust cleanup mechanism for Notion test entries in `src/collabiq/test_utils/notion_cleanup.py`
-- [ ] T019 [US1] Enhance `scripts/cleanup_test_entries.py` to utilize the new cleanup mechanism
+- [X] T014 [P] [US1] Implement `pytest` fixture for test Gmail account setup and teardown in `tests/conftest.py` ✅ Implemented gmail_test_account and gmail_receiver fixtures
+- [X] T015 [P] [US1] Implement `pytest` fixture for test Notion database setup and teardown in `tests/conftest.py` ✅ Implemented notion_test_database and notion_writer fixtures
+- [X] T016 [US1] Integrate `GmailReceiver` with E2E tests to fetch real emails in `tests/e2e/test_real_gmail_notion.py` ✅ Created new E2E test file with real Gmail integration
+- [X] T017 [US1] Implement Notion write validation in E2E tests in `tests/e2e/test_real_gmail_notion.py` ✅ Implemented validation tests for Notion writes
+- [X] T018 [US1] Develop robust cleanup mechanism for Notion test entries in `src/collabiq/test_utils/notion_cleanup.py` ✅ Implemented NotionTestCleanup with retry, verification, idempotency
+- [X] T019 [US1] Enhance `scripts/cleanup_test_entries.py` to utilize the new cleanup mechanism ✅ Rewrote script to use NotionTestCleanup module
 
-**Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
+**Checkpoint**: ✅ User Story 1 COMPLETE - Real E2E testing with Gmail/Notion integration and robust cleanup
 
 ---
 

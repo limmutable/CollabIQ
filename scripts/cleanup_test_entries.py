@@ -1,25 +1,36 @@
 #!/usr/bin/env python3
 """
-Cleanup Test Entries Script
+Cleanup Test Entries Script (Enhanced with T018)
 
-Deletes Notion entries from production database that match test email IDs.
-Uses email_id field to identify test entries created during E2E testing.
+Deletes Notion entries from test database that match test email IDs or test_run_id.
+Uses robust cleanup mechanism with retry logic, verification, and error handling.
 
 Safety Features:
 - Dry-run mode (preview only, no deletion)
 - Explicit confirmation required
-- Filters by email_id from test set only
-- Logs all deletions to audit trail
+- Filters by email_id or test_run_id only
+- Retry logic with exponential backoff
+- Post-cleanup verification
+- Detailed audit logging
 
 Usage:
-    uv run python scripts/cleanup_test_entries.py                 # Interactive
-    uv run python scripts/cleanup_test_entries.py --dry-run      # Preview only
-    uv run python scripts/cleanup_test_entries.py --yes          # Skip confirmation
+    # Clean by test run ID
+    uv run python scripts/cleanup_test_entries.py --test-run-id test-001
+
+    # Clean by email IDs from file
+    uv run python scripts/cleanup_test_entries.py --email-ids-file data/e2e_test/test_email_ids.json
+
+    # Preview only (no deletion)
+    uv run python scripts/cleanup_test_entries.py --test-run-id test-001 --dry-run
+
+    # Skip confirmation prompt
+    uv run python scripts/cleanup_test_entries.py --test-run-id test-001 --yes
 """
 
 import argparse
 import json
 import sys
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -27,7 +38,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.notion_integrator.notion_client_wrapper import NotionClientWrapper
+from src.collabiq.test_utils.notion_cleanup import NotionTestCleanup
 
 
 def load_test_email_ids(email_ids_file: str) -> list[str]:
@@ -50,48 +61,12 @@ def load_test_email_ids(email_ids_file: str) -> list[str]:
     return email_ids
 
 
-def find_test_entries(notion_client: NotionClientWrapper, email_ids: list[str]) -> list[dict]:
-    """Find all Notion entries matching test email IDs"""
-    print("\nSearching for test entries in production database...")
-
-    # Query Notion database for entries with matching email_ids
-    # Assuming notion_client has method to query by email_id field
-    test_entries = []
-
-    for email_id in email_ids:
-        try:
-            # Query database for this email_id
-            # Note: Actual implementation depends on NotionClientWrapper API
-            entries = notion_client.query_by_email_id(email_id)
-            test_entries.extend(entries)
-        except Exception as e:
-            print(f"  Warning: Failed to query email_id {email_id}: {e}")
-
-    print(f"Found {len(test_entries)} test entries to delete")
-    return test_entries
-
-
-def preview_entries(entries: list[dict]):
-    """Show preview of entries that will be deleted"""
-    print("\n" + "=" * 70)
-    print("PREVIEW: The following entries will be deleted:")
-    print("=" * 70)
-
-    for i, entry in enumerate(entries, 1):
-        print(f"\n{i}. Entry ID: {entry.get('id', 'unknown')}")
-        print(f"   Email ID: {entry.get('email_id', 'unknown')}")
-        print(f"   Subject: {entry.get('subject', 'No subject')[:50]}")
-        print(f"   Created: {entry.get('created_time', 'unknown')}")
-
-    print("\n" + "=" * 70)
-    print(f"TOTAL: {len(entries)} entries will be deleted")
-    print("=" * 70)
-
-
-def confirm_deletion() -> bool:
+def confirm_deletion(entry_count: int) -> bool:
     """Prompt user for explicit confirmation"""
-    print("\n⚠️  WARNING: This action will PERMANENTLY delete the entries above")
-    print("⚠️  from the production CollabIQ database.")
+    print("\n" + "=" * 70)
+    print(f"⚠️  WARNING: This will PERMANENTLY delete {entry_count} entries")
+    print("⚠️  from the Notion test database.")
+    print("=" * 70)
     print()
 
     while True:
@@ -105,58 +80,24 @@ def confirm_deletion() -> bool:
             print("Please type 'yes' or 'no'")
 
 
-def delete_entries(
-    notion_client: NotionClientWrapper, entries: list[dict], audit_log_path: Path
-) -> int:
-    """Delete entries and log to audit trail"""
-    print("\nDeleting entries...")
-
-    deleted_count = 0
-    audit_records = []
-
-    for entry in entries:
-        entry_id = entry.get("id")
-
-        try:
-            # Delete entry from Notion
-            notion_client.delete_page(entry_id)
-
-            print(f"  ✓ Deleted entry: {entry_id}")
-            deleted_count += 1
-
-            # Record deletion in audit log
-            audit_records.append(
-                {
-                    "timestamp": datetime.now().isoformat(),
-                    "action": "deleted",
-                    "entry_id": entry_id,
-                    "email_id": entry.get("email_id", "unknown"),
-                    "subject": entry.get("subject", "No subject"),
-                }
-            )
-
-        except Exception as e:
-            print(f"  ✗ Failed to delete entry {entry_id}: {e}")
-
-    # Write audit log
-    if audit_records:
-        with audit_log_path.open("w", encoding="utf-8") as f:
-            json.dump(audit_records, f, indent=2, ensure_ascii=False)
-
-        print(f"\nAudit trail saved to: {audit_log_path}")
-
-    return deleted_count
-
-
 def main():
     parser = argparse.ArgumentParser(
-        description="Delete test entries from production Notion database"
+        description="Delete test entries from Notion test database using robust cleanup mechanism"
+    )
+    parser.add_argument(
+        "--test-run-id",
+        type=str,
+        help="Test run ID to filter entries (e.g., test-001)",
     )
     parser.add_argument(
         "--email-ids-file",
         type=str,
-        default="data/e2e_test/test_email_ids.json",
-        help="Path to test email IDs file (default: data/e2e_test/test_email_ids.json)",
+        help="Path to test email IDs file (e.g., data/e2e_test/test_email_ids.json)",
+    )
+    parser.add_argument(
+        "--database-id",
+        type=str,
+        help="Notion database ID (uses TEST_NOTION_DATABASE_ID env var if not provided)",
     )
     parser.add_argument(
         "--dry-run",
@@ -168,32 +109,75 @@ def main():
         action="store_true",
         help="Skip confirmation prompt (use with caution)",
     )
+    parser.add_argument(
+        "--no-verify",
+        action="store_true",
+        help="Skip post-cleanup verification",
+    )
 
     args = parser.parse_args()
 
-    # Load test email IDs
-    email_ids = load_test_email_ids(args.email_ids_file)
-
-    if len(email_ids) == 0:
-        print("ERROR: No test email IDs found in file")
+    # Validate arguments: need either test_run_id or email_ids_file
+    if not args.test_run_id and not args.email_ids_file:
+        print("ERROR: Must provide either --test-run-id or --email-ids-file")
+        parser.print_help()
         sys.exit(1)
 
-    # Initialize Notion client
+    # Get database ID from args or environment
+    database_id = args.database_id or os.getenv("TEST_NOTION_DATABASE_ID")
+
+    if not database_id:
+        print("ERROR: Database ID not provided. Set TEST_NOTION_DATABASE_ID env var or use --database-id")
+        sys.exit(1)
+
+    # Load email IDs if provided
+    email_ids = None
+    if args.email_ids_file:
+        email_ids = load_test_email_ids(args.email_ids_file)
+
+        if len(email_ids) == 0:
+            print("ERROR: No test email IDs found in file")
+            sys.exit(1)
+
+    # Initialize cleanup manager
     try:
-        notion_client = NotionClientWrapper()
+        cleanup = NotionTestCleanup(
+            database_id=database_id,
+            test_run_id=args.test_run_id,
+            email_ids=email_ids,
+            max_retries=3,
+            timeout_seconds=30,
+        )
     except Exception as e:
-        print(f"ERROR: Failed to initialize Notion client: {e}")
+        print(f"ERROR: Failed to initialize cleanup manager: {e}")
         sys.exit(1)
 
-    # Find test entries
-    test_entries = find_test_entries(notion_client, email_ids)
+    print("\n" + "=" * 70)
+    print("Notion Test Entry Cleanup")
+    print("=" * 70)
+    print(f"Database ID: {database_id}")
+    if args.test_run_id:
+        print(f"Test Run ID: {args.test_run_id}")
+    if email_ids:
+        print(f"Email IDs: {len(email_ids)} emails")
+    print("=" * 70)
+
+    # Find test entries (preview)
+    print("\nSearching for test entries...")
+    test_entries = cleanup.find_test_entries()
 
     if len(test_entries) == 0:
         print("\n✓ No test entries found. Database is clean.")
         sys.exit(0)
 
     # Preview entries
-    preview_entries(test_entries)
+    print(f"\nFound {len(test_entries)} test entries:")
+    for i, entry in enumerate(test_entries[:10], 1):  # Show first 10
+        page_id = entry.get("id", "unknown")
+        print(f"  {i}. Page ID: {page_id[:16]}...")
+
+    if len(test_entries) > 10:
+        print(f"  ... and {len(test_entries) - 10} more")
 
     # Dry-run mode: stop here
     if args.dry_run:
@@ -203,21 +187,60 @@ def main():
 
     # Confirm deletion
     if not args.yes:
-        if not confirm_deletion():
+        if not confirm_deletion(len(test_entries)):
             print("\nCancelled. No entries deleted.")
             sys.exit(0)
     else:
         print("\n[SKIP CONFIRMATION] Proceeding with deletion...")
 
-    # Delete entries
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    audit_log_path = Path(f"data/e2e_test/cleanup_audit_{timestamp}.log")
+    # Perform cleanup with retry logic and verification
+    print("\nStarting cleanup (with retry logic and verification)...")
 
-    deleted_count = delete_entries(notion_client, test_entries, audit_log_path)
+    try:
+        result = cleanup.cleanup_test_entries(
+            verify=not args.no_verify,
+            continue_on_error=True
+        )
 
-    print(f"\n{'='*70}")
-    print(f"✓ Successfully deleted {deleted_count}/{len(test_entries)} entries")
-    print(f"{'='*70}")
+        # Print results
+        print("\n" + "=" * 70)
+        print("Cleanup Complete")
+        print("=" * 70)
+        print(f"✓ Successfully cleaned: {result.cleaned} entries")
+        print(f"✗ Errors: {result.errors}")
+        print(f"⏱  Duration: {result.duration:.1f}s")
+
+        if not args.no_verify:
+            if result.verified:
+                print(f"✓ Verification: All entries removed")
+            else:
+                print(f"⚠️  Verification: Some entries may still exist")
+
+        if result.failed_ids:
+            print(f"\nFailed to delete {len(result.failed_ids)} entries:")
+            for failed_id in result.failed_ids[:5]:  # Show first 5
+                print(f"  - {failed_id}")
+            if len(result.failed_ids) > 5:
+                print(f"  ... and {len(result.failed_ids) - 5} more")
+
+        # Save audit log
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        audit_log_path = Path(f"data/e2e_test/cleanup_audit_{timestamp}.json")
+        audit_log_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with audit_log_path.open("w", encoding="utf-8") as f:
+            json.dump(result.to_dict(), f, indent=2, ensure_ascii=False)
+
+        print(f"\n📝 Audit log saved to: {audit_log_path}")
+        print("=" * 70)
+
+        # Exit with non-zero if there were errors
+        if result.errors > 0:
+            sys.exit(1)
+
+    except Exception as e:
+        print(f"\nERROR: Cleanup failed: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

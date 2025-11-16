@@ -17,7 +17,14 @@ Usage (CLI):
 
 __version__ = "0.1.0"
 
-# Library exports will be added as modules are implemented
-# from .notion_cleanup import cleanup_notion
+# Library exports
+from .notion_cleanup import cleanup_notion, NotionTestCleanup
+
+# Future exports (to be implemented)
 # from .performance_monitor import monitor_performance, assert_performance
 # from .fuzz_generator import generate_fuzz_input
+
+__all__ = [
+    "cleanup_notion",
+    "NotionTestCleanup",
+]
