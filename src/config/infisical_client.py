@@ -15,7 +15,12 @@ import os
 import time
 from typing import Any, Dict, Optional
 
-from infisical_sdk import InfisicalSDKClient
+try:
+    from infisical_sdk import InfisicalSDKClient
+    INFISICAL_AVAILABLE = True
+except ImportError:
+    InfisicalSDKClient = None  # type: ignore
+    INFISICAL_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -162,6 +167,11 @@ class InfisicalClient:
         """
         if not self.enabled:
             logger.info("Infisical is disabled - secrets will be read from .env file")
+            return
+
+        if not INFISICAL_AVAILABLE:
+            logger.warning("Infisical SDK not available - falling back to .env file")
+            self.enabled = False
             return
 
         try:

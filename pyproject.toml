@@ -1,6 +1,41 @@
 [project]
 name = "collabiq"
 version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    # CLI framework
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    # API clients
+    "notion-client>=2.2.0",
+    "google-api-python-client>=2.100.0",
+    "google-auth-httplib2>=0.2.0",
+    "google-auth-oauthlib>=1.1.0",
+    "anthropic>=0.25.0",
+    "openai>=1.0.0",
+    "google-generativeai>=0.3.0",
+    # Data validation & handling
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "python-dateutil>=2.8.0",
+    # Utilities
+    "python-dotenv>=1.0.0",
+    "tenacity>=8.2.0",
+    "requests>=2.31.0",
+    "rapidfuzz>=3.0.0",
+    "email-validator>=2.3.0",
+    "dateparser>=1.2.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-mock>=3.11.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+]
 
 [project.scripts]
 collabiq = "collabiq.cli:app"
