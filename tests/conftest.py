@@ -58,27 +58,44 @@ def gmail_test_account() -> Optional[dict]:
     """Provide test Gmail account credentials for E2E testing.
 
     Checks environment variables for test Gmail configuration.
-    Returns None if credentials are not available (will skip E2E tests).
+    Falls back to production credentials if test credentials not configured.
+
+    Priority order:
+    1. TEST_GMAIL_* (dedicated test account)
+    2. GOOGLE_CREDENTIALS_PATH / GMAIL_TOKEN_PATH (production account)
 
     Required Environment Variables:
-        TEST_GMAIL_CREDENTIALS_PATH: Path to Gmail OAuth credentials JSON
-        TEST_GMAIL_TOKEN_PATH: Path to Gmail OAuth token JSON
-        TEST_GMAIL_ADDRESS: Email address of test account
+        TEST_GMAIL_CREDENTIALS_PATH: Path to Gmail OAuth credentials JSON (optional)
+        TEST_GMAIL_TOKEN_PATH: Path to Gmail OAuth token JSON (optional)
+        TEST_GMAIL_ADDRESS: Email address of test account (optional)
+
+        OR (fallback to production):
+        GOOGLE_CREDENTIALS_PATH or GMAIL_CREDENTIALS_PATH: Production credentials
+        GMAIL_TOKEN_PATH: Production token
+        EMAIL_ADDRESS: Production email address
 
     Returns:
-        dict with keys: credentials_path, token_path, email_address
+        dict with keys: credentials_path, token_path, email_address, is_production
         None if credentials not configured
     """
+    # Try dedicated test credentials first
     credentials_path = os.getenv("TEST_GMAIL_CREDENTIALS_PATH")
     token_path = os.getenv("TEST_GMAIL_TOKEN_PATH")
     email_address = os.getenv("TEST_GMAIL_ADDRESS")
+    is_production = False
+
+    # Fallback to production credentials if test credentials not available
+    if not all([credentials_path, token_path, email_address]):
+        credentials_path = os.getenv("GOOGLE_CREDENTIALS_PATH") or os.getenv("GMAIL_CREDENTIALS_PATH")
+        token_path = os.getenv("GMAIL_TOKEN_PATH")
+        email_address = os.getenv("EMAIL_ADDRESS")
+        is_production = True
 
     if not all([credentials_path, token_path, email_address]):
         pytest.skip(
-            "Gmail test credentials not configured. Set:\n"
-            "  - TEST_GMAIL_CREDENTIALS_PATH\n"
-            "  - TEST_GMAIL_TOKEN_PATH\n"
-            "  - TEST_GMAIL_ADDRESS"
+            "Gmail credentials not configured. Set either:\n"
+            "  Test account: TEST_GMAIL_CREDENTIALS_PATH, TEST_GMAIL_TOKEN_PATH, TEST_GMAIL_ADDRESS\n"
+            "  OR Production: GOOGLE_CREDENTIALS_PATH, GMAIL_TOKEN_PATH, EMAIL_ADDRESS"
         )
         return None
 
@@ -95,6 +112,7 @@ def gmail_test_account() -> Optional[dict]:
         "credentials_path": credentials_path,
         "token_path": token_path,
         "email_address": email_address,
+        "is_production": is_production,
     }
 
 
@@ -128,30 +146,47 @@ def notion_test_database() -> Optional[dict]:
     """Provide test Notion database configuration for E2E testing.
 
     Checks environment variables for test Notion database.
-    Returns None if not configured (will skip E2E tests).
+    Falls back to production database if test database not configured.
+
+    Priority order:
+    1. TEST_NOTION_* (dedicated test database)
+    2. NOTION_API_KEY / NOTION_DATABASE_ID_COLLABIQ (production database)
 
     Required Environment Variables:
-        TEST_NOTION_TOKEN: Notion API token for testing
-        TEST_NOTION_DATABASE_ID: ID of test database for E2E tests
+        TEST_NOTION_TOKEN: Notion API token for testing (optional)
+        TEST_NOTION_DATABASE_ID: ID of test database for E2E tests (optional)
+
+        OR (fallback to production):
+        NOTION_API_KEY: Production Notion token
+        NOTION_DATABASE_ID_COLLABIQ: Production CollabIQ database ID
 
     Returns:
-        dict with keys: token, database_id
+        dict with keys: token, database_id, is_production
         None if not configured
     """
+    # Try dedicated test database first
     token = os.getenv("TEST_NOTION_TOKEN")
     database_id = os.getenv("TEST_NOTION_DATABASE_ID")
+    is_production = False
+
+    # Fallback to production database if test database not available
+    if not all([token, database_id]):
+        token = os.getenv("NOTION_API_KEY")
+        database_id = os.getenv("NOTION_DATABASE_ID_COLLABIQ")
+        is_production = True
 
     if not all([token, database_id]):
         pytest.skip(
-            "Notion test database not configured. Set:\n"
-            "  - TEST_NOTION_TOKEN\n"
-            "  - TEST_NOTION_DATABASE_ID"
+            "Notion database not configured. Set either:\n"
+            "  Test database: TEST_NOTION_TOKEN, TEST_NOTION_DATABASE_ID\n"
+            "  OR Production: NOTION_API_KEY, NOTION_DATABASE_ID_COLLABIQ"
         )
         return None
 
     return {
         "token": token,
         "database_id": database_id,
+        "is_production": is_production,
     }
 
 

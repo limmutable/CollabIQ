@@ -2,22 +2,25 @@
 Real E2E Tests with Gmail and Notion Integration (T016, T017)
 
 These tests validate the complete pipeline with real external APIs:
-- Fetch real emails from test Gmail account
+- Fetch real emails from Gmail account (test or production)
 - Process emails through LLM extraction
-- Write entries to test Notion database
+- Write entries to Notion database (test or production)
 - Validate Notion entries
 
-Requirements:
-    - TEST_GMAIL_CREDENTIALS_PATH env var
-    - TEST_GMAIL_TOKEN_PATH env var
-    - TEST_GMAIL_ADDRESS env var
-    - TEST_NOTION_TOKEN env var
-    - TEST_NOTION_DATABASE_ID env var
+Configuration Priority:
+    1. Dedicated test accounts (TEST_GMAIL_*, TEST_NOTION_*)
+    2. Production accounts (GOOGLE_CREDENTIALS_PATH, NOTION_API_KEY, etc.)
+
+Environment Variables:
+    E2E_MAX_EMAILS: Maximum number of emails to process in tests (default: 5)
+    E2E_SKIP_CLEANUP: Skip cleanup if set to 'true' (default: false)
 
 Tests will be skipped if credentials are not configured.
+Tests will show warnings when using production accounts.
 """
 
 import pytest
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -25,6 +28,11 @@ from e2e_test.runner import E2ERunner
 from llm_orchestrator.orchestrator import LLMOrchestrator
 from llm_orchestrator.types import OrchestrationConfig
 from models.classification_service import ClassificationService
+
+
+# Configuration for E2E tests
+MAX_EMAILS = int(os.getenv("E2E_MAX_EMAILS", "5"))  # Process 5 emails by default
+SKIP_CLEANUP = os.getenv("E2E_SKIP_CLEANUP", "false").lower() == "true"
 
 
 @pytest.fixture
@@ -68,56 +76,83 @@ def e2e_runner(gmail_receiver, llm_orchestrator, classification_service, notion_
 @pytest.mark.integration
 def test_fetch_real_email_from_gmail(gmail_receiver, gmail_test_account):
     """
-    T016: Test fetching real emails from Gmail test account
+    T016: Test fetching real emails from Gmail account
 
     Acceptance Scenario 1 (User Story 1):
-    Given a configured test Gmail account and Notion database,
+    Given a configured Gmail account,
     When the automated E2E test suite is executed,
     Then real emails are fetched from Gmail.
+
+    Note: Uses MAX_EMAILS (default 5) to limit email processing in tests.
     """
-    # Fetch recent emails from test account
-    query = f"to:{gmail_test_account['email_address']} newer_than:7d"
+    # Show warning if using production account
+    if gmail_test_account['is_production']:
+        print("\n⚠️  WARNING: Using PRODUCTION Gmail account for E2E testing")
+        print(f"    Account: {gmail_test_account['email_address']}")
+        print(f"    Max emails: {MAX_EMAILS}")
+
+    # Fetch recent emails from account
+    # For tests: Fetch a fixed number of emails (unlike live processing which only fetches unprocessed)
+    query = f"to:{gmail_test_account['email_address']} newer_than:30d"
 
     raw_emails = gmail_receiver.fetch_emails(
-        max_results=5,
+        max_results=MAX_EMAILS,
         query=query
     )
 
     # Verify emails were fetched
-    assert len(raw_emails) > 0, "Should fetch at least 1 email from test account"
+    assert len(raw_emails) > 0, f"Should fetch at least 1 email (tried to fetch {MAX_EMAILS})"
     assert all(hasattr(email, 'email_id') for email in raw_emails), "All emails should have email_id"
     assert all(hasattr(email, 'subject') for email in raw_emails), "All emails should have subject"
     assert all(hasattr(email, 'cleaned_body') for email in raw_emails), "All emails should have cleaned_body"
 
-    print(f"\n✓ Successfully fetched {len(raw_emails)} real emails from Gmail")
+    account_type = "PRODUCTION" if gmail_test_account['is_production'] else "TEST"
+    print(f"\n✓ Successfully fetched {len(raw_emails)} real emails from {account_type} Gmail")
     for email in raw_emails[:3]:  # Show first 3
         print(f"  - {email.email_id}: {email.subject[:50]}")
 
 
 @pytest.mark.e2e
 @pytest.mark.integration
-def test_process_real_email_to_notion(e2e_runner, gmail_test_account):
+def test_process_real_email_to_notion(e2e_runner, gmail_test_account, notion_test_database):
     """
     T016 + T017: Test complete pipeline from Gmail fetch to Notion write
 
     Acceptance Scenarios 2-3 (User Story 1):
     - Given real emails are fetched and processed,
       When the automated E2E test suite proceeds,
-      Then corresponding entries are created in the test Notion database.
-    - Given entries are created in the test Notion database,
+      Then corresponding entries are created in the Notion database.
+    - Given entries are created in the Notion database,
       When validation is performed,
       Then the entries match the extracted data.
+
+    Note: Uses MAX_EMAILS (default 5) to limit processing. Processes a fixed
+    number of emails (unlike live which only processes unprocessed emails).
     """
-    # Fetch one recent email from test account
-    query = f"to:{gmail_test_account['email_address']} newer_than:7d"
+    # Show warnings if using production accounts
+    if gmail_test_account['is_production']:
+        print("\n⚠️  WARNING: Using PRODUCTION Gmail account")
+        print(f"    Account: {gmail_test_account['email_address']}")
+
+    if notion_test_database['is_production']:
+        print("⚠️  WARNING: Using PRODUCTION Notion database")
+        print(f"    Database ID: {notion_test_database['database_id'][:16]}...")
+        if not SKIP_CLEANUP:
+            print("    Test entries will be created and cleaned up!")
+
+    print(f"    Processing up to {MAX_EMAILS} emails")
+
+    # Fetch recent emails from account
+    # For tests: Process a fixed number, unlike live which only processes new/unprocessed
+    query = f"to:{gmail_test_account['email_address']} newer_than:30d"
 
     # Get email IDs to process
     raw_emails = e2e_runner.gmail_receiver.fetch_emails(
-        max_results=1,
+        max_results=MAX_EMAILS,
         query=query
     )
 
-    assert len(raw_emails) > 0, "Should have at least 1 test email"
+    assert len(raw_emails) > 0, f"Should have at least 1 email (tried {MAX_EMAILS})"
 
     email_ids = [email.email_id for email in raw_emails]
 
@@ -143,10 +178,14 @@ def test_process_real_email_to_notion(e2e_runner, gmail_test_account):
         f"Critical errors detected: {test_run.error_summary.get('critical', 0)} (SC-003)"
     )
 
-    print(f"\n✓ E2E Pipeline Success:")
+    account_type = "PRODUCTION" if gmail_test_account['is_production'] or notion_test_database['is_production'] else "TEST"
+    print(f"\n✓ E2E Pipeline Success ({account_type} accounts):")
     print(f"  - Emails processed: {test_run.emails_processed}")
     print(f"  - Success rate: {success_rate:.1%}")
     print(f"  - Notion entries created: {test_run.success_count}")
+
+    if not SKIP_CLEANUP and notion_test_database['is_production']:
+        print(f"  ⚠️  Cleanup needed for {test_run.success_count} entries in production database!")
 
 
 @pytest.mark.e2e
