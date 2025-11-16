@@ -21,8 +21,8 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+# Add src directory to path to match pytest pythonpath configuration
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from llm_adapters.gemini_adapter import GeminiAdapter
 from llm_provider.types import ExtractedEntities

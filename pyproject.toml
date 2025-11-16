@@ -46,6 +46,7 @@ testpaths = ["tests"]
 markers = [
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
     "notion: marks tests that interact with Notion API (deselect with '-m \"not notion\"')",
+    "e2e: marks tests as end-to-end tests (deselect with '-m \"not e2e\"')",
 ]
 # Prevent Pydantic models from being collected as test classes
 norecursedirs = [".*", "build", "dist", "CVS", "_darcs", "{arch}", "*.egg", "venv", ".venv", "src"]
