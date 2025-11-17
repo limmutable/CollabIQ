@@ -106,12 +106,12 @@
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create `src/collabiq/date_parser/parser.py` for date parsing and normalization logic
-- [ ] T021 [P] [US2] Create `src/collabiq/date_parser/models.py` for date-related Pydantic models
-- [ ] T022 [US2] Implement comprehensive unit tests for `src/collabiq/date_parser/parser.py` in `tests/unit/test_date_parser.py`
-- [ ] T023 [US2] Implement integration tests for `date_parser` with email content in `tests/integration/test_date_extraction.py`
+- [X] T020 [P] [US2] Create `src/collabiq/date_parser/parser.py` for date parsing and normalization logic
+- [X] T021 [P] [US2] Create `src/collabiq/date_parser/models.py` for date-related Pydantic models
+- [X] T022 [US2] Implement comprehensive unit tests for `src/collabiq/date_parser/parser.py` in `tests/unit/test_date_parser.py`
+- [X] T023 [US2] Implement integration tests for `date_parser` with email content in `tests/integration/test_date_extraction.py`
 
-**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
+**Checkpoint**: ✅ User Story 2 COMPLETE - Date extraction library with comprehensive testing (51 unit tests + 23 integration tests = 74 tests passing)
 
 ---
 
@@ -123,16 +123,59 @@
 
 ### Implementation for User Story 3
 
-- [ ] T024 [P] [US3] Create `src/collabiq/llm_benchmarking/suite.py` for benchmarking logic
-- [ ] T025 [P] [US3] Create `src/collabiq/llm_benchmarking/prompts.py` for prompt variations
-- [ ] T026 [US3] Implement benchmarking suite to evaluate LLM performance on Korean/English text in `src/collabiq/llm_benchmarking/suite.py`
-- [ ] T027 [US3] Develop prompt optimization tests in `tests/integration/test_llm_prompts.py`
-- [ ] T027a [US3] Create `src/collabiq/llm_benchmarking/ab_testing.py` for A/B test framework
-- [ ] T027b [US3] Implement A/B testing infrastructure for comparing prompt variations in `tests/integration/test_llm_prompts.py`
-- [ ] T027c [US3] Create test cases for at least 3 prompt variations for Korean text extraction in `tests/integration/test_llm_prompts.py`
-- [ ] T028 [US3] Create `scripts/benchmark_llm_performance.py` to run the benchmarking suite
+- [X] T024 [P] [US3] Create `src/collabiq/llm_benchmarking/suite.py` for benchmarking logic
+- [X] T025 [P] [US3] Create `src/collabiq/llm_benchmarking/prompts.py` for prompt variations
+- [X] T026 [US3] Implement benchmarking suite to evaluate LLM performance on Korean/English text in `src/collabiq/llm_benchmarking/suite.py`
+- [X] T027 [US3] Develop prompt optimization tests in `tests/integration/test_llm_prompts.py`
+- [X] T027a [US3] Create `src/collabiq/llm_benchmarking/ab_testing.py` for A/B test framework
+- [X] T027b [US3] Implement A/B testing infrastructure for comparing prompt variations in `tests/integration/test_llm_prompts.py`
+- [X] T027c [US3] Create test cases for at least 3 prompt variations for Korean text extraction in `tests/integration/test_llm_prompts.py`
+- [X] T028 [US3] Create `scripts/benchmark_llm_performance.py` to run the benchmarking suite
 
-**Checkpoint**: All user stories should now be independently functional
+**Checkpoint**: ✅ User Story 3 COMPLETE - LLM benchmarking framework with 5 prompt variations and 31 integration tests
+
+---
+
+## Phase 4.5: Date Parser Production Integration (Priority: P1) 🎯 PRODUCTION IMPACT
+
+**Goal**: Integrate the enhanced date_parser library into production LLM adapters to improve date extraction accuracy.
+
+**Why This Phase**: Phases 1-4 built testing infrastructure but don't improve production. This phase delivers the actual accuracy improvement by replacing the old date_utils with the robust, tested date_parser.
+
+**Success Criteria**: Date extraction accuracy improves from baseline ~85% to target 98% (per SC-002).
+
+### Implementation for Date Parser Integration
+
+- [ ] T020a [P] [US2-INT] Replace `llm_provider.date_utils` imports with `collabiq.date_parser` in `src/llm_adapters/gemini_adapter.py`
+- [ ] T020b [P] [US2-INT] Replace `llm_provider.date_utils` imports with `collabiq.date_parser` in `src/llm_adapters/claude_adapter.py`
+- [ ] T020c [P] [US2-INT] Replace `llm_provider.date_utils` imports with `collabiq.date_parser` in `src/llm_adapters/openai_adapter.py`
+- [ ] T020d [US2-INT] Create integration tests in `tests/integration/test_adapter_date_parsing.py` to verify adapters use enhanced date_parser with overlap prevention and confidence scoring
+- [ ] T020e [US2-INT] Run E2E tests with real Gmail emails containing various Korean date formats and validate extraction accuracy meets 98% target
+- [ ] T020f [US2-INT] Update `src/llm_provider/date_utils.py` with deprecation notice pointing to new `collabiq.date_parser` module
+
+**Checkpoint**: Date parser integrated into production - actual accuracy improvement delivered
+
+---
+
+## Phase 5.5: LLM Prompt Production Integration (Priority: P2) 🎯 PRODUCTION IMPACT
+
+**Goal**: Use benchmarking results to deploy optimized prompts into production adapters, improving Korean text extraction accuracy.
+
+**Why This Phase**: Phase 5 built benchmarking tools but doesn't improve production. This phase delivers the actual quality improvement by deploying winning prompts from A/B tests.
+
+**Success Criteria**: Korean text extraction accuracy improves by at least 10% (per SC-003, baseline OpenAI ~70%).
+
+### Implementation for Prompt Optimization Integration
+
+- [ ] T028a [US3-INT] Run `scripts/benchmark_llm_performance.py` with production Korean email samples (minimum 20 samples) to identify winning prompt variation
+- [ ] T028b [US3-INT] Document benchmark results in `data/test_metrics/prompt_optimization_results.md` with detailed accuracy/confidence comparison across all 5 prompt variations
+- [ ] T028c [US3-INT] Create `src/collabiq/llm_benchmarking/prompt_optimizer.py` module to generate optimized prompts based on benchmark results
+- [ ] T028d [US3-INT] Update `src/llm_adapters/gemini_adapter.py._build_prompt()` to use winning Korean-optimized prompt from benchmarks
+- [ ] T028e [US3-INT] Update `src/llm_adapters/claude_adapter.py` prompt construction to use optimized prompt for Korean text
+- [ ] T028f [US3-INT] Create integration tests in `tests/integration/test_adapter_korean_prompts.py` to verify adapters use optimized prompts and accuracy improved by 10%+
+- [ ] T028g [US3-INT] Run E2E tests with real Korean emails and validate extraction accuracy meets 10% improvement target (70% → 80%+)
+
+**Checkpoint**: Optimized prompts deployed to production - actual Korean text quality improvement delivered
 
 ---
 
@@ -209,6 +252,8 @@
 - **User Story 1 (P1)**: Can start after Foundational (Phase 2) - No dependencies on other stories
 - **User Story 2 (P1)**: Can start after Foundational (Phase 2) - May integrate with US1 but should be independently testable
 - **User Story 3 (P2)**: Can start after Foundational (Phase 2) - May integrate with US1/US2 but should be independently testable
+- **Phase 4.5 (P1 - PRODUCTION)**: Depends on Phase 4 completion - Integrates date_parser into production adapters
+- **Phase 5.5 (P2 - PRODUCTION)**: Depends on Phase 5 completion - Integrates optimized prompts into production adapters
 - **User Story 5 (P2)**: Can start after Foundational (Phase 2) - May integrate with US1 but should be independently testable
 - **User Story 6 (P2)**: Can start after Foundational (Phase 2) - May integrate with US1 but should be independently testable
 - **User Story 4 (P3)**: Can start after Foundational (Phase 2) - No dependencies on other stories
@@ -259,12 +304,14 @@ Task: "Implement pytest fixture for test Notion database setup and teardown in t
 
 1. Complete Setup + Foundational → Foundation ready
 2. Add User Story 1 → Test independently → Deploy/Demo (MVP!)
-3. Add User Story 2 → Test independently → Deploy/Demo
-4. Add User Story 3 → Test independently → Deploy/Demo
-5. Add User Story 5 → Test independently → Deploy/Demo
-6. Add User Story 6 → Test independently → Deploy/Demo
-7. Add User Story 4 → Test independently → Deploy/Demo
-8. Each story adds value without breaking previous stories
+3. Add User Story 2 → Test independently (date_parser library) → Ready for integration
+4. **Add Phase 4.5 → Integrate date_parser → Deploy/Demo (PRODUCTION IMPACT: 85% → 98% date accuracy)**
+5. Add User Story 3 → Test independently (benchmarking tools) → Ready for integration
+6. **Add Phase 5.5 → Integrate optimized prompts → Deploy/Demo (PRODUCTION IMPACT: 10%+ Korean accuracy)**
+7. Add User Story 5 → Test independently → Deploy/Demo
+8. Add User Story 6 → Test independently → Deploy/Demo
+9. Add User Story 4 → Test independently → Deploy/Demo
+10. Each story adds value without breaking previous stories
 
 ### Parallel Team Strategy
 

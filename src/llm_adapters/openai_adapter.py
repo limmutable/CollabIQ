@@ -23,7 +23,7 @@ from llm_provider.exceptions import (
     LLMValidationError,
 )
 from llm_provider.types import ConfidenceScores, ExtractedEntities
-from llm_provider.date_utils import parse_date
+from collabiq.date_parser.parser import parse_date
 
 logger = logging.getLogger(__name__)
 
@@ -185,13 +185,14 @@ class OpenAIAdapter(LLMProvider):
                     return field_data.get("confidence", default)
                 return default
 
-            # Parse date if present
+            # Parse date if present (using enhanced date_parser)
             date_value = None
             date_field = data.get("date")
             if date_field:
                 date_str = get_value(date_field)
                 if date_str:
-                    date_value = parse_date(date_str)
+                    parsed_result = parse_date(date_str)
+                    date_value = parsed_result.parsed_date if parsed_result else None
 
             # Build ExtractedEntities
             entities = ExtractedEntities(

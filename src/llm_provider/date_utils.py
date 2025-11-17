@@ -1,5 +1,36 @@
 """Date parsing utilities for multi-format date handling.
 
+⚠️ DEPRECATION NOTICE (Phase 015 - Phase 4.5)
+===============================================
+This module is DEPRECATED as of Phase 4.5 (Date Parser Integration).
+
+All production code should now use the enhanced date_parser library:
+    from collabiq.date_parser import parse_date
+
+The enhanced date_parser provides:
+✅ Better Korean date format support (full dates, partial dates, week notation)
+✅ Confidence scoring for parsed dates
+✅ Format detection (ISO, English, Korean, relative)
+✅ Overlap prevention for ambiguous date ranges
+✅ 51 comprehensive unit tests
+
+This legacy module is kept only for backward compatibility and will be
+removed in a future phase. DO NOT use this module in new code.
+
+Migration Guide:
+----------------
+OLD CODE (llm_provider.date_utils):
+    from llm_provider.date_utils import parse_date
+    result = parse_date("2024년 11월 15일")  # Returns: datetime or None
+
+NEW CODE (collabiq.date_parser):
+    from collabiq.date_parser import parse_date
+    result = parse_date("2024년 11월 15일")  # Returns: ParsedDate or None
+    if result:
+        date_value = result.parsed_date  # Extract datetime
+        confidence = result.confidence   # Get confidence score
+        format_type = result.format_detected  # Get format type
+
 This module provides utilities for parsing dates in various formats:
 - English absolute dates: "2025-01-15", "January 15, 2025"
 - Korean dates: "2025년 1월 15일", "10월 27일"
@@ -10,10 +41,19 @@ Uses dateparser library for robust multi-format parsing.
 """
 
 import re
+import warnings
 from datetime import datetime, UTC
 from typing import Optional
 
 import dateparser
+
+# Issue deprecation warning when module is imported
+warnings.warn(
+    "llm_provider.date_utils is deprecated. Use collabiq.date_parser instead. "
+    "See module docstring for migration guide.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 def parse_date(

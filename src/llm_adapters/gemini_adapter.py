@@ -26,7 +26,7 @@ from llm_provider.exceptions import (
     LLMTimeoutError,
     LLMValidationError,
 )
-from llm_provider.date_utils import parse_date
+from collabiq.date_parser.parser import parse_date
 
 try:
     from error_handling.structured_logger import logger as error_logger
@@ -437,9 +437,13 @@ class GeminiAdapter(LLMProvider):
             details_data = response_data.get("details", {})
             date_data = response_data.get("date", {})
 
-            # Parse date string to datetime
+            # Parse date string to datetime (using enhanced date_parser)
             date_str = date_data.get("value")
-            parsed_date = parse_date(date_str) if date_str else None
+            if date_str:
+                parsed_result = parse_date(date_str)
+                parsed_date = parsed_result.parsed_date if parsed_result else None
+            else:
+                parsed_date = None
 
             # Use provided email_id or generate from email text hash (backward compatibility)
             if email_id is None:
@@ -541,12 +545,13 @@ class GeminiAdapter(LLMProvider):
         details_data = response_data.get("details", {})
         date_data = response_data.get("date", {})
 
-        # Parse date if possible
+        # Parse date if possible (using enhanced date_parser)
         date_str = date_data.get("value") if isinstance(date_data, dict) else None
         parsed_date = None
         if date_str:
             try:
-                parsed_date = parse_date(date_str)
+                parsed_result = parse_date(date_str)
+                parsed_date = parsed_result.parsed_date if parsed_result else None
             except Exception:
                 pass
 
