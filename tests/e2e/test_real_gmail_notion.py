@@ -2,21 +2,21 @@
 Real E2E Tests with Gmail and Notion Integration (T016, T017)
 
 These tests validate the complete pipeline with real external APIs:
-- Fetch real emails from Gmail account (test or production)
+- Fetch real emails from Gmail account
 - Process emails through LLM extraction
-- Write entries to Notion database (test or production)
+- Write entries to Notion database
 - Validate Notion entries
 
-Configuration Priority:
-    1. Dedicated test accounts (TEST_GMAIL_*, TEST_NOTION_*)
-    2. Production accounts (GOOGLE_CREDENTIALS_PATH, NOTION_API_KEY, etc.)
+Required Environment Variables:
+    Gmail: GOOGLE_CREDENTIALS_PATH, GMAIL_TOKEN_PATH, EMAIL_ADDRESS
+    Notion: NOTION_API_KEY, NOTION_DATABASE_ID_COLLABIQ
+    (Can be set in .env file or retrieved from Infisical)
 
-Environment Variables:
-    E2E_MAX_EMAILS: Maximum number of emails to process in tests (default: 5)
-    E2E_SKIP_CLEANUP: Skip cleanup if set to 'true' (default: false)
+Test Configuration:
+    E2E_MAX_EMAILS: Maximum number of emails to process in tests (default: 8)
+    E2E_SKIP_CLEANUP: Skip cleanup of test entries (default: false)
 
 Tests will be skipped if credentials are not configured.
-Tests will show warnings when using production accounts.
 """
 
 import pytest
@@ -31,7 +31,7 @@ from models.classification_service import ClassificationService
 
 
 # Configuration for E2E tests
-MAX_EMAILS = int(os.getenv("E2E_MAX_EMAILS", "5"))  # Process 5 emails by default
+MAX_EMAILS = int(os.getenv("E2E_MAX_EMAILS", "8"))  # Process 8 emails by default
 SKIP_CLEANUP = os.getenv("E2E_SKIP_CLEANUP", "false").lower() == "true"
 
 
@@ -83,14 +83,8 @@ def test_fetch_real_email_from_gmail(gmail_receiver, gmail_test_account):
     When the automated E2E test suite is executed,
     Then real emails are fetched from Gmail.
 
-    Note: Uses MAX_EMAILS (default 5) to limit email processing in tests.
+    Note: Uses MAX_EMAILS (default 8) to limit email processing in tests.
     """
-    # Show warning if using production account
-    if gmail_test_account['is_production']:
-        print("\n⚠️  WARNING: Using PRODUCTION Gmail account for E2E testing")
-        print(f"    Account: {gmail_test_account['email_address']}")
-        print(f"    Max emails: {MAX_EMAILS}")
-
     # Fetch recent emails from account
     # For tests: Fetch a fixed number of emails (unlike live processing which only fetches unprocessed)
     query = f"to:{gmail_test_account['email_address']} newer_than:30d"
@@ -106,8 +100,7 @@ def test_fetch_real_email_from_gmail(gmail_receiver, gmail_test_account):
     assert all(hasattr(email, 'subject') for email in raw_emails), "All emails should have subject"
     assert all(hasattr(email, 'cleaned_body') for email in raw_emails), "All emails should have cleaned_body"
 
-    account_type = "PRODUCTION" if gmail_test_account['is_production'] else "TEST"
-    print(f"\n✓ Successfully fetched {len(raw_emails)} real emails from {account_type} Gmail")
+    print(f"\n✓ Successfully fetched {len(raw_emails)} real emails from Gmail")
     for email in raw_emails[:3]:  # Show first 3
         print(f"  - {email.email_id}: {email.subject[:50]}")
 
@@ -126,21 +119,10 @@ def test_process_real_email_to_notion(e2e_runner, gmail_test_account, notion_tes
       When validation is performed,
       Then the entries match the extracted data.
 
-    Note: Uses MAX_EMAILS (default 5) to limit processing. Processes a fixed
+    Note: Uses MAX_EMAILS (default 8) to limit processing. Processes a fixed
     number of emails (unlike live which only processes unprocessed emails).
     """
-    # Show warnings if using production accounts
-    if gmail_test_account['is_production']:
-        print("\n⚠️  WARNING: Using PRODUCTION Gmail account")
-        print(f"    Account: {gmail_test_account['email_address']}")
-
-    if notion_test_database['is_production']:
-        print("⚠️  WARNING: Using PRODUCTION Notion database")
-        print(f"    Database ID: {notion_test_database['database_id'][:16]}...")
-        if not SKIP_CLEANUP:
-            print("    Test entries will be created and cleaned up!")
-
-    print(f"    Processing up to {MAX_EMAILS} emails")
+    print(f"\nProcessing up to {MAX_EMAILS} emails from Gmail to Notion")
 
     # Fetch recent emails from account
     # For tests: Process a fixed number, unlike live which only processes new/unprocessed
@@ -178,14 +160,13 @@ def test_process_real_email_to_notion(e2e_runner, gmail_test_account, notion_tes
         f"Critical errors detected: {test_run.error_summary.get('critical', 0)} (SC-003)"
     )
 
-    account_type = "PRODUCTION" if gmail_test_account['is_production'] or notion_test_database['is_production'] else "TEST"
-    print(f"\n✓ E2E Pipeline Success ({account_type} accounts):")
+    print(f"\n✓ E2E Pipeline Success:")
     print(f"  - Emails processed: {test_run.emails_processed}")
     print(f"  - Success rate: {success_rate:.1%}")
     print(f"  - Notion entries created: {test_run.success_count}")
 
-    if not SKIP_CLEANUP and notion_test_database['is_production']:
-        print(f"  ⚠️  Cleanup needed for {test_run.success_count} entries in production database!")
+    if not SKIP_CLEANUP:
+        print(f"  - Cleanup: {test_run.success_count} entries will be cleaned up")
 
 
 @pytest.mark.e2e

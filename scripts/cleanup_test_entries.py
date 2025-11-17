@@ -97,7 +97,7 @@ def main():
     parser.add_argument(
         "--database-id",
         type=str,
-        help="Notion database ID (uses TEST_NOTION_DATABASE_ID env var if not provided)",
+        help="Notion database ID (uses NOTION_DATABASE_ID_COLLABIQ env var if not provided)",
     )
     parser.add_argument(
         "--dry-run",
@@ -124,10 +124,10 @@ def main():
         sys.exit(1)
 
     # Get database ID from args or environment
-    database_id = args.database_id or os.getenv("TEST_NOTION_DATABASE_ID")
+    database_id = args.database_id or os.getenv("NOTION_DATABASE_ID_COLLABIQ")
 
     if not database_id:
-        print("ERROR: Database ID not provided. Set TEST_NOTION_DATABASE_ID env var or use --database-id")
+        print("ERROR: Database ID not provided. Set NOTION_DATABASE_ID_COLLABIQ env var or use --database-id")
         sys.exit(1)
 
     # Load email IDs if provided
