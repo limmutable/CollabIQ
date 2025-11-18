@@ -10,7 +10,6 @@ Commands:
 """
 
 import json
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -18,13 +17,11 @@ from typing import Optional
 
 import typer
 from rich.console import Console
-from rich.table import Table
 
-from .common import console
 from ..formatters.progress import create_progress, create_spinner
-from ..formatters.json_output import output_json, format_json_error
+from ..formatters.json_output import output_json
 from ..formatters.tables import create_table
-from ..utils.validation import validate_email_id, validate_date
+from ..utils.validation import validate_date
 from ..utils.logging import log_cli_operation, log_cli_error
 
 # Import email receiver and normalizer services
@@ -69,7 +66,7 @@ def fetch(
         collabiq email fetch --json
     """
     start_time = time.time()
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
 
     try:
         # Validate service availability
@@ -115,7 +112,9 @@ def fetch(
                 for email in emails:
                     receiver.save_raw_email(email)
                     saved_count += 1
-                progress.update(task, description=f"[green]✓ Saved {saved_count} emails")
+                progress.update(
+                    task, description=f"[green]✓ Saved {saved_count} emails"
+                )
         else:
             for email in emails:
                 receiver.save_raw_email(email)
@@ -193,7 +192,7 @@ def clean(
         collabiq email clean --json
     """
     start_time = time.time()
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
 
     try:
         # Validate service availability
@@ -228,9 +227,7 @@ def clean(
 
         if not quiet and not json_output:
             with create_progress() as progress:
-                task = progress.add_task(
-                    "Processing emails...", total=len(raw_files)
-                )
+                task = progress.add_task("Processing emails...", total=len(raw_files))
 
                 for raw_file in raw_files:
                     # Load raw email
@@ -307,7 +304,9 @@ def clean(
                 status="success",
             )
         elif not quiet:
-            console.print(f"[green]✓ Cleaned {cleaned_count} emails successfully[/green]")
+            console.print(
+                f"[green]✓ Cleaned {cleaned_count} emails successfully[/green]"
+            )
             console.print(f"Duration: {duration_ms / 1000:.1f}s")
 
     except Exception as e:
@@ -325,8 +324,12 @@ def clean(
 @email_app.command()
 def list(
     limit: int = typer.Option(20, help="Maximum number of emails to display"),
-    since: Optional[str] = typer.Option(None, help="Filter by date (e.g., 'yesterday', '2025-11-01')"),
-    status: Optional[str] = typer.Option(None, help="Filter by status (raw, cleaned, extracted, written)"),
+    since: Optional[str] = typer.Option(
+        None, help="Filter by date (e.g., 'yesterday', '2025-11-01')"
+    ),
+    status: Optional[str] = typer.Option(
+        None, help="Filter by status (raw, cleaned, extracted, written)"
+    ),
     debug: bool = typer.Option(False, help="Enable debug logging"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ):
@@ -340,7 +343,7 @@ def list(
         collabiq email list --since yesterday
         collabiq email list --status cleaned --json
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
 
     try:
         # Validate date if provided
@@ -368,13 +371,15 @@ def list(
 
                     # Extract email data from the saved format
                     metadata = data.get("metadata", {})
-                    emails.append({
-                        "id": metadata.get("message_id", email_file.stem),
-                        "sender": metadata.get("from", "Unknown"),
-                        "subject": metadata.get("subject", "No subject"),
-                        "status": "raw",
-                        "timestamp": metadata.get("received_at", ""),
-                    })
+                    emails.append(
+                        {
+                            "id": metadata.get("message_id", email_file.stem),
+                            "sender": metadata.get("from", "Unknown"),
+                            "subject": metadata.get("subject", "No subject"),
+                            "status": "raw",
+                            "timestamp": metadata.get("received_at", ""),
+                        }
+                    )
                 except Exception:
                     continue
 
@@ -395,13 +400,15 @@ def list(
                     if existing:
                         existing["status"] = "cleaned"
                     else:
-                        emails.append({
-                            "id": email_id,
-                            "sender": "Unknown",
-                            "subject": "Unknown",
-                            "status": "cleaned",
-                            "timestamp": data.get("cleaned_at", ""),
-                        })
+                        emails.append(
+                            {
+                                "id": email_id,
+                                "sender": "Unknown",
+                                "subject": "Unknown",
+                                "status": "cleaned",
+                                "timestamp": data.get("cleaned_at", ""),
+                            }
+                        )
                 except Exception:
                     continue
 
@@ -441,7 +448,9 @@ def list(
                 table.add_row(
                     email["id"],
                     email["sender"],
-                    email["subject"][:40] + "..." if len(email["subject"]) > 40 else email["subject"],
+                    email["subject"][:40] + "..."
+                    if len(email["subject"]) > 40
+                    else email["subject"],
                     f"[{status_style}]{email['status']}[/{status_style}]",
                 )
 
@@ -482,7 +491,7 @@ def verify(
         collabiq email verify
         collabiq email verify --json
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
 
     try:
         # Validate service availability
@@ -504,7 +513,9 @@ def verify(
         if TOKEN_PATH.exists():
             checks.append({"check": "Token File", "status": "✓ Pass"})
         else:
-            checks.append({"check": "Token File", "status": "⚠ Not found (will authenticate)"})
+            checks.append(
+                {"check": "Token File", "status": "⚠ Not found (will authenticate)"}
+            )
 
         # Try to connect to Gmail
         try:
@@ -530,7 +541,9 @@ def verify(
                 recent_count = "Available"
                 checks.append({"check": "Recent Email Count", "status": recent_count})
             except Exception:
-                checks.append({"check": "Recent Email Count", "status": "⚠ Unable to query"})
+                checks.append(
+                    {"check": "Recent Email Count", "status": "⚠ Unable to query"}
+                )
 
         except Exception as e:
             checks.append({"check": "Authentication", "status": f"✗ Failed: {str(e)}"})
@@ -614,7 +627,7 @@ def process(
         collabiq email process --json
     """
     start_time = time.time()
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
 
     # Track stage results
     stages = {
@@ -667,14 +680,18 @@ def process(
         stages["extract"]["failed"] = 1
 
         if not quiet and not json_output:
-            console.print(f"├─ Extracting entities... [green]✓ {extracted} extracted[/green] [yellow](1 failed)[/yellow]")
+            console.print(
+                f"├─ Extracting entities... [green]✓ {extracted} extracted[/green] [yellow](1 failed)[/yellow]"
+            )
 
         # Stage 4: Validate data (simulated)
         validated = extracted
         stages["validate"]["success"] = validated
 
         if not quiet and not json_output:
-            console.print(f"├─ Validating data... [green]✓ {validated} validated[/green]")
+            console.print(
+                f"├─ Validating data... [green]✓ {validated} validated[/green]"
+            )
 
         # Stage 5: Write to Notion (simulated)
         written = validated - 1  # Simulate 1 failure
@@ -682,7 +699,9 @@ def process(
         stages["write"]["failed"] = 1
 
         if not quiet and not json_output:
-            console.print(f"└─ Writing to Notion... [green]✓ {written} written[/green] [yellow](1 failed)[/yellow]")
+            console.print(
+                f"└─ Writing to Notion... [green]✓ {written} written[/green] [yellow](1 failed)[/yellow]"
+            )
 
         # Calculate totals
         total_success = stages["write"]["success"]
@@ -717,9 +736,13 @@ def process(
                     f"[yellow]Summary: {total_success} successful, {total_failed} failed[/yellow]"
                 )
             else:
-                console.print(f"[green]Summary: {total_success} successful, {total_failed} failed[/green]")
+                console.print(
+                    f"[green]Summary: {total_success} successful, {total_failed} failed[/green]"
+                )
 
-            console.print(f"Duration: {duration_ms / 1000 / 60:.1f}m {(duration_ms / 1000) % 60:.0f}s")
+            console.print(
+                f"Duration: {duration_ms / 1000 / 60:.1f}m {(duration_ms / 1000) % 60:.0f}s"
+            )
 
     except Exception as e:
         duration_ms = int((time.time() - start_time) * 1000)

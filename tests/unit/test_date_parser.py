@@ -10,7 +10,6 @@ Tests cover:
 
 from datetime import datetime
 
-import pytest
 
 from src.collabiq.date_parser import (
     DateFormat,

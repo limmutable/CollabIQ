@@ -33,7 +33,6 @@ Usage (CLI):
 import logging
 import time
 from datetime import datetime
-from pathlib import Path
 from typing import Dict, List, Optional
 from dataclasses import dataclass, asdict
 
@@ -113,7 +112,9 @@ class NotionTestCleanup:
         # Initialize Notion client
         import os
 
-        token = notion_token or os.getenv("TEST_NOTION_TOKEN") or os.getenv("NOTION_TOKEN")
+        token = (
+            notion_token or os.getenv("TEST_NOTION_TOKEN") or os.getenv("NOTION_TOKEN")
+        )
         if not token:
             raise ValueError("Notion token not provided and not found in environment")
 
@@ -163,7 +164,7 @@ class NotionTestCleanup:
                 for email_id in self.email_ids:
                     # Check timeout
                     if time.time() - start_time > self.timeout_seconds:
-                        logger.warning(f"Timeout reached while querying email IDs (30s)")
+                        logger.warning("Timeout reached while querying email IDs (30s)")
                         break
 
                     filter_condition = {

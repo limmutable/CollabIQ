@@ -17,6 +17,7 @@ from typing import Any, Dict, Optional
 
 try:
     from infisical_sdk import InfisicalSDKClient
+
     INFISICAL_AVAILABLE = True
 except ImportError:
     InfisicalSDKClient = None  # type: ignore

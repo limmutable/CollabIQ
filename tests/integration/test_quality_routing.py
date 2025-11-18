@@ -6,7 +6,6 @@ when quality routing is enabled.
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 from llm_adapters.health_tracker import HealthTracker
 from llm_orchestrator.quality_tracker import QualityTracker
@@ -101,7 +100,9 @@ def health_tracker(tmp_path):
     return HealthTracker(data_dir=tmp_path / "llm_health")
 
 
-def test_quality_routing_selects_highest_quality_provider(quality_tracker, health_tracker):
+def test_quality_routing_selects_highest_quality_provider(
+    quality_tracker, health_tracker
+):
     """Test that quality routing selects provider with highest quality score."""
     # Create providers
     providers = {
@@ -112,7 +113,11 @@ def test_quality_routing_selects_highest_quality_provider(quality_tracker, healt
 
     # Create strategy with quality routing enabled
     strategy = FailoverStrategy(
-        priority_order=["gemini", "claude", "openai"],  # Priority order differs from quality
+        priority_order=[
+            "gemini",
+            "claude",
+            "openai",
+        ],  # Priority order differs from quality
         quality_tracker=quality_tracker,
     )
 
@@ -154,7 +159,9 @@ def test_quality_routing_disabled_uses_priority_order(health_tracker):
     assert provider_used == "gemini"
 
 
-def test_quality_routing_falls_back_to_priority_when_no_metrics(health_tracker, tmp_path):
+def test_quality_routing_falls_back_to_priority_when_no_metrics(
+    health_tracker, tmp_path
+):
     """Test fallback to priority order when no quality metrics available."""
     # Create empty quality tracker (no metrics)
     empty_quality_tracker = QualityTracker(data_dir=tmp_path / "empty_metrics")
@@ -215,7 +222,9 @@ def test_quality_routing_skips_unhealthy_providers(quality_tracker, health_track
     assert provider_used == "gemini"
 
 
-def test_quality_routing_tries_next_provider_on_failure(quality_tracker, health_tracker):
+def test_quality_routing_tries_next_provider_on_failure(
+    quality_tracker, health_tracker
+):
     """Test that quality routing tries next provider if first fails."""
     # Create providers where Claude fails
     providers = {

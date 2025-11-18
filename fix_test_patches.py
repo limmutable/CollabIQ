@@ -3,13 +3,13 @@
 Fix test mock patch paths by removing 'src.' prefix to match source code import style.
 """
 
-import os
 import re
 from pathlib import Path
 
+
 def fix_patches_in_file(file_path):
     """Fix patch paths in a single file."""
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         content = f.read()
 
     original_content = content
@@ -26,17 +26,18 @@ def fix_patches_in_file(file_path):
         for match in matches:
             print(f"  {file_path.name}: 'src.{match}' -> '{match}'")
 
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             f.write(new_content)
         return True
     return False
 
+
 def main():
     """Fix patch paths in all test files."""
-    test_dir = Path('tests')
+    test_dir = Path("tests")
 
     # Find all Python test files
-    test_files = list(test_dir.glob('**/*.py'))
+    test_files = list(test_dir.glob("**/*.py"))
 
     print(f"Found {len(test_files)} test files")
     print("Fixing patch paths...")
@@ -49,5 +50,6 @@ def main():
     print(f"\nModified {modified_count} files")
     print("Patch fixes complete!")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

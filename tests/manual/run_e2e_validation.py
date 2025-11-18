@@ -107,7 +107,9 @@ def print_progress_bar(current: int, total: int, width: int = 50):
     filled = int(width * progress)
     bar = "█" * filled + "░" * (width - filled)
     percent = progress * 100
-    print(f"\r  Progress: [{bar}] {current}/{total} ({percent:.1f}%)", end="", flush=True)
+    print(
+        f"\r  Progress: [{bar}] {current}/{total} ({percent:.1f}%)", end="", flush=True
+    )
 
 
 def run_tests_with_progress(runner: E2ERunner, email_ids: list):
@@ -159,12 +161,16 @@ def print_results(test_run, report_path):
     if success_rate >= 95:
         print("  ✅ SUCCESS CRITERIA MET: Success rate ≥95% (SC-001)")
     else:
-        print(f"  ❌ SUCCESS CRITERIA NOT MET: Success rate {success_rate:.1f}% < 95% (SC-001)")
+        print(
+            f"  ❌ SUCCESS CRITERIA NOT MET: Success rate {success_rate:.1f}% < 95% (SC-001)"
+        )
 
     if test_run.error_summary.get("critical", 0) == 0:
         print("  ✅ NO CRITICAL ERRORS (SC-003)")
     else:
-        print(f"  ❌ CRITICAL ERRORS: {test_run.error_summary.get('critical', 0)} errors detected (SC-003)")
+        print(
+            f"  ❌ CRITICAL ERRORS: {test_run.error_summary.get('critical', 0)} errors detected (SC-003)"
+        )
 
     print()
     print(f"  Report saved to: {report_path}")
@@ -193,7 +199,9 @@ def print_next_steps(test_run):
         print()
         print("  3. Run cleanup script:")
         print("     uv run python scripts/cleanup_test_entries.py --dry-run")
-        print("     uv run python scripts/cleanup_test_entries.py  # After verification")
+        print(
+            "     uv run python scripts/cleanup_test_entries.py  # After verification"
+        )
     else:
         print("  1. Review error report:")
         print(f"     cat data/e2e_test/reports/{test_run.run_id}_errors.md")

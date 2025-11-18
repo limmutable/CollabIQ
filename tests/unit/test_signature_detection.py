@@ -18,8 +18,6 @@ try:
     from models.cleaned_email import CleanedEmail
 except ImportError:
     from content_normalizer.normalizer import ContentNormalizer
-    from models.raw_email import RawEmail, EmailMetadata
-    from models.cleaned_email import CleanedEmail
 
 
 # Test fixtures directory

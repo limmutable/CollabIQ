@@ -137,7 +137,9 @@ class OrchestrationConfig(BaseModel):
         quality_weight: Weight for quality vs other factors (0.0-1.0)
     """
 
-    default_strategy: Literal["failover", "consensus", "best_match", "all_providers"] = "failover"
+    default_strategy: Literal[
+        "failover", "consensus", "best_match", "all_providers"
+    ] = "failover"
     provider_priority: list[str] = Field(default_factory=list)
     timeout_seconds: float = Field(default=90.0, ge=10.0, le=300.0)
     unhealthy_threshold: int = Field(default=5, ge=1, le=10)
@@ -255,9 +257,7 @@ class QualityMetricsRecord(BaseModel):
 
     @field_validator("validation_failure_reasons")
     @classmethod
-    def validate_failure_reasons(
-        cls, v: list[str] | None, info
-    ) -> list[str] | None:
+    def validate_failure_reasons(cls, v: list[str] | None, info) -> list[str] | None:
         """Ensure validation_failure_reasons is provided when validation_passed is False."""
         if "validation_passed" in info.data:
             if not info.data["validation_passed"] and not v:
@@ -328,7 +328,9 @@ class QualityThresholdConfig(BaseModel):
     minimum_average_confidence: float = Field(default=0.80, ge=0.0, le=1.0)
     minimum_field_completeness: float = Field(default=80.0, ge=0.0, le=100.0)
     maximum_validation_failure_rate: float = Field(default=10.0, ge=0.0, le=100.0)
-    minimum_notion_matching_success_rate: float | None = Field(default=None, ge=0.0, le=100.0)
+    minimum_notion_matching_success_rate: float | None = Field(
+        default=None, ge=0.0, le=100.0
+    )
     evaluation_window_size: int = Field(default=100, ge=10)
     enabled: bool = True
 
@@ -347,7 +349,11 @@ class ProviderQualityComparison(BaseModel):
 
     comparison_timestamp: datetime = Field(default_factory=datetime.utcnow)
     providers_compared: list[str]
-    provider_rankings: list[dict]  # provider_name (str), quality_score (float), rank (int)
-    quality_to_cost_rankings: list[dict]  # provider_name (str), value_score (float), rank (int)
+    provider_rankings: list[
+        dict
+    ]  # provider_name (str), quality_score (float), rank (int)
+    quality_to_cost_rankings: list[
+        dict
+    ]  # provider_name (str), value_score (float), rank (int)
     recommended_provider: str
     recommendation_reason: str

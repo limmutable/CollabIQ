@@ -7,7 +7,7 @@ matching operations for company names and person names.
 
 from typing import Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict
+from pydantic import BaseModel, Field, model_validator, ConfigDict
 
 
 class CompanyMatch(BaseModel):
@@ -40,9 +40,7 @@ class CompanyMatch(BaseModel):
     confidence_level: Literal["high", "medium", "low", "none"] = Field(
         ..., description="Confidence in match quality"
     )
-    was_created: bool = Field(
-        False, description="Whether company was auto-created"
-    )
+    was_created: bool = Field(False, description="Whether company was auto-created")
     match_method: Optional[Literal["character", "llm", "hybrid"]] = Field(
         None, description="Algorithm used (for evaluation/monitoring)"
     )
@@ -61,8 +59,13 @@ class CompanyMatch(BaseModel):
         # Validate page_id consistency
         if self.match_type == "none" and self.page_id is not None:
             raise ValueError("Match type 'none' must have page_id=None")
-        if self.match_type in ["exact", "fuzzy", "semantic", "created"] and self.page_id is None:
-            raise ValueError(f"Match type '{self.match_type}' must have non-None page_id")
+        if (
+            self.match_type in ["exact", "fuzzy", "semantic", "created"]
+            and self.page_id is None
+        ):
+            raise ValueError(
+                f"Match type '{self.match_type}' must have non-None page_id"
+            )
 
         # Validate was_created consistency
         if self.was_created and self.match_type != "created":
@@ -73,7 +76,7 @@ class CompanyMatch(BaseModel):
         return self
 
     model_config = ConfigDict(
-        json_schema_extra = {
+        json_schema_extra={
             "example": {
                 "page_id": "abc123def456",
                 "company_name": "웨이크",
@@ -115,9 +118,7 @@ class PersonMatch(BaseModel):
     confidence_level: Literal["high", "medium", "low", "none"] = Field(
         ..., description="Confidence in match quality"
     )
-    is_ambiguous: bool = Field(
-        False, description="Multiple similar matches found"
-    )
+    is_ambiguous: bool = Field(False, description="Multiple similar matches found")
     alternative_matches: List[Dict[str, str]] = Field(
         default_factory=list,
         description="Other potential matches (if ambiguous)",
@@ -130,7 +131,9 @@ class PersonMatch(BaseModel):
         if self.match_type == "none" and self.user_id is not None:
             raise ValueError("Match type 'none' must have user_id=None")
         if self.match_type in ["exact", "fuzzy"] and self.user_id is None:
-            raise ValueError(f"Match type '{self.match_type}' must have non-None user_id")
+            raise ValueError(
+                f"Match type '{self.match_type}' must have non-None user_id"
+            )
 
         # Validate user_name consistency
         if self.user_id is not None and not self.user_name:
@@ -151,7 +154,7 @@ class PersonMatch(BaseModel):
         return self
 
     model_config = ConfigDict(
-        json_schema_extra = {
+        json_schema_extra={
             "example": {
                 "user_id": "user-uuid-789",
                 "user_name": "김철수 (Cheolsu Kim)",

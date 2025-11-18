@@ -9,14 +9,12 @@ Tests validate:
 """
 
 import json
-import tempfile
-from datetime import datetime
 from pathlib import Path
 
 import pytest
 
 from e2e_test.error_collector import ErrorCollector
-from e2e_test.models import ErrorRecord, PipelineStage, Severity
+from e2e_test.models import PipelineStage, Severity
 
 
 class TestCollectError:
@@ -64,7 +62,9 @@ class TestCollectError:
         """Test that collect_error raises ValueError if neither exception nor message provided"""
         collector = ErrorCollector(output_dir=str(tmp_path))
 
-        with pytest.raises(ValueError, match="Either exception or error_message must be provided"):
+        with pytest.raises(
+            ValueError, match="Either exception or error_message must be provided"
+        ):
             collector.collect_error(
                 run_id="2025-11-04T14:30:00",
                 email_id="msg_003",
@@ -232,7 +232,7 @@ class TestGetErrorSummary:
         for i in range(3):
             error = collector.collect_error(
                 run_id=run_id,
-                email_id=f"msg_{i+10}",
+                email_id=f"msg_{i + 10}",
                 stage=PipelineStage.MATCHING,
                 error_message=f"Medium error {i}",
                 severity=Severity.MEDIUM,

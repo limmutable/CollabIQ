@@ -11,9 +11,8 @@ import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
-import pytest
 
 from error_handling.models import ErrorCategory, ErrorRecord, ErrorSeverity
 from error_handling.structured_logger import JSONFormatter, StructuredLogger

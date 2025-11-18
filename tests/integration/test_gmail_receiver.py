@@ -13,7 +13,6 @@ To run these tests:
 
 import json
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -32,7 +31,7 @@ def mock_credentials_content():
             "token_uri": "https://oauth2.googleapis.com/token",
             "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
             "client_secret": "GOCSPX-mock_secret",
-            "redirect_uris": ["http://127.0.0.1:8080"]
+            "redirect_uris": ["http://127.0.0.1:8080"],
         }
     }
 
@@ -47,14 +46,20 @@ def valid_token_content():
         "client_id": "123456789-abcdefg.apps.googleusercontent.com",
         "client_secret": "GOCSPX-mock_secret",
         "scopes": ["https://www.googleapis.com/auth/gmail.readonly"],
-        "expiry": (datetime.now(UTC) + timedelta(hours=1)).isoformat() + "Z"
+        "expiry": (datetime.now(UTC) + timedelta(hours=1)).isoformat() + "Z",
     }
 
 
 # T017: Test group alias query filter
-@patch('email_receiver.gmail_receiver.build')
-@patch('email_receiver.gmail_receiver.Credentials')
-def test_group_alias_query_filter(mock_credentials_cls, mock_build, tmp_path, mock_credentials_content, valid_token_content):
+@patch("email_receiver.gmail_receiver.build")
+@patch("email_receiver.gmail_receiver.Credentials")
+def test_group_alias_query_filter(
+    mock_credentials_cls,
+    mock_build,
+    tmp_path,
+    mock_credentials_content,
+    valid_token_content,
+):
     """
     T017 [P] [US2]: Verify deliveredto query filter is constructed correctly.
 
@@ -81,36 +86,36 @@ def test_group_alias_query_filter(mock_credentials_cls, mock_build, tmp_path, mo
 
     mock_service = MagicMock()
     mock_messages_list = MagicMock()
-    mock_messages_list.execute.return_value = {'messages': []}
+    mock_messages_list.execute.return_value = {"messages": []}
     mock_service.users().messages().list.return_value = mock_messages_list
     mock_build.return_value = mock_service
 
-    receiver = GmailReceiver(
-        credentials_path=creds_path,
-        token_path=token_path
-    )
+    receiver = GmailReceiver(credentials_path=creds_path, token_path=token_path)
     receiver.connect()
 
     # Act
-    receiver.fetch_emails(
-        query='deliveredto:"collab@signite.co"',
-        max_emails=10
-    )
+    receiver.fetch_emails(query='deliveredto:"collab@signite.co"', max_emails=10)
 
     # Assert
     # Verify the Gmail API was called with the correct query
     mock_service.users().messages().list.assert_called_once()
     call_kwargs = mock_service.users().messages().list.call_args[1]
-    assert 'q' in call_kwargs
-    assert 'deliveredto:"collab@signite.co"' in call_kwargs['q']
-    assert call_kwargs['userId'] == 'me'
-    assert call_kwargs['maxResults'] == 10
+    assert "q" in call_kwargs
+    assert 'deliveredto:"collab@signite.co"' in call_kwargs["q"]
+    assert call_kwargs["userId"] == "me"
+    assert call_kwargs["maxResults"] == 10
 
 
 # T019: Test group alias email retrieval integration
-@patch('email_receiver.gmail_receiver.build')
-@patch('email_receiver.gmail_receiver.Credentials')
-def test_group_alias_email_retrieval_integration(mock_credentials_cls, mock_build, tmp_path, mock_credentials_content, valid_token_content):
+@patch("email_receiver.gmail_receiver.build")
+@patch("email_receiver.gmail_receiver.Credentials")
+def test_group_alias_email_retrieval_integration(
+    mock_credentials_cls,
+    mock_build,
+    tmp_path,
+    mock_credentials_content,
+    valid_token_content,
+):
     """
     T019 [US2]: Verify emails sent to group alias can be retrieved with deliveredto filter.
 
@@ -137,20 +142,22 @@ def test_group_alias_email_retrieval_integration(mock_credentials_cls, mock_buil
 
     # Mock Gmail API response with a message sent to group alias
     mock_message = {
-        'id': 'msg123',
-        'threadId': 'thread123',
-        'payload': {
-            'headers': [
-                {'name': 'From', 'value': 'sender@example.com'},
-                {'name': 'To', 'value': 'collab@signite.co'},
-                {'name': 'Subject', 'value': 'Test collaboration email'},
-                {'name': 'Date', 'value': 'Fri, 01 Nov 2025 10:00:00 +0000'},
-                {'name': 'Message-ID', 'value': '<test123@mail.example.com>'},
-                {'name': 'Delivered-To', 'value': 'collab@signite.co'}
+        "id": "msg123",
+        "threadId": "thread123",
+        "payload": {
+            "headers": [
+                {"name": "From", "value": "sender@example.com"},
+                {"name": "To", "value": "collab@signite.co"},
+                {"name": "Subject", "value": "Test collaboration email"},
+                {"name": "Date", "value": "Fri, 01 Nov 2025 10:00:00 +0000"},
+                {"name": "Message-ID", "value": "<test123@mail.example.com>"},
+                {"name": "Delivered-To", "value": "collab@signite.co"},
             ],
-            'body': {'data': 'VGVzdCBlbWFpbCBib2R5'}  # base64 encoded "Test email body"
+            "body": {
+                "data": "VGVzdCBlbWFpbCBib2R5"
+            },  # base64 encoded "Test email body"
         },
-        'internalDate': '1698753600000'
+        "internalDate": "1698753600000",
     }
 
     mock_service = MagicMock()
@@ -158,7 +165,7 @@ def test_group_alias_email_retrieval_integration(mock_credentials_cls, mock_buil
     # Mock messages().list() to return message IDs
     mock_messages_list = MagicMock()
     mock_messages_list.execute.return_value = {
-        'messages': [{'id': 'msg123', 'threadId': 'thread123'}]
+        "messages": [{"id": "msg123", "threadId": "thread123"}]
     }
     mock_service.users().messages().list.return_value = mock_messages_list
 
@@ -169,16 +176,12 @@ def test_group_alias_email_retrieval_integration(mock_credentials_cls, mock_buil
 
     mock_build.return_value = mock_service
 
-    receiver = GmailReceiver(
-        credentials_path=creds_path,
-        token_path=token_path
-    )
+    receiver = GmailReceiver(credentials_path=creds_path, token_path=token_path)
     receiver.connect()
 
     # Act
     emails = receiver.fetch_emails(
-        query='deliveredto:"collab@signite.co"',
-        max_emails=10
+        query='deliveredto:"collab@signite.co"', max_emails=10
     )
 
     # Assert
@@ -186,10 +189,10 @@ def test_group_alias_email_retrieval_integration(mock_credentials_cls, mock_buil
     email = emails[0]
 
     # Verify email metadata
-    assert email.metadata.message_id == '<test123@mail.example.com>'
-    assert email.metadata.sender == 'sender@example.com'
-    assert email.metadata.subject == 'Test collaboration email'
+    assert email.metadata.message_id == "<test123@mail.example.com>"
+    assert email.metadata.sender == "sender@example.com"
+    assert email.metadata.subject == "Test collaboration email"
 
     # Verify the query included deliveredto filter
     call_kwargs = mock_service.users().messages().list.call_args[1]
-    assert 'deliveredto:"collab@signite.co"' in call_kwargs['q']
+    assert 'deliveredto:"collab@signite.co"' in call_kwargs["q"]

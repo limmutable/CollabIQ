@@ -47,7 +47,9 @@ class OrchestrationTimeoutError(LLMAPIError):
     """
 
     def __init__(
-        self, message: str = "Orchestration timeout", timeout_seconds: float | None = None
+        self,
+        message: str = "Orchestration timeout",
+        timeout_seconds: float | None = None,
     ):
         """Initialize OrchestrationTimeoutError.
 

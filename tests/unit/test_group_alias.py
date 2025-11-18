@@ -10,8 +10,6 @@ To run these tests:
     pytest tests/unit/test_group_alias.py -v
 """
 
-import pytest
-
 
 def construct_deliveredto_query(
     email_address: str, additional_filters: str = ""

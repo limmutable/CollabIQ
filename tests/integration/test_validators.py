@@ -7,8 +7,6 @@ Tests validate:
 - Field format checks (dates, collabor ation types, company IDs)
 """
 
-import pytest
-
 from e2e_test.validators import Validator
 
 
@@ -24,7 +22,9 @@ class TestValidateNotionEntry:
             "properties": {
                 "Email ID": {"rich_text": [{"text": {"content": "msg_001"}}]},
                 "담당자": {"title": [{"text": {"content": "김철수"}}]},
-                "스타트업명": {"rich_text": [{"text": {"content": "브레이크앤컴퍼니"}}]},
+                "스타트업명": {
+                    "rich_text": [{"text": {"content": "브레이크앤컴퍼니"}}]
+                },
                 "협력기관": {"rich_text": [{"text": {"content": "신세계푸드"}}]},
                 "협력유형": {"select": {"name": "[A] 포트폴리오 x SSG"}},
                 "날짜": {"date": {"start": "2025-10-28"}},
@@ -103,7 +103,9 @@ class TestKoreanTextValidation:
         notion_entry = {
             "properties": {
                 "담당자": {"title": [{"text": {"content": "김철수"}}]},
-                "스타트업명": {"rich_text": [{"text": {"content": "브레이크앤컴퍼니"}}]},
+                "스타트업명": {
+                    "rich_text": [{"text": {"content": "브레이크앤컴퍼니"}}]
+                },
             }
         }
 
@@ -121,7 +123,9 @@ class TestKoreanTextValidation:
         # Corrupted Notion entry with mojibake
         notion_entry = {
             "properties": {
-                "담당자": {"title": [{"text": {"content": "ë‹´ë‹¹ìž: ê¹€ì²ì"}}]},  # Mojibake
+                "담당자": {
+                    "title": [{"text": {"content": "ë‹´ë‹¹ìž: ê¹€ì²ì"}}]
+                },  # Mojibake
             }
         }
 
@@ -139,7 +143,9 @@ class TestKoreanTextValidation:
 
         notion_entry = {
             "properties": {
-                "스타트업명": {"rich_text": [{"text": {"content": "브레이크앤컴퍼니 🚀"}}]},
+                "스타트업명": {
+                    "rich_text": [{"text": {"content": "브레이크앤컴퍼니 🚀"}}]
+                },
             }
         }
 
@@ -157,7 +163,11 @@ class TestKoreanTextValidation:
             "properties": {
                 "협력기관": {
                     "rich_text": [
-                        {"text": {"content": "브레이크앤컴퍼니 x 신세계푸드 (Collaboration Type A)"}}
+                        {
+                            "text": {
+                                "content": "브레이크앤컴퍼니 x 신세계푸드 (Collaboration Type A)"
+                            }
+                        }
                     ]
                 },
             }

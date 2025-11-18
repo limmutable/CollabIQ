@@ -16,12 +16,10 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict
 
 import typer
 from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -30,7 +28,11 @@ from collabiq.utils.logging import log_cli_operation, log_cli_error
 from collabiq.formatters.tables import create_table
 from collabiq.formatters.json_output import output_json, format_json_error
 from notion_integrator.integrator import NotionIntegrator
-from notion_integrator.client import NotionAuthenticationError, NotionObjectNotFoundError, NotionPermissionError
+from notion_integrator.client import (
+    NotionAuthenticationError,
+    NotionObjectNotFoundError,
+    NotionPermissionError,
+)
 from llm_provider.types import ExtractedEntitiesWithClassification, ConfidenceScores
 
 notion_app = typer.Typer(
@@ -57,7 +59,7 @@ def get_notion_config(json_mode: bool = False) -> Dict[str, str]:
     Raises:
         typer.Exit: If required configuration is missing
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
     api_key = os.getenv("NOTION_API_KEY")
     collabiq_db_id = os.getenv("NOTION_DATABASE_ID_COLLABIQ")
 
@@ -66,13 +68,20 @@ def get_notion_config(json_mode: bool = False) -> Dict[str, str]:
             output_json(
                 data={},
                 status="failure",
-                errors=[{"error_type": "ConfigurationError", "message": "NOTION_API_KEY not set in environment"}]
+                errors=[
+                    {
+                        "error_type": "ConfigurationError",
+                        "message": "NOTION_API_KEY not set in environment",
+                    }
+                ],
             )
         else:
             console.print("[red]Error: NOTION_API_KEY not set in environment[/red]")
             console.print("\n[yellow]Remediation:[/yellow]")
             console.print("1. Set NOTION_API_KEY environment variable")
-            console.print("2. Or configure Infisical secrets (run: collabiq config test-secrets)")
+            console.print(
+                "2. Or configure Infisical secrets (run: collabiq config test-secrets)"
+            )
         raise typer.Exit(1)
 
     if not collabiq_db_id:
@@ -80,10 +89,17 @@ def get_notion_config(json_mode: bool = False) -> Dict[str, str]:
             output_json(
                 data={},
                 status="failure",
-                errors=[{"error_type": "ConfigurationError", "message": "NOTION_DATABASE_ID_COLLABIQ not set in environment"}]
+                errors=[
+                    {
+                        "error_type": "ConfigurationError",
+                        "message": "NOTION_DATABASE_ID_COLLABIQ not set in environment",
+                    }
+                ],
             )
         else:
-            console.print("[red]Error: NOTION_DATABASE_ID_COLLABIQ not set in environment[/red]")
+            console.print(
+                "[red]Error: NOTION_DATABASE_ID_COLLABIQ not set in environment[/red]"
+            )
             console.print("\n[yellow]Remediation:[/yellow]")
             console.print("1. Set NOTION_DATABASE_ID_COLLABIQ environment variable")
             console.print("2. Get database ID from Notion database URL")
@@ -92,7 +108,9 @@ def get_notion_config(json_mode: bool = False) -> Dict[str, str]:
     return {"api_key": api_key, "collabiq_db_id": collabiq_db_id}
 
 
-def handle_notion_error(error: Exception, context: str, json_mode: bool = False) -> None:
+def handle_notion_error(
+    error: Exception, context: str, json_mode: bool = False
+) -> None:
     """
     Handle Notion API errors with user-friendly messages and remediation.
 
@@ -101,7 +119,7 @@ def handle_notion_error(error: Exception, context: str, json_mode: bool = False)
         context: Context string (e.g., "notion_verify")
         json_mode: Whether to output JSON format
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
     error_type = type(error).__name__
     error_message = str(error)
 
@@ -169,7 +187,7 @@ def verify(
         $ collabiq notion verify --json
         $ collabiq notion verify --debug
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
     start_time = datetime.now()
 
     try:
@@ -243,7 +261,7 @@ def schema(
         $ collabiq notion schema
         $ collabiq notion schema --json
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
     start_time = datetime.now()
 
     try:
@@ -264,11 +282,13 @@ def schema(
                 # Build property list
                 properties = []
                 for prop in schema.database.properties.values():
-                    properties.append({
-                        "name": prop.name,
-                        "type": prop.type,
-                        "id": prop.id,
-                    })
+                    properties.append(
+                        {
+                            "name": prop.name,
+                            "type": prop.type,
+                            "id": prop.id,
+                        }
+                    )
 
                 return {
                     "database_name": schema.database.title,
@@ -295,7 +315,9 @@ def schema(
         else:
             console.print(f"\n[cyan]Database:[/cyan] {result['database_name']}")
             console.print(f"[cyan]Database ID:[/cyan] {result['database_id']}")
-            console.print(f"[cyan]Total Properties:[/cyan] {result['property_count']}\n")
+            console.print(
+                f"[cyan]Total Properties:[/cyan] {result['property_count']}\n"
+            )
 
             # Create table for properties
             table = create_table(
@@ -342,7 +364,7 @@ def test_write(
         $ collabiq notion test-write
         $ collabiq notion test-write --json
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
     start_time = datetime.now()
 
     try:
@@ -389,7 +411,9 @@ def test_write(
                 write_result = await writer.create_collabiq_entry(test_data)
 
                 if not write_result.success:
-                    raise Exception(f"Failed to create test entry: {write_result.error_message}")
+                    raise Exception(
+                        f"Failed to create test entry: {write_result.error_message}"
+                    )
 
                 page_id = write_result.page_id
 
@@ -449,7 +473,7 @@ def cleanup_tests(
         $ collabiq notion cleanup-tests --yes
         $ collabiq notion cleanup-tests --json
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
     start_time = datetime.now()
 
     try:
@@ -465,9 +489,7 @@ def cleanup_tests(
                 # Search for entries with email_id starting with 'cli_test_'
                 filter_conditions = {
                     "property": "Email ID",
-                    "rich_text": {
-                        "starts_with": "cli_test_"
-                    },
+                    "rich_text": {"starts_with": "cli_test_"},
                 }
 
                 response = await integrator.client.query_database(
@@ -492,12 +514,16 @@ def cleanup_tests(
                     if email_id_prop.get("type") == "rich_text":
                         rich_text_array = email_id_prop.get("rich_text", [])
                         if rich_text_array:
-                            email_id = rich_text_array[0].get("text", {}).get("content", "")
+                            email_id = (
+                                rich_text_array[0].get("text", {}).get("content", "")
+                            )
 
-                    entries.append({
-                        "page_id": page_id,
-                        "email_id": email_id,
-                    })
+                    entries.append(
+                        {
+                            "page_id": page_id,
+                            "email_id": email_id,
+                        }
+                    )
 
                 return {"cleaned": 0, "entries": entries, "entry_count": entry_count}
 
@@ -507,14 +533,19 @@ def cleanup_tests(
         # If no entries found, exit early
         if result["entry_count"] == 0:
             if json:
-                output_json(data={"cleaned": 0, "message": "No test entries found"}, status="success")
+                output_json(
+                    data={"cleaned": 0, "message": "No test entries found"},
+                    status="success",
+                )
             else:
                 console.print("\n[yellow]No test entries found to cleanup[/yellow]")
             return
 
         # Confirmation prompt (unless --yes or --json)
         if not yes and not json:
-            console.print(f"\n[yellow]Found {result['entry_count']} test entries to cleanup:[/yellow]")
+            console.print(
+                f"\n[yellow]Found {result['entry_count']} test entries to cleanup:[/yellow]"
+            )
             for entry in result["entries"][:5]:  # Show first 5
                 console.print(f"  - {entry['email_id']} ({entry['page_id']})")
             if result["entry_count"] > 5:
@@ -540,7 +571,9 @@ def cleanup_tests(
                         )
                         cleaned += 1
                     except Exception as e:
-                        console.print(f"[yellow]Warning: Failed to archive {entry['page_id']}: {e}[/yellow]")
+                        console.print(
+                            f"[yellow]Warning: Failed to archive {entry['page_id']}: {e}[/yellow]"
+                        )
 
                 return {"cleaned": cleaned, "total": result["entry_count"]}
 
@@ -550,13 +583,20 @@ def cleanup_tests(
         duration_ms = int((datetime.now() - start_time).total_seconds() * 1000)
 
         # Log success
-        log_cli_operation("notion cleanup-tests", success=True, duration_ms=duration_ms, cleaned=cleanup_result["cleaned"])
+        log_cli_operation(
+            "notion cleanup-tests",
+            success=True,
+            duration_ms=duration_ms,
+            cleaned=cleanup_result["cleaned"],
+        )
 
         # Output result
         if json:
             output_json(data=cleanup_result, status="success")
         else:
-            console.print(f"\n[green]✓ Cleaned up {cleanup_result['cleaned']} of {cleanup_result['total']} test entries[/green]")
+            console.print(
+                f"\n[green]✓ Cleaned up {cleanup_result['cleaned']} of {cleanup_result['total']} test entries[/green]"
+            )
             console.print(f"\n[dim]Completed in {duration_ms}ms[/dim]")
 
     except Exception as e:
@@ -569,7 +609,9 @@ def cleanup_tests(
 def match_company(
     ctx: typer.Context,
     company_name: str = typer.Argument(..., help="Company name to match"),
-    threshold: float = typer.Option(0.85, "--threshold", "-t", help="Similarity threshold (0.0-1.0)"),
+    threshold: float = typer.Option(
+        0.85, "--threshold", "-t", help="Similarity threshold (0.0-1.0)"
+    ),
     json: bool = typer.Option(False, "--json", help="Output in JSON format"),
     debug: bool = typer.Option(False, "--debug", help="Enable debug logging"),
 ) -> None:
@@ -584,7 +626,7 @@ def match_company(
         $ collabiq notion match-company "네트워크" --threshold 0.90
         $ collabiq notion match-company "스타트업" --json
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
     start_time = datetime.now()
 
     try:
@@ -597,10 +639,17 @@ def match_company(
                 output_json(
                     data={},
                     status="failure",
-                    errors=[{"error_type": "ConfigurationError", "message": "NOTION_DATABASE_ID_COMPANIES not set"}]
+                    errors=[
+                        {
+                            "error_type": "ConfigurationError",
+                            "message": "NOTION_DATABASE_ID_COMPANIES not set",
+                        }
+                    ],
                 )
             else:
-                console.print("[red]Error: NOTION_DATABASE_ID_COMPANIES not set in environment[/red]")
+                console.print(
+                    "[red]Error: NOTION_DATABASE_ID_COMPANIES not set in environment[/red]"
+                )
             raise typer.Exit(1)
 
         async def match_async():
@@ -633,7 +682,9 @@ def match_company(
                 return {
                     "input_name": company_name,
                     "match_type": match_result.match_type,
-                    "matched_company": match_result.company_name if match_result.page_id else None,
+                    "matched_company": match_result.company_name
+                    if match_result.page_id
+                    else None,
                     "page_id": match_result.page_id,
                     "similarity_score": round(match_result.similarity_score, 2),
                     "confidence_level": match_result.confidence_level,
@@ -658,16 +709,22 @@ def match_company(
             console.print(f"\n[cyan]Input:[/cyan] {result['input_name']}")
             console.print(f"[cyan]Match Type:[/cyan] {result['match_type']}")
 
-            if result['match_type'] in ['exact', 'fuzzy']:
-                console.print(f"[green]✓ Match Found![/green]")
-                console.print(f"[cyan]Matched Company:[/cyan] {result['matched_company']}")
+            if result["match_type"] in ["exact", "fuzzy"]:
+                console.print("[green]✓ Match Found![/green]")
+                console.print(
+                    f"[cyan]Matched Company:[/cyan] {result['matched_company']}"
+                )
                 console.print(f"[cyan]Similarity:[/cyan] {result['similarity_score']}")
                 console.print(f"[cyan]Confidence:[/cyan] {result['confidence_level']}")
                 console.print(f"[cyan]Page ID:[/cyan] {result['page_id']}")
             else:
-                console.print(f"[yellow]No match found (similarity: {result['similarity_score']} < {result['threshold']})[/yellow]")
+                console.print(
+                    f"[yellow]No match found (similarity: {result['similarity_score']} < {result['threshold']})[/yellow]"
+                )
 
-            console.print(f"\n[dim]Searched {result['total_candidates']} companies in {duration_ms}ms[/dim]")
+            console.print(
+                f"\n[dim]Searched {result['total_candidates']} companies in {duration_ms}ms[/dim]"
+            )
 
     except typer.Exit:
         raise
@@ -679,7 +736,9 @@ def match_company(
 def match_person(
     ctx: typer.Context,
     person_name: str = typer.Argument(..., help="Person name to match"),
-    threshold: float = typer.Option(0.70, "--threshold", "-t", help="Similarity threshold (0.0-1.0)"),
+    threshold: float = typer.Option(
+        0.70, "--threshold", "-t", help="Similarity threshold (0.0-1.0)"
+    ),
     json: bool = typer.Option(False, "--json", help="Output in JSON format"),
     debug: bool = typer.Option(False, "--debug", help="Enable debug logging"),
 ) -> None:
@@ -694,7 +753,7 @@ def match_person(
         $ collabiq notion match-person "John Smith" --threshold 0.80
         $ collabiq notion match-person "이영희" --json
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
     start_time = datetime.now()
 
     try:
@@ -726,7 +785,9 @@ def match_person(
                 return {
                     "input_name": person_name,
                     "match_type": match_result.match_type,
-                    "matched_user": match_result.user_name if match_result.user_id else None,
+                    "matched_user": match_result.user_name
+                    if match_result.user_id
+                    else None,
                     "user_id": match_result.user_id,
                     "similarity_score": round(match_result.similarity_score, 2),
                     "confidence_level": match_result.confidence_level,
@@ -752,23 +813,29 @@ def match_person(
             console.print(f"\n[cyan]Input:[/cyan] {result['input_name']}")
             console.print(f"[cyan]Match Type:[/cyan] {result['match_type']}")
 
-            if result['match_type'] in ['exact', 'fuzzy']:
-                console.print(f"[green]✓ Match Found![/green]")
+            if result["match_type"] in ["exact", "fuzzy"]:
+                console.print("[green]✓ Match Found![/green]")
                 console.print(f"[cyan]Matched User:[/cyan] {result['matched_user']}")
                 console.print(f"[cyan]Similarity:[/cyan] {result['similarity_score']}")
                 console.print(f"[cyan]Confidence:[/cyan] {result['confidence_level']}")
 
-                if result['is_ambiguous']:
-                    console.print(f"[yellow]⚠ Ambiguous match detected![/yellow]")
-                    console.print(f"[yellow]Alternative matches:[/yellow]")
-                    for alt in result['alternative_matches']:
-                        console.print(f"  - {alt['user_name']} (similarity: {alt['similarity_score']})")
+                if result["is_ambiguous"]:
+                    console.print("[yellow]⚠ Ambiguous match detected![/yellow]")
+                    console.print("[yellow]Alternative matches:[/yellow]")
+                    for alt in result["alternative_matches"]:
+                        console.print(
+                            f"  - {alt['user_name']} (similarity: {alt['similarity_score']})"
+                        )
 
                 console.print(f"[cyan]User ID:[/cyan] {result['user_id']}")
             else:
-                console.print(f"[yellow]No match found (similarity: {result['similarity_score']} < {result['threshold']})[/yellow]")
+                console.print(
+                    f"[yellow]No match found (similarity: {result['similarity_score']} < {result['threshold']})[/yellow]"
+                )
 
-            console.print(f"\n[dim]Searched {result['total_users']} users in {duration_ms}ms[/dim]")
+            console.print(
+                f"\n[dim]Searched {result['total_users']} users in {duration_ms}ms[/dim]"
+            )
 
     except typer.Exit:
         raise
@@ -781,7 +848,9 @@ def list_users(
     ctx: typer.Context,
     json: bool = typer.Option(False, "--json", help="Output in JSON format"),
     debug: bool = typer.Option(False, "--debug", help="Enable debug logging"),
-    refresh: bool = typer.Option(False, "--refresh", "-r", help="Force refresh from API"),
+    refresh: bool = typer.Option(
+        False, "--refresh", "-r", help="Force refresh from API"
+    ),
 ) -> None:
     """
     List all Notion workspace users.
@@ -794,7 +863,7 @@ def list_users(
         $ collabiq notion list-users --refresh
         $ collabiq notion list-users --json
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
     start_time = datetime.now()
 
     try:
@@ -841,14 +910,21 @@ def list_users(
         duration_ms = int((datetime.now() - start_time).total_seconds() * 1000)
 
         # Log success
-        log_cli_operation("notion list-users", success=True, duration_ms=duration_ms, user_count=result["user_count"])
+        log_cli_operation(
+            "notion list-users",
+            success=True,
+            duration_ms=duration_ms,
+            user_count=result["user_count"],
+        )
 
         # Output result
         if json:
             output_json(data=result, status="success")
         else:
             console.print(f"\n[cyan]Total Users:[/cyan] {result['user_count']}")
-            console.print(f"[cyan]Source:[/cyan] {'Cache (24h TTL)' if result['from_cache'] else 'Fresh from API'}\n")
+            console.print(
+                f"[cyan]Source:[/cyan] {'Cache (24h TTL)' if result['from_cache'] else 'Fresh from API'}\n"
+            )
 
             # Create table for users
             table = create_table(
@@ -857,7 +933,12 @@ def list_users(
                     {"name": "Name", "style": "cyan", "field": "name"},
                     {"name": "Email", "style": "magenta", "field": "email"},
                     {"name": "Type", "style": "green", "field": "type"},
-                    {"name": "User ID", "style": "dim", "field": "id", "no_wrap": False},
+                    {
+                        "name": "User ID",
+                        "style": "dim",
+                        "field": "id",
+                        "no_wrap": False,
+                    },
                 ],
                 show_lines=True,
             )
@@ -867,7 +948,7 @@ def list_users(
                     user["name"] or "(no name)",
                     user["email"] or "(no email)",
                     user["type"],
-                    user["id"]
+                    user["id"],
                 )
 
             console.print(table)

@@ -10,9 +10,8 @@ Tests cover:
 
 from datetime import datetime
 
-import pytest
 
-from src.collabiq.date_parser import DateFormat, extract_dates_from_text, parse_date
+from src.collabiq.date_parser import DateFormat, extract_dates_from_text
 
 
 class TestRealWorldEmailScenarios:

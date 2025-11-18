@@ -6,10 +6,9 @@ TDD: These tests are written FIRST and should FAIL before implementation.
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, AsyncMock
 
 from notion_integrator import NotionWriter
-from llm_provider.types import WriteResult
 from tests.fixtures import create_valid_extracted_data
 
 
@@ -58,8 +57,7 @@ class TestDuplicateDetection:
     def notion_writer_skip(self, mock_notion_integrator):
         """Create NotionWriter with 'skip' duplicate behavior."""
         writer = NotionWriter(
-            notion_integrator=mock_notion_integrator,
-            collabiq_db_id="test-db-id-123"
+            notion_integrator=mock_notion_integrator, collabiq_db_id="test-db-id-123"
         )
         writer.duplicate_behavior = "skip"
         return writer
@@ -68,8 +66,7 @@ class TestDuplicateDetection:
     def notion_writer_update(self, mock_notion_integrator):
         """Create NotionWriter with 'update' duplicate behavior."""
         writer = NotionWriter(
-            notion_integrator=mock_notion_integrator,
-            collabiq_db_id="test-db-id-123"
+            notion_integrator=mock_notion_integrator, collabiq_db_id="test-db-id-123"
         )
         writer.duplicate_behavior = "update"
         return writer
@@ -99,7 +96,9 @@ class TestDuplicateDetection:
         result1 = await notion_writer_skip.create_collabiq_entry(sample_data)
 
         assert result1.success is True, "First write should succeed"
-        assert result1.page_id == "first-page-id-123", "First write should return page_id"
+        assert result1.page_id == "first-page-id-123", (
+            "First write should return page_id"
+        )
         assert result1.is_duplicate is False, "First write is not a duplicate"
 
         # Second write - detects duplicate, skips
@@ -110,9 +109,11 @@ class TestDuplicateDetection:
                         "id": "first-page-id-123",
                         "properties": {
                             "email_id": {
-                                "rich_text": [{"text": {"content": "duplicate-test-001"}}]
+                                "rich_text": [
+                                    {"text": {"content": "duplicate-test-001"}}
+                                ]
                             }
-                        }
+                        },
                     }
                 ]
             }
@@ -121,16 +122,21 @@ class TestDuplicateDetection:
         result2 = await notion_writer_skip.create_collabiq_entry(sample_data)
 
         # Verify duplicate was detected and skipped
-        assert result2.success is True, "Duplicate detection should return success (skipped)"
-        assert result2.is_duplicate is True, "Second write should be marked as duplicate"
-        assert result2.existing_page_id == "first-page-id-123", \
+        assert result2.success is True, (
+            "Duplicate detection should return success (skipped)"
+        )
+        assert result2.is_duplicate is True, (
+            "Second write should be marked as duplicate"
+        )
+        assert result2.existing_page_id == "first-page-id-123", (
             "existing_page_id should match first entry"
-        assert result2.page_id is None, \
-            "page_id should be None for skipped duplicate"
+        )
+        assert result2.page_id is None, "page_id should be None for skipped duplicate"
 
         # Verify only ONE create call was made (first write only)
-        assert mock_notion_integrator.client.client.pages.create.call_count == 1, \
+        assert mock_notion_integrator.client.client.pages.create.call_count == 1, (
             "Only one entry should be created (skip behavior)"
+        )
 
     @pytest.mark.asyncio
     async def test_duplicate_detection_update_behavior(
@@ -148,7 +154,11 @@ class TestDuplicateDetection:
 
         # First write - succeeds
         mock_notion_integrator.client.client.pages.create = AsyncMock(
-            return_value={"id": "original-page-id-456", "object": "page", "properties": {}}
+            return_value={
+                "id": "original-page-id-456",
+                "object": "page",
+                "properties": {},
+            }
         )
         mock_notion_integrator.client.query_database = AsyncMock(
             return_value={"results": []}  # No duplicate on first write
@@ -169,24 +179,32 @@ class TestDuplicateDetection:
                             "email_id": {
                                 "rich_text": [{"text": {"content": "update-test-001"}}]
                             }
-                        }
+                        },
                     }
                 ]
             }
         )
         mock_notion_integrator.client.client.pages.update = AsyncMock(
-            return_value={"id": "original-page-id-456", "object": "page", "properties": {}}
+            return_value={
+                "id": "original-page-id-456",
+                "object": "page",
+                "properties": {},
+            }
         )
 
         result2 = await notion_writer_update.create_collabiq_entry(sample_data)
 
         # Verify duplicate was detected and updated
         assert result2.success is True, "Update should succeed"
-        assert result2.is_duplicate is True, "Second write should be marked as duplicate"
-        assert result2.page_id == "original-page-id-456", \
+        assert result2.is_duplicate is True, (
+            "Second write should be marked as duplicate"
+        )
+        assert result2.page_id == "original-page-id-456", (
             "page_id should match updated entry"
-        assert result2.existing_page_id == "original-page-id-456", \
+        )
+        assert result2.existing_page_id == "original-page-id-456", (
             "existing_page_id should match original entry"
+        )
 
         # Verify update API was called
         mock_notion_integrator.client.client.pages.update.assert_called_once()
@@ -210,13 +228,18 @@ class TestDuplicateDetection:
         logging configuration pollution from earlier tests.
         """
         import logging
+
         caplog.set_level(logging.INFO, logger="notion_integrator.writer")
 
         sample_data = create_valid_extracted_data(email_id="log-test-001")
 
         # First write
         mock_notion_integrator.client.client.pages.create = AsyncMock(
-            return_value={"id": "logged-page-id-789", "object": "page", "properties": {}}
+            return_value={
+                "id": "logged-page-id-789",
+                "object": "page",
+                "properties": {},
+            }
         )
         mock_notion_integrator.client.query_database = AsyncMock(
             return_value={"results": []}
@@ -233,7 +256,7 @@ class TestDuplicateDetection:
                             "email_id": {
                                 "rich_text": [{"text": {"content": "log-test-001"}}]
                             }
-                        }
+                        },
                     }
                 ]
             }
@@ -247,7 +270,10 @@ class TestDuplicateDetection:
             "duplicate" in record.message.lower() and "log-test-001" in record.message
             for record in caplog.records
         )
-        logged_in_output = "duplicate detected" in caplog.text.lower() and "log-test-001" in caplog.text.lower()
+        logged_in_output = (
+            "duplicate detected" in caplog.text.lower()
+            and "log-test-001" in caplog.text.lower()
+        )
 
         assert logged_in_caplog or logged_in_output, (
             f"Duplicate detection should be logged with email_id. "

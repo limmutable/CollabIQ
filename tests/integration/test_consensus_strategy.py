@@ -8,7 +8,6 @@ Tests the consensus strategy with mocked providers to verify:
 - Confidence score recalculation
 """
 
-import asyncio
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
@@ -150,9 +149,7 @@ class TestConsensusBasics:
         assert result.person_in_charge == "김철수"
 
     @pytest.mark.asyncio
-    async def test_recalculates_confidence_scores(
-        self, mock_providers, health_tracker
-    ):
+    async def test_recalculates_confidence_scores(self, mock_providers, health_tracker):
         """Test that consensus recalculates confidence based on agreement."""
         strategy = ConsensusStrategy(
             provider_names=["gemini", "claude", "openai"],
@@ -186,9 +183,7 @@ class TestMinimumProviderValidation:
     """Test minimum provider response validation."""
 
     @pytest.mark.asyncio
-    async def test_requires_minimum_two_responses(
-        self, mock_providers, health_tracker
-    ):
+    async def test_requires_minimum_two_responses(self, mock_providers, health_tracker):
         """Test that consensus requires at least 2 provider responses."""
         # Make 2 providers fail, only 1 succeeds
         mock_providers["gemini"].extract_entities = MagicMock(

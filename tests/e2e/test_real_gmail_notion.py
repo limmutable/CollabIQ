@@ -21,8 +21,6 @@ Tests will be skipped if credentials are not configured.
 
 import pytest
 import os
-from datetime import datetime
-from pathlib import Path
 
 from e2e_test.runner import E2ERunner
 from llm_orchestrator.orchestrator import LLMOrchestrator
@@ -89,16 +87,21 @@ def test_fetch_real_email_from_gmail(gmail_receiver, gmail_test_account):
     # For tests: Fetch a fixed number of emails (unlike live processing which only fetches unprocessed)
     query = f"to:{gmail_test_account['email_address']} newer_than:30d"
 
-    raw_emails = gmail_receiver.fetch_emails(
-        max_results=MAX_EMAILS,
-        query=query
-    )
+    raw_emails = gmail_receiver.fetch_emails(max_results=MAX_EMAILS, query=query)
 
     # Verify emails were fetched
-    assert len(raw_emails) > 0, f"Should fetch at least 1 email (tried to fetch {MAX_EMAILS})"
-    assert all(hasattr(email, 'email_id') for email in raw_emails), "All emails should have email_id"
-    assert all(hasattr(email, 'subject') for email in raw_emails), "All emails should have subject"
-    assert all(hasattr(email, 'cleaned_body') for email in raw_emails), "All emails should have cleaned_body"
+    assert len(raw_emails) > 0, (
+        f"Should fetch at least 1 email (tried to fetch {MAX_EMAILS})"
+    )
+    assert all(hasattr(email, "email_id") for email in raw_emails), (
+        "All emails should have email_id"
+    )
+    assert all(hasattr(email, "subject") for email in raw_emails), (
+        "All emails should have subject"
+    )
+    assert all(hasattr(email, "cleaned_body") for email in raw_emails), (
+        "All emails should have cleaned_body"
+    )
 
     print(f"\n✓ Successfully fetched {len(raw_emails)} real emails from Gmail")
     for email in raw_emails[:3]:  # Show first 3
@@ -107,7 +110,9 @@ def test_fetch_real_email_from_gmail(gmail_receiver, gmail_test_account):
 
 @pytest.mark.e2e
 @pytest.mark.integration
-def test_process_real_email_to_notion(e2e_runner, gmail_test_account, notion_test_database):
+def test_process_real_email_to_notion(
+    e2e_runner, gmail_test_account, notion_test_database
+):
     """
     T016 + T017: Test complete pipeline from Gmail fetch to Notion write
 
@@ -130,8 +135,7 @@ def test_process_real_email_to_notion(e2e_runner, gmail_test_account, notion_tes
 
     # Get email IDs to process
     raw_emails = e2e_runner.gmail_receiver.fetch_emails(
-        max_results=MAX_EMAILS,
-        query=query
+        max_results=MAX_EMAILS, query=query
     )
 
     assert len(raw_emails) > 0, f"Should have at least 1 email (tried {MAX_EMAILS})"
@@ -141,11 +145,13 @@ def test_process_real_email_to_notion(e2e_runner, gmail_test_account, notion_tes
     # Run E2E test with real APIs
     test_run = e2e_runner.run_tests(
         email_ids=email_ids,
-        test_mode=False  # Real API calls
+        test_mode=False,  # Real API calls
     )
 
     # Verify test run completed
-    assert test_run.status == "completed", f"Test run should complete, got: {test_run.status}"
+    assert test_run.status == "completed", (
+        f"Test run should complete, got: {test_run.status}"
+    )
     assert test_run.emails_processed == len(email_ids), "All emails should be processed"
 
     # Verify success rate (SC-001: ≥95%)
@@ -160,7 +166,7 @@ def test_process_real_email_to_notion(e2e_runner, gmail_test_account, notion_tes
         f"Critical errors detected: {test_run.error_summary.get('critical', 0)} (SC-003)"
     )
 
-    print(f"\n✓ E2E Pipeline Success:")
+    print("\n✓ E2E Pipeline Success:")
     print(f"  - Emails processed: {test_run.emails_processed}")
     print(f"  - Success rate: {success_rate:.1%}")
     print(f"  - Notion entries created: {test_run.success_count}")
@@ -203,7 +209,9 @@ def test_notion_write_validation(e2e_runner, notion_writer, gmail_test_account):
     page_id = notion_writer.write_entry(classified_data)
 
     assert page_id is not None, "Notion page ID should be returned"
-    assert len(page_id) >= 32, f"Notion page ID should be at least 32 chars, got: {page_id}"
+    assert len(page_id) >= 32, (
+        f"Notion page ID should be at least 32 chars, got: {page_id}"
+    )
 
     # Read back from Notion to validate
     notion_page = notion_writer.client.client.pages.retrieve(page_id=page_id)
@@ -221,13 +229,20 @@ def test_notion_write_validation(e2e_runner, notion_writer, gmail_test_account):
     # Validate email_id is stored (for cleanup identification)
     if "email_id" in properties:
         # Notion email_id field should match
-        notion_email_id = properties["email_id"].get("rich_text", [{}])[0].get("text", {}).get("content")
-        assert notion_email_id == email_id, f"Email ID mismatch: {notion_email_id} != {email_id}"
+        notion_email_id = (
+            properties["email_id"]
+            .get("rich_text", [{}])[0]
+            .get("text", {})
+            .get("content")
+        )
+        assert notion_email_id == email_id, (
+            f"Email ID mismatch: {notion_email_id} != {email_id}"
+        )
 
-    print(f"\n✓ Notion Write Validation Passed:")
+    print("\n✓ Notion Write Validation Passed:")
     print(f"  - Page ID: {page_id}")
     print(f"  - Email ID: {email_id}")
-    print(f"  - All required fields present")
+    print("  - All required fields present")
 
 
 @pytest.mark.e2e
@@ -258,14 +273,14 @@ def test_batch_processing_real_emails(e2e_runner, gmail_test_account):
     # Check success rate
     success_rate = test_run.success_count / test_run.emails_processed
 
-    print(f"\n✓ Batch Processing Results:")
+    print("\n✓ Batch Processing Results:")
     print(f"  - Emails processed: {test_run.emails_processed}")
     print(f"  - Success rate: {success_rate:.1%}")
     print(f"  - Failures: {test_run.failure_count}")
 
     # SC-001: ≥95% success rate
     if success_rate < 0.95:
-        print(f"  ⚠️  Warning: Success rate below 95% threshold")
+        print("  ⚠️  Warning: Success rate below 95% threshold")
 
     # SC-003: No critical errors
     assert test_run.error_summary.get("critical", 0) == 0, "No critical errors allowed"

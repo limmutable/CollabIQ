@@ -11,7 +11,6 @@ All components should fail gracefully without crashes.
 """
 
 import pytest
-from typing import Dict, Any
 
 from collabiq.date_parser import parse_date
 from notion_integrator.integrator import NotionIntegrator
@@ -204,7 +203,7 @@ class TestNotionIntegratorErrorHandling:
 
         # Should validate or coerce confidence values
         try:
-            result = integrator.create_company_entry(invalid_confidence)
+            integrator.create_company_entry(invalid_confidence)
         except (TypeError, ValueError):
             # Acceptable to reject invalid confidence
             pass
@@ -323,6 +322,4 @@ class TestBoundaryConditions:
         }
 
         # All boundary values should be valid
-        assert all(
-            0.0 <= v["confidence"] <= 1.0 for v in boundary_confidences.values()
-        )
+        assert all(0.0 <= v["confidence"] <= 1.0 for v in boundary_confidences.values())

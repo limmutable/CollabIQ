@@ -29,7 +29,8 @@ class DuplicateTracker(BaseModel):
         default_factory=set, description="Set of processed message IDs"
     )
     last_updated: datetime = Field(
-        default_factory=lambda: datetime.now(UTC), description="Last time tracker was updated"
+        default_factory=lambda: datetime.now(UTC),
+        description="Last time tracker was updated",
     )
 
     def is_duplicate(self, message_id: str) -> bool:

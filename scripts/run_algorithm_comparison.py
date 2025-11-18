@@ -25,9 +25,9 @@ from notion_integrator.fuzzy_matcher import RapidfuzzMatcher
 def print_detailed_results():
     """Print detailed comparison of matching results."""
 
-    print("="*80)
+    print("=" * 80)
     print("ALGORITHM COMPARISON: Rapidfuzz vs LLM-based Matching")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # Load test data
@@ -49,19 +49,31 @@ def print_detailed_results():
     }
 
     print("Dataset Composition:")
-    print(f"  Exact Matches:  {stats['exact_matches']:2d} ({stats['exact_matches']/len(test_cases)*100:.0f}%)")
-    print(f"  Fuzzy Matches:  {stats['fuzzy_matches']:2d} ({stats['fuzzy_matches']/len(test_cases)*100:.0f}%)")
-    print(f"  No Matches:     {stats['no_matches']:2d} ({stats['no_matches']/len(test_cases)*100:.0f}%)")
+    print(
+        f"  Exact Matches:  {stats['exact_matches']:2d} ({stats['exact_matches'] / len(test_cases) * 100:.0f}%)"
+    )
+    print(
+        f"  Fuzzy Matches:  {stats['fuzzy_matches']:2d} ({stats['fuzzy_matches'] / len(test_cases) * 100:.0f}%)"
+    )
+    print(
+        f"  No Matches:     {stats['no_matches']:2d} ({stats['no_matches'] / len(test_cases) * 100:.0f}%)"
+    )
     print()
-    print(f"  Easy:   {stats['easy']:2d} ({stats['easy']/len(test_cases)*100:.0f}%)")
-    print(f"  Medium: {stats['medium']:2d} ({stats['medium']/len(test_cases)*100:.0f}%)")
-    print(f"  Hard:   {stats['hard']:2d} ({stats['hard']/len(test_cases)*100:.0f}%)")
+    print(
+        f"  Easy:   {stats['easy']:2d} ({stats['easy'] / len(test_cases) * 100:.0f}%)"
+    )
+    print(
+        f"  Medium: {stats['medium']:2d} ({stats['medium'] / len(test_cases) * 100:.0f}%)"
+    )
+    print(
+        f"  Hard:   {stats['hard']:2d} ({stats['hard'] / len(test_cases) * 100:.0f}%)"
+    )
     print()
 
     # Evaluate Rapidfuzz
-    print("="*80)
+    print("=" * 80)
     print("TESTING: RapidfuzzMatcher (Character-based Fuzzy Matching)")
-    print("="*80)
+    print("=" * 80)
     print()
 
     rapidfuzz_matcher = RapidfuzzMatcher()
@@ -73,19 +85,19 @@ def print_detailed_results():
         similarity_threshold=0.85,
     )
 
-    print(f"✅ Evaluation Complete")
+    print("✅ Evaluation Complete")
     print(f"   Accuracy:  {rapidfuzz_metrics.accuracy:.1%}")
     print(f"   Precision: {rapidfuzz_metrics.precision:.1%}")
     print(f"   Recall:    {rapidfuzz_metrics.recall:.1%}")
     print(f"   F1 Score:  {rapidfuzz_metrics.f1_score:.3f}")
     print(f"   Latency:   {rapidfuzz_metrics.avg_latency_ms:.2f}ms avg")
-    print(f"   Cost:      $0 (free)")
+    print("   Cost:      $0 (free)")
     print()
 
     # Show detailed results
-    print("="*80)
+    print("=" * 80)
     print("DETAILED RESULTS BY TEST CASE")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # Group by category
@@ -105,7 +117,7 @@ def print_detailed_results():
         total = len(results)
 
         print(f"Category: {category}")
-        print(f"  Accuracy: {correct}/{total} ({correct/total*100:.0f}%)")
+        print(f"  Accuracy: {correct}/{total} ({correct / total * 100:.0f}%)")
         print()
 
         for result, tc in results:
@@ -117,30 +129,36 @@ def print_detailed_results():
 
             if not result.is_correct:
                 # Explain why it failed
-                if result.predicted_match == "(no match)" and result.expected_match != "(no match)":
-                    print(f"     ⚠️  False Negative: Failed to find match")
-                elif result.predicted_match != "(no match)" and result.expected_match == "(no match)":
-                    print(f"     ⚠️  False Positive: Matched when shouldn't")
+                if (
+                    result.predicted_match == "(no match)"
+                    and result.expected_match != "(no match)"
+                ):
+                    print("     ⚠️  False Negative: Failed to find match")
+                elif (
+                    result.predicted_match != "(no match)"
+                    and result.expected_match == "(no match)"
+                ):
+                    print("     ⚠️  False Positive: Matched when shouldn't")
                 else:
-                    print(f"     ⚠️  Wrong Match: Found different company")
+                    print("     ⚠️  Wrong Match: Found different company")
 
             print()
 
     # Summary comparison
-    print("="*80)
+    print("=" * 80)
     print("ALGORITHM COMPARISON SUMMARY")
-    print("="*80)
+    print("=" * 80)
     print()
 
     print("RapidfuzzMatcher (Character-based):")
-    print(f"  ✅ Strengths:")
+    print("  ✅ Strengths:")
     print(f"     - Fast: {rapidfuzz_metrics.avg_latency_ms:.2f}ms average")
-    print(f"     - Free: No API costs")
-    print(f"     - Simple: No dependencies on external services")
-    print(f"     - Handles exact matches perfectly")
-    print(f"     - Good with whitespace variations")
+    print("     - Free: No API costs")
+    print("     - Simple: No dependencies on external services")
+    print("     - Handles exact matches perfectly")
+    print("     - Good with whitespace variations")
     print()
-    print(f"  ⚠️  Limitations:")
+    print("  ⚠️  Limitations:")
 
     # Find failure patterns
     failed_categories = set()
@@ -154,45 +172,47 @@ def print_detailed_results():
         for cat in sorted(failed_categories):
             print(f"     - Struggles with: {cat}")
     else:
-        print(f"     - None observed on this dataset!")
+        print("     - None observed on this dataset!")
 
     print()
 
     print("LLMMatcher (Semantic, not tested):")
-    print(f"  ✅ Theoretical Strengths:")
-    print(f"     - Semantic understanding")
-    print(f"     - Handles synonyms and variations")
-    print(f"     - Can understand context")
-    print(f"     - Multilingual capabilities")
+    print("  ✅ Theoretical Strengths:")
+    print("     - Semantic understanding")
+    print("     - Handles synonyms and variations")
+    print("     - Can understand context")
+    print("     - Multilingual capabilities")
     print()
-    print(f"  ⚠️  Trade-offs:")
-    print(f"     - Slower: ~500-2000ms per call")
-    print(f"     - Costly: ~$0.001 per match")
-    print(f"     - Requires LLM API configuration")
-    print(f"     - May have variability in results")
+    print("  ⚠️  Trade-offs:")
+    print("     - Slower: ~500-2000ms per call")
+    print("     - Costly: ~$0.001 per match")
+    print("     - Requires LLM API configuration")
+    print("     - May have variability in results")
     print()
 
     # Final recommendation
-    print("="*80)
+    print("=" * 80)
     print("RECOMMENDATION")
-    print("="*80)
+    print("=" * 80)
     print()
 
     if rapidfuzz_metrics.f1_score >= 0.90:
         print("✅ USE RapidfuzzMatcher for production")
         print(f"   - Meets 90% accuracy threshold ({rapidfuzz_metrics.accuracy:.1%})")
-        print(f"   - Fast and free")
-        print(f"   - No external dependencies")
+        print("   - Fast and free")
+        print("   - No external dependencies")
     elif rapidfuzz_metrics.f1_score >= 0.80:
         print("⚠️  CONSIDER HybridMatcher")
-        print(f"   - Rapidfuzz at {rapidfuzz_metrics.f1_score:.1%} is good but below target")
-        print(f"   - Use Rapidfuzz first, LLM fallback for difficult cases")
-        print(f"   - Balances speed, cost, and accuracy")
+        print(
+            f"   - Rapidfuzz at {rapidfuzz_metrics.f1_score:.1%} is good but below target"
+        )
+        print("   - Use Rapidfuzz first, LLM fallback for difficult cases")
+        print("   - Balances speed, cost, and accuracy")
     else:
         print("❌ EVALUATE LLMMatcher")
         print(f"   - Rapidfuzz at {rapidfuzz_metrics.f1_score:.1%} is below 80%")
-        print(f"   - May need semantic understanding")
-        print(f"   - Consider dataset improvements first")
+        print("   - May need semantic understanding")
+        print("   - Consider dataset improvements first")
 
     print()
 
@@ -206,5 +226,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\nERROR: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

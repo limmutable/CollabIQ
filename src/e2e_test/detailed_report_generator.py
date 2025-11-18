@@ -12,7 +12,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +154,9 @@ class DetailedReportGenerator:
 
         success_rate = 0
         if run_data["emails_processed"] > 0:
-            success_rate = (run_data["success_count"] / run_data["emails_processed"]) * 100
+            success_rate = (
+                run_data["success_count"] / run_data["emails_processed"]
+            ) * 100
 
         return f"""## 1. Test Run Summary
 
@@ -180,13 +182,17 @@ class DetailedReportGenerator:
 
 ---"""
 
-    def _generate_email_details(self, run_data: dict, extractions: Dict[str, dict]) -> str:
+    def _generate_email_details(
+        self, run_data: dict, extractions: Dict[str, dict]
+    ) -> str:
         """Generate per-email processing details."""
-        section = [f"""## 2. Email Processing Details
+        section = [
+            f"""## 2. Email Processing Details
 
 Total emails processed: {len(run_data.get("test_email_ids", []))}
 
-"""]
+"""
+        ]
 
         for idx, email_id in enumerate(run_data.get("test_email_ids", []), 1):
             extraction = extractions.get(email_id, {})
@@ -238,11 +244,15 @@ Extracted values are mapped to Notion database properties as follows:
 
 ---"""
 
-    def _generate_notion_write_results(self, run_data: dict, extractions: Dict[str, dict]) -> str:
+    def _generate_notion_write_results(
+        self, run_data: dict, extractions: Dict[str, dict]
+    ) -> str:
         """Generate Notion database write results."""
-        section = [f"""## 4. Notion Database Write Results
+        section = [
+            """## 4. Notion Database Write Results
 
-"""]
+"""
+        ]
 
         writes_attempted = len(run_data.get("test_email_ids", []))
         writes_successful = run_data.get("success_count", 0)
@@ -265,11 +275,17 @@ Extracted values are mapped to Notion database properties as follows:
 
         for email_id in run_data.get("test_email_ids", []):
             if email_id in extractions:
-                section.append(f"| `{email_id}` | ✅ Success | Written to Notion database |")
+                section.append(
+                    f"| `{email_id}` | ✅ Success | Written to Notion database |"
+                )
             else:
-                section.append(f"| `{email_id}` | ❌ Failed | Check error report for details |")
+                section.append(
+                    f"| `{email_id}` | ❌ Failed | Check error report for details |"
+                )
 
-        section.append("\n**Note**: Detailed error information available in `{run_id}_errors.md`")
+        section.append(
+            "\n**Note**: Detailed error information available in `{run_id}_errors.md`"
+        )
         section.append("\n---")
 
         return "\n".join(section)
@@ -283,11 +299,13 @@ No quality metrics available for this run.
 
 ---"""
 
-        section = [f"""## 5. Quality Metrics Summary
+        section = [
+            """## 5. Quality Metrics Summary
 
 Quality metrics collected across all LLM providers:
 
-"""]
+"""
+        ]
 
         # Sort providers by quality score
         providers_sorted = sorted(
@@ -297,7 +315,7 @@ Quality metrics collected across all LLM providers:
                 + 0.3 * (x[1]["field_completeness"] / 100)
                 + 0.3 * (x[1]["validation_success_rate"] / 100)
             ),
-            reverse=True
+            reverse=True,
         )
 
         for idx, (provider, metrics) in enumerate(providers_sorted, 1):
@@ -326,7 +344,9 @@ Quality metrics collected across all LLM providers:
 
             section.append("\n")
 
-        section.append("**Quality Score Formula**: 40% confidence + 30% completeness + 30% validation")
+        section.append(
+            "**Quality Score Formula**: 40% confidence + 30% completeness + 30% validation"
+        )
         section.append("\n---")
 
         return "\n".join(section)
@@ -344,11 +364,13 @@ Quality metrics collected across all LLM providers:
         if total_errors == 0:
             return ""
 
-        section = [f"""## 6. Detailed Error Report
+        section = [
+            f"""## 6. Detailed Error Report
 
 **Total Errors**: {total_errors}
 
-"""]
+"""
+        ]
 
         # Generate error details by severity
         for severity in ["critical", "high", "medium", "low"]:

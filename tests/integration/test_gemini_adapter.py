@@ -7,8 +7,7 @@ Tests cover Korean, English, and mixed language emails.
 import json
 import pytest
 from pathlib import Path
-from unittest.mock import patch, Mock
-from datetime import datetime
+from unittest.mock import patch
 
 from llm_adapters.gemini_adapter import GeminiAdapter
 from llm_provider.types import ExtractedEntities
@@ -126,7 +125,9 @@ def test_gemini_adapter_timeout_error(gemini_adapter, korean_email_001):
         "_call_gemini_api",
         side_effect=TimeoutError("Request timeout"),
     ):
-        with patch.object(gemini_adapter, "_handle_api_error", side_effect=LLMTimeoutError()):
+        with patch.object(
+            gemini_adapter, "_handle_api_error", side_effect=LLMTimeoutError()
+        ):
             with pytest.raises(LLMTimeoutError):
                 gemini_adapter.extract_entities(korean_email_001)
 

@@ -70,7 +70,9 @@ def confirm_deletion(entry_count: int) -> bool:
     print()
 
     while True:
-        response = input("Type 'yes' to confirm deletion, or 'no' to cancel: ").strip().lower()
+        response = (
+            input("Type 'yes' to confirm deletion, or 'no' to cancel: ").strip().lower()
+        )
 
         if response == "yes":
             return True
@@ -127,7 +129,9 @@ def main():
     database_id = args.database_id or os.getenv("NOTION_DATABASE_ID_COLLABIQ")
 
     if not database_id:
-        print("ERROR: Database ID not provided. Set NOTION_DATABASE_ID_COLLABIQ env var or use --database-id")
+        print(
+            "ERROR: Database ID not provided. Set NOTION_DATABASE_ID_COLLABIQ env var or use --database-id"
+        )
         sys.exit(1)
 
     # Load email IDs if provided
@@ -198,8 +202,7 @@ def main():
 
     try:
         result = cleanup.cleanup_test_entries(
-            verify=not args.no_verify,
-            continue_on_error=True
+            verify=not args.no_verify, continue_on_error=True
         )
 
         # Print results
@@ -212,9 +215,9 @@ def main():
 
         if not args.no_verify:
             if result.verified:
-                print(f"✓ Verification: All entries removed")
+                print("✓ Verification: All entries removed")
             else:
-                print(f"⚠️  Verification: Some entries may still exist")
+                print("⚠️  Verification: Some entries may still exist")
 
         if result.failed_ids:
             print(f"\nFailed to delete {len(result.failed_ids)} entries:")

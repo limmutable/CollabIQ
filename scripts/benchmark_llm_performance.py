@@ -44,13 +44,12 @@ from collabiq.llm_benchmarking.prompts import (
     get_prompt_description,
     list_prompt_ids,
 )
-from collabiq.llm_benchmarking.suite import BenchmarkSuite, run_benchmark
-from collabiq.llm_benchmarking.ab_testing import ABTestFramework, compare_prompts
+from collabiq.llm_benchmarking.suite import run_benchmark
+from collabiq.llm_benchmarking.ab_testing import compare_prompts
 from llm_adapters.gemini_adapter import GeminiAdapter
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -65,7 +64,7 @@ DEFAULT_TEST_DATA = [
             "partner_org": "신세계",
             "details": "킥오프 미팅",
             "date": "2024-11-16",
-        }
+        },
     },
     {
         "email_text": "TableManager kicked off pilot with Shinsegae yesterday. Contact: John Kim.",
@@ -75,7 +74,7 @@ DEFAULT_TEST_DATA = [
             "partner_org": "Shinsegae",
             "details": "kicked off pilot",
             "date": "2024-11-16",
-        }
+        },
     },
     {
         "email_text": "11월 1주에 스마트시티 프로젝트 관련 회의 예정",
@@ -85,7 +84,7 @@ DEFAULT_TEST_DATA = [
             "partner_org": None,
             "details": "스마트시티 프로젝트 관련 회의",
             "date": "2024-11-01",
-        }
+        },
     },
     {
         "email_text": "프랙시스 강승현 대표와 만나기로 했는데, 신세계 파트너십 논의할 예정입니다.",
@@ -95,7 +94,7 @@ DEFAULT_TEST_DATA = [
             "partner_org": "신세계",
             "details": "파트너십 논의",
             "date": None,
-        }
+        },
     },
     {
         "email_text": "BreakandCompany meeting scheduled for November 20, 2024. Will discuss CJ partnership.",
@@ -105,7 +104,7 @@ DEFAULT_TEST_DATA = [
             "partner_org": "CJ",
             "details": "discuss CJ partnership",
             "date": "2024-11-20",
-        }
+        },
     },
 ]
 
@@ -144,12 +143,14 @@ def get_provider(provider_name: str):
         return GeminiAdapter(api_key=api_key)
     elif provider_name.lower() == "claude":
         from llm_adapters.claude_adapter import ClaudeAdapter
+
         api_key = os.getenv("ANTHROPIC_API_KEY")
         if not api_key:
             raise ValueError("ANTHROPIC_API_KEY environment variable not set")
         return ClaudeAdapter(api_key=api_key)
     elif provider_name.lower() == "openai":
         from llm_adapters.openai_adapter import OpenAIAdapter
+
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OPENAI_API_KEY environment variable not set")
@@ -201,19 +202,19 @@ def run_simple_benchmark(args):
     metrics = result["metrics"]
     print(f"\nProvider: {result['provider']}")
     print(f"Prompt: {result['prompt_id']}")
-    print(f"\nTests:")
+    print("\nTests:")
     print(f"  Total:      {result['total_tests']}")
     print(f"  Successful: {result['successful_tests']}")
     print(f"  Failed:     {result['failed_tests']}")
 
-    print(f"\nPerformance:")
+    print("\nPerformance:")
     print(f"  Accuracy:        {metrics['avg_accuracy']:.2%}")
     print(f"  Confidence:      {metrics['avg_confidence']:.2%}")
     print(f"  Completeness:    {metrics['avg_completeness']:.2%}")
     print(f"  Response Time:   {metrics['avg_response_time']:.2f}s")
 
     if metrics.get("field_accuracies"):
-        print(f"\nField Accuracies:")
+        print("\nField Accuracies:")
         for field, accuracy in metrics["field_accuracies"].items():
             print(f"  {field:20s}: {accuracy:.2%}")
 
@@ -337,20 +338,18 @@ Examples:
 
   # Use custom test data
   python scripts/benchmark_llm_performance.py --test-data data/my_test_emails.json
-        """
+        """,
     )
 
     # Mode selection
     parser.add_argument(
-        "--compare",
-        action="store_true",
-        help="Run A/B test comparing two prompts"
+        "--compare", action="store_true", help="Run A/B test comparing two prompts"
     )
 
     parser.add_argument(
         "--list-prompts",
         action="store_true",
-        help="List all available prompt variations"
+        help="List all available prompt variations",
     )
 
     # Provider selection
@@ -359,7 +358,7 @@ Examples:
         type=str,
         default="gemini",
         choices=["gemini", "claude", "openai"],
-        help="LLM provider to use (default: gemini)"
+        help="LLM provider to use (default: gemini)",
     )
 
     # Prompt selection
@@ -367,8 +366,14 @@ Examples:
         "--prompt",
         type=str,
         default=BASELINE,
-        choices=[BASELINE, KOREAN_OPTIMIZED, EXPLICIT_FORMAT, FEW_SHOT, STRUCTURED_OUTPUT],
-        help=f"Prompt variation to use (default: {BASELINE})"
+        choices=[
+            BASELINE,
+            KOREAN_OPTIMIZED,
+            EXPLICIT_FORMAT,
+            FEW_SHOT,
+            STRUCTURED_OUTPUT,
+        ],
+        help=f"Prompt variation to use (default: {BASELINE})",
     )
 
     # A/B test options
@@ -376,16 +381,28 @@ Examples:
         "--baseline",
         type=str,
         default=BASELINE,
-        choices=[BASELINE, KOREAN_OPTIMIZED, EXPLICIT_FORMAT, FEW_SHOT, STRUCTURED_OUTPUT],
-        help=f"Baseline prompt for A/B test (default: {BASELINE})"
+        choices=[
+            BASELINE,
+            KOREAN_OPTIMIZED,
+            EXPLICIT_FORMAT,
+            FEW_SHOT,
+            STRUCTURED_OUTPUT,
+        ],
+        help=f"Baseline prompt for A/B test (default: {BASELINE})",
     )
 
     parser.add_argument(
         "--test",
         type=str,
         default=KOREAN_OPTIMIZED,
-        choices=[BASELINE, KOREAN_OPTIMIZED, EXPLICIT_FORMAT, FEW_SHOT, STRUCTURED_OUTPUT],
-        help=f"Test prompt for A/B test (default: {KOREAN_OPTIMIZED})"
+        choices=[
+            BASELINE,
+            KOREAN_OPTIMIZED,
+            EXPLICIT_FORMAT,
+            FEW_SHOT,
+            STRUCTURED_OUTPUT,
+        ],
+        help=f"Test prompt for A/B test (default: {KOREAN_OPTIMIZED})",
     )
 
     # Data options
@@ -393,14 +410,14 @@ Examples:
         "--test-data",
         type=Path,
         default=None,
-        help="Path to JSON file with test data (default: use built-in samples)"
+        help="Path to JSON file with test data (default: use built-in samples)",
     )
 
     parser.add_argument(
         "--output-dir",
         type=str,
         default=None,
-        help="Directory to save results (default: data/test_metrics/benchmarks/)"
+        help="Directory to save results (default: data/test_metrics/benchmarks/)",
     )
 
     args = parser.parse_args()

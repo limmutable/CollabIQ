@@ -22,8 +22,12 @@ console = Console()
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Test extraction with specific email ID")
-    parser.add_argument("--email-id", required=True, help="Email ID to use for extraction")
+    parser = argparse.ArgumentParser(
+        description="Test extraction with specific email ID"
+    )
+    parser.add_argument(
+        "--email-id", required=True, help="Email ID to use for extraction"
+    )
     parser.add_argument("--text", help="Email text to process (inline)")
     parser.add_argument("--file", help="Path to file containing email text")
     parser.add_argument(
@@ -82,13 +86,17 @@ def main():
 """
         console.print("[yellow]No email text provided, using default sample[/yellow]")
 
-    console.print(f"\n[bold cyan]Testing Extraction with Email ID: {args.email_id}[/bold cyan]\n")
+    console.print(
+        f"\n[bold cyan]Testing Extraction with Email ID: {args.email_id}[/bold cyan]\n"
+    )
 
     # Configure orchestrator
     provider_priority = ["gemini", "claude", "openai"]
     if args.provider:
         # Put specified provider first
-        provider_priority = [args.provider] + [p for p in provider_priority if p != args.provider]
+        provider_priority = [args.provider] + [
+            p for p in provider_priority if p != args.provider
+        ]
 
     config = OrchestrationConfig(
         default_strategy=args.strategy,
@@ -97,7 +105,9 @@ def main():
     )
 
     console.print(f"Strategy: [cyan]{args.strategy}[/cyan]")
-    console.print(f"Quality Routing: [cyan]{'ENABLED' if args.quality_routing else 'DISABLED'}[/cyan]")
+    console.print(
+        f"Quality Routing: [cyan]{'ENABLED' if args.quality_routing else 'DISABLED'}[/cyan]"
+    )
     console.print(f"Provider Priority: [cyan]{', '.join(provider_priority)}[/cyan]\n")
 
     # Create orchestrator
@@ -105,7 +115,9 @@ def main():
 
     # Display email text
     console.print("[bold]Email Text:[/bold]")
-    console.print(f"[dim]{email_text.strip()[:200]}{'...' if len(email_text) > 200 else ''}[/dim]\n")
+    console.print(
+        f"[dim]{email_text.strip()[:200]}{'...' if len(email_text) > 200 else ''}[/dim]\n"
+    )
 
     # Extract entities
     try:
@@ -132,7 +144,11 @@ def main():
             ("Startup Name", entities.startup_name, entities.confidence.startup),
             ("Partner Org", entities.partner_org, entities.confidence.partner),
             ("Details", entities.details, entities.confidence.details),
-            ("Date", str(entities.date) if entities.date else None, entities.confidence.date),
+            (
+                "Date",
+                str(entities.date) if entities.date else None,
+                entities.confidence.date,
+            ),
         ]
 
         for field_name, value, confidence in fields:
@@ -171,7 +187,9 @@ def main():
         )
         completeness = (field_count / 5) * 100
 
-        console.print(f"\n[bold]Field Completeness:[/bold] {field_count}/5 ({completeness:.0f}%)")
+        console.print(
+            f"\n[bold]Field Completeness:[/bold] {field_count}/5 ({completeness:.0f}%)"
+        )
 
         # Average confidence
         avg_confidence = (
@@ -212,7 +230,9 @@ def main():
                 "quality_routing_enabled": args.quality_routing,
             }
 
-            output_file.write_text(json.dumps(output_data, indent=2, ensure_ascii=False))
+            output_file.write_text(
+                json.dumps(output_data, indent=2, ensure_ascii=False)
+            )
             console.print(f"[green]✓[/green] Results saved to: {output_file}")
 
         # Show quality metrics if requested

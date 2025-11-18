@@ -6,7 +6,6 @@ This module tests pattern parsing to support future changes:
 - Handles multi-character codes: [A1], [AB], etc.
 """
 
-import pytest
 import re
 
 

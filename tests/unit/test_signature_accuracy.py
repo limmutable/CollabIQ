@@ -9,8 +9,6 @@ Tasks:
 - T061: Create accuracy test dataset (20+ emails)
 """
 
-from pathlib import Path
-
 import pytest
 
 try:
@@ -239,13 +237,13 @@ def test_signature_removal_accuracy_95_percent(normalizer):
 
     # Print detailed results
     print(f"\n{'=' * 70}")
-    print(f"SIGNATURE REMOVAL ACCURACY TEST RESULTS")
+    print("SIGNATURE REMOVAL ACCURACY TEST RESULTS")
     print(f"{'=' * 70}")
     print(f"Total test cases: {total_tests}")
     print(f"Successful: {successful_removals}")
     print(f"Failed: {len(failed_cases)}")
     print(f"Accuracy: {accuracy:.1f}%")
-    print(f"Target: 95.0%")
+    print("Target: 95.0%")
     print(f"Status: {'✓ PASS' if accuracy >= 95.0 else '✗ FAIL'}")
     print(f"{'=' * 70}")
 
@@ -290,7 +288,7 @@ def test_dataset_quality():
     )
     english_cases = total_cases - korean_cases
 
-    print(f"\nDataset composition:")
+    print("\nDataset composition:")
     print(f"  Total cases: {total_cases}")
     print(f"  With signature: {with_signature}")
     print(f"  Without signature: {without_signature}")
@@ -348,7 +346,7 @@ def test_individual_pattern_coverage():
         if not case["has_signature"]:
             pattern_coverage["no_signature"] += 1
 
-    print(f"\nPattern coverage:")
+    print("\nPattern coverage:")
     for pattern, count in pattern_coverage.items():
         print(f"  {pattern}: {count}")
 

@@ -38,18 +38,18 @@ Examples:
 
   # Limit to 5 results
   uv run python tests/manual/test_gmail_retrieval.py --max-results 5
-        """
+        """,
     )
     parser.add_argument(
         "--query",
-        default='to:collab@signite.co',
-        help='Gmail search query (default: to:collab@signite.co)'
+        default="to:collab@signite.co",
+        help="Gmail search query (default: to:collab@signite.co)",
     )
     parser.add_argument(
         "--max-results",
         type=int,
         default=10,
-        help="Maximum number of emails to retrieve (default: 10)"
+        help="Maximum number of emails to retrieve (default: 10)",
     )
 
     args = parser.parse_args()
@@ -95,8 +95,7 @@ Examples:
         # Create receiver and connect
         print("Connecting to Gmail API...")
         receiver = GmailReceiver(
-            credentials_path=credentials_path,
-            token_path=token_path
+            credentials_path=credentials_path, token_path=token_path
         )
         receiver.connect()
         print("✓ Connected successfully")
@@ -107,10 +106,7 @@ Examples:
         print(f"Max results: {args.max_results}")
         print("-" * 70)
 
-        emails = receiver.fetch_emails(
-            query=args.query,
-            max_emails=args.max_results
-        )
+        emails = receiver.fetch_emails(query=args.query, max_emails=args.max_results)
 
         print()
         print("=" * 70)

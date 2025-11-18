@@ -9,15 +9,13 @@ Commands:
 
 import json
 import signal
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional
 
 import typer
 from rich.console import Console
-from rich.table import Table
 
 from collabiq.utils.logging import log_cli_error, log_cli_operation
 from collabiq.formatters.progress import create_spinner, create_progress
@@ -59,11 +57,23 @@ def _signal_handler(sig, frame):
 
 @test_app.command()
 def e2e(
-    all_emails: bool = typer.Option(False, "--all", help="Run tests on all available test emails"),
-    limit: Optional[int] = typer.Option(None, "--limit", help="Limit number of emails to test"),
-    email_id: Optional[str] = typer.Option(None, "--email-id", help="Test specific email by ID"),
-    resume: Optional[str] = typer.Option(None, "--resume", help="Resume interrupted test run by run ID"),
-    production_mode: bool = typer.Option(False, "--production-mode", help="Run in production mode (writes to real Notion database)"),
+    all_emails: bool = typer.Option(
+        False, "--all", help="Run tests on all available test emails"
+    ),
+    limit: Optional[int] = typer.Option(
+        None, "--limit", help="Limit number of emails to test"
+    ),
+    email_id: Optional[str] = typer.Option(
+        None, "--email-id", help="Test specific email by ID"
+    ),
+    resume: Optional[str] = typer.Option(
+        None, "--resume", help="Resume interrupted test run by run ID"
+    ),
+    production_mode: bool = typer.Option(
+        False,
+        "--production-mode",
+        help="Run in production mode (writes to real Notion database)",
+    ),
     debug: bool = typer.Option(False, help="Enable debug logging"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
     quiet: bool = typer.Option(False, help="Suppress non-error output"),
@@ -128,7 +138,9 @@ def e2e(
 
             if not quiet and not json_output:
                 console.print(f"[green]✓ Resumed test run {resume}[/green]")
-                console.print(f"Emails processed: {test_run.emails_processed}/{test_run.email_count}")
+                console.print(
+                    f"Emails processed: {test_run.emails_processed}/{test_run.email_count}"
+                )
                 console.print(f"Status: {test_run.status}\n")
 
             # Generate reports
@@ -161,12 +173,16 @@ def e2e(
             # Test limited number of emails
             email_ids = [email["email_id"] for email in test_emails[:limit]]
             if not quiet and not json_output:
-                console.print(f"[bold]Testing {len(email_ids)} emails (limit: {limit})[/bold]\n")
+                console.print(
+                    f"[bold]Testing {len(email_ids)} emails (limit: {limit})[/bold]\n"
+                )
         else:
             # Default: test first 3 emails
             email_ids = [email["email_id"] for email in test_emails[:3]]
             if not quiet and not json_output:
-                console.print(f"[bold]Testing {len(email_ids)} emails (default)[/bold]\n")
+                console.print(
+                    f"[bold]Testing {len(email_ids)} emails (default)[/bold]\n"
+                )
 
         if len(email_ids) == 0:
             raise ValueError("No emails to test")
@@ -174,7 +190,9 @@ def e2e(
         # Warning for production mode
         if production_mode and not quiet and not json_output:
             console.print("[bold yellow]⚠️  PRODUCTION MODE ENABLED[/bold yellow]")
-            console.print("[yellow]This will write to your production Notion database![/yellow]")
+            console.print(
+                "[yellow]This will write to your production Notion database![/yellow]"
+            )
             console.print(f"[yellow]Processing {len(email_ids)} email(s)...[/yellow]\n")
 
         # Initialize E2E runner with real or mocked services
@@ -219,8 +237,7 @@ def e2e(
 
             with create_progress() as progress:
                 task = progress.add_task(
-                    f"[cyan]Processing emails...",
-                    total=len(email_ids)
+                    "[cyan]Processing emails...", total=len(email_ids)
                 )
 
                 # Store reference for interrupt handler
@@ -228,10 +245,14 @@ def e2e(
 
                 # Run tests
                 try:
-                    test_run = runner.run_tests(email_ids, test_mode=not production_mode)
+                    test_run = runner.run_tests(
+                        email_ids, test_mode=not production_mode
+                    )
                 except KeyboardInterrupt:
                     console.print("\n[yellow]Test run interrupted by user[/yellow]")
-                    console.print("Run with --resume to continue from where you left off")
+                    console.print(
+                        "Run with --resume to continue from where you left off"
+                    )
                     raise typer.Exit(code=130)  # Standard exit code for SIGINT
 
                 progress.update(task, completed=len(email_ids))
@@ -280,7 +301,9 @@ def e2e(
 @test_app.command()
 def select_emails(
     limit: int = typer.Option(50, help="Maximum number of emails to select"),
-    from_date: Optional[str] = typer.Option(None, "--from-date", help="Select emails from this date onwards (YYYY-MM-DD)"),
+    from_date: Optional[str] = typer.Option(
+        None, "--from-date", help="Select emails from this date onwards (YYYY-MM-DD)"
+    ),
     debug: bool = typer.Option(False, help="Enable debug logging"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
     quiet: bool = typer.Option(False, help="Suppress non-error output"),
@@ -327,22 +350,26 @@ def select_emails(
             with create_spinner(f"Fetching up to {limit} emails...") as progress:
                 task = progress.add_task("", total=None)
                 emails = receiver.fetch_emails(max_emails=limit)
-                progress.update(task, description=f"[green]✓ Fetched {len(emails)} emails[/green]")
+                progress.update(
+                    task, description=f"[green]✓ Fetched {len(emails)} emails[/green]"
+                )
         else:
             emails = receiver.fetch_emails(max_emails=limit)
 
         # Create test email metadata
         test_emails = []
         for email in emails:
-            test_emails.append({
-                "email_id": email.metadata.message_id,
-                "subject": email.metadata.subject,
-                "received_date": email.metadata.received_at.date().isoformat(),
-                "collaboration_type": None,  # Would be detected by extraction
-                "has_korean_text": _detect_korean(email.body),
-                "selection_reason": "stratified_sample",
-                "notes": f"Auto-selected from Gmail on {datetime.now().date().isoformat()}"
-            })
+            test_emails.append(
+                {
+                    "email_id": email.metadata.message_id,
+                    "subject": email.metadata.subject,
+                    "received_date": email.metadata.received_at.date().isoformat(),
+                    "collaboration_type": None,  # Would be detected by extraction
+                    "has_korean_text": _detect_korean(email.body),
+                    "selection_reason": "stratified_sample",
+                    "notes": f"Auto-selected from Gmail on {datetime.now().date().isoformat()}",
+                }
+            )
 
         # Save to file
         with TEST_EMAIL_IDS_FILE.open("w") as f:
@@ -372,7 +399,9 @@ def select_emails(
             console.print(f"[green]✓ Selected {len(test_emails)} test emails[/green]")
             console.print(f"Saved to: {TEST_EMAIL_IDS_FILE}")
             console.print(f"Duration: {duration_ms / 1000:.1f}s\n")
-            console.print("Next step: Run 'collabiq test e2e --limit 3' to test the pipeline")
+            console.print(
+                "Next step: Run 'collabiq test e2e --limit 3' to test the pipeline"
+            )
 
     except Exception as e:
         duration_ms = int((time.time() - start_time) * 1000)
@@ -426,18 +455,26 @@ def validate(
 
                 try:
                     if CREDENTIALS_PATH.exists():
-                        checks.append({"component": "Gmail Credentials", "status": "✓ Pass"})
+                        checks.append(
+                            {"component": "Gmail Credentials", "status": "✓ Pass"}
+                        )
                     else:
-                        checks.append({"component": "Gmail Credentials", "status": "✗ Missing"})
+                        checks.append(
+                            {"component": "Gmail Credentials", "status": "✗ Missing"}
+                        )
 
                     if TOKEN_PATH.exists():
                         checks.append({"component": "Gmail Token", "status": "✓ Pass"})
                     else:
-                        checks.append({"component": "Gmail Token", "status": "⚠ Not found"})
+                        checks.append(
+                            {"component": "Gmail Token", "status": "⚠ Not found"}
+                        )
 
                     progress.update(task, description="[green]✓ Gmail checked[/green]")
                 except Exception as e:
-                    checks.append({"component": "Gmail API", "status": f"✗ Failed: {str(e)}"})
+                    checks.append(
+                        {"component": "Gmail API", "status": f"✗ Failed: {str(e)}"}
+                    )
                     progress.update(task, description="[red]✗ Gmail check failed[/red]")
         else:
             if CREDENTIALS_PATH.exists():
@@ -455,8 +492,12 @@ def validate(
                     checks.append({"component": "Notion API", "status": "✓ Pass"})
                     progress.update(task, description="[green]✓ Notion checked[/green]")
                 except Exception as e:
-                    checks.append({"component": "Notion API", "status": f"✗ Failed: {str(e)}"})
-                    progress.update(task, description="[red]✗ Notion check failed[/red]")
+                    checks.append(
+                        {"component": "Notion API", "status": f"✗ Failed: {str(e)}"}
+                    )
+                    progress.update(
+                        task, description="[red]✗ Notion check failed[/red]"
+                    )
         else:
             checks.append({"component": "Notion API", "status": "✓ Pass"})
 
@@ -470,8 +511,12 @@ def validate(
                     checks.append({"component": "Gemini API", "status": "✓ Pass"})
                     progress.update(task, description="[green]✓ Gemini checked[/green]")
                 except Exception as e:
-                    checks.append({"component": "Gemini API", "status": f"✗ Failed: {str(e)}"})
-                    progress.update(task, description="[red]✗ Gemini check failed[/red]")
+                    checks.append(
+                        {"component": "Gemini API", "status": f"✗ Failed: {str(e)}"}
+                    )
+                    progress.update(
+                        task, description="[red]✗ Gemini check failed[/red]"
+                    )
         else:
             checks.append({"component": "Gemini API", "status": "✓ Pass"})
 
@@ -483,10 +528,16 @@ def validate(
                 try:
                     # Would validate config here
                     checks.append({"component": "Configuration", "status": "✓ Pass"})
-                    progress.update(task, description="[green]✓ Configuration checked[/green]")
+                    progress.update(
+                        task, description="[green]✓ Configuration checked[/green]"
+                    )
                 except Exception as e:
-                    checks.append({"component": "Configuration", "status": f"✗ Failed: {str(e)}"})
-                    progress.update(task, description="[red]✗ Configuration check failed[/red]")
+                    checks.append(
+                        {"component": "Configuration", "status": f"✗ Failed: {str(e)}"}
+                    )
+                    progress.update(
+                        task, description="[red]✗ Configuration check failed[/red]"
+                    )
         else:
             checks.append({"component": "Configuration", "status": "✓ Pass"})
 
@@ -668,7 +719,9 @@ def _generate_reports(test_run, console, json_output, quiet):
         if success_rate >= 95:
             console.print("[green]✓ Success rate ≥95% (SC-001 met)[/green]")
         else:
-            console.print(f"[red]✗ Success rate {success_rate:.1f}% < 95% (SC-001 not met)[/red]")
+            console.print(
+                f"[red]✗ Success rate {success_rate:.1f}% < 95% (SC-001 not met)[/red]"
+            )
 
         if test_run.error_summary.get("critical", 0) == 0:
             console.print("[green]✓ No critical errors (SC-003 met)[/green]")
@@ -685,7 +738,7 @@ def _detect_korean(text: str) -> bool:
 
     # Check for Hangul characters (Korean alphabet)
     for char in text:
-        if '\uac00' <= char <= '\ud7a3':  # Hangul syllables range
+        if "\uac00" <= char <= "\ud7a3":  # Hangul syllables range
             return True
 
     return False

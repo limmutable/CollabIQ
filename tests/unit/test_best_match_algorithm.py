@@ -133,7 +133,9 @@ class TestCalculateAggregateConfidence:
 
         for confidence in test_cases:
             result = calculate_aggregate_confidence(confidence)
-            assert 0.0 <= result <= 1.0, f"Result {result} out of range for {confidence}"
+            assert 0.0 <= result <= 1.0, (
+                f"Result {result} out of range for {confidence}"
+            )
 
     def test_weighted_average_formula(self):
         """Test that the weighted average formula is correct."""
@@ -141,12 +143,16 @@ class TestCalculateAggregateConfidence:
             person=0.8, startup=0.7, partner=0.6, details=0.5, date=0.4
         )
 
-        weights = {"person": 2.0, "startup": 1.5, "partner": 1.0, "details": 0.5, "date": 0.25}
+        weights = {
+            "person": 2.0,
+            "startup": 1.5,
+            "partner": 1.0,
+            "details": 0.5,
+            "date": 0.25,
+        }
 
         # Manual calculation
-        numerator = (
-            0.8 * 2.0 + 0.7 * 1.5 + 0.6 * 1.0 + 0.5 * 0.5 + 0.4 * 0.25
-        )  # 3.8
+        numerator = 0.8 * 2.0 + 0.7 * 1.5 + 0.6 * 1.0 + 0.5 * 0.5 + 0.4 * 0.25  # 3.8
         denominator = 2.0 + 1.5 + 1.0 + 0.5 + 0.25  # 5.25
         expected = numerator / denominator  # 0.7238095
 
@@ -194,7 +200,13 @@ class TestCalculateAggregateConfidence:
         )
 
         # Give date zero weight
-        weights = {"person": 1.0, "startup": 1.0, "partner": 1.0, "details": 1.0, "date": 0.0}
+        weights = {
+            "person": 1.0,
+            "startup": 1.0,
+            "partner": 1.0,
+            "details": 1.0,
+            "date": 0.0,
+        }
 
         result = calculate_aggregate_confidence(confidence, weights=weights)
 
@@ -210,7 +222,13 @@ class TestCalculateAggregateConfidence:
             person=0.9, startup=0.8, partner=0.7, details=0.6, date=0.5
         )
 
-        invalid_weights = {"person": -1.0, "startup": 1.0, "partner": 1.0, "details": 1.0, "date": 1.0}
+        invalid_weights = {
+            "person": -1.0,
+            "startup": 1.0,
+            "partner": 1.0,
+            "details": 1.0,
+            "date": 1.0,
+        }
 
         with pytest.raises(ValueError, match="Weights must be non-negative"):
             calculate_aggregate_confidence(confidence, weights=invalid_weights)
@@ -221,7 +239,13 @@ class TestCalculateAggregateConfidence:
             person=0.9, startup=0.8, partner=0.7, details=0.6, date=0.5
         )
 
-        zero_weights = {"person": 0.0, "startup": 0.0, "partner": 0.0, "details": 0.0, "date": 0.0}
+        zero_weights = {
+            "person": 0.0,
+            "startup": 0.0,
+            "partner": 0.0,
+            "details": 0.0,
+            "date": 0.0,
+        }
 
         with pytest.raises(ValueError, match="Sum of weights must be positive"):
             calculate_aggregate_confidence(confidence, weights=zero_weights)

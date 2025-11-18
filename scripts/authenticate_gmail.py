@@ -21,6 +21,7 @@ sys.path.insert(0, str(project_root / "src"))
 from email_receiver.gmail_receiver import GmailReceiver
 from config.settings import Settings
 
+
 def main():
     """Run Gmail OAuth2 authentication flow."""
     print("=" * 60)
@@ -56,8 +57,7 @@ def main():
     try:
         # Create receiver instance with credentials and token paths
         receiver = GmailReceiver(
-            credentials_path=credentials_path,
-            token_path=settings.gmail_token_path
+            credentials_path=credentials_path, token_path=settings.gmail_token_path
         )
 
         # Connect (this triggers the browser OAuth flow if no token exists)
@@ -86,6 +86,7 @@ def main():
         print("  docs/setup/troubleshooting-gmail-api.md")
         print()
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

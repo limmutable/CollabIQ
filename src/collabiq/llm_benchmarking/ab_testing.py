@@ -6,11 +6,10 @@ and LLM providers to identify which performs better.
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from collabiq.llm_benchmarking.metrics import (
     AggregatedMetrics,
-    BenchmarkResult,
     ComparisonResult,
 )
 from collabiq.llm_benchmarking.suite import BenchmarkSuite
@@ -177,7 +176,9 @@ class ABTestFramework:
             ...     prompt_id="korean_optimized"
             ... )
         """
-        logger.info(f"Starting provider comparison: {baseline_name} vs {comparison_name}")
+        logger.info(
+            f"Starting provider comparison: {baseline_name} vs {comparison_name}"
+        )
 
         # Run baseline provider
         logger.info(f"Running baseline provider: {baseline_name}")
@@ -242,7 +243,10 @@ class ABTestFramework:
         return result
 
     def _calculate_improvement(
-        self, baseline_value: float, comparison_value: float, lower_is_better: bool = False
+        self,
+        baseline_value: float,
+        comparison_value: float,
+        lower_is_better: bool = False,
     ) -> float:
         """Calculate percentage improvement.
 

@@ -8,13 +8,11 @@ and exponential backoff retry logic per FR-010.
 import json
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch, call
+from unittest.mock import Mock, patch
 import pytest
-from google.auth.exceptions import RefreshError
 from googleapiclient.errors import HttpError
 
 import sys
-from pathlib import Path
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -352,7 +350,9 @@ def test_gmail_receiver_exponential_backoff(
     # Verify sleep delays are positive and increasing (exponential backoff with jitter)
     # Jitter adds 0-2 seconds to base delay
     assert sleep_calls[0] > 0  # First sleep is positive
-    assert sleep_calls[1] > sleep_calls[0]  # Second sleep is longer (exponential backoff)
+    assert (
+        sleep_calls[1] > sleep_calls[0]
+    )  # Second sleep is longer (exponential backoff)
 
 
 @patch("email_receiver.gmail_receiver.build")

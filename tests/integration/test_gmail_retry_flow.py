@@ -21,7 +21,7 @@ class TestGmailRetryFlow:
         gmail_circuit_breaker.state_obj.state = CircuitState.CLOSED
         gmail_circuit_breaker.state_obj.failure_count = 0
 
-    @patch('src.email_receiver.gmail_receiver.build')
+    @patch("src.email_receiver.gmail_receiver.build")
     def test_gmail_fetch_timeout_retry_success(self, mock_build):
         """
         Test that Gmail fetch_emails retries on timeout and eventually succeeds.
@@ -30,8 +30,7 @@ class TestGmailRetryFlow:
         """
         # Create receiver with mock paths
         receiver = GmailReceiver(
-            credentials_path="mock_credentials.json",
-            token_path="mock_token.json"
+            credentials_path="mock_credentials.json", token_path="mock_token.json"
         )
 
         # Mock service that fails once then succeeds
@@ -43,7 +42,7 @@ class TestGmailRetryFlow:
         # Second call: success with empty messages list
         mock_list().execute.side_effect = [
             socket.timeout("Connection timeout"),
-            {"messages": []}
+            {"messages": []},
         ]
 
         receiver.service = mock_service
@@ -60,7 +59,7 @@ class TestGmailRetryFlow:
         # Verify empty result (no messages)
         assert result == []
 
-    @patch('src.email_receiver.gmail_receiver.build')
+    @patch("src.email_receiver.gmail_receiver.build")
     def test_gmail_fetch_all_retries_exhausted(self, mock_build):
         """
         Test that Gmail fetch_emails exhausts retries after 3 attempts.
@@ -69,8 +68,7 @@ class TestGmailRetryFlow:
         """
         # Create receiver with mock paths
         receiver = GmailReceiver(
-            credentials_path="mock_credentials.json",
-            token_path="mock_token.json"
+            credentials_path="mock_credentials.json", token_path="mock_token.json"
         )
 
         # Mock service that always times out
@@ -87,7 +85,7 @@ class TestGmailRetryFlow:
         # Verify retry attempts (should be 3 with GMAIL_RETRY_CONFIG)
         assert mock_list().execute.call_count == 3
 
-    @patch('src.email_receiver.gmail_receiver.build')
+    @patch("src.email_receiver.gmail_receiver.build")
     def test_gmail_fetch_no_retry_on_auth_error(self, mock_build):
         """
         Test that Gmail fetch_emails does NOT retry on authentication errors.
@@ -99,8 +97,7 @@ class TestGmailRetryFlow:
 
         # Create receiver with mock paths
         receiver = GmailReceiver(
-            credentials_path="mock_credentials.json",
-            token_path="mock_token.json"
+            credentials_path="mock_credentials.json", token_path="mock_token.json"
         )
 
         # Mock service that returns 401

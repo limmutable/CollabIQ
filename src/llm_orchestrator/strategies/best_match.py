@@ -132,9 +132,7 @@ class BestMatchStrategy:
                           (e.g., ["gemini", "claude", "openai"])
         """
         self.provider_names = provider_names
-        logger.info(
-            f"Initialized BestMatchStrategy with providers: {provider_names}"
-        )
+        logger.info(f"Initialized BestMatchStrategy with providers: {provider_names}")
 
     def execute(
         self,
@@ -182,9 +180,7 @@ class BestMatchStrategy:
         for provider_name in self.provider_names:
             # Skip if provider not available
             if provider_name not in providers:
-                logger.warning(
-                    f"Provider '{provider_name}' not configured, skipping"
-                )
+                logger.warning(f"Provider '{provider_name}' not configured, skipping")
                 continue
 
             # Skip if provider is unhealthy
@@ -254,8 +250,7 @@ class BestMatchStrategy:
         # Check if we have any results
         if not results:
             error_msg = (
-                f"All providers failed or unhealthy. "
-                f"Attempted: {self.provider_names}"
+                f"All providers failed or unhealthy. Attempted: {self.provider_names}"
             )
             if failed_providers:
                 error_msg += f". Failures: {failed_providers}"
@@ -267,7 +262,12 @@ class BestMatchStrategy:
         # Sort by: 1) aggregate_confidence (descending), 2) priority order (ascending)
         # Priority order = index in self.provider_names (lower index = higher priority)
         results_with_priority = [
-            (entities, provider_name, agg_conf, self.provider_names.index(provider_name))
+            (
+                entities,
+                provider_name,
+                agg_conf,
+                self.provider_names.index(provider_name),
+            )
             for entities, provider_name, agg_conf in results
         ]
 

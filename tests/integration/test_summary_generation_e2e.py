@@ -78,27 +78,32 @@ class TestSummaryGenerationE2E:
         )
 
         # Mock intensity classification
-        mock_intensity_response = json.dumps({
-            "intensity": "협력",
-            "confidence": 0.92,
-            "reasoning": "PoC 킥오프 미팅과 파일럿 테스트 계획이 논의되어 협력 단계로 분류"
-        })
+        mock_intensity_response = json.dumps(
+            {
+                "intensity": "협력",
+                "confidence": 0.92,
+                "reasoning": "PoC 킥오프 미팅과 파일럿 테스트 계획이 논의되어 협력 단계로 분류",
+            }
+        )
 
         # Mock summary generation
-        mock_summary_response = json.dumps({
-            "summary": "브레이크앤컴퍼니(안동훈 팀장)와 신세계푸드가 2025년 10월 28일 PoC 킥오프 미팅을 진행했습니다. 이번 협업에서는 간편식 제품 라인업 확대를 위한 파일럿 테스트를 계획하고 있으며, 향후 본격적인 협력 방안을 논의할 예정입니다. 신세계푸드는 브레이크앤컴퍼니의 기술력을 활용한 새로운 간편식 개발에 관심을 보이고 있습니다.",
-            "word_count": 95,
-            "key_entities_preserved": {
-                "person_in_charge": True,
-                "startup_name": True,
-                "partner_org": True,
-                "details": True,
-                "date": True
+        mock_summary_response = json.dumps(
+            {
+                "summary": "브레이크앤컴퍼니(안동훈 팀장)와 신세계푸드가 2025년 10월 28일 PoC 킥오프 미팅을 진행했습니다. 이번 협업에서는 간편식 제품 라인업 확대를 위한 파일럿 테스트를 계획하고 있으며, 향후 본격적인 협력 방안을 논의할 예정입니다. 신세계푸드는 브레이크앤컴퍼니의 기술력을 활용한 새로운 간편식 개발에 관심을 보이고 있습니다.",
+                "word_count": 95,
+                "key_entities_preserved": {
+                    "person_in_charge": True,
+                    "startup_name": True,
+                    "partner_org": True,
+                    "details": True,
+                    "date": True,
+                },
             }
-        })
+        )
 
         # Setup mock to return different responses for intensity vs summary
         call_count = [0]
+
         def mock_call_with_retry(func):
             call_count[0] += 1
             if call_count[0] == 1:
@@ -140,7 +145,10 @@ class TestSummaryGenerationE2E:
         # Verify entities appear in summary
         assert "브레이크앤컴퍼니" in result.collaboration_summary
         assert "신세계" in result.collaboration_summary
-        assert "PoC" in result.collaboration_summary or "킥오프" in result.collaboration_summary
+        assert (
+            "PoC" in result.collaboration_summary
+            or "킥오프" in result.collaboration_summary
+        )
 
     @pytest.mark.asyncio
     async def test_sample_003_summary_omits_signature(
@@ -178,27 +186,32 @@ class TestSummaryGenerationE2E:
         )
 
         # Mock intensity classification
-        mock_intensity_response = json.dumps({
-            "intensity": "협력",
-            "confidence": 0.90,
-            "reasoning": "라이브 커머스 방송 계획과 앱 내 단독 딜 코너 오픈이 논의되어 협력 단계로 분류"
-        })
+        mock_intensity_response = json.dumps(
+            {
+                "intensity": "협력",
+                "confidence": 0.90,
+                "reasoning": "라이브 커머스 방송 계획과 앱 내 단독 딜 코너 오픈이 논의되어 협력 단계로 분류",
+            }
+        )
 
         # Mock summary generation (signature should be omitted)
-        mock_summary_response = json.dumps({
-            "summary": "스위트스팟이 시리즈 A 투자 유치(50억원, 리드 투자사: 시그나이트)에 성공했으며, 신세계라이브쇼핑과 골프용품 라이브 커머스 협업을 진행 중입니다. 11월 중 신세계라이브쇼핑 전용 골프 특가 방송(월 1회)을 시작하고, 스위트스팟 앱 내 신세계 골프웨어 단독 딜 코너를 오픈할 계획입니다. 2026년 Q1부터 본격적인 협업이 시작될 예정입니다.",
-            "word_count": 88,
-            "key_entities_preserved": {
-                "person_in_charge": True,
-                "startup_name": True,
-                "partner_org": True,
-                "details": True,
-                "date": True
+        mock_summary_response = json.dumps(
+            {
+                "summary": "스위트스팟이 시리즈 A 투자 유치(50억원, 리드 투자사: 시그나이트)에 성공했으며, 신세계라이브쇼핑과 골프용품 라이브 커머스 협업을 진행 중입니다. 11월 중 신세계라이브쇼핑 전용 골프 특가 방송(월 1회)을 시작하고, 스위트스팟 앱 내 신세계 골프웨어 단독 딜 코너를 오픈할 계획입니다. 2026년 Q1부터 본격적인 협업이 시작될 예정입니다.",
+                "word_count": 88,
+                "key_entities_preserved": {
+                    "person_in_charge": True,
+                    "startup_name": True,
+                    "partner_org": True,
+                    "details": True,
+                    "date": True,
+                },
             }
-        })
+        )
 
         # Setup mock to return different responses
         call_count = [0]
+
         def mock_call_with_retry(func):
             call_count[0] += 1
             if call_count[0] == 1:
@@ -268,27 +281,32 @@ class TestSummaryGenerationE2E:
         )
 
         # Mock intensity classification
-        mock_intensity_response = json.dumps({
-            "intensity": "이해",
-            "confidence": 0.88,
-            "reasoning": "첫 미팅 결과 공유 및 협업 가능성 논의 단계로 이해 단계로 분류"
-        })
+        mock_intensity_response = json.dumps(
+            {
+                "intensity": "이해",
+                "confidence": 0.88,
+                "reasoning": "첫 미팅 결과 공유 및 협업 가능성 논의 단계로 이해 단계로 분류",
+            }
+        )
 
         # Mock summary generation (within 50-150 word count)
-        mock_summary_response = json.dumps({
-            "summary": "파지티브호텔 장예지 대표가 신세계백화점과 호텔 예약 플랫폼 협업 가능성을 논의했습니다. 파지티브호텔은 호텔 재고 최적화 및 다이나믹 프라이싱 SaaS를 제공하며, 국내 중소형 호텔 200여 곳이 사용 중이고 월 거래액은 약 100억원입니다. 협업 안건으로는 신세계백화점 VIP 고객 대상 호텔 제휴 프로그램, SSG PAY 연동 특가 예약 서비스, 신세계 상품권 결제 지원 등이 논의되었습니다.",
-            "word_count": 120,
-            "key_entities_preserved": {
-                "person_in_charge": True,
-                "startup_name": True,
-                "partner_org": True,
-                "details": True,
-                "date": True
+        mock_summary_response = json.dumps(
+            {
+                "summary": "파지티브호텔 장예지 대표가 신세계백화점과 호텔 예약 플랫폼 협업 가능성을 논의했습니다. 파지티브호텔은 호텔 재고 최적화 및 다이나믹 프라이싱 SaaS를 제공하며, 국내 중소형 호텔 200여 곳이 사용 중이고 월 거래액은 약 100억원입니다. 협업 안건으로는 신세계백화점 VIP 고객 대상 호텔 제휴 프로그램, SSG PAY 연동 특가 예약 서비스, 신세계 상품권 결제 지원 등이 논의되었습니다.",
+                "word_count": 120,
+                "key_entities_preserved": {
+                    "person_in_charge": True,
+                    "startup_name": True,
+                    "partner_org": True,
+                    "details": True,
+                    "date": True,
+                },
             }
-        })
+        )
 
         # Setup mock to return different responses
         call_count = [0]
+
         def mock_call_with_retry(func):
             call_count[0] += 1
             if call_count[0] == 1:

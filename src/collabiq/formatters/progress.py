@@ -5,7 +5,6 @@ Provides helpers for creating progress bars, spinners, and ETA displays
 for long-running CLI operations.
 """
 
-from typing import Optional
 from rich.progress import (
     Progress,
     SpinnerColumn,

@@ -7,6 +7,7 @@ CollabIQ CLI - Main package entry point.
 # Import libraries ONLY - CLI commands are registered lazily to avoid circular imports
 from . import date_parser, llm_benchmarking, test_utils
 
+
 def _register_commands():
     """Lazy registration of CLI commands to avoid circular imports with adapters."""
     # Import the main app instance from the cli module
@@ -32,10 +33,9 @@ def _register_commands():
 
     return app
 
+
 # Export app via property to trigger lazy registration
 def __getattr__(name):
     if name == "app":
         return _register_commands()
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
-
-

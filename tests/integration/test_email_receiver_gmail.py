@@ -18,6 +18,7 @@ from pathlib import Path
 import pytest
 
 import sys
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from email_receiver.gmail_receiver import GmailReceiver
@@ -26,7 +27,7 @@ from models.raw_email import RawEmail
 # Skip integration tests unless explicitly enabled
 pytestmark = pytest.mark.skipif(
     os.getenv("GMAIL_INTEGRATION_TEST") != "1",
-    reason="Integration tests require GMAIL_INTEGRATION_TEST=1 and real credentials"
+    reason="Integration tests require GMAIL_INTEGRATION_TEST=1 and real credentials",
 )
 
 
@@ -51,7 +52,7 @@ def gmail_receiver(gmail_credentials, tmp_path):
         credentials_path=creds_path,
         token_path=token_path,
         raw_email_dir=tmp_path / "data" / "raw",
-        metadata_dir=tmp_path / "data" / "metadata"
+        metadata_dir=tmp_path / "data" / "metadata",
     )
 
     return receiver

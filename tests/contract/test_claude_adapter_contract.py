@@ -4,8 +4,6 @@ This module ensures ClaudeAdapter adheres to the LLMProvider interface contract.
 All tests verify the interface compliance defined in llm-provider-interface.md.
 """
 
-import os
-from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest

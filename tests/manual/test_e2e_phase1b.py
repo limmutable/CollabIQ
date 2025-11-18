@@ -12,7 +12,6 @@ Usage:
 """
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from datetime import datetime
@@ -35,22 +34,22 @@ def main():
         "--max-emails",
         type=int,
         default=2,
-        help="Maximum number of emails to process (default: 2)"
+        help="Maximum number of emails to process (default: 2)",
     )
     parser.add_argument(
         "--query",
         default="to:collab@signite.co",
-        help="Gmail search query (default: to:collab@signite.co)"
+        help="Gmail search query (default: to:collab@signite.co)",
     )
     parser.add_argument(
         "--save-emails",
         action="store_true",
-        help="Save cleaned emails to data/cleaned/"
+        help="Save cleaned emails to data/cleaned/",
     )
     parser.add_argument(
         "--save-extractions",
         action="store_true",
-        help="Save extracted entities to data/extractions/"
+        help="Save extracted entities to data/extractions/",
     )
 
     args = parser.parse_args()
@@ -66,8 +65,7 @@ def main():
     print("Step 1: Initializing Gmail receiver...")
     credentials_path = settings.get_gmail_credentials_path()
     gmail_receiver = GmailReceiver(
-        credentials_path=credentials_path,
-        token_path=settings.gmail_token_path
+        credentials_path=credentials_path, token_path=settings.gmail_token_path
     )
     gmail_receiver.connect()
     print("✓ Connected to Gmail API")
@@ -98,10 +96,7 @@ def main():
     # Fetch emails
     print(f"Step 4: Fetching {args.max_emails} email(s) from collab@signite.co...")
     print(f"Query: {args.query}")
-    emails = gmail_receiver.fetch_emails(
-        query=args.query,
-        max_emails=args.max_emails
-    )
+    emails = gmail_receiver.fetch_emails(query=args.query, max_emails=args.max_emails)
     print(f"✓ Retrieved {len(emails)} email(s)")
     print()
 
@@ -134,11 +129,16 @@ def main():
             cleaned_dir = Path("data/cleaned") / datetime.now().strftime("%Y/%m")
             cleaned_dir.mkdir(parents=True, exist_ok=True)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            cleaned_file = cleaned_dir / f"{timestamp}_{raw_email.metadata.message_id.strip('<>')}.txt"
+            cleaned_file = (
+                cleaned_dir
+                / f"{timestamp}_{raw_email.metadata.message_id.strip('<>')}.txt"
+            )
             cleaned_file.write_text(cleaned_body, encoding="utf-8")
             print(f"  ✓ Saved cleaned email to: {cleaned_file}")
 
-        print(f"  ✓ Cleaned (original: {len(raw_email.body)} chars → cleaned: {len(cleaned_body)} chars)")
+        print(
+            f"  ✓ Cleaned (original: {len(raw_email.body)} chars → cleaned: {len(cleaned_body)} chars)"
+        )
         print()
 
         # Step 6: Extract entities with Gemini
@@ -152,10 +152,18 @@ def main():
             print("  " + "─" * 76)
             print("  Extracted Entities:")
             print("  " + "─" * 76)
-            print(f"  담당자 (Person):      {extracted.person_in_charge or 'N/A'} (confidence: {extracted.confidence.person:.2f})")
-            print(f"  스타트업 (Startup):   {extracted.startup_name or 'N/A'} (confidence: {extracted.confidence.startup:.2f})")
-            print(f"  협업기관 (Partner):   {extracted.partner_org or 'N/A'} (confidence: {extracted.confidence.partner:.2f})")
-            print(f"  날짜 (Date):          {extracted.date or 'N/A'} (confidence: {extracted.confidence.date:.2f})")
+            print(
+                f"  담당자 (Person):      {extracted.person_in_charge or 'N/A'} (confidence: {extracted.confidence.person:.2f})"
+            )
+            print(
+                f"  스타트업 (Startup):   {extracted.startup_name or 'N/A'} (confidence: {extracted.confidence.startup:.2f})"
+            )
+            print(
+                f"  협업기관 (Partner):   {extracted.partner_org or 'N/A'} (confidence: {extracted.confidence.partner:.2f})"
+            )
+            print(
+                f"  날짜 (Date):          {extracted.date or 'N/A'} (confidence: {extracted.confidence.date:.2f})"
+            )
             print()
             print(f"  세부내용 (Details):   {extracted.details or 'N/A'}")
             print(f"  (confidence: {extracted.confidence.details:.2f})")
@@ -164,11 +172,18 @@ def main():
 
             # Save extraction if requested
             if args.save_extractions:
-                extraction_dir = Path("data/extractions") / datetime.now().strftime("%Y/%m")
+                extraction_dir = Path("data/extractions") / datetime.now().strftime(
+                    "%Y/%m"
+                )
                 extraction_dir.mkdir(parents=True, exist_ok=True)
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                extraction_file = extraction_dir / f"{timestamp}_{raw_email.metadata.message_id.strip('<>')}.json"
-                extraction_file.write_text(extracted.model_dump_json(indent=2), encoding="utf-8")
+                extraction_file = (
+                    extraction_dir
+                    / f"{timestamp}_{raw_email.metadata.message_id.strip('<>')}.json"
+                )
+                extraction_file.write_text(
+                    extracted.model_dump_json(indent=2), encoding="utf-8"
+                )
                 print(f"  ✓ Saved extraction to: {extraction_file}")
                 print()
 
@@ -181,7 +196,7 @@ def main():
     print("✅ End-to-end test complete!")
     print("=" * 80)
     print()
-    print(f"Summary:")
+    print("Summary:")
     print(f"  - Fetched: {len(emails)} email(s)")
     print(f"  - Cleaned: {len(emails)} email(s)")
     print(f"  - Extracted: {len(emails)} entity set(s)")

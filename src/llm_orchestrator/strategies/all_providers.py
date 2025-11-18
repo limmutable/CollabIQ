@@ -291,7 +291,9 @@ class AllProvidersStrategy:
         ]
 
         # Gather results (don't fail fast - collect all results/errors)
-        all_results = loop.run_until_complete(asyncio.gather(*tasks, return_exceptions=False))
+        all_results = loop.run_until_complete(
+            asyncio.gather(*tasks, return_exceptions=False)
+        )
 
         # Separate successful and failed results
         successful_results: dict[str, ExtractedEntities] = {}

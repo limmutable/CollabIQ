@@ -55,9 +55,7 @@ class FieldMapper:
             for name, prop in properties_dict.items()
         }
 
-    async def map_to_notion_properties_async(
-        self, extracted_data
-    ) -> Dict[str, Any]:
+    async def map_to_notion_properties_async(self, extracted_data) -> Dict[str, Any]:
         """Map ExtractedEntitiesWithClassification to Notion properties format with async fuzzy matching.
 
         This async version performs fuzzy matching for company names and person names before mapping.
@@ -214,7 +212,10 @@ class FieldMapper:
                 )
 
                 # Log low-confidence or ambiguous matches for manual review
-                if match_result.confidence_level in ["low", "medium"] or match_result.is_ambiguous:
+                if (
+                    match_result.confidence_level in ["low", "medium"]
+                    or match_result.is_ambiguous
+                ):
                     warning_msg = (
                         f"Person match requires review: '{extracted_data.person_in_charge}' → '{match_result.user_name}' "
                         f"(similarity: {match_result.similarity_score:.2f}, confidence: {match_result.confidence_level}"

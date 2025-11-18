@@ -50,10 +50,18 @@ class ParsedDate(BaseModel):
 
     original_text: str = Field(..., description="Original date string")
     parsed_date: Optional[datetime] = Field(None, description="Parsed datetime object")
-    iso_format: Optional[str] = Field(None, description="ISO 8601 date string (YYYY-MM-DD)")
-    format_detected: DateFormat = Field(DateFormat.UNKNOWN, description="Detected format type")
-    confidence: float = Field(1.0, ge=0.0, le=1.0, description="Confidence score (0.0-1.0)")
-    parse_error: Optional[str] = Field(None, description="Error message if parsing failed")
+    iso_format: Optional[str] = Field(
+        None, description="ISO 8601 date string (YYYY-MM-DD)"
+    )
+    format_detected: DateFormat = Field(
+        DateFormat.UNKNOWN, description="Detected format type"
+    )
+    confidence: float = Field(
+        1.0, ge=0.0, le=1.0, description="Confidence score (0.0-1.0)"
+    )
+    parse_error: Optional[str] = Field(
+        None, description="Error message if parsing failed"
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -81,10 +89,16 @@ class DateExtractionResult(BaseModel):
     """
 
     email_id: str = Field(..., description="Email ID")
-    dates_found: list[ParsedDate] = Field(default_factory=list, description="All dates found")
-    primary_date: Optional[ParsedDate] = Field(None, description="Primary/most relevant date")
+    dates_found: list[ParsedDate] = Field(
+        default_factory=list, description="All dates found"
+    )
+    primary_date: Optional[ParsedDate] = Field(
+        None, description="Primary/most relevant date"
+    )
     extraction_method: str = Field("regex", description="Extraction method used")
-    confidence: float = Field(1.0, ge=0.0, le=1.0, description="Overall confidence score")
+    confidence: float = Field(
+        1.0, ge=0.0, le=1.0, description="Overall confidence score"
+    )
 
     model_config = ConfigDict(
         json_schema_extra={

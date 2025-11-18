@@ -9,8 +9,6 @@ Commands:
 """
 
 import asyncio
-import json
-import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -18,11 +16,9 @@ from typing import Optional
 import typer
 from rich.console import Console
 from rich.panel import Panel
-from rich.text import Text
 
-from .common import console
 from ..formatters.progress import create_progress
-from ..formatters.json_output import output_json, format_json_error
+from ..formatters.json_output import output_json
 from ..formatters.tables import create_table
 from ..utils.logging import log_cli_operation, log_cli_error
 
@@ -122,12 +118,14 @@ def list(
         collabiq errors list --since 2024-01-01
         collabiq errors list --json
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
 
     try:
         # Validate service availability
         if DLQManager is None:
-            raise RuntimeError("DLQ manager not available. Ensure notion_integrator module is installed.")
+            raise RuntimeError(
+                "DLQ manager not available. Ensure notion_integrator module is installed."
+            )
 
         # Initialize DLQ manager
         dlq_manager = DLQManager(dlq_dir=str(DLQ_DIR))
@@ -137,10 +135,7 @@ def list(
 
         if not dlq_files:
             if json_output:
-                output_json(
-                    data={"errors": [], "count": 0},
-                    status="success"
-                )
+                output_json(data={"errors": [], "count": 0}, status="success")
             elif not quiet:
                 console.print("[green]✓ No errors found in DLQ[/green]")
             return
@@ -169,16 +164,18 @@ def list(
                 # Extract error ID from filename
                 error_id = Path(file_path).stem
 
-                errors.append({
-                    "error_id": error_id,
-                    "email_id": entry.email_id,
-                    "error_type": entry.error.get("error_type", "Unknown"),
-                    "error_message": entry.error.get("error_message", ""),
-                    "failed_at": entry.failed_at.isoformat(),
-                    "retry_count": entry.retry_count,
-                    "severity": entry_severity,
-                    "file_path": file_path,
-                })
+                errors.append(
+                    {
+                        "error_id": error_id,
+                        "email_id": entry.email_id,
+                        "error_type": entry.error.get("error_type", "Unknown"),
+                        "error_message": entry.error.get("error_message", ""),
+                        "failed_at": entry.failed_at.isoformat(),
+                        "retry_count": entry.retry_count,
+                        "severity": entry_severity,
+                        "file_path": file_path,
+                    }
+                )
             except Exception as e:
                 log_cli_error(f"Failed to load DLQ entry {file_path}: {e}")
                 continue
@@ -191,20 +188,38 @@ def list(
         if json_output:
             output_json(
                 data={"errors": errors, "count": len(errors), "total": len(dlq_files)},
-                status="success"
+                status="success",
             )
         else:
             # Create table
             table = create_table(
                 title=f"Failed Operations (DLQ) - Showing {len(errors)} of {len(dlq_files)}",
                 columns=[
-                    {"name": "Error ID", "field": "error_id", "style": "cyan", "no_wrap": True},
-                    {"name": "Email ID", "field": "email_id", "style": "magenta", "no_wrap": True},
+                    {
+                        "name": "Error ID",
+                        "field": "error_id",
+                        "style": "cyan",
+                        "no_wrap": True,
+                    },
+                    {
+                        "name": "Email ID",
+                        "field": "email_id",
+                        "style": "magenta",
+                        "no_wrap": True,
+                    },
                     {"name": "Error Type", "field": "error_type", "style": "red"},
-                    {"name": "Failed At", "field": "failed_at_short", "style": "yellow"},
+                    {
+                        "name": "Failed At",
+                        "field": "failed_at_short",
+                        "style": "yellow",
+                    },
                     {"name": "Retries", "field": "retry_count", "justify": "right"},
-                    {"name": "Severity", "field": "severity_colored", "justify": "center"},
-                ]
+                    {
+                        "name": "Severity",
+                        "field": "severity_colored",
+                        "justify": "center",
+                    },
+                ],
             )
 
             for error in errors:
@@ -233,18 +248,19 @@ def list(
             console.print(table)
 
             if not quiet:
-                console.print(f"\n[dim]Use 'collabiq errors show <error-id>' to view full details[/dim]")
+                console.print(
+                    "\n[dim]Use 'collabiq errors show <error-id>' to view full details[/dim]"
+                )
 
-        log_cli_operation("errors_list", {"count": len(errors), "filtered": len(errors) < len(dlq_files)})
+        log_cli_operation(
+            "errors_list",
+            {"count": len(errors), "filtered": len(errors) < len(dlq_files)},
+        )
 
     except Exception as e:
         log_cli_error(f"Error listing DLQ entries: {e}")
         if json_output:
-            output_json(
-                data={},
-                status="failure",
-                errors=[str(e)]
-            )
+            output_json(data={}, status="failure", errors=[str(e)])
         else:
             console.print(f"[red]✗ Error listing DLQ entries: {e}[/red]")
         raise typer.Exit(1)
@@ -265,12 +281,14 @@ def show(
         collabiq errors show email001_20240101_120000
         collabiq errors show email001_20240101_120000 --json
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
 
     try:
         # Validate service availability
         if DLQManager is None:
-            raise RuntimeError("DLQ manager not available. Ensure notion_integrator module is installed.")
+            raise RuntimeError(
+                "DLQ manager not available. Ensure notion_integrator module is installed."
+            )
 
         # Initialize DLQ manager
         dlq_manager = DLQManager(dlq_dir=str(DLQ_DIR))
@@ -298,10 +316,12 @@ def show(
                     "retry_count": entry.retry_count,
                     "severity": severity,
                     "error": entry.error,
-                    "extracted_data": entry.extracted_data.model_dump() if entry.extracted_data else None,
+                    "extracted_data": entry.extracted_data.model_dump()
+                    if entry.extracted_data
+                    else None,
                     "remediation": remediation,
                 },
-                status="success"
+                status="success",
             )
         else:
             # Create detailed display
@@ -309,17 +329,29 @@ def show(
 
             # Basic info
             console.print(f"[bold]Email ID:[/bold] {entry.email_id}")
-            console.print(f"[bold]Failed At:[/bold] {entry.failed_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+            console.print(
+                f"[bold]Failed At:[/bold] {entry.failed_at.strftime('%Y-%m-%d %H:%M:%S UTC')}"
+            )
             console.print(f"[bold]Retry Count:[/bold] {entry.retry_count}")
 
             # Severity
-            sev_color = "red" if severity == "error" else "yellow" if severity == "warning" else "blue"
-            console.print(f"[bold]Severity:[/bold] [{sev_color}]{severity.upper()}[/{sev_color}]")
+            sev_color = (
+                "red"
+                if severity == "error"
+                else "yellow"
+                if severity == "warning"
+                else "blue"
+            )
+            console.print(
+                f"[bold]Severity:[/bold] [{sev_color}]{severity.upper()}[/{sev_color}]"
+            )
 
             # Error details
-            console.print(f"\n[bold red]Error Information:[/bold red]")
+            console.print("\n[bold red]Error Information:[/bold red]")
             console.print(f"  Type: {entry.error.get('error_type', 'Unknown')}")
-            console.print(f"  Message: {entry.error.get('error_message', 'No message')}")
+            console.print(
+                f"  Message: {entry.error.get('error_message', 'No message')}"
+            )
 
             if entry.error.get("status_code"):
                 console.print(f"  Status Code: {entry.error['status_code']}")
@@ -328,22 +360,24 @@ def show(
             panel = Panel(
                 remediation,
                 title="[bold green]Remediation Suggestion[/bold green]",
-                border_style="green"
+                border_style="green",
             )
             console.print(f"\n{panel}")
 
             # Extracted data summary
             if entry.extracted_data:
-                console.print(f"\n[bold]Extracted Data Summary:[/bold]")
+                console.print("\n[bold]Extracted Data Summary:[/bold]")
                 data = entry.extracted_data
                 console.print(f"  Person: {data.person_in_charge or 'N/A'}")
                 console.print(f"  Startup: {data.startup_name or 'N/A'}")
                 console.print(f"  Partner: {data.partner_org or 'N/A'}")
-                console.print(f"  Date: {data.date.strftime('%Y-%m-%d') if data.date else 'N/A'}")
+                console.print(
+                    f"  Date: {data.date.strftime('%Y-%m-%d') if data.date else 'N/A'}"
+                )
 
                 # Show confidence scores if available
-                if hasattr(data, 'confidence') and data.confidence:
-                    console.print(f"\n[dim]Confidence Scores:[/dim]")
+                if hasattr(data, "confidence") and data.confidence:
+                    console.print("\n[dim]Confidence Scores:[/dim]")
                     console.print(f"  Person: {data.confidence.person:.2f}")
                     console.print(f"  Startup: {data.confidence.startup:.2f}")
                     console.print(f"  Partner: {data.confidence.partner:.2f}")
@@ -355,22 +389,14 @@ def show(
     except FileNotFoundError as e:
         log_cli_error(f"Error not found: {e}")
         if json_output:
-            output_json(
-                data={},
-                status="failure",
-                errors=[str(e)]
-            )
+            output_json(data={}, status="failure", errors=[str(e)])
         else:
             console.print(f"[red]✗ {e}[/red]")
         raise typer.Exit(1)
     except Exception as e:
         log_cli_error(f"Error showing DLQ entry: {e}")
         if json_output:
-            output_json(
-                data={},
-                status="failure",
-                errors=[str(e)]
-            )
+            output_json(data={}, status="failure", errors=[str(e)])
         else:
             console.print(f"[red]✗ Error showing DLQ entry: {e}[/red]")
         raise typer.Exit(1)
@@ -380,7 +406,9 @@ def show(
 def retry(
     all: bool = typer.Option(False, "--all", help="Retry all failed operations"),
     id: Optional[str] = typer.Option(None, "--id", help="Retry specific error ID"),
-    since: Optional[str] = typer.Option(None, "--since", help="Retry errors since date (YYYY-MM-DD)"),
+    since: Optional[str] = typer.Option(
+        None, "--since", help="Retry errors since date (YYYY-MM-DD)"
+    ),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
     quiet: bool = typer.Option(False, help="Suppress non-error output"),
 ):
@@ -396,12 +424,14 @@ def retry(
         collabiq errors retry --all
         collabiq errors retry --since 2024-01-01
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
 
     try:
         # Validate service availability
         if DLQManager is None:
-            raise RuntimeError("DLQ manager not available. Ensure notion_integrator module is installed.")
+            raise RuntimeError(
+                "DLQ manager not available. Ensure notion_integrator module is installed."
+            )
 
         # Validate exactly one option is provided
         options_count = sum([all, id is not None, since is not None])
@@ -416,9 +446,12 @@ def retry(
         # Get NotionWriter for retry (import here to avoid circular dependency)
         try:
             from notion_integrator.writer import NotionWriter
+
             notion_writer = NotionWriter()
         except ImportError:
-            raise RuntimeError("NotionWriter not available. Ensure notion_integrator module is installed.")
+            raise RuntimeError(
+                "NotionWriter not available. Ensure notion_integrator module is installed."
+            )
 
         # Determine which entries to retry
         entries_to_retry = []
@@ -450,8 +483,7 @@ def retry(
         if not entries_to_retry:
             if json_output:
                 output_json(
-                    data={"succeeded": 0, "failed": 0, "total": 0},
-                    status="success"
+                    data={"succeeded": 0, "failed": 0, "total": 0}, status="success"
                 )
             elif not quiet:
                 console.print("[yellow]No errors to retry[/yellow]")
@@ -465,7 +497,9 @@ def retry(
                 # No progress bar
                 for file_path in entries_to_retry:
                     try:
-                        success = await dlq_manager.retry_failed_write(file_path, notion_writer)
+                        success = await dlq_manager.retry_failed_write(
+                            file_path, notion_writer
+                        )
                         if success:
                             results["succeeded"] += 1
                         else:
@@ -478,12 +512,14 @@ def retry(
                 with create_progress() as progress:
                     task = progress.add_task(
                         f"[cyan]Retrying {len(entries_to_retry)} failed operations...",
-                        total=len(entries_to_retry)
+                        total=len(entries_to_retry),
                     )
 
                     for file_path in entries_to_retry:
                         try:
-                            success = await dlq_manager.retry_failed_write(file_path, notion_writer)
+                            success = await dlq_manager.retry_failed_write(
+                                file_path, notion_writer
+                            )
                             if success:
                                 results["succeeded"] += 1
                             else:
@@ -505,12 +541,12 @@ def retry(
                 data={
                     "succeeded": results["succeeded"],
                     "failed": results["failed"],
-                    "total": len(entries_to_retry)
+                    "total": len(entries_to_retry),
                 },
-                status="success"
+                status="success",
             )
         else:
-            console.print(f"\n[bold]Retry Results:[/bold]")
+            console.print("\n[bold]Retry Results:[/bold]")
             console.print(f"  [green]✓ Succeeded: {results['succeeded']}[/green]")
             console.print(f"  [red]✗ Failed: {results['failed']}[/red]")
             console.print(f"  Total: {len(entries_to_retry)}")
@@ -534,8 +570,12 @@ def retry(
 
 @errors_app.command()
 def clear(
-    resolved: bool = typer.Option(False, "--resolved", help="Clear only resolved errors (already processed)"),
-    before: Optional[str] = typer.Option(None, "--before", help="Clear errors before date (YYYY-MM-DD)"),
+    resolved: bool = typer.Option(
+        False, "--resolved", help="Clear only resolved errors (already processed)"
+    ),
+    before: Optional[str] = typer.Option(
+        None, "--before", help="Clear errors before date (YYYY-MM-DD)"
+    ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
     quiet: bool = typer.Option(False, help="Suppress non-error output"),
@@ -551,12 +591,14 @@ def clear(
         collabiq errors clear --before 2024-01-01
         collabiq errors clear --resolved --before 2024-01-01 -y
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
 
     try:
         # Validate service availability
         if DLQManager is None:
-            raise RuntimeError("DLQ manager not available. Ensure notion_integrator module is installed.")
+            raise RuntimeError(
+                "DLQ manager not available. Ensure notion_integrator module is installed."
+            )
 
         # Initialize DLQ manager
         dlq_manager = DLQManager(dlq_dir=str(DLQ_DIR))
@@ -566,10 +608,7 @@ def clear(
 
         if not all_files:
             if json_output:
-                output_json(
-                    data={"cleared": 0, "total": 0},
-                    status="success"
-                )
+                output_json(data={"cleared": 0, "total": 0}, status="success")
             elif not quiet:
                 console.print("[green]✓ No errors in DLQ[/green]")
             return
@@ -603,8 +642,7 @@ def clear(
         if not entries_to_clear:
             if json_output:
                 output_json(
-                    data={"cleared": 0, "total": len(all_files)},
-                    status="success"
+                    data={"cleared": 0, "total": len(all_files)}, status="success"
                 )
             elif not quiet:
                 console.print("[yellow]No errors match the criteria[/yellow]")
@@ -612,7 +650,9 @@ def clear(
 
         # Confirm deletion
         if not yes and not json_output:
-            console.print(f"[yellow]About to clear {len(entries_to_clear)} error(s) from DLQ[/yellow]")
+            console.print(
+                f"[yellow]About to clear {len(entries_to_clear)} error(s) from DLQ[/yellow]"
+            )
             confirm = typer.confirm("Are you sure?")
             if not confirm:
                 console.print("[dim]Cancelled[/dim]")
@@ -633,9 +673,9 @@ def clear(
                 data={
                     "cleared": cleared_count,
                     "total": len(all_files),
-                    "remaining": len(all_files) - cleared_count
+                    "remaining": len(all_files) - cleared_count,
                 },
-                status="success"
+                status="success",
             )
         else:
             console.print(f"[green]✓ Cleared {cleared_count} error(s) from DLQ[/green]")
@@ -643,7 +683,9 @@ def clear(
             if remaining > 0:
                 console.print(f"[dim]{remaining} error(s) remaining[/dim]")
 
-        log_cli_operation("errors_clear", {"cleared": cleared_count, "total": len(all_files)})
+        log_cli_operation(
+            "errors_clear", {"cleared": cleared_count, "total": len(all_files)}
+        )
 
     except ValueError as e:
         if json_output:

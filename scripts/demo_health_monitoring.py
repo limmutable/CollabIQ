@@ -10,7 +10,6 @@ Note: Requires GEMINI_API_KEY environment variable to be set.
 """
 
 import os
-from datetime import datetime, timezone
 
 from src.llm_orchestrator.cost_tracker import CostTracker
 from src.llm_orchestrator.orchestrator import LLMOrchestrator
@@ -98,7 +97,7 @@ openai_cost = (5000 / 1_000_000) * 0.15 + (2500 / 1_000_000) * 0.60
 print("\nExpected Costs (verification):")
 print(f"  Claude: ${claude_cost:.6f}")
 print(f"  OpenAI: ${openai_cost:.6f}")
-print(f"  Gemini: $0.000000 (free tier)")
+print("  Gemini: $0.000000 (free tier)")
 
 # =============================================================================
 # 2. Demonstrate Orchestrator Integration

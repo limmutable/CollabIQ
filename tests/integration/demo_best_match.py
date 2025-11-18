@@ -16,9 +16,7 @@ from llm_orchestrator.strategies.best_match import (
 from llm_provider.types import ConfidenceScores, ExtractedEntities
 
 
-def create_mock_provider(
-    name: str, confidence_scores: ConfidenceScores
-) -> MagicMock:
+def create_mock_provider(name: str, confidence_scores: ConfidenceScores) -> MagicMock:
     """Create a mock provider that returns entities with specified confidence."""
     provider = MagicMock()
     provider.extract_entities.return_value = ExtractedEntities(
@@ -68,11 +66,13 @@ def demo_scenario_1_clear_winner():
         result = provider.extract_entities(email_text="test", email_id="demo")
         agg_conf = calculate_aggregate_confidence(result.confidence)
         print(f"  {name:10s}: {agg_conf:.4f}")
-        print(f"    Details: person={result.confidence.person:.2f}, "
-              f"startup={result.confidence.startup:.2f}, "
-              f"partner={result.confidence.partner:.2f}, "
-              f"details={result.confidence.details:.2f}, "
-              f"date={result.confidence.date:.2f}")
+        print(
+            f"    Details: person={result.confidence.person:.2f}, "
+            f"startup={result.confidence.startup:.2f}, "
+            f"partner={result.confidence.partner:.2f}, "
+            f"details={result.confidence.details:.2f}, "
+            f"date={result.confidence.date:.2f}"
+        )
 
     # Run best-match strategy
     health_tracker = HealthTracker(
@@ -86,7 +86,7 @@ def demo_scenario_1_clear_winner():
     )
 
     print(f"\n✓ Best-Match Selection: {provider_used}")
-    print(f"  Winner has highest aggregate confidence (0.8981)")
+    print("  Winner has highest aggregate confidence (0.8981)")
 
 
 def demo_scenario_2_weighted_matters():
@@ -113,18 +113,31 @@ def demo_scenario_2_weighted_matters():
     print("\nConfidence Scores:")
     for name, provider in providers.items():
         result = provider.extract_entities(email_text="test", email_id="demo")
-        avg = sum([result.confidence.person, result.confidence.startup,
-                   result.confidence.partner, result.confidence.details,
-                   result.confidence.date]) / 5
+        avg = (
+            sum(
+                [
+                    result.confidence.person,
+                    result.confidence.startup,
+                    result.confidence.partner,
+                    result.confidence.details,
+                    result.confidence.date,
+                ]
+            )
+            / 5
+        )
         agg = calculate_aggregate_confidence(result.confidence)
         print(f"  {name:15s}:")
         print(f"    Simple average:     {avg:.4f}")
         print(f"    Weighted aggregate: {agg:.4f}")
-        print(f"    person={result.confidence.person:.2f} (weight=1.5), "
-              f"startup={result.confidence.startup:.2f} (weight=1.5), "
-              f"partner={result.confidence.partner:.2f} (weight=1.0)")
-        print(f"    details={result.confidence.details:.2f} (weight=0.8), "
-              f"date={result.confidence.date:.2f} (weight=0.5)")
+        print(
+            f"    person={result.confidence.person:.2f} (weight=1.5), "
+            f"startup={result.confidence.startup:.2f} (weight=1.5), "
+            f"partner={result.confidence.partner:.2f} (weight=1.0)"
+        )
+        print(
+            f"    details={result.confidence.details:.2f} (weight=0.8), "
+            f"date={result.confidence.date:.2f} (weight=0.5)"
+        )
 
     health_tracker = HealthTracker(
         data_dir=Path("/tmp/demo_best_match"), unhealthy_threshold=3
@@ -137,7 +150,7 @@ def demo_scenario_2_weighted_matters():
     )
 
     print(f"\n✓ Best-Match Selection: {provider_used}")
-    print(f"  Weighted aggregate favors high confidence in person/startup fields")
+    print("  Weighted aggregate favors high confidence in person/startup fields")
 
 
 def demo_scenario_3_tie_breaking():
@@ -180,8 +193,10 @@ def demo_scenario_3_tie_breaking():
     print("\nHistorical Success Rates:")
     for name in providers.keys():
         metrics = health_tracker.get_metrics(name)
-        print(f"  {name:15s}: {metrics.success_rate:.2%} "
-              f"({metrics.success_count}/{metrics.success_count + metrics.failure_count})")
+        print(
+            f"  {name:15s}: {metrics.success_rate:.2%} "
+            f"({metrics.success_count}/{metrics.success_count + metrics.failure_count})"
+        )
 
     strategy = BestMatchStrategy(provider_names=["provider_2", "provider_1"])
     result, provider_used = strategy.execute(
@@ -191,13 +206,15 @@ def demo_scenario_3_tie_breaking():
     )
 
     print(f"\n✓ Best-Match Selection: {provider_used}")
-    print(f"  Tie-breaker: Higher historical success rate wins")
+    print("  Tie-breaker: Higher historical success rate wins")
 
 
 def demo_scenario_4_partial_failures():
     """Scenario 4: Some providers fail, best-match selects from successful ones."""
     print("\n" + "=" * 80)
-    print("SCENARIO 4: Partial Failures (Gemini fails, best-match selects from remaining)")
+    print(
+        "SCENARIO 4: Partial Failures (Gemini fails, best-match selects from remaining)"
+    )
     print("=" * 80)
 
     from llm_provider.exceptions import LLMAPIError
@@ -219,9 +236,7 @@ def demo_scenario_4_partial_failures():
     }
 
     # Make gemini fail
-    providers["gemini"].extract_entities.side_effect = LLMAPIError(
-        "API timeout"
-    )
+    providers["gemini"].extract_entities.side_effect = LLMAPIError("API timeout")
 
     print("\nProvider Status:")
     print("  gemini:  FAILED (API timeout)")
@@ -242,7 +257,7 @@ def demo_scenario_4_partial_failures():
     )
 
     print(f"\n✓ Best-Match Selection: {provider_used}")
-    print(f"  Selects best among successful providers (Claude: 0.8585 > OpenAI: 0.8113)")
+    print("  Selects best among successful providers (Claude: 0.8585 > OpenAI: 0.8113)")
 
 
 if __name__ == "__main__":

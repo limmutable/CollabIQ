@@ -16,14 +16,14 @@ To run these tests:
 """
 
 import json
-import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 import pytest
 
 import sys
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from email_receiver.gmail_receiver import GmailReceiver, EmailReceiverError
@@ -39,7 +39,7 @@ def mock_credentials_content():
             "redirect_uris": ["http://127.0.0.1:8080"],
             "project_id": "collabiq-test",
             "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-            "token_uri": "https://oauth2.googleapis.com/token"
+            "token_uri": "https://oauth2.googleapis.com/token",
         }
     }
 
@@ -54,7 +54,7 @@ def mock_token_content():
         "client_id": "123456789-abcdefg.apps.googleusercontent.com",
         "client_secret": "GOCSPX-mock_secret",
         "scopes": ["https://www.googleapis.com/auth/gmail.readonly"],
-        "expiry": (datetime.now(UTC) + timedelta(hours=1)).isoformat() + "Z"
+        "expiry": (datetime.now(UTC) + timedelta(hours=1)).isoformat() + "Z",
     }
 
 
@@ -68,7 +68,7 @@ def expired_token_content():
         "client_id": "123456789-abcdefg.apps.googleusercontent.com",
         "client_secret": "GOCSPX-mock_secret",
         "scopes": ["https://www.googleapis.com/auth/gmail.readonly"],
-        "expiry": (datetime.now(UTC) - timedelta(hours=1)).isoformat() + "Z"
+        "expiry": (datetime.now(UTC) - timedelta(hours=1)).isoformat() + "Z",
     }
 
 
@@ -94,7 +94,7 @@ def test_oauth_credentials_loading_from_env(tmp_path, mock_credentials_content):
         credentials_path=creds_path,
         token_path=token_path,
         raw_email_dir=tmp_path / "raw",
-        metadata_dir=tmp_path / "metadata"
+        metadata_dir=tmp_path / "metadata",
     )
 
     # Assert
@@ -117,24 +117,31 @@ def test_oauth_credentials_missing_file(tmp_path):
     creds_path = tmp_path / "nonexistent_credentials.json"
     token_path = tmp_path / "token.json"
 
-    receiver = GmailReceiver(
-        credentials_path=creds_path,
-        token_path=token_path
-    )
+    receiver = GmailReceiver(credentials_path=creds_path, token_path=token_path)
 
     # Act & Assert
     with pytest.raises(EmailReceiverError) as exc_info:
         receiver.connect()
 
     assert exc_info.value.code == "AUTHENTICATION_FAILED"
-    assert "credentials" in exc_info.value.message.lower() or "failed to authenticate" in exc_info.value.message.lower()
+    assert (
+        "credentials" in exc_info.value.message.lower()
+        or "failed to authenticate" in exc_info.value.message.lower()
+    )
 
 
 # T006: Test token refresh when access token expires
-@patch('email_receiver.gmail_receiver.build')
-@patch('email_receiver.gmail_receiver.Request')
-@patch('email_receiver.gmail_receiver.Credentials')
-def test_oauth_token_refresh(mock_credentials_cls, mock_request_cls, mock_build, tmp_path, mock_credentials_content, expired_token_content):
+@patch("email_receiver.gmail_receiver.build")
+@patch("email_receiver.gmail_receiver.Request")
+@patch("email_receiver.gmail_receiver.Credentials")
+def test_oauth_token_refresh(
+    mock_credentials_cls,
+    mock_request_cls,
+    mock_build,
+    tmp_path,
+    mock_credentials_content,
+    expired_token_content,
+):
     """
     T006 [P] [US1]: Verify automatic token refresh when access token expires.
 
@@ -158,19 +165,18 @@ def test_oauth_token_refresh(mock_credentials_cls, mock_request_cls, mock_build,
     mock_creds.valid = False
     mock_creds.expired = True
     mock_creds.refresh_token = "1//0gZ1xYz_mock_refresh_token"
-    mock_creds.to_json.return_value = json.dumps({
-        "token": "ya29.new_refreshed_token",
-        "refresh_token": "1//0gZ1xYz_mock_refresh_token",
-        "expiry": (datetime.now(UTC) + timedelta(hours=1)).isoformat() + "Z"
-    })
+    mock_creds.to_json.return_value = json.dumps(
+        {
+            "token": "ya29.new_refreshed_token",
+            "refresh_token": "1//0gZ1xYz_mock_refresh_token",
+            "expiry": (datetime.now(UTC) + timedelta(hours=1)).isoformat() + "Z",
+        }
+    )
 
     mock_credentials_cls.from_authorized_user_file.return_value = mock_creds
     mock_build.return_value = MagicMock()
 
-    receiver = GmailReceiver(
-        credentials_path=creds_path,
-        token_path=token_path
-    )
+    receiver = GmailReceiver(credentials_path=creds_path, token_path=token_path)
 
     # Act
     receiver.connect()
@@ -181,10 +187,17 @@ def test_oauth_token_refresh(mock_credentials_cls, mock_request_cls, mock_build,
     mock_build.assert_called_once()  # Gmail service was built
 
 
-@patch('email_receiver.gmail_receiver.build')
-@patch('email_receiver.gmail_receiver.Request')
-@patch('email_receiver.gmail_receiver.Credentials')
-def test_oauth_token_refresh_failure(mock_credentials_cls, mock_request_cls, mock_build, tmp_path, mock_credentials_content, expired_token_content):
+@patch("email_receiver.gmail_receiver.build")
+@patch("email_receiver.gmail_receiver.Request")
+@patch("email_receiver.gmail_receiver.Credentials")
+def test_oauth_token_refresh_failure(
+    mock_credentials_cls,
+    mock_request_cls,
+    mock_build,
+    tmp_path,
+    mock_credentials_content,
+    expired_token_content,
+):
     """
     T006 [P] [US1]: Verify graceful error when token refresh fails.
 
@@ -210,10 +223,7 @@ def test_oauth_token_refresh_failure(mock_credentials_cls, mock_request_cls, moc
 
     mock_credentials_cls.from_authorized_user_file.return_value = mock_creds
 
-    receiver = GmailReceiver(
-        credentials_path=creds_path,
-        token_path=token_path
-    )
+    receiver = GmailReceiver(credentials_path=creds_path, token_path=token_path)
 
     # Act & Assert
     with pytest.raises(EmailReceiverError) as exc_info:
@@ -222,13 +232,18 @@ def test_oauth_token_refresh_failure(mock_credentials_cls, mock_request_cls, moc
     assert exc_info.value.code == "AUTHENTICATION_FAILED"
     # Verify error message mentions token issues (token refresh, invalid grant, or expired/invalid)
     error_msg = exc_info.value.message.lower()
-    assert ("token" in error_msg and ("invalid" in error_msg or "expired" in error_msg or "refresh" in error_msg)) or "invalid_grant" in error_msg
+    assert (
+        "token" in error_msg
+        and ("invalid" in error_msg or "expired" in error_msg or "refresh" in error_msg)
+    ) or "invalid_grant" in error_msg
 
 
 # T007: Test first-time OAuth flow (simulated)
-@patch('email_receiver.gmail_receiver.build')
-@patch('email_receiver.gmail_receiver.InstalledAppFlow')
-def test_oauth_first_time_flow_simulation(mock_installed_flow_cls, mock_build, tmp_path, mock_credentials_content):
+@patch("email_receiver.gmail_receiver.build")
+@patch("email_receiver.gmail_receiver.InstalledAppFlow")
+def test_oauth_first_time_flow_simulation(
+    mock_installed_flow_cls, mock_build, tmp_path, mock_credentials_content
+):
     """
     T007 [P] [US1]: Verify first-time OAuth flow creates and saves token.
 
@@ -252,20 +267,19 @@ def test_oauth_first_time_flow_simulation(mock_installed_flow_cls, mock_build, t
     # Mock OAuth flow
     mock_flow = MagicMock()
     mock_creds = MagicMock()
-    mock_creds.to_json.return_value = json.dumps({
-        "token": "ya29.new_token_from_oauth",
-        "refresh_token": "1//0gZ1xYz_new_refresh_token",
-        "expiry": (datetime.now(UTC) + timedelta(hours=1)).isoformat() + "Z"
-    })
+    mock_creds.to_json.return_value = json.dumps(
+        {
+            "token": "ya29.new_token_from_oauth",
+            "refresh_token": "1//0gZ1xYz_new_refresh_token",
+            "expiry": (datetime.now(UTC) + timedelta(hours=1)).isoformat() + "Z",
+        }
+    )
     mock_flow.run_local_server.return_value = mock_creds
 
     mock_installed_flow_cls.from_client_secrets_file.return_value = mock_flow
     mock_build.return_value = MagicMock()
 
-    receiver = GmailReceiver(
-        credentials_path=creds_path,
-        token_path=token_path
-    )
+    receiver = GmailReceiver(credentials_path=creds_path, token_path=token_path)
 
     # Act
     receiver.connect()
@@ -296,20 +310,23 @@ def test_oauth_scope_validation(tmp_path, mock_credentials_content):
 
     token_path = tmp_path / "token.json"
 
-    receiver = GmailReceiver(
-        credentials_path=creds_path,
-        token_path=token_path
-    )
+    receiver = GmailReceiver(credentials_path=creds_path, token_path=token_path)
 
     # Assert
-    assert receiver.SCOPES == ['https://www.googleapis.com/auth/gmail.readonly']
+    assert receiver.SCOPES == ["https://www.googleapis.com/auth/gmail.readonly"]
     assert len(receiver.SCOPES) == 1  # Only read-only scope per research.md Decision 2
 
 
 # T008: Test Gmail API connection with valid credentials
-@patch('email_receiver.gmail_receiver.build')
-@patch('email_receiver.gmail_receiver.Credentials')
-def test_gmail_api_connection(mock_credentials_cls, mock_build, tmp_path, mock_credentials_content, mock_token_content):
+@patch("email_receiver.gmail_receiver.build")
+@patch("email_receiver.gmail_receiver.Credentials")
+def test_gmail_api_connection(
+    mock_credentials_cls,
+    mock_build,
+    tmp_path,
+    mock_credentials_content,
+    mock_token_content,
+):
     """
     T008 [US1]: Verify successful Gmail API connection with valid credentials.
 
@@ -339,10 +356,7 @@ def test_gmail_api_connection(mock_credentials_cls, mock_build, tmp_path, mock_c
     mock_service = MagicMock()
     mock_build.return_value = mock_service
 
-    receiver = GmailReceiver(
-        credentials_path=creds_path,
-        token_path=token_path
-    )
+    receiver = GmailReceiver(credentials_path=creds_path, token_path=token_path)
 
     # Act
     receiver.connect()
@@ -351,11 +365,13 @@ def test_gmail_api_connection(mock_credentials_cls, mock_build, tmp_path, mock_c
     assert receiver.service is not None
     assert receiver.service == mock_service
     assert receiver.creds == mock_creds
-    mock_build.assert_called_once_with('gmail', 'v1', credentials=mock_creds)
+    mock_build.assert_called_once_with("gmail", "v1", credentials=mock_creds)
 
 
-@patch('email_receiver.gmail_receiver.InstalledAppFlow')
-def test_gmail_api_connection_without_token(mock_installed_flow_cls, tmp_path, mock_credentials_content):
+@patch("email_receiver.gmail_receiver.InstalledAppFlow")
+def test_gmail_api_connection_without_token(
+    mock_installed_flow_cls, tmp_path, mock_credentials_content
+):
     """
     T008 [US1]: Verify connection fails gracefully when token.json doesn't exist and OAuth flow cannot run.
 
@@ -377,10 +393,7 @@ def test_gmail_api_connection_without_token(mock_installed_flow_cls, tmp_path, m
     mock_flow.run_local_server.side_effect = Exception("OAuth flow cancelled by user")
     mock_installed_flow_cls.from_client_secrets_file.return_value = mock_flow
 
-    receiver = GmailReceiver(
-        credentials_path=creds_path,
-        token_path=token_path
-    )
+    receiver = GmailReceiver(credentials_path=creds_path, token_path=token_path)
 
     # Act & Assert
     # OAuth flow should fail gracefully
@@ -389,4 +402,8 @@ def test_gmail_api_connection_without_token(mock_installed_flow_cls, tmp_path, m
 
     # Verify error message is actionable
     error_message = str(exc_info.value).lower()
-    assert "oauth" in error_message or "auth" in error_message or "cancelled" in error_message
+    assert (
+        "oauth" in error_message
+        or "auth" in error_message
+        or "cancelled" in error_message
+    )

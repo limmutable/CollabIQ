@@ -25,7 +25,12 @@ from dataclasses import dataclass, asdict
 
 import pytest
 
-from notion_integrator.fuzzy_matcher import RapidfuzzMatcher, LLMMatcher, HybridMatcher, CompanyMatcher
+from notion_integrator.fuzzy_matcher import (
+    RapidfuzzMatcher,
+    LLMMatcher,
+    HybridMatcher,
+    CompanyMatcher,
+)
 
 
 @dataclass
@@ -67,7 +72,9 @@ class MatchResult:
     match_method: str
 
 
-def load_ground_truth(file_path: str = "tests/fixtures/evaluation/ground_truth.json") -> List[Dict]:
+def load_ground_truth(
+    file_path: str = "tests/fixtures/evaluation/ground_truth.json",
+) -> List[Dict]:
     """
     Load ground truth test cases.
 
@@ -84,7 +91,9 @@ def load_ground_truth(file_path: str = "tests/fixtures/evaluation/ground_truth.j
     return data["test_cases"]
 
 
-def load_candidates(file_path: str = "data/notion_cache/data_Companies.json") -> List[Tuple[str, str]]:
+def load_candidates(
+    file_path: str = "data/notion_cache/data_Companies.json",
+) -> List[Tuple[str, str]]:
     """
     Load company candidates from Companies database cache.
 
@@ -178,17 +187,19 @@ def evaluate_matcher(
             latency_ms = (time.time() - start_time) * 1000
             latencies.append(latency_ms)
 
-            results.append(MatchResult(
-                test_case_id=test_id,
-                extracted_name=extracted_name,
-                expected_match=expected_match or "(no match)",
-                predicted_match=f"ERROR: {str(e)}",
-                is_correct=False,
-                similarity_score=0.0,
-                match_type="error",
-                latency_ms=latency_ms,
-                match_method="error",
-            ))
+            results.append(
+                MatchResult(
+                    test_case_id=test_id,
+                    extracted_name=extracted_name,
+                    expected_match=expected_match or "(no match)",
+                    predicted_match=f"ERROR: {str(e)}",
+                    is_correct=False,
+                    similarity_score=0.0,
+                    match_type="error",
+                    latency_ms=latency_ms,
+                    match_method="error",
+                )
+            )
 
             incorrect_matches += 1
             if expected_match is not None:
@@ -206,7 +217,7 @@ def evaluate_matcher(
             predicted_match = None
 
         # Check correctness
-        is_correct = (predicted_match == expected_match)
+        is_correct = predicted_match == expected_match
 
         if is_correct:
             correct_matches += 1
@@ -221,30 +232,44 @@ def evaluate_matcher(
             elif predicted_match is not None and expected_match is not None:
                 false_negatives += 1  # Found wrong match
 
-        results.append(MatchResult(
-            test_case_id=test_id,
-            extracted_name=extracted_name,
-            expected_match=expected_match or "(no match)",
-            predicted_match=predicted_match or "(no match)",
-            is_correct=is_correct,
-            similarity_score=match_result.similarity_score,
-            match_type=match_result.match_type,
-            latency_ms=latency_ms,
-            match_method=match_result.match_method,
-        ))
+        results.append(
+            MatchResult(
+                test_case_id=test_id,
+                extracted_name=extracted_name,
+                expected_match=expected_match or "(no match)",
+                predicted_match=predicted_match or "(no match)",
+                is_correct=is_correct,
+                similarity_score=match_result.similarity_score,
+                match_type=match_result.match_type,
+                latency_ms=latency_ms,
+                match_method=match_result.match_method,
+            )
+        )
 
     # Compute metrics
     total_cases = len(test_cases)
     accuracy = correct_matches / total_cases if total_cases > 0 else 0.0
 
     # Precision = TP / (TP + FP)
-    precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0.0
+    precision = (
+        true_positives / (true_positives + false_positives)
+        if (true_positives + false_positives) > 0
+        else 0.0
+    )
 
     # Recall = TP / (TP + FN)
-    recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 else 0.0
+    recall = (
+        true_positives / (true_positives + false_negatives)
+        if (true_positives + false_negatives) > 0
+        else 0.0
+    )
 
     # F1 = 2 * (Precision * Recall) / (Precision + Recall)
-    f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+    f1_score = (
+        2 * (precision * recall) / (precision + recall)
+        if (precision + recall) > 0
+        else 0.0
+    )
 
     avg_latency_ms = sum(latencies) / len(latencies) if latencies else 0.0
     total_latency_ms = sum(latencies)
@@ -253,7 +278,9 @@ def evaluate_matcher(
     if "LLM" in matcher_name or "Hybrid" in matcher_name:
         # Assume $0.001 per LLM call (rough estimate)
         llm_calls = sum(1 for r in results if "semantic" in r.match_method)
-        estimated_cost_per_match = (llm_calls / total_cases) * 0.001 if total_cases > 0 else 0.0
+        estimated_cost_per_match = (
+            (llm_calls / total_cases) * 0.001 if total_cases > 0 else 0.0
+        )
     else:
         estimated_cost_per_match = 0.0  # Rapidfuzz is free
 
@@ -323,7 +350,7 @@ This report compares three approaches for fuzzy company name matching:
         medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉"
         report += f"| {medal} | **{metrics.matcher_name}** | {metrics.accuracy:.1%} | {metrics.precision:.1%} | {metrics.recall:.1%} | {metrics.f1_score:.3f} | {metrics.avg_latency_ms:.1f}ms | ${metrics.estimated_cost_per_match:.4f} |\n"
 
-    report += f"""
+    report += """
 
 ---
 
@@ -332,7 +359,13 @@ This report compares three approaches for fuzzy company name matching:
 """
 
     for metrics in sorted_metrics:
-        status_icon = "✅" if metrics.f1_score >= 0.90 else "⚠️" if metrics.f1_score >= 0.80 else "❌"
+        status_icon = (
+            "✅"
+            if metrics.f1_score >= 0.90
+            else "⚠️"
+            if metrics.f1_score >= 0.80
+            else "❌"
+        )
 
         report += f"""
 ### {status_icon} {metrics.matcher_name}
@@ -379,7 +412,9 @@ This report compares three approaches for fuzzy company name matching:
                 disagreements.append((test_id, results_dict))
 
         if disagreements:
-            report += f"\nFound {len(disagreements)} cases where matchers disagreed:\n\n"
+            report += (
+                f"\nFound {len(disagreements)} cases where matchers disagreed:\n\n"
+            )
 
             for test_id, results_dict in disagreements[:10]:  # Show top 10
                 first_result = list(results_dict.values())[0]
@@ -531,8 +566,12 @@ def test_rapidfuzz_matcher_evaluation():
     )
 
     # Assert minimum performance
-    assert metrics.accuracy >= 0.80, f"Accuracy {metrics.accuracy:.1%} below 80% threshold"
-    assert metrics.f1_score >= 0.80, f"F1 score {metrics.f1_score:.3f} below 0.80 threshold"
+    assert metrics.accuracy >= 0.80, (
+        f"Accuracy {metrics.accuracy:.1%} below 80% threshold"
+    )
+    assert metrics.f1_score >= 0.80, (
+        f"F1 score {metrics.f1_score:.3f} below 0.80 threshold"
+    )
 
     print(f"\n{metrics.matcher_name} Results:")
     print(f"  Accuracy: {metrics.accuracy:.2%}")
@@ -559,7 +598,9 @@ def test_llm_matcher_evaluation():
         similarity_threshold=0.70,
     )
 
-    assert metrics.accuracy >= 0.80, f"Accuracy {metrics.accuracy:.1%} below 80% threshold"
+    assert metrics.accuracy >= 0.80, (
+        f"Accuracy {metrics.accuracy:.1%} below 80% threshold"
+    )
 
     print(f"\n{metrics.matcher_name} Results:")
     print(f"  Accuracy: {metrics.accuracy:.2%}")
@@ -586,7 +627,9 @@ def test_hybrid_matcher_evaluation():
         similarity_threshold=0.85,
     )
 
-    assert metrics.accuracy >= 0.80, f"Accuracy {metrics.accuracy:.1%} below 80% threshold"
+    assert metrics.accuracy >= 0.80, (
+        f"Accuracy {metrics.accuracy:.1%} below 80% threshold"
+    )
 
     print(f"\n{metrics.matcher_name} Results:")
     print(f"  Accuracy: {metrics.accuracy:.2%}")
@@ -604,9 +647,9 @@ def test_comparative_evaluation():
     all_results = {}
 
     # Evaluate RapidfuzzMatcher
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Evaluating RapidfuzzMatcher...")
-    print("="*70)
+    print("=" * 70)
 
     rapidfuzz_matcher = RapidfuzzMatcher()
     rapidfuzz_metrics, rapidfuzz_results = evaluate_matcher(
@@ -625,11 +668,12 @@ def test_comparative_evaluation():
 
     # Evaluate LLMMatcher (optional - requires LLM)
     try:
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("Evaluating LLMMatcher...")
-        print("="*70)
+        print("=" * 70)
 
         from llm_orchestrator.orchestrator import LLMOrchestrator
+
         orchestrator = LLMOrchestrator()
 
         llm_matcher = LLMMatcher(orchestrator)
@@ -648,9 +692,9 @@ def test_comparative_evaluation():
         print(f"✅ Avg Latency: {llm_metrics.avg_latency_ms:.1f}ms")
 
         # Evaluate HybridMatcher
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("Evaluating HybridMatcher...")
-        print("="*70)
+        print("=" * 70)
 
         hybrid_matcher = HybridMatcher(orchestrator)
         hybrid_metrics, hybrid_results = evaluate_matcher(
@@ -672,9 +716,9 @@ def test_comparative_evaluation():
         print("    (LLM matchers require LLM orchestrator configuration)")
 
     # Generate comparison report
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Generating comparison report...")
-    print("="*70)
+    print("=" * 70)
 
     generate_comparison_report(all_metrics, all_results)
 

@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 from llm_orchestrator.cost_tracker import CostTracker
-from llm_orchestrator.types import CostMetricsSummary, ProviderConfig
+from llm_orchestrator.types import ProviderConfig
 
 
 @pytest.fixture
@@ -79,9 +79,13 @@ class TestCostTrackerInitialization:
         tracker = CostTracker(data_dir=data_dir)
 
         assert data_dir.exists()
-        assert (data_dir / "cost_metrics.json").exists() is False  # Not created until first write
+        assert (
+            data_dir / "cost_metrics.json"
+        ).exists() is False  # Not created until first write
 
-    def test_initialization_with_provider_configs(self, temp_data_dir, provider_configs):
+    def test_initialization_with_provider_configs(
+        self, temp_data_dir, provider_configs
+    ):
         """Test initialization with provider configurations."""
         tracker = CostTracker(data_dir=temp_data_dir, provider_configs=provider_configs)
 
@@ -104,7 +108,9 @@ class TestUsageRecording:
         assert metrics.total_output_tokens == 500
         assert metrics.total_tokens == 1500
 
-    def test_record_usage_calculates_cost_correctly(self, temp_data_dir, provider_configs):
+    def test_record_usage_calculates_cost_correctly(
+        self, temp_data_dir, provider_configs
+    ):
         """Test cost calculation using provider-specific pricing.
 
         Claude pricing: $3/1M input, $15/1M output
@@ -147,7 +153,9 @@ class TestUsageRecording:
         expected_cost = 0.135
         assert metrics.total_cost_usd == pytest.approx(expected_cost, rel=1e-4)
 
-    def test_record_usage_updates_average_cost_per_email(self, temp_data_dir, provider_configs):
+    def test_record_usage_updates_average_cost_per_email(
+        self, temp_data_dir, provider_configs
+    ):
         """Test average cost per email calculation."""
         tracker = CostTracker(data_dir=temp_data_dir, provider_configs=provider_configs)
 
@@ -238,11 +246,15 @@ class TestPersistence:
     def test_metrics_loaded_on_initialization(self, temp_data_dir, provider_configs):
         """Test that existing metrics are loaded on initialization."""
         # Create tracker and record usage
-        tracker1 = CostTracker(data_dir=temp_data_dir, provider_configs=provider_configs)
+        tracker1 = CostTracker(
+            data_dir=temp_data_dir, provider_configs=provider_configs
+        )
         tracker1.record_usage("claude", input_tokens=1000, output_tokens=500)
 
         # Create new tracker instance (should load existing metrics)
-        tracker2 = CostTracker(data_dir=temp_data_dir, provider_configs=provider_configs)
+        tracker2 = CostTracker(
+            data_dir=temp_data_dir, provider_configs=provider_configs
+        )
 
         metrics = tracker2.get_metrics("claude")
         assert metrics.total_api_calls == 1
@@ -307,7 +319,9 @@ class TestResetMetrics:
         tracker.reset_metrics("claude")
 
         # Create new tracker and verify reset persisted
-        tracker2 = CostTracker(data_dir=temp_data_dir, provider_configs=provider_configs)
+        tracker2 = CostTracker(
+            data_dir=temp_data_dir, provider_configs=provider_configs
+        )
 
         metrics = tracker2.get_metrics("claude")
         assert metrics.total_api_calls == 0

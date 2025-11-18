@@ -78,23 +78,25 @@ def test_full_pipeline_with_all_emails(test_email_ids, runner, report_generator)
     report_path = Path(f"data/e2e_test/reports/{test_run.run_id}_summary.md")
     report_path.write_text(summary, encoding="utf-8")
 
-    print(f"\n{'='*70}")
-    print(f"Test Run Summary")
-    print(f"{'='*70}")
+    print(f"\n{'=' * 70}")
+    print("Test Run Summary")
+    print(f"{'=' * 70}")
     print(f"Run ID: {test_run.run_id}")
     print(f"Emails Processed: {test_run.emails_processed}")
     print(f"Success Count: {test_run.success_count}")
     print(f"Failure Count: {test_run.failure_count}")
-    print(f"Success Rate: {test_run.success_count / test_run.emails_processed * 100:.1f}%")
+    print(
+        f"Success Rate: {test_run.success_count / test_run.emails_processed * 100:.1f}%"
+    )
     print(f"Errors: {test_run.error_summary}")
     print(f"\nReport saved to: {report_path}")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     # Basic assertions
     assert test_run.status == "completed", "Test run should complete successfully"
-    assert (
-        test_run.emails_processed == len(test_email_ids)
-    ), "All emails should be processed"
+    assert test_run.emails_processed == len(test_email_ids), (
+        "All emails should be processed"
+    )
 
     # SC-003: No critical errors allowed (always enforced)
     assert test_run.error_summary.get("critical", 0) == 0, (
@@ -106,8 +108,8 @@ def test_full_pipeline_with_all_emails(test_email_ids, runner, report_generator)
     success_rate = test_run.success_count / test_run.emails_processed
     if success_rate < 0.95:
         print(f"\n⚠️  WARNING: Success rate {success_rate:.1%} is below 95% (SC-001)")
-        print(f"    This likely indicates missing API credentials.")
-        print(f"    Configure Gmail, Gemini, and Notion APIs for full validation.")
+        print("    This likely indicates missing API credentials.")
+        print("    Configure Gmail, Gemini, and Notion APIs for full validation.")
         print(f"    See report for details: {report_path}\n")
 
 
@@ -138,7 +140,10 @@ def test_error_collection(test_email_ids, runner, report_generator):
     This test validates that the ErrorCollector and ReportGenerator work correctly.
     """
     # Run tests
-    test_run = runner.run_tests(test_email_ids[:5] if len(test_email_ids) >= 5 else test_email_ids, test_mode=True)
+    test_run = runner.run_tests(
+        test_email_ids[:5] if len(test_email_ids) >= 5 else test_email_ids,
+        test_mode=True,
+    )
 
     # Generate error report
     error_report = report_generator.generate_error_report(test_run.run_id)
@@ -164,7 +169,9 @@ def test_pipeline_with_varying_email_counts(email_count, test_email_ids, runner)
     Validates that the runner handles different batch sizes correctly.
     """
     if len(test_email_ids) < email_count:
-        pytest.skip(f"Not enough test emails (need {email_count}, have {len(test_email_ids)})")
+        pytest.skip(
+            f"Not enough test emails (need {email_count}, have {len(test_email_ids)})"
+        )
 
     # Process subset of emails
     test_run = runner.run_tests(test_email_ids[:email_count], test_mode=True)

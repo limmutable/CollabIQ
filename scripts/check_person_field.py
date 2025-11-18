@@ -24,6 +24,7 @@ async def check_person_fields():
 
     # Load config from environment
     import os
+
     database_id = os.getenv("NOTION_DATABASE_ID_COLLABIQ")
 
     if not database_id:
@@ -45,7 +46,7 @@ async def check_person_fields():
         response = await sdk_client.databases.query(
             database_id=schema.database.id,
             page_size=10,
-            sorts=[{"timestamp": "created_time", "direction": "descending"}]
+            sorts=[{"timestamp": "created_time", "direction": "descending"}],
         )
 
         results = response.get("results", [])
@@ -56,7 +57,7 @@ async def check_person_fields():
             "total_entries": len(results),
             "person_field_populated": 0,
             "person_field_empty": 0,
-            "entries_with_person": []
+            "entries_with_person": [],
         }
 
         for i, page in enumerate(results, 1):
@@ -82,17 +83,23 @@ async def check_person_fields():
             if has_person:
                 person_field_stats["person_field_populated"] += 1
                 person_names = [p.get("name", "Unknown") for p in people]
-                person_field_stats["entries_with_person"].append({
-                    "title": title,
-                    "email_id": email_id,
-                    "person_names": person_names,
-                    "person_ids": [p.get("id") for p in people]
-                })
+                person_field_stats["entries_with_person"].append(
+                    {
+                        "title": title,
+                        "email_id": email_id,
+                        "person_names": person_names,
+                        "person_ids": [p.get("id") for p in people],
+                    }
+                )
             else:
                 person_field_stats["person_field_empty"] += 1
 
             status_icon = "✅" if has_person else "❌"
-            person_display = ", ".join([p.get("name", "Unknown") for p in people]) if people else "(empty)"
+            person_display = (
+                ", ".join([p.get("name", "Unknown") for p in people])
+                if people
+                else "(empty)"
+            )
 
             print(f"{i}. {status_icon} {title[:40]}")
             print(f"   Email ID: {email_id}")
@@ -105,24 +112,29 @@ async def check_person_fields():
         print("PERSON FIELD POPULATION SUMMARY")
         print("=" * 70)
         print(f"Total Entries Checked: {person_field_stats['total_entries']}")
-        print(f"✅ Person Field Populated: {person_field_stats['person_field_populated']}")
+        print(
+            f"✅ Person Field Populated: {person_field_stats['person_field_populated']}"
+        )
         print(f"❌ Person Field Empty: {person_field_stats['person_field_empty']}")
 
-        if person_field_stats['total_entries'] > 0:
-            population_rate = (person_field_stats['person_field_populated'] /
-                             person_field_stats['total_entries'] * 100)
+        if person_field_stats["total_entries"] > 0:
+            population_rate = (
+                person_field_stats["person_field_populated"]
+                / person_field_stats["total_entries"]
+                * 100
+            )
             print(f"Population Rate: {population_rate:.1f}%")
 
         print("\n" + "=" * 70)
         print("ENTRIES WITH PERSON FIELD POPULATED")
         print("=" * 70)
-        for entry in person_field_stats['entries_with_person']:
+        for entry in person_field_stats["entries_with_person"]:
             print(f"\n📧 {entry['title']}")
             print(f"   Email ID: {entry['email_id']}")
             print(f"   Person(s): {', '.join(entry['person_names'])}")
             print(f"   User ID(s): {', '.join(entry['person_ids'])}")
 
-        if not person_field_stats['entries_with_person']:
+        if not person_field_stats["entries_with_person"]:
             print("\nNo entries with person field populated found in last 10 entries.")
             print("This may indicate:")
             print("  1. Recent emails did not have extractable person names")
@@ -139,5 +151,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\nERROR: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

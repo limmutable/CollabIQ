@@ -205,7 +205,7 @@ class TestNotionAPIErrors:
 
             # Should handle or raise controlled exception
             try:
-                result = integrator.create_company_entry(valid_extraction)
+                integrator.create_company_entry(valid_extraction)
             except (KeyError, ValueError, Exception):
                 # Acceptable to fail on malformed response
                 pass
@@ -289,7 +289,7 @@ class TestRetryLogic:
             except TimeoutError:
                 pass
 
-            elapsed = time.time() - start_time
+            time.time() - start_time
 
             # Should have some delay from retries (at least 1 second)
             # This is a weak test - adjust based on actual retry config

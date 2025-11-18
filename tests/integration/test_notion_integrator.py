@@ -141,7 +141,9 @@ def test_integrator_initialization_env_var():
 
 
 @pytest.mark.asyncio
-async def test_discover_database_schema(mock_notion_api_response, mock_notion_data_source_response):
+async def test_discover_database_schema(
+    mock_notion_api_response, mock_notion_data_source_response
+):
     """Test schema discovery through integrator."""
     with patch("notion_integrator.integrator.NotionClient") as MockClient:
         # Setup mock client
@@ -171,7 +173,9 @@ async def test_discover_database_schema(mock_notion_api_response, mock_notion_da
 
 
 @pytest.mark.asyncio
-async def test_fetch_all_records(mock_notion_api_response, mock_query_response, mock_notion_data_source_response):
+async def test_fetch_all_records(
+    mock_notion_api_response, mock_query_response, mock_notion_data_source_response
+):
     """Test fetching all records through integrator."""
     with patch("notion_integrator.integrator.NotionClient") as MockClient:
         # Setup mock client
@@ -203,7 +207,9 @@ async def test_fetch_all_records(mock_notion_api_response, mock_query_response, 
 
 
 @pytest.mark.asyncio
-async def test_format_for_llm(mock_notion_api_response, mock_query_response, mock_notion_data_source_response):
+async def test_format_for_llm(
+    mock_notion_api_response, mock_query_response, mock_notion_data_source_response
+):
     """Test LLM formatting through integrator."""
     with patch("notion_integrator.integrator.NotionClient") as MockClient:
         # Setup mock client
@@ -237,7 +243,9 @@ async def test_format_for_llm(mock_notion_api_response, mock_query_response, moc
 
 
 @pytest.mark.asyncio
-async def test_get_data_single_database(mock_notion_api_response, mock_query_response, mock_notion_data_source_response):
+async def test_get_data_single_database(
+    mock_notion_api_response, mock_query_response, mock_notion_data_source_response
+):
     """Test get_data with single database."""
     with patch("notion_integrator.integrator.NotionClient") as MockClient:
         # Setup mock client
@@ -271,7 +279,9 @@ async def test_get_data_single_database(mock_notion_api_response, mock_query_res
 
 
 @pytest.mark.asyncio
-async def test_refresh_cache(mock_notion_api_response, mock_notion_data_source_response):
+async def test_refresh_cache(
+    mock_notion_api_response, mock_notion_data_source_response
+):
     """Test cache refresh."""
     with patch("notion_integrator.integrator.NotionClient") as MockClient:
         # Setup mock client
@@ -298,7 +308,9 @@ async def test_refresh_cache(mock_notion_api_response, mock_notion_data_source_r
 
 
 @pytest.mark.asyncio
-async def test_integrator_as_context_manager(mock_notion_api_response, mock_notion_data_source_response):
+async def test_integrator_as_context_manager(
+    mock_notion_api_response, mock_notion_data_source_response
+):
     """Test NotionIntegrator as async context manager."""
     with patch("notion_integrator.integrator.NotionClient") as MockClient:
         # Setup mock client

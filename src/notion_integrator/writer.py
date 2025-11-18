@@ -112,15 +112,7 @@ class NotionWriter:
             # Build properties for Companies database
             # Companies database uses "Known Name" as the title property
             properties = {
-                "Known Name": {
-                    "title": [
-                        {
-                            "text": {
-                                "content": company_name
-                            }
-                        }
-                    ]
-                }
+                "Known Name": {"title": [{"text": {"content": company_name}}]}
             }
 
             # Create page in Companies database (with retry logic)
@@ -244,8 +236,10 @@ class NotionWriter:
                     # Map extracted data to Notion properties format
                     # Use async version if available, otherwise fall back to sync
                     if hasattr(self.field_mapper, "map_to_notion_properties_async"):
-                        properties = await self.field_mapper.map_to_notion_properties_async(
-                            extracted_data
+                        properties = (
+                            await self.field_mapper.map_to_notion_properties_async(
+                                extracted_data
+                            )
                         )
                     else:
                         properties = self.field_mapper.map_to_notion_properties(

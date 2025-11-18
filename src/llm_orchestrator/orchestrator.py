@@ -6,9 +6,8 @@ LLM providers using configurable strategies (failover, consensus, best-match).
 
 import asyncio
 import logging
-import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import TYPE_CHECKING, Optional
 
 from llm_orchestrator.exceptions import InvalidProviderError, InvalidStrategyError
 from llm_orchestrator.strategies.all_providers import AllProvidersStrategy
@@ -24,10 +23,7 @@ from llm_provider.base import LLMProvider
 from llm_provider.types import ExtractedEntities
 
 if TYPE_CHECKING:
-    from llm_adapters.claude_adapter import ClaudeAdapter
-    from llm_adapters.gemini_adapter import GeminiAdapter
     from llm_adapters.health_tracker import HealthTracker
-    from llm_adapters.openai_adapter import OpenAIAdapter
     from llm_orchestrator.cost_tracker import CostTracker
     from llm_orchestrator.quality_tracker import QualityTracker
 
@@ -80,7 +76,9 @@ class LLMOrchestrator:
         self._strategies = {
             "failover": FailoverStrategy(
                 priority_order=config.provider_priority,
-                quality_tracker=quality_tracker if config.enable_quality_routing else None,
+                quality_tracker=quality_tracker
+                if config.enable_quality_routing
+                else None,
             ),
             "consensus": ConsensusStrategy(
                 provider_names=config.provider_priority,
@@ -91,7 +89,9 @@ class LLMOrchestrator:
             "best_match": BestMatchStrategy(provider_names=config.provider_priority),
             "all_providers": AllProvidersStrategy(
                 provider_names=config.provider_priority,
-                selection_mode="quality_based" if config.enable_quality_routing else "highest_confidence",
+                selection_mode="quality_based"
+                if config.enable_quality_routing
+                else "highest_confidence",
                 quality_tracker=quality_tracker,
             ),
         }
@@ -305,6 +305,7 @@ class LLMOrchestrator:
 
         # Check if strategy is async (consensus, best_match) or sync (failover)
         import inspect
+
         if inspect.iscoroutinefunction(strategy_impl.execute):
             # Run async strategy
             entities, provider_used = asyncio.run(
@@ -365,7 +366,10 @@ class LLMOrchestrator:
                     strategy_impl, AllProvidersStrategy
                 ):
                     # Record metrics for ALL successful providers
-                    for prov_name, prov_entities in strategy_impl.last_all_results.items():
+                    for (
+                        prov_name,
+                        prov_entities,
+                    ) in strategy_impl.last_all_results.items():
                         try:
                             self.quality_tracker.record_extraction(
                                 provider_name=prov_name,

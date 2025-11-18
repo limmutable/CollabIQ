@@ -7,10 +7,6 @@ Tests for:
 - Tie-breaking logic
 """
 
-import pytest
-
-from llm_provider.types import ConfidenceScores, ExtractedEntities
-
 
 class TestJaroWinklerSimilarity:
     """Test Jaro-Winkler string similarity function."""

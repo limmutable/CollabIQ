@@ -36,7 +36,9 @@ class FailoverStrategy:
     """
 
     def __init__(
-        self, priority_order: list[str], quality_tracker: Optional["QualityTracker"] = None
+        self,
+        priority_order: list[str],
+        quality_tracker: Optional["QualityTracker"] = None,
     ):
         """Initialize failover strategy.
 
@@ -109,7 +111,10 @@ class FailoverStrategy:
 
                 # Add remaining providers in priority order
                 for provider_name in self.priority_order:
-                    if provider_name != quality_selected and provider_name in available_providers:
+                    if (
+                        provider_name != quality_selected
+                        and provider_name in available_providers
+                    ):
                         provider_order.append(provider_name)
 
                 logger.info(
@@ -121,7 +126,9 @@ class FailoverStrategy:
                     "Quality routing enabled but no quality metrics available, "
                     "falling back to priority order"
                 )
-                logger.debug(f"Fallback provider_order (no quality metrics): {provider_order}")
+                logger.debug(
+                    f"Fallback provider_order (no quality metrics): {provider_order}"
+                )
 
         for provider_name in provider_order:
             logger.debug(f"Attempting provider: {provider_name}")
@@ -134,7 +141,9 @@ class FailoverStrategy:
 
             # Skip if provider is unhealthy
             is_provider_healthy = health_tracker.is_healthy(provider_name)
-            logger.debug(f"Provider {provider_name} health status: {is_provider_healthy}")
+            logger.debug(
+                f"Provider {provider_name} health status: {is_provider_healthy}"
+            )
             if not is_provider_healthy:
                 logger.info(
                     f"Skipping unhealthy provider: {provider_name} "

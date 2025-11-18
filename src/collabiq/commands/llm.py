@@ -111,7 +111,9 @@ def _display_basic_status(provider_status: dict):
     for provider_name, status in provider_status.items():
         # Health status with color
         health_color = "green" if status.health_status == "healthy" else "red"
-        health_display = f"[{health_color}]{status.health_status.upper()}[/{health_color}]"
+        health_display = (
+            f"[{health_color}]{status.health_status.upper()}[/{health_color}]"
+        )
 
         # Circuit breaker state with color
         cb_state = status.circuit_breaker_state.upper()
@@ -189,7 +191,9 @@ def _display_detailed_status(orchestrator: LLMOrchestrator, provider_status: dic
 
     for provider_name, status in provider_status.items():
         health_color = "green" if status.health_status == "healthy" else "red"
-        health_display = f"[{health_color}]{status.health_status.upper()}[/{health_color}]"
+        health_display = (
+            f"[{health_color}]{status.health_status.upper()}[/{health_color}]"
+        )
 
         cb_state = status.circuit_breaker_state.upper()
         if cb_state == "CLOSED":
@@ -281,7 +285,9 @@ def _display_detailed_status(orchestrator: LLMOrchestrator, provider_status: dic
                     validation_color = "yellow"
                 else:
                     validation_color = "red"
-                validation_display = f"[{validation_color}]{validation_rate:.1f}%[/{validation_color}]"
+                validation_display = (
+                    f"[{validation_color}]{validation_rate:.1f}%[/{validation_color}]"
+                )
 
                 # Format confidence with color
                 confidence = metrics.average_overall_confidence * 100
@@ -291,7 +297,9 @@ def _display_detailed_status(orchestrator: LLMOrchestrator, provider_status: dic
                     confidence_color = "yellow"
                 else:
                     confidence_color = "red"
-                confidence_display = f"[{confidence_color}]{confidence:.1f}%[/{confidence_color}]"
+                confidence_display = (
+                    f"[{confidence_color}]{confidence:.1f}%[/{confidence_color}]"
+                )
 
                 # Format completeness with color
                 completeness = metrics.average_field_completeness
@@ -301,7 +309,9 @@ def _display_detailed_status(orchestrator: LLMOrchestrator, provider_status: dic
                     completeness_color = "yellow"
                 else:
                     completeness_color = "red"
-                completeness_display = f"[{completeness_color}]{completeness:.1f}%[/{completeness_color}]"
+                completeness_display = (
+                    f"[{completeness_color}]{completeness:.1f}%[/{completeness_color}]"
+                )
 
                 quality_table.add_row(
                     provider_name.title(),
@@ -329,11 +339,18 @@ def _display_detailed_status(orchestrator: LLMOrchestrator, provider_status: dic
             metrics = quality_metrics.get(provider_name)
             if metrics and metrics.total_extractions > 0:
                 console.print(f"[cyan]{provider_name.title()}:[/cyan]")
-                field_table = Table(show_header=False, show_edge=False, box=None, pad_edge=False)
+                field_table = Table(
+                    show_header=False, show_edge=False, box=None, pad_edge=False
+                )
                 field_table.add_column("Field", style="white", width=15)
-                field_table.add_column("Confidence", style="white", width=10, justify="right")
+                field_table.add_column(
+                    "Confidence", style="white", width=10, justify="right"
+                )
 
-                for field_name, confidence_value in metrics.per_field_confidence_averages.items():
+                for (
+                    field_name,
+                    confidence_value,
+                ) in metrics.per_field_confidence_averages.items():
                     confidence_pct = confidence_value * 100
                     if confidence_pct >= 85:
                         color = "green"
@@ -343,7 +360,7 @@ def _display_detailed_status(orchestrator: LLMOrchestrator, provider_status: dic
                         color = "red"
                     field_table.add_row(
                         f"  {field_name.title()}:",
-                        f"[{color}]{confidence_pct:.1f}%[/{color}]"
+                        f"[{color}]{confidence_pct:.1f}%[/{color}]",
                     )
 
                 console.print(field_table)
@@ -359,14 +376,16 @@ def _display_detailed_status(orchestrator: LLMOrchestrator, provider_status: dic
         "Active Strategy:", f"[green]{orchestrator.get_active_strategy()}[/green]"
     )
     strategy_table.add_row(
-        "Provider Priority:", f"[white]{', '.join(orchestrator.config.provider_priority)}[/white]"
+        "Provider Priority:",
+        f"[white]{', '.join(orchestrator.config.provider_priority)}[/white]",
     )
     strategy_table.add_row(
         "Available Providers:",
         f"[white]{', '.join(orchestrator.get_available_providers())}[/white]",
     )
     strategy_table.add_row(
-        "Unhealthy Threshold:", f"[white]{orchestrator.config.unhealthy_threshold} failures[/white]"
+        "Unhealthy Threshold:",
+        f"[white]{orchestrator.config.unhealthy_threshold} failures[/white]",
     )
     strategy_table.add_row(
         "Circuit Breaker Timeout:",
@@ -380,9 +399,7 @@ def _display_detailed_status(orchestrator: LLMOrchestrator, provider_status: dic
     else:
         quality_status = "[yellow]DISABLED[/yellow]"
 
-    strategy_table.add_row(
-        "Quality Routing:", quality_status
-    )
+    strategy_table.add_row("Quality Routing:", quality_status)
 
     # Show quality thresholds if enabled and configured
     if quality_routing_enabled and orchestrator.config.quality_threshold:
@@ -392,9 +409,7 @@ def _display_detailed_status(orchestrator: LLMOrchestrator, provider_status: dic
             f"completeness≥{threshold.minimum_field_completeness:.1f}%, "
             f"failures≤{threshold.maximum_validation_failure_rate:.1f}%"
         )
-        strategy_table.add_row(
-            "  Thresholds:", f"[dim]{threshold_info}[/dim]"
-        )
+        strategy_table.add_row("  Thresholds:", f"[dim]{threshold_info}[/dim]")
 
         # Show which provider would be selected based on current metrics
         if orchestrator.quality_tracker:
@@ -449,12 +464,8 @@ def _format_timestamp(dt: datetime) -> str:
 
 @llm_app.command()
 def test(
-    provider: str = typer.Argument(
-        ..., help="Provider name (gemini, claude, openai)"
-    ),
-    json_output: bool = typer.Option(
-        False, "--json", help="Output as JSON"
-    ),
+    provider: str = typer.Argument(..., help="Provider name (gemini, claude, openai)"),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ):
     """
     Test specific LLM provider connectivity and health.
@@ -517,7 +528,8 @@ def test(
 @llm_app.command()
 def set_strategy(
     strategy: str = typer.Argument(
-        ..., help="Orchestration strategy (failover, consensus, best_match, all_providers)"
+        ...,
+        help="Orchestration strategy (failover, consensus, best_match, all_providers)",
     ),
 ):
     """
@@ -662,7 +674,9 @@ def set_quality_routing(
                 "  4. Falls back to priority order if quality routing fails\n"
             )
         else:
-            console.print("[yellow]○[/yellow] Quality routing [yellow]DISABLED[/yellow]")
+            console.print(
+                "[yellow]○[/yellow] Quality routing [yellow]DISABLED[/yellow]"
+            )
             console.print(
                 "\n[dim]Providers will be tried in fixed priority order:[/dim]\n"
                 "  [dim]1. Gemini → 2. Claude → 3. OpenAI[/dim]\n"
@@ -757,7 +771,9 @@ def _display_basic_comparison(comparison: "ProviderQualityComparison"):
 
     # Quality Rankings Table
     console.print("[bold]Quality Rankings[/bold]")
-    console.print("[dim]Composite score: 40% confidence, 30% completeness, 30% validation[/dim]\n")
+    console.print(
+        "[dim]Composite score: 40% confidence, 30% completeness, 30% validation[/dim]\n"
+    )
 
     quality_table = Table(show_header=True, header_style="bold magenta")
     quality_table.add_column("Rank", justify="center", width=6)
@@ -817,11 +833,11 @@ def _display_basic_comparison(comparison: "ProviderQualityComparison"):
     console.print(value_table)
 
     # Recommendation Summary
-    console.print(f"\n[bold green]Recommendation[/bold green]\n")
-    console.print(f"[cyan]{comparison.recommended_provider.title()}[/cyan]: {comparison.recommendation_reason}\n")
+    console.print("\n[bold green]Recommendation[/bold green]\n")
     console.print(
-        "[dim]Use --detailed flag for per-metric breakdown[/dim]\n"
+        f"[cyan]{comparison.recommended_provider.title()}[/cyan]: {comparison.recommendation_reason}\n"
     )
+    console.print("[dim]Use --detailed flag for per-metric breakdown[/dim]\n")
 
 
 def _display_detailed_comparison(
@@ -908,7 +924,9 @@ def _display_detailed_comparison(
 
     # Quality Rankings
     console.print("\n[bold]Quality Rankings[/bold]")
-    console.print("[dim]Composite score: 40% confidence, 30% completeness, 30% validation[/dim]\n")
+    console.print(
+        "[dim]Composite score: 40% confidence, 30% completeness, 30% validation[/dim]\n"
+    )
 
     quality_table = Table(show_header=True, header_style="bold magenta")
     quality_table.add_column("Rank", justify="center", width=6)
@@ -968,8 +986,11 @@ def _display_detailed_comparison(
     console.print(value_table)
 
     # Recommendation Summary
-    console.print(f"\n[bold green]Recommendation[/bold green]\n")
-    console.print(f"[cyan]{comparison.recommended_provider.title()}[/cyan]: {comparison.recommendation_reason}\n")
+    console.print("\n[bold green]Recommendation[/bold green]\n")
+    console.print(
+        f"[cyan]{comparison.recommended_provider.title()}[/cyan]: {comparison.recommendation_reason}\n"
+    )
+
 
 @llm_app.command()
 def export_metrics(
@@ -1014,16 +1035,13 @@ def export_metrics(
     """
     console = Console()
 
-    console.print(f"\n[bold cyan]Exporting LLM Metrics[/bold cyan]\n")
+    console.print("\n[bold cyan]Exporting LLM Metrics[/bold cyan]\n")
 
     try:
         orchestrator = LLMOrchestrator.from_config()
 
         # Collect metrics based on flags
-        export_data = {
-            "exported_at": datetime.now().isoformat(),
-            "metrics": {}
-        }
+        export_data = {"exported_at": datetime.now().isoformat(), "metrics": {}}
 
         if include_health and orchestrator.health_tracker:
             console.print("[dim]- Collecting health metrics...[/dim]")
@@ -1061,11 +1079,17 @@ def export_metrics(
         # Show summary
         summary = []
         if include_health:
-            summary.append(f"health ({len(export_data['metrics'].get('health', {}))} providers)")
+            summary.append(
+                f"health ({len(export_data['metrics'].get('health', {}))} providers)"
+            )
         if include_cost:
-            summary.append(f"cost ({len(export_data['metrics'].get('cost', {}))} providers)")
+            summary.append(
+                f"cost ({len(export_data['metrics'].get('cost', {}))} providers)"
+            )
         if include_quality:
-            summary.append(f"quality ({len(export_data['metrics'].get('quality', {}))} providers)")
+            summary.append(
+                f"quality ({len(export_data['metrics'].get('quality', {}))} providers)"
+            )
 
         console.print(f"Exported: {', '.join(summary)}\n")
 
@@ -1081,9 +1105,7 @@ def export_metrics(
 
 @llm_app.command()
 def policy(
-    json_output: bool = typer.Option(
-        False, "--json", help="Output as JSON"
-    ),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ):
     """View current orchestration policy and configuration.
 
@@ -1109,10 +1131,16 @@ def policy(
             }
             console.print(json.dumps(policy_data, indent=2))
         else:
-            console.print(f"\n[bold cyan]Current Orchestration Policy[/bold cyan]\n")
-            console.print(f"Strategy: [green]{orchestrator.get_active_strategy()}[/green]")
-            console.print(f"Provider Priority: {', '.join(orchestrator.config.provider_priority)}")
-            console.print(f"Available Providers: {', '.join(orchestrator.get_available_providers())}\n")
+            console.print("\n[bold cyan]Current Orchestration Policy[/bold cyan]\n")
+            console.print(
+                f"Strategy: [green]{orchestrator.get_active_strategy()}[/green]"
+            )
+            console.print(
+                f"Provider Priority: {', '.join(orchestrator.config.provider_priority)}"
+            )
+            console.print(
+                f"Available Providers: {', '.join(orchestrator.get_available_providers())}\n"
+            )
 
     except Exception as e:
         console.print(f"\n[red]Error: {e}[/red]\n")
@@ -1122,7 +1150,8 @@ def policy(
 @llm_app.command(name="set-policy")
 def set_policy_alias(
     strategy: str = typer.Argument(
-        ..., help="Orchestration strategy (failover, consensus, best_match, all_providers)"
+        ...,
+        help="Orchestration strategy (failover, consensus, best_match, all_providers)",
     ),
 ):
     """Set LLM orchestration policy (alias for set-strategy).
@@ -1143,9 +1172,7 @@ def set_policy_alias(
 
 @llm_app.command()
 def usage(
-    json_output: bool = typer.Option(
-        False, "--json", help="Output as JSON"
-    ),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
 ):
     """View LLM usage statistics and metrics.
 
@@ -1225,7 +1252,9 @@ def disable(
         collabiq llm disable claude
     """
     console = Console()
-    console.print(f"\n[yellow]Note: Provider disable/enable not yet implemented[/yellow]")
+    console.print(
+        "\n[yellow]Note: Provider disable/enable not yet implemented[/yellow]"
+    )
     console.print(f"Would disable provider: {provider}\n")
     # TODO: Implement provider enable/disable functionality
     raise typer.Exit(0)
@@ -1246,7 +1275,9 @@ def enable(
         collabiq llm enable claude
     """
     console = Console()
-    console.print(f"\n[yellow]Note: Provider disable/enable not yet implemented[/yellow]")
+    console.print(
+        "\n[yellow]Note: Provider disable/enable not yet implemented[/yellow]"
+    )
     console.print(f"Would enable provider: {provider}\n")
     # TODO: Implement provider enable/disable functionality
     raise typer.Exit(0)

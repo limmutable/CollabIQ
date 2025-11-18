@@ -52,9 +52,7 @@ def mock_providers():
 class TestFailoverBasics:
     """Test basic failover functionality."""
 
-    def test_uses_first_provider_when_available(
-        self, mock_providers, health_tracker
-    ):
+    def test_uses_first_provider_when_available(self, mock_providers, health_tracker):
         """Test that failover uses the first provider in priority order."""
         strategy = FailoverStrategy(priority_order=["gemini", "claude", "openai"])
 
@@ -161,9 +159,7 @@ class TestHealthTracking:
     def test_records_failure_in_health_tracker(self, mock_providers, health_tracker):
         """Test that failed calls are recorded in health tracker."""
         # Make provider fail
-        mock_providers["gemini"].extract_entities.side_effect = LLMAPIError(
-            "API Error"
-        )
+        mock_providers["gemini"].extract_entities.side_effect = LLMAPIError("API Error")
 
         strategy = FailoverStrategy(priority_order=["gemini", "claude"])
 

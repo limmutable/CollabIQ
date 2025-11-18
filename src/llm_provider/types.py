@@ -67,7 +67,7 @@ class ConfidenceScores(BaseModel):
         )
 
     model_config = ConfigDict(
-        json_schema_extra = {
+        json_schema_extra={
             "example": {
                 "person": 0.95,
                 "startup": 0.92,
@@ -77,6 +77,7 @@ class ConfidenceScores(BaseModel):
             }
         }
     )
+
 
 class ExtractedEntities(BaseModel):
     """Entity extraction results from a single email.
@@ -188,7 +189,7 @@ class ExtractedEntities(BaseModel):
         return v
 
     model_config = ConfigDict(
-        json_schema_extra = {
+        json_schema_extra={
             "example": {
                 "person_in_charge": "김철수",
                 "startup_name": "본봄",
@@ -340,7 +341,7 @@ class ExtractedEntitiesWithClassification(ExtractedEntities):
         return False
 
     model_config = ConfigDict(
-        json_schema_extra = {
+        json_schema_extra={
             "example": {
                 # Phase 1b fields
                 "person_in_charge": "김주영",
@@ -410,7 +411,7 @@ class BatchSummary(BaseModel):
         return v
 
     model_config = ConfigDict(
-        json_schema_extra = {
+        json_schema_extra={
             "example": {
                 "total_count": 20,
                 "success_count": 18,
@@ -463,7 +464,7 @@ class ExtractionBatch(BaseModel):
         return v
 
     model_config = ConfigDict(
-        json_schema_extra = {
+        json_schema_extra={
             "example": {
                 "batch_id": "550e8400-e29b-41d4-a716-446655440000",
                 "emails": ["email text 1", "email text 2", "..."],
@@ -540,13 +541,16 @@ class DLQEntry(BaseModel):
     dlq_file_path: Optional[str] = Field(None, description="DLQ file path")
 
     model_config = ConfigDict(
-        json_schema_extra = {
+        json_schema_extra={
             "example": {
                 "email_id": "msg_abc123",
                 "failed_at": "2025-11-01T10:30:00Z",
                 "retry_count": 3,
                 "error": {"type": "LLMAPIError", "message": "API call failed"},
-                "extracted_data": {"email_id": "msg_abc123", "person_in_charge": "김철수"},
+                "extracted_data": {
+                    "email_id": "msg_abc123",
+                    "person_in_charge": "김철수",
+                },
                 "original_email_content": "Original email content...",
                 "dlq_file_path": "/path/to/dlq/file.json",
             }

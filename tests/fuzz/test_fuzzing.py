@@ -15,7 +15,6 @@ Usage:
 """
 
 import pytest
-from typing import Dict, Any
 
 from collabiq.test_utils.fuzz_generator import (
     FuzzGenerator,
@@ -201,6 +200,7 @@ class TestLLMAdapterFuzzing:
     def gemini_adapter(self):
         """Create Gemini adapter for testing."""
         import os
+
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             pytest.skip("GEMINI_API_KEY not available")
@@ -353,7 +353,6 @@ class TestFuzzingComprehensive:
         date_strings = list(generate_fuzz_date_strings(count=20, config=fuzz_config))
 
         errors = []
-        crashes = []
 
         for i, date_str in enumerate(date_strings):
             try:
@@ -365,7 +364,9 @@ class TestFuzzingComprehensive:
 
         # Should handle majority gracefully (at least 50%)
         success_rate = (len(date_strings) - len(errors)) / len(date_strings)
-        assert success_rate >= 0.5, f"Too many errors: {len(errors)}/{len(date_strings)}"
+        assert success_rate >= 0.5, (
+            f"Too many errors: {len(errors)}/{len(date_strings)}"
+        )
 
     def test_all_categories_email_structure(self, fuzz_config):
         """Test email structure validation against all categories."""

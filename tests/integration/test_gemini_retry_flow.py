@@ -6,9 +6,7 @@ KNOWN ISSUES (to be fixed in future iteration):
 - TODO: Fix mocking setup to properly isolate extract_entities() method for retry testing
 """
 
-from unittest.mock import Mock, patch, MagicMock, mock_open
-from datetime import datetime, timezone
-from pathlib import Path
+from unittest.mock import Mock, patch, mock_open
 
 import pytest
 
@@ -20,7 +18,7 @@ from error_handling import gemini_circuit_breaker, CircuitState
 def reset_circuit_breaker():
     """Reset circuit breaker state before each test."""
     # Re-import to ensure we are always resetting the current module-level instance
-    from error_handling import gemini_circuit_breaker, CircuitState
+    from error_handling import gemini_circuit_breaker
 
     gemini_circuit_breaker.state_obj.state = CircuitState.CLOSED
     gemini_circuit_breaker.state_obj.failure_count = 0
@@ -32,8 +30,8 @@ def reset_circuit_breaker():
 class TestGeminiRetryFlow:
     """Test Gemini extract_entities with retry on rate limits and transient failures."""
 
-    @patch('builtins.open', new_callable=mock_open, read_data="Mock prompt template")
-    @patch('llm_adapters.gemini_adapter.genai')
+    @patch("builtins.open", new_callable=mock_open, read_data="Mock prompt template")
+    @patch("llm_adapters.gemini_adapter.genai")
     def test_gemini_rate_limit_retry_with_header(self, mock_genai, mock_file):
         """
         Test that Gemini extract_entities retries on 429 rate limit with Retry-After header.
@@ -64,10 +62,7 @@ class TestGeminiRetryFlow:
             "date": {"value": null, "confidence": 0.0}
         }"""
 
-        mock_model.generate_content.side_effect = [
-            rate_limit_error,
-            mock_response
-        ]
+        mock_model.generate_content.side_effect = [rate_limit_error, mock_response]
 
         # Execute - should retry and succeed
         email_text = "Meeting with John Doe from Acme Corp at john@example.com"
@@ -88,8 +83,8 @@ class TestGeminiRetryFlow:
         except Exception as e:
             pytest.fail(f"Unexpected exception: {e}")
 
-    @patch('builtins.open', new_callable=mock_open, read_data="Mock prompt template")
-    @patch('llm_adapters.gemini_adapter.genai')
+    @patch("builtins.open", new_callable=mock_open, read_data="Mock prompt template")
+    @patch("llm_adapters.gemini_adapter.genai")
     def test_gemini_all_retries_exhausted(self, mock_genai, mock_file):
         """
         Test that Gemini extract_entities exhausts retries after all attempts fail.
@@ -117,8 +112,8 @@ class TestGeminiRetryFlow:
         # Verify retry attempts (should be 3 with GEMINI_RETRY_CONFIG)
         assert mock_model.generate_content.call_count == 3
 
-    @patch('builtins.open', new_callable=mock_open, read_data="Mock prompt template")
-    @patch('llm_adapters.gemini_adapter.genai')
+    @patch("builtins.open", new_callable=mock_open, read_data="Mock prompt template")
+    @patch("llm_adapters.gemini_adapter.genai")
     def test_gemini_transient_error_retry_success(self, mock_genai, mock_file):
         """
         Test that Gemini extract_entities retries on transient connection errors.
@@ -145,9 +140,10 @@ class TestGeminiRetryFlow:
         }"""
 
         import socket
+
         mock_model.generate_content.side_effect = [
             socket.timeout("Connection timeout"),
-            mock_response
+            mock_response,
         ]
 
         # Execute - should retry and succeed
@@ -166,9 +162,11 @@ class TestGeminiRetryFlow:
         except Exception as e:
             pytest.fail(f"Unexpected exception: {e}")
 
-    @patch('builtins.open', new_callable=mock_open, read_data="Mock prompt template")
-    @patch('llm_adapters.gemini_adapter.genai')
-    def test_gemini_circuit_breaker_opens_on_repeated_failures(self, mock_genai, mock_file):
+    @patch("builtins.open", new_callable=mock_open, read_data="Mock prompt template")
+    @patch("llm_adapters.gemini_adapter.genai")
+    def test_gemini_circuit_breaker_opens_on_repeated_failures(
+        self, mock_genai, mock_file
+    ):
         """
         Test that circuit breaker opens after threshold failures.
 

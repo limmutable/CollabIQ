@@ -7,11 +7,9 @@ Tests person name matching with Korean names, ambiguity detection, and caching.
 import json
 import pytest
 from datetime import datetime, timedelta
-from pathlib import Path
 from unittest.mock import MagicMock
 
 from notion_integrator.person_matcher import NotionPersonMatcher, NotionUser
-from models.matching import PersonMatch
 
 
 class TestPersonMatcherExactMatch:
@@ -204,7 +202,9 @@ class TestPersonMatcherCaching:
         Then: Cache is ignored (returns None from _get_from_cache)
         """
         mock_client = MagicMock()
-        matcher = NotionPersonMatcher(mock_client, cache_dir=str(tmp_path), cache_ttl_hours=24)
+        matcher = NotionPersonMatcher(
+            mock_client, cache_dir=str(tmp_path), cache_ttl_hours=24
+        )
 
         # Create expired cache
         cache_path = tmp_path / "users_list.json"

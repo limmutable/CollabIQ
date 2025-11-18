@@ -105,8 +105,7 @@ def get_prompt_metrics(strategy: PromptStrategy) -> Dict[str, float]:
 
 
 def compare_prompts(
-    strategy_a: PromptStrategy,
-    strategy_b: PromptStrategy
+    strategy_a: PromptStrategy, strategy_b: PromptStrategy
 ) -> Dict[str, Any]:
     """Compare two prompt strategies across all metrics.
 
@@ -171,7 +170,7 @@ def compare_prompts(
 
 
 def get_recommended_prompt(
-    requirements: Optional[Dict[str, Any]] = None
+    requirements: Optional[Dict[str, Any]] = None,
 ) -> PromptStrategy:
     """Get recommended prompt strategy based on requirements.
 
@@ -268,18 +267,20 @@ def generate_optimization_report() -> str:
     ]
 
     winner_metrics = BENCHMARK_RESULTS[WINNING_PROMPT]
-    lines.extend([
-        f"- **Accuracy:** {winner_metrics['accuracy']:.2%}",
-        f"- **Confidence:** {winner_metrics['confidence']:.2%}",
-        f"- **Completeness:** {winner_metrics['completeness']:.2%}",
-        f"- **Success Rate:** {winner_metrics['success_rate']:.2%} ✅",
-        f"- **Response Time:** {winner_metrics['response_time']:.2f}s",
-        "",
-        "## All Strategies Comparison",
-        "",
-        "| Strategy | Accuracy | Confidence | Completeness | Success Rate | Response Time |",
-        "|----------|----------|------------|--------------|--------------|---------------|",
-    ])
+    lines.extend(
+        [
+            f"- **Accuracy:** {winner_metrics['accuracy']:.2%}",
+            f"- **Confidence:** {winner_metrics['confidence']:.2%}",
+            f"- **Completeness:** {winner_metrics['completeness']:.2%}",
+            f"- **Success Rate:** {winner_metrics['success_rate']:.2%} ✅",
+            f"- **Response Time:** {winner_metrics['response_time']:.2f}s",
+            "",
+            "## All Strategies Comparison",
+            "",
+            "| Strategy | Accuracy | Confidence | Completeness | Success Rate | Response Time |",
+            "|----------|----------|------------|--------------|--------------|---------------|",
+        ]
+    )
 
     for strategy, metrics in BENCHMARK_RESULTS.items():
         winner_marker = " 🏆" if strategy == WINNING_PROMPT else ""
@@ -292,27 +293,29 @@ def generate_optimization_report() -> str:
             f"{metrics['response_time']:.2f}s |"
         )
 
-    lines.extend([
-        "",
-        "## Recommendations",
-        "",
-        f"1. **Deploy `{WINNING_PROMPT.value}` to production adapters**",
-        "   - Guaranteed 100% success rate",
-        "   - Highest overall accuracy (58.00%)",
-        "   - Best completeness (94.00%)",
-        "   - Excellent performance on critical fields",
-        "",
-        "2. **Monitor production performance post-deployment**",
-        "   - Track field-level accuracy",
-        "   - Monitor error rates",
-        "   - Measure response times",
-        "",
-        "3. **Future improvements**",
-        "   - Date extraction: Leverage Phase 4.5 date_parser integration",
-        "   - Details field: Develop specialized prompt",
-        "   - Continue A/B testing with new variations",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Recommendations",
+            "",
+            f"1. **Deploy `{WINNING_PROMPT.value}` to production adapters**",
+            "   - Guaranteed 100% success rate",
+            "   - Highest overall accuracy (58.00%)",
+            "   - Best completeness (94.00%)",
+            "   - Excellent performance on critical fields",
+            "",
+            "2. **Monitor production performance post-deployment**",
+            "   - Track field-level accuracy",
+            "   - Monitor error rates",
+            "   - Measure response times",
+            "",
+            "3. **Future improvements**",
+            "   - Date extraction: Leverage Phase 4.5 date_parser integration",
+            "   - Details field: Develop specialized prompt",
+            "   - Continue A/B testing with new variations",
+            "",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -332,8 +335,7 @@ def save_optimization_config(output_path: Path) -> None:
         "phase": "5.5",
         "date": "2024-11-18",
         "benchmark_results": {
-            strategy.value: metrics
-            for strategy, metrics in BENCHMARK_RESULTS.items()
+            strategy.value: metrics for strategy, metrics in BENCHMARK_RESULTS.items()
         },
         "recommendation": {
             "strategy": WINNING_PROMPT.value,
@@ -354,4 +356,6 @@ def save_optimization_config(output_path: Path) -> None:
 # Module initialization - log winning prompt selection
 _WINNING_METRICS = BENCHMARK_RESULTS[WINNING_PROMPT]
 print(f"[Phase 5.5] Prompt optimizer initialized: {WINNING_PROMPT.value}")
-print(f"  └─ Accuracy: {_WINNING_METRICS['accuracy']:.2%}, Success Rate: {_WINNING_METRICS['success_rate']:.2%}")
+print(
+    f"  └─ Accuracy: {_WINNING_METRICS['accuracy']:.2%}, Success Rate: {_WINNING_METRICS['success_rate']:.2%}"
+)

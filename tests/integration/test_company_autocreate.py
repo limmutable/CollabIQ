@@ -5,8 +5,6 @@ Tests the end-to-end flow of auto-creating new companies when no match is found.
 Covers T016 and T017 from tasks.md.
 """
 
-import pytest
-
 from models.matching import CompanyMatch
 from notion_integrator.fuzzy_matcher import RapidfuzzMatcher
 
@@ -39,7 +37,9 @@ class TestAutoCreationWorkflow:
 
         # Should signal creation is needed
         assert isinstance(result, CompanyMatch)
-        assert result.match_type == "none"  # Will be updated to "created" after actual creation
+        assert (
+            result.match_type == "none"
+        )  # Will be updated to "created" after actual creation
         assert result.page_id is None  # Will be set after actual creation
         assert result.company_name == "완전히새로운회사123"
         assert result.similarity_score == 0.0
@@ -93,7 +93,10 @@ class TestDuplicatePrevention:
 
         # Simulate database after first auto-creation
         candidates = [
-            ("newly_created_page_id00000000000", "새로운스타트업"),  # Previously created
+            (
+                "newly_created_page_id00000000000",
+                "새로운스타트업",
+            ),  # Previously created
             ("page2" + "0" * 26, "웨이크"),
         ]
 

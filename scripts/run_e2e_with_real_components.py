@@ -20,7 +20,6 @@ Safety:
 """
 
 import argparse
-import asyncio
 import json
 import os
 import sys
@@ -40,7 +39,9 @@ from src.e2e_test.runner import E2ERunner
 from src.e2e_test.report_generator import ReportGenerator
 
 
-def load_test_email_ids(email_ids_file: str = "data/e2e_test/test_email_ids.json") -> list[str]:
+def load_test_email_ids(
+    email_ids_file: str = "data/e2e_test/test_email_ids.json",
+) -> list[str]:
     """Load test email IDs from JSON file"""
     path = Path(email_ids_file)
 
@@ -63,6 +64,7 @@ def initialize_components():
 
     # Explicitly load .env file first (pydantic_settings not always reliable in all environments)
     from dotenv import load_dotenv
+
     load_dotenv(override=True)
 
     # Load settings
@@ -194,7 +196,9 @@ Examples:
 
     # Safety check
     if not args.dry_run and not args.confirm:
-        print("ERROR: Must use --confirm flag to write to Notion, or --dry-run for testing")
+        print(
+            "ERROR: Must use --confirm flag to write to Notion, or --dry-run for testing"
+        )
         print("\nThis script WILL CREATE ENTRIES in the production Notion database!")
         print("Use --confirm only if you understand this and want to proceed.")
         print("\nFor testing without writes, use: --dry-run")
@@ -226,6 +230,7 @@ Examples:
     except Exception as e:
         print(f"ERROR: Failed to initialize components: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
@@ -273,7 +278,9 @@ Examples:
     print("=" * 70)
     print(f"Run ID: {test_run.run_id}")
     print(f"Emails Processed: {test_run.emails_processed}")
-    print(f"Success: {test_run.success_count} ({test_run.success_count / test_run.emails_processed * 100:.1f}%)")
+    print(
+        f"Success: {test_run.success_count} ({test_run.success_count / test_run.emails_processed * 100:.1f}%)"
+    )
     print(f"Failures: {test_run.failure_count}")
     print(f"Errors: {test_run.error_summary}")
     print(f"\nSummary: {summary_path}")
@@ -305,5 +312,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\nERROR: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

@@ -55,7 +55,7 @@ def normalize_for_matching(name: str) -> str:
     import re
 
     # Remove parenthetical content like (산스), (주), etc.
-    without_parens = re.sub(r'\([^)]*\)', '', name).strip()
+    without_parens = re.sub(r"\([^)]*\)", "", name).strip()
 
     # Normalize Korean character variants
     # Common substitutions in Korean company names:
@@ -64,8 +64,8 @@ def normalize_for_matching(name: str) -> str:
 
     # 워크 (work) ↔ 웍 (same pronunciation, different spelling)
     # Common in "네트워크" (network) variations
-    normalized = normalized.replace('워크', '웍')
-    normalized = normalized.replace('웍스', '웍')  # 웍스 → 웍 for matching
+    normalized = normalized.replace("워크", "웍")
+    normalized = normalized.replace("웍스", "웍")  # 웍스 → 웍 for matching
 
     return normalized
 
@@ -179,17 +179,30 @@ class RapidfuzzMatcher(CompanyMatcher):
             # Strategy 2: Partial ratio (ONLY for parentheticals)
             # Only use if one string has parentheses (indicates likely parenthetical case)
             # This prevents "스타트업" matching "스타트업A" at 1.0
-            use_partial = '(' in normalized_name or ')' in normalized_name or '(' in normalized_candidate or ')' in normalized_candidate
-            score_partial = fuzz.partial_ratio(normalized_name, normalized_candidate) / 100.0 if use_partial else 0.0
+            use_partial = (
+                "(" in normalized_name
+                or ")" in normalized_name
+                or "(" in normalized_candidate
+                or ")" in normalized_candidate
+            )
+            score_partial = (
+                fuzz.partial_ratio(normalized_name, normalized_candidate) / 100.0
+                if use_partial
+                else 0.0
+            )
 
             # Strategy 3: Exact match after parenthetical removal
             score_normalized = 1.0 if matching_name == matching_candidate else 0.0
 
             # Strategy 4: Ratio on normalized forms (for Korean variants)
-            score_normalized_fuzzy = fuzz.ratio(matching_name, matching_candidate) / 100.0
+            score_normalized_fuzzy = (
+                fuzz.ratio(matching_name, matching_candidate) / 100.0
+            )
 
             # Take the maximum score across all strategies
-            similarity = max(score_ratio, score_partial, score_normalized, score_normalized_fuzzy)
+            similarity = max(
+                score_ratio, score_partial, score_normalized, score_normalized_fuzzy
+            )
 
             if similarity > best_score:
                 best_score = similarity
@@ -407,7 +420,7 @@ class LLMMatcher(CompanyMatcher):
             ValueError: If company_name is empty or threshold is invalid
         """
         import logging
-        
+
         # Validate threshold
         if not (0.0 <= similarity_threshold <= 1.0):
             raise ValueError(
@@ -437,23 +450,23 @@ class LLMMatcher(CompanyMatcher):
         try:
             # Simple text response parsing (no structured response needed for evaluation)
             response_text = self.llm_orchestrator.generate_text(prompt)
-            
+
             # Parse response to extract best match
             # Format: "Best match: <company_name> (score: 0.XX)"
             import re
-            match = re.search(r'Best match: (.+?) \(score: (0\.\d+)\)', response_text)
-            
+
+            match = re.search(r"Best match: (.+?) \(score: (0\.\d+)\)", response_text)
+
             if match:
                 best_name = match.group(1).strip()
                 score = float(match.group(2))
-                
+
                 if score >= similarity_threshold:
                     # Find matching page_id
                     page_id = next(
-                        (pid for pid, name in candidates if name == best_name),
-                        None
+                        (pid for pid, name in candidates if name == best_name), None
                     )
-                    
+
                     if page_id:
                         confidence = self._compute_confidence_level(score)
                         return CompanyMatch(
@@ -506,7 +519,9 @@ class LLMMatcher(CompanyMatcher):
             Prompt string for LLM
         """
         candidates_list = "\n".join(
-            [f"{i+1}. {name}" for i, (page_id, name) in enumerate(candidates[:10])]  # Limit to top 10
+            [
+                f"{i + 1}. {name}" for i, (page_id, name) in enumerate(candidates[:10])
+            ]  # Limit to top 10
         )
 
         return f"""You are a company name matching expert. Match the extracted company name to the most similar candidate.

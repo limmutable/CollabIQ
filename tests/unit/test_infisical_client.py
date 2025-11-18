@@ -17,7 +17,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from config.infisical_client import (
     InfisicalAuthError,
-    InfisicalCacheMissError,
     InfisicalClient,
     InfisicalConnectionError,
     SecretNotFoundError,

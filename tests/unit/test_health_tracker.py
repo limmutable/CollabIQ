@@ -5,7 +5,6 @@ as defined in specs/012-multi-llm/contracts/health-tracker-interface.md.
 """
 
 import time
-from pathlib import Path
 
 import pytest
 

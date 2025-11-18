@@ -131,7 +131,10 @@ class NotionPersonMatcher(PersonMatcher):
 
         logger.info(
             "NotionPersonMatcher initialized",
-            extra={"cache_dir": str(self.cache_dir), "cache_ttl_hours": cache_ttl_hours},
+            extra={
+                "cache_dir": str(self.cache_dir),
+                "cache_ttl_hours": cache_ttl_hours,
+            },
         )
 
     def list_users(self, *, force_refresh: bool = False) -> List[NotionUser]:
@@ -153,7 +156,9 @@ class NotionPersonMatcher(PersonMatcher):
         if not force_refresh:
             cached_users = self._get_from_cache()
             if cached_users is not None:
-                logger.info("Users loaded from cache", extra={"user_count": len(cached_users)})
+                logger.info(
+                    "Users loaded from cache", extra={"user_count": len(cached_users)}
+                )
                 return cached_users
 
         # Cache miss or force refresh - fetch from API
@@ -173,7 +178,9 @@ class NotionPersonMatcher(PersonMatcher):
 
         return users
 
-    async def list_users_async(self, *, force_refresh: bool = False) -> List[NotionUser]:
+    async def list_users_async(
+        self, *, force_refresh: bool = False
+    ) -> List[NotionUser]:
         """
         List Notion workspace users with caching (async version).
 
@@ -190,7 +197,9 @@ class NotionPersonMatcher(PersonMatcher):
         if not force_refresh:
             cached_users = self._get_from_cache()
             if cached_users is not None:
-                logger.info("Users loaded from cache", extra={"user_count": len(cached_users)})
+                logger.info(
+                    "Users loaded from cache", extra={"user_count": len(cached_users)}
+                )
                 return cached_users
 
         # Cache miss or force refresh - fetch from API
@@ -391,12 +400,14 @@ class NotionPersonMatcher(PersonMatcher):
                     email = person_data.get("email")
 
                 if user_id:
-                    users.append(NotionUser(
-                        id=user_id,
-                        name=name,
-                        email=email,
-                        type=user_type,
-                    ))
+                    users.append(
+                        NotionUser(
+                            id=user_id,
+                            name=name,
+                            email=email,
+                            type=user_type,
+                        )
+                    )
 
             logger.info(
                 "Users fetched from API",

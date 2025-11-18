@@ -8,7 +8,7 @@ This module verifies:
 """
 
 import pytest
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
 
 class TestNotionSchemaFetching:

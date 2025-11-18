@@ -12,20 +12,18 @@ Tests all 9 scenarios from contracts/retry_decorator.md:
 9. Logging Integration
 """
 
-import asyncio
 import socket
 import time
 from typing import Optional
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
 from error_handling.circuit_breaker import (
-    CircuitBreaker,
     CircuitBreakerOpen,
     gmail_circuit_breaker,
 )
-from error_handling.models import CircuitState, ErrorCategory, ErrorSeverity
+from error_handling.models import CircuitState
 
 
 # Mock exception classes for testing
@@ -269,7 +267,10 @@ class TestRetryContract:
         for _ in range(5):
             try:
                 fetch_emails_always_fails()
-            except (socket.timeout, CircuitBreakerOpen): # Catch CircuitBreakerOpen here
+            except (
+                socket.timeout,
+                CircuitBreakerOpen,
+            ):  # Catch CircuitBreakerOpen here
                 pass
 
         assert gmail_circuit_breaker.get_state() == CircuitState.OPEN

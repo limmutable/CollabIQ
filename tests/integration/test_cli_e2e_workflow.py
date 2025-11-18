@@ -7,8 +7,6 @@ Note: These tests verify the CLI command orchestration, not the E2E test logic i
 The E2E test logic is tested separately in tests/e2e/test_full_pipeline.py.
 """
 
-import json
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -66,7 +64,9 @@ def test_e2e_execution_and_reporting():
     result = runner.invoke(app, ["test", "e2e", "--limit", "3"])
 
     # Command should complete (exit code 1 indicates low success rate, not command failure)
-    assert result.exit_code in [0, 1], f"Command should complete, got exit code {result.exit_code}"
+    assert result.exit_code in [0, 1], (
+        f"Command should complete, got exit code {result.exit_code}"
+    )
 
     # Verify the E2E runner executed (shows test results)
     assert (
@@ -76,7 +76,9 @@ def test_e2e_execution_and_reporting():
     ), f"Expected E2E test output not found in: {result.stdout}"
 
     # Verify error handling is clean (not a stack trace)
-    assert "Traceback" not in result.stdout, "Should not show stack trace for expected errors"
+    assert "Traceback" not in result.stdout, (
+        "Should not show stack trace for expected errors"
+    )
 
 
 def test_interrupt_and_resume_workflow():
@@ -100,10 +102,14 @@ def test_interrupt_and_resume_workflow():
     # Verify the command attempted to resume (error message indicates the run was looked for)
     output_lower = result.stdout.lower()
     # The error could be either "not found" or about missing E2E infrastructure
-    assert "not found" in output_lower or "e2e" in output_lower or "test" in output_lower
+    assert (
+        "not found" in output_lower or "e2e" in output_lower or "test" in output_lower
+    )
 
     # Verify error handling is clean
-    assert "Traceback" not in result.stdout, "Should not show stack trace for expected errors"
+    assert "Traceback" not in result.stdout, (
+        "Should not show stack trace for expected errors"
+    )
 
 
 def test_select_emails_command():
@@ -135,7 +141,16 @@ def test_validate_command():
 
     # Should complete (may pass or fail depending on environment)
     # We just verify it runs and shows check results
-    assert "Gmail" in result.stdout or "Notion" in result.stdout or "health" in result.stdout.lower()
+    assert (
+        "Gmail" in result.stdout
+        or "Notion" in result.stdout
+        or "health" in result.stdout.lower()
+    )
 
     # Verify it shows check results in some form
-    assert "✓" in result.stdout or "✗" in result.stdout or "Pass" in result.stdout or "Failed" in result.stdout
+    assert (
+        "✓" in result.stdout
+        or "✗" in result.stdout
+        or "Pass" in result.stdout
+        or "Failed" in result.stdout
+    )

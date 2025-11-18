@@ -24,7 +24,6 @@ from typing import Dict, List
 import pytest
 
 from llm_adapters.gemini_adapter import GeminiAdapter
-from llm_provider.types import ExtractedEntities
 
 
 # Fixture: Load mock Notion data
@@ -70,7 +69,9 @@ def gemini_adapter():
 # Helper function to load sample emails
 def load_sample_email(filename: str) -> str:
     """Load sample email from tests/fixtures/sample_emails/."""
-    fixture_path = Path(__file__).parent.parent / "fixtures" / "sample_emails" / filename
+    fixture_path = (
+        Path(__file__).parent.parent / "fixtures" / "sample_emails" / filename
+    )
     with open(fixture_path, "r", encoding="utf-8") as f:
         return f.read()
 
@@ -84,7 +85,10 @@ class TestUS1PrimaryStartupMatching:
     """Integration tests for User Story 1: Match Primary Startup Company."""
 
     def test_exact_startup_match_korean(
-        self, gemini_adapter: GeminiAdapter, company_context_markdown: str, mock_notion_data: List[Dict]
+        self,
+        gemini_adapter: GeminiAdapter,
+        company_context_markdown: str,
+        mock_notion_data: List[Dict],
     ):
         """Test exact match for Korean startup name (sample-001.txt).
 
@@ -126,7 +130,10 @@ class TestUS2BeneficiaryCompanyMatching:
     """Integration tests for User Story 2: Match Beneficiary Company."""
 
     def test_ssg_affiliate_match(
-        self, gemini_adapter: GeminiAdapter, company_context_markdown: str, mock_notion_data: List[Dict]
+        self,
+        gemini_adapter: GeminiAdapter,
+        company_context_markdown: str,
+        mock_notion_data: List[Dict],
     ):
         """Test SSG affiliate matching (sample-004.txt: NXN Labs × 신세계인터내셔널).
 
@@ -158,13 +165,20 @@ class TestUS2BeneficiaryCompanyMatching:
         # - "신세계V" (the specific division mentioned in the email text)
         # All are valid extractions - email mentions "신세계V" explicitly
         assert entities.partner_org in [
-            "신세계", "신세계인터내셔널", "신세계V",
-            "Shinsegae", "Shinsegae International"
+            "신세계",
+            "신세계인터내셔널",
+            "신세계V",
+            "Shinsegae",
+            "Shinsegae International",
         ]
 
         # Get IDs for valid interpretations
-        shinsegae_id = next((c["id"] for c in mock_notion_data if c["name"] == "신세계"), None)
-        shinsegae_intl_id = next((c["id"] for c in mock_notion_data if c["name"] == "신세계인터내셔널"), None)
+        shinsegae_id = next(
+            (c["id"] for c in mock_notion_data if c["name"] == "신세계"), None
+        )
+        shinsegae_intl_id = next(
+            (c["id"] for c in mock_notion_data if c["name"] == "신세계인터내셔널"), None
+        )
 
         # If LLM extracted "신세계V" (specific division not in database),
         # it may either:
@@ -183,7 +197,10 @@ class TestUS2BeneficiaryCompanyMatching:
             assert entities.partner_match_confidence >= 0.70
 
     def test_portfolio_x_portfolio_match(
-        self, gemini_adapter: GeminiAdapter, company_context_markdown: str, mock_notion_data: List[Dict]
+        self,
+        gemini_adapter: GeminiAdapter,
+        company_context_markdown: str,
+        mock_notion_data: List[Dict],
     ):
         """Test Portfolio×Portfolio matching (sample-006.txt: 플록스 × 스마트푸드네트워크).
 
@@ -204,8 +221,13 @@ class TestUS2BeneficiaryCompanyMatching:
         )
 
         # Get expected IDs (both now in database)
-        phlox_id = next((c["id"] for c in mock_notion_data if "플록스" in c["name"]), None)
-        sfn_id = next((c["id"] for c in mock_notion_data if "스마트푸드네트워크" in c["name"]), None)
+        phlox_id = next(
+            (c["id"] for c in mock_notion_data if "플록스" in c["name"]), None
+        )
+        sfn_id = next(
+            (c["id"] for c in mock_notion_data if "스마트푸드네트워크" in c["name"]),
+            None,
+        )
         assert phlox_id == "789jkl012mno345pqr678stu901vwx23"
         assert sfn_id == "pqr678stu901vwx234yz056abc123def"
 
@@ -224,7 +246,10 @@ class TestUS2BeneficiaryCompanyMatching:
         assert entities.partner_match_confidence >= 0.90
 
     def test_english_name_matching(
-        self, gemini_adapter: GeminiAdapter, company_context_markdown: str, mock_notion_data: List[Dict]
+        self,
+        gemini_adapter: GeminiAdapter,
+        company_context_markdown: str,
+        mock_notion_data: List[Dict],
     ):
         """Test English name matching (english_002.txt with "Shinsegae International").
 
@@ -243,7 +268,11 @@ class TestUS2BeneficiaryCompanyMatching:
 
         # Get expected ID
         expected_id = next(
-            (c["id"] for c in mock_notion_data if c["english_name"] == "Shinsegae International"),
+            (
+                c["id"]
+                for c in mock_notion_data
+                if c["english_name"] == "Shinsegae International"
+            ),
             None,
         )
 
@@ -261,7 +290,10 @@ class TestUS3NameVariations:
     """Integration tests for User Story 3: Handle Company Name Variations."""
 
     def test_abbreviation_matching(
-        self, gemini_adapter: GeminiAdapter, company_context_markdown: str, mock_notion_data: List[Dict]
+        self,
+        gemini_adapter: GeminiAdapter,
+        company_context_markdown: str,
+        mock_notion_data: List[Dict],
     ):
         """Test abbreviation matching (SSG푸드 → 신세계푸드).
 
@@ -277,7 +309,9 @@ class TestUS3NameVariations:
         )
 
         # Get expected ID for 신세계푸드
-        expected_id = next((c["id"] for c in mock_notion_data if c["name"] == "신세계푸드"), None)
+        expected_id = next(
+            (c["id"] for c in mock_notion_data if c["name"] == "신세계푸드"), None
+        )
 
         # Validate semantic matching
         assert entities.matched_partner_id == expected_id
@@ -288,7 +322,10 @@ class TestUS3NameVariations:
         )
 
     def test_typo_tolerance(
-        self, gemini_adapter: GeminiAdapter, company_context_markdown: str, mock_notion_data: List[Dict]
+        self,
+        gemini_adapter: GeminiAdapter,
+        company_context_markdown: str,
+        mock_notion_data: List[Dict],
     ):
         """Test typo tolerance (브레이크언컴퍼니 → 브레이크앤컴퍼니).
 
@@ -308,7 +345,9 @@ class TestUS3NameVariations:
         )
 
         # Get expected ID
-        expected_id = next((c["id"] for c in mock_notion_data if c["name"] == "브레이크앤컴퍼니"), None)
+        expected_id = next(
+            (c["id"] for c in mock_notion_data if c["name"] == "브레이크앤컴퍼니"), None
+        )
 
         # Validate fuzzy matching - must match correctly with ≥0.70 confidence
         assert entities.matched_company_id == expected_id
@@ -355,7 +394,10 @@ class TestUS4NoMatchScenarios:
             )
 
     def test_ambiguous_company_name(
-        self, gemini_adapter: GeminiAdapter, company_context_markdown: str, mock_notion_data: List[Dict]
+        self,
+        gemini_adapter: GeminiAdapter,
+        company_context_markdown: str,
+        mock_notion_data: List[Dict],
     ):
         """Test ambiguous company name (multiple partial matches).
 
@@ -382,7 +424,8 @@ class TestUS4NoMatchScenarios:
 
         # Should match to one of the valid Shinsegae entities
         shinsegae_ids = [
-            c["id"] for c in mock_notion_data
+            c["id"]
+            for c in mock_notion_data
             if "신세계" in c["name"] or "Shinsegae" in c["english_name"]
         ]
 

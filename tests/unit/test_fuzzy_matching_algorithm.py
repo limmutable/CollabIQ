@@ -47,7 +47,9 @@ class TestJaroWinklerKoreanText:
         similarity = fuzz.ratio(extracted, candidate) / 100.0
 
         # Should be high enough to match (may be close to threshold)
-        assert similarity >= 0.75, f"Character alternative similarity too low: {similarity:.2f}"
+        assert similarity >= 0.75, (
+            f"Character alternative similarity too low: {similarity:.2f}"
+        )
 
     def test_spacing_differences_high_similarity(self):
         """
@@ -60,7 +62,9 @@ class TestJaroWinklerKoreanText:
 
         similarity = fuzz.ratio(extracted, candidate) / 100.0
 
-        assert similarity >= 0.90, f"Spacing difference similarity too low: {similarity:.2f}"
+        assert similarity >= 0.90, (
+            f"Spacing difference similarity too low: {similarity:.2f}"
+        )
 
     def test_exact_match_returns_1_0(self):
         """
@@ -82,7 +86,9 @@ class TestJaroWinklerKoreanText:
 
         similarity = fuzz.ratio(extracted, candidate) / 100.0
 
-        assert similarity < 0.70, f"Unrelated names should have low similarity, got {similarity:.2f}"
+        assert similarity < 0.70, (
+            f"Unrelated names should have low similarity, got {similarity:.2f}"
+        )
 
     def test_partial_match_medium_similarity(self):
         """
@@ -224,10 +230,10 @@ def test_similarity_threshold_cases(
     similarity = fuzz.ratio(extracted, candidate) / 100.0
 
     if expected_above_threshold:
-        assert (
-            similarity >= 0.85
-        ), f"Expected ≥0.85 for '{extracted}' vs '{candidate}', got {similarity:.2f}"
+        assert similarity >= 0.85, (
+            f"Expected ≥0.85 for '{extracted}' vs '{candidate}', got {similarity:.2f}"
+        )
     else:
-        assert (
-            similarity < 0.85
-        ), f"Expected <0.85 for '{extracted}' vs '{candidate}', got {similarity:.2f}"
+        assert similarity < 0.85, (
+            f"Expected <0.85 for '{extracted}' vs '{candidate}', got {similarity:.2f}"
+        )

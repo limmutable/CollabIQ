@@ -8,6 +8,7 @@ based on environment variables or flags.
 import os
 from rich.console import Console
 
+
 def get_console(force_color: bool = False, force_no_color: bool = False) -> Console:
     """
     Get or create a Console instance with specified color settings.

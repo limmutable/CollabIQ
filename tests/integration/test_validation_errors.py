@@ -7,22 +7,19 @@ Tests graceful degradation when emails have invalid/malformed data:
 - System processes valid emails even if one is malformed
 """
 
-import json
-import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from pydantic import ValidationError
 
 from email_receiver.gmail_receiver import GmailReceiver
 from error_handling.error_classifier import ErrorClassifier
-from error_handling.models import ErrorCategory, ErrorRecord, ErrorSeverity
+from error_handling.models import ErrorCategory
 from error_handling.structured_logger import StructuredLogger
 from llm_adapters.gemini_adapter import GeminiAdapter
-from llm_provider.types import ConfidenceScores, ExtractedEntities
-from models.raw_email import EmailMetadata, RawEmail
+from models.raw_email import EmailMetadata
 
 
 class TestValidationErrorHandling:
@@ -37,14 +34,15 @@ class TestValidationErrorHandling:
                 message_id="",  # Invalid: empty message_id
                 sender="test@example.com",
                 subject="Test",
-                received_at=datetime.now(UTC)
+                received_at=datetime.now(UTC),
             )
             pytest.fail("Should have raised ValidationError")
         except ValidationError as e:
             # Verify ErrorClassifier categorizes it as PERMANENT
             category = ErrorClassifier.classify(e)
-            assert category == ErrorCategory.PERMANENT, \
+            assert category == ErrorCategory.PERMANENT, (
                 f"ValidationError should be PERMANENT, got {category}"
+            )
 
             # Verify it's not retryable
             is_retryable = ErrorClassifier.is_retryable(e)
@@ -55,7 +53,7 @@ class TestValidationErrorHandling:
         # Create GmailReceiver
         receiver = GmailReceiver(
             credentials_path=Path("fake/credentials.json"),
-            token_path=Path("fake/token.json")
+            token_path=Path("fake/token.json"),
         )
 
         # Mock the Gmail API service
@@ -64,43 +62,50 @@ class TestValidationErrorHandling:
 
         # Mock message list response (2 messages)
         mock_service.users().messages().list().execute.return_value = {
-            'messages': [
-                {'id': 'msg_001'},
-                {'id': 'msg_002'}
-            ]
+            "messages": [{"id": "msg_001"}, {"id": "msg_002"}]
         }
 
         # Mock message details - first message is malformed (empty message_id), second is valid
         call_count = [0]  # Track which call we're on
+
         def mock_get_execute(*args, **kwargs):
             call_count[0] += 1
             if call_count[0] == 1:
                 # First call: Return message with empty message_id (will cause ValidationError)
                 return {
-                    'id': 'msg_001',
-                    'payload': {
-                        'headers': [
-                            {'name': 'Message-ID', 'value': ''},  # Empty message_id → ValidationError
-                            {'name': 'From', 'value': 'test@example.com'},
-                            {'name': 'Subject', 'value': 'Test 1'},
-                            {'name': 'Date', 'value': 'Mon, 01 Nov 2021 10:00:00 +0000'}
+                    "id": "msg_001",
+                    "payload": {
+                        "headers": [
+                            {
+                                "name": "Message-ID",
+                                "value": "",
+                            },  # Empty message_id → ValidationError
+                            {"name": "From", "value": "test@example.com"},
+                            {"name": "Subject", "value": "Test 1"},
+                            {
+                                "name": "Date",
+                                "value": "Mon, 01 Nov 2021 10:00:00 +0000",
+                            },
                         ],
-                        'body': {'data': 'VGVzdCBib2R5'}  # Valid body
-                    }
+                        "body": {"data": "VGVzdCBib2R5"},  # Valid body
+                    },
                 }
             else:
                 # Second call: Return valid message
                 return {
-                    'id': 'msg_002',
-                    'payload': {
-                        'headers': [
-                            {'name': 'Message-ID', 'value': '<msg_002@gmail.com>'},
-                            {'name': 'From', 'value': 'test@example.com'},
-                            {'name': 'Subject', 'value': 'Test 2'},
-                            {'name': 'Date', 'value': 'Mon, 01 Nov 2021 10:00:00 +0000'}
+                    "id": "msg_002",
+                    "payload": {
+                        "headers": [
+                            {"name": "Message-ID", "value": "<msg_002@gmail.com>"},
+                            {"name": "From", "value": "test@example.com"},
+                            {"name": "Subject", "value": "Test 2"},
+                            {
+                                "name": "Date",
+                                "value": "Mon, 01 Nov 2021 10:00:00 +0000",
+                            },
                         ],
-                        'body': {'data': 'VGVzdCBib2R5'}  # "Test body" in base64
-                    }
+                        "body": {"data": "VGVzdCBib2R5"},  # "Test body" in base64
+                    },
                 }
 
         mock_service.users().messages().get().execute.side_effect = mock_get_execute
@@ -119,7 +124,7 @@ class TestValidationErrorHandling:
             api_key="fake_api_key",
             model="gemini-2.0-flash-exp",
             timeout=10,
-            max_retries=1
+            max_retries=1,
         )
 
         email_text = "테스트 이메일"
@@ -135,7 +140,7 @@ class TestValidationErrorHandling:
             "matched_company_id": "invalid_uuid",  # Invalid: too short (should be 32 or 36 chars)
             "matched_partner_id": None,
             "startup_match_confidence": 0.9,
-            "partner_match_confidence": None
+            "partner_match_confidence": None,
         }
 
         # Call _parse_response directly (bypasses API call)
@@ -143,19 +148,33 @@ class TestValidationErrorHandling:
             response_data=invalid_response_data,
             email_text=email_text,
             company_context="fake company context",  # Enables matching fields
-            email_id=email_id
+            email_id=email_id,
         )
 
         # Verify result is marked as "needs_review" (all confidence scores = 0.0)
-        assert result.confidence.person == 0.0, "Person confidence should be 0.0 for needs_review"
-        assert result.confidence.startup == 0.0, "Startup confidence should be 0.0 for needs_review"
-        assert result.confidence.partner == 0.0, "Partner confidence should be 0.0 for needs_review"
-        assert result.confidence.details == 0.0, "Details confidence should be 0.0 for needs_review"
-        assert result.confidence.date == 0.0, "Date confidence should be 0.0 for needs_review"
+        assert result.confidence.person == 0.0, (
+            "Person confidence should be 0.0 for needs_review"
+        )
+        assert result.confidence.startup == 0.0, (
+            "Startup confidence should be 0.0 for needs_review"
+        )
+        assert result.confidence.partner == 0.0, (
+            "Partner confidence should be 0.0 for needs_review"
+        )
+        assert result.confidence.details == 0.0, (
+            "Details confidence should be 0.0 for needs_review"
+        )
+        assert result.confidence.date == 0.0, (
+            "Date confidence should be 0.0 for needs_review"
+        )
 
         # Verify matched IDs are None (validation failed)
-        assert result.matched_company_id is None, "matched_company_id should be None after validation error"
-        assert result.matched_partner_id is None, "matched_partner_id should be None after validation error"
+        assert result.matched_company_id is None, (
+            "matched_company_id should be None after validation error"
+        )
+        assert result.matched_partner_id is None, (
+            "matched_partner_id should be None after validation error"
+        )
 
     def test_structured_logger_includes_field_level_validation_errors(self):
         """T030: StructuredLogger should include field-level validation errors."""
@@ -165,7 +184,7 @@ class TestValidationErrorHandling:
                 message_id="",  # Invalid: empty message_id
                 sender="invalid-email",  # Invalid: not an email
                 subject="Test",
-                received_at=datetime.now(UTC)
+                received_at=datetime.now(UTC),
             )
             pytest.fail("Should have raised ValidationError")
         except ValidationError as e:
@@ -176,23 +195,24 @@ class TestValidationErrorHandling:
             logger.log_validation_error(
                 message="Test validation error",
                 validation_error=e,
-                context={"email_id": "test_001", "operation": "test_operation"}
+                context={"email_id": "test_001", "operation": "test_operation"},
             )
 
             # Verify the log includes validation_errors in context
             # This is tested by checking that e.errors() is called (has field-level details)
-            assert hasattr(e, 'errors'), "ValidationError should have errors() method"
+            assert hasattr(e, "errors"), "ValidationError should have errors() method"
             errors = e.errors()
             assert len(errors) > 0, "Should have at least one validation error"
-            assert all('loc' in err and 'msg' in err for err in errors), \
+            assert all("loc" in err and "msg" in err for err in errors), (
                 "Each error should have 'loc' (field location) and 'msg'"
+            )
 
     def test_batch_processing_continues_despite_malformed_email(self):
         """T032: Verify system processes valid emails even when one is malformed."""
         # Create GmailReceiver
         receiver = GmailReceiver(
             credentials_path=Path("fake/credentials.json"),
-            token_path=Path("fake/token.json")
+            token_path=Path("fake/token.json"),
         )
 
         # Mock the Gmail API service
@@ -201,56 +221,69 @@ class TestValidationErrorHandling:
 
         # Mock message list response (3 messages)
         mock_service.users().messages().list().execute.return_value = {
-            'messages': [
-                {'id': 'msg_001'},
-                {'id': 'msg_002_invalid'},  # This one will fail validation
-                {'id': 'msg_003'}
+            "messages": [
+                {"id": "msg_001"},
+                {"id": "msg_002_invalid"},  # This one will fail validation
+                {"id": "msg_003"},
             ]
         }
 
         # Mock message details
         call_count = [0]
+
         def mock_get_execute(*args, **kwargs):
             call_count[0] += 1
             if call_count[0] == 1:
                 return {
-                    'id': 'msg_001',
-                    'payload': {
-                        'headers': [
-                            {'name': 'Message-ID', 'value': '<msg_001@gmail.com>'},
-                            {'name': 'From', 'value': 'test@example.com'},
-                            {'name': 'Subject', 'value': 'Test 1'},
-                            {'name': 'Date', 'value': 'Mon, 01 Nov 2021 10:00:00 +0000'}
+                    "id": "msg_001",
+                    "payload": {
+                        "headers": [
+                            {"name": "Message-ID", "value": "<msg_001@gmail.com>"},
+                            {"name": "From", "value": "test@example.com"},
+                            {"name": "Subject", "value": "Test 1"},
+                            {
+                                "name": "Date",
+                                "value": "Mon, 01 Nov 2021 10:00:00 +0000",
+                            },
                         ],
-                        'body': {'data': 'VGVzdCBib2R5IDE='}  # "Test body 1"
-                    }
+                        "body": {"data": "VGVzdCBib2R5IDE="},  # "Test body 1"
+                    },
                 }
             elif call_count[0] == 2:
                 # Malformed: empty message_id
                 return {
-                    'id': 'msg_002_invalid',
-                    'payload': {
-                        'headers': [
-                            {'name': 'Message-ID', 'value': ''},  # Empty message_id → ValidationError
-                            {'name': 'From', 'value': 'test@example.com'},
-                            {'name': 'Subject', 'value': 'Test 2'},
-                            {'name': 'Date', 'value': 'Mon, 01 Nov 2021 10:00:00 +0000'}
+                    "id": "msg_002_invalid",
+                    "payload": {
+                        "headers": [
+                            {
+                                "name": "Message-ID",
+                                "value": "",
+                            },  # Empty message_id → ValidationError
+                            {"name": "From", "value": "test@example.com"},
+                            {"name": "Subject", "value": "Test 2"},
+                            {
+                                "name": "Date",
+                                "value": "Mon, 01 Nov 2021 10:00:00 +0000",
+                            },
                         ],
-                        'body': {'data': 'VGVzdCBib2R5IDI='}  # Valid body
-                    }
+                        "body": {"data": "VGVzdCBib2R5IDI="},  # Valid body
+                    },
                 }
             else:  # call 3
                 return {
-                    'id': 'msg_003',
-                    'payload': {
-                        'headers': [
-                            {'name': 'Message-ID', 'value': '<msg_003@gmail.com>'},
-                            {'name': 'From', 'value': 'test@example.com'},
-                            {'name': 'Subject', 'value': 'Test 3'},
-                            {'name': 'Date', 'value': 'Mon, 01 Nov 2021 10:00:00 +0000'}
+                    "id": "msg_003",
+                    "payload": {
+                        "headers": [
+                            {"name": "Message-ID", "value": "<msg_003@gmail.com>"},
+                            {"name": "From", "value": "test@example.com"},
+                            {"name": "Subject", "value": "Test 3"},
+                            {
+                                "name": "Date",
+                                "value": "Mon, 01 Nov 2021 10:00:00 +0000",
+                            },
                         ],
-                        'body': {'data': 'VGVzdCBib2R5IDM='}  # "Test body 3"
-                    }
+                        "body": {"data": "VGVzdCBib2R5IDM="},  # "Test body 3"
+                    },
                 }
 
         mock_service.users().messages().get().execute.side_effect = mock_get_execute
@@ -259,13 +292,17 @@ class TestValidationErrorHandling:
         emails = receiver.fetch_emails(max_emails=10)
 
         # Verify 2 valid emails were returned (1 was skipped)
-        assert len(emails) == 2, f"Expected 2 valid emails (1 skipped), got {len(emails)}"
+        assert len(emails) == 2, (
+            f"Expected 2 valid emails (1 skipped), got {len(emails)}"
+        )
         assert emails[0].metadata.message_id == "<msg_001@gmail.com>"
         assert emails[1].metadata.message_id == "<msg_003@gmail.com>"
 
         # Verify the system achieved ~66% success rate (2/3 emails processed)
         success_rate = len(emails) / 3
-        assert success_rate >= 0.66, f"Success rate {success_rate:.2f} should be >= 0.66 (2/3)"
+        assert success_rate >= 0.66, (
+            f"Success rate {success_rate:.2f} should be >= 0.66 (2/3)"
+        )
 
 
 if __name__ == "__main__":

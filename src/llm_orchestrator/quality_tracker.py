@@ -12,12 +12,9 @@ import shutil
 import tempfile
 from datetime import datetime, UTC
 from pathlib import Path
-from typing import Literal
 
 from llm_orchestrator.types import (
     ProviderQualitySummary,
-    QualityMetricsRecord,
-    QualityThresholdConfig,
     ProviderQualityComparison,
 )
 from llm_provider.types import ExtractedEntities
@@ -294,35 +291,34 @@ class QualityTracker:
             summary.failed_validations += 1
 
         # Recalculate validation success rate
-        summary.validation_success_rate = (
-            summary.successful_validations / n_new
-        ) * 100
+        summary.validation_success_rate = (summary.successful_validations / n_new) * 100
 
         # Update running average for overall confidence (incremental formula)
         old_avg_confidence = summary.average_overall_confidence
-        summary.average_overall_confidence = old_avg_confidence + (
-            overall_confidence - old_avg_confidence
-        ) / n_new
+        summary.average_overall_confidence = (
+            old_avg_confidence + (overall_confidence - old_avg_confidence) / n_new
+        )
 
         # Update running average for field completeness
         old_avg_completeness = summary.average_field_completeness
-        summary.average_field_completeness = old_avg_completeness + (
-            field_completeness_percentage - old_avg_completeness
-        ) / n_new
+        summary.average_field_completeness = (
+            old_avg_completeness
+            + (field_completeness_percentage - old_avg_completeness) / n_new
+        )
 
         # Update running average for fields extracted
         old_avg_fields = summary.average_fields_extracted
-        summary.average_fields_extracted = old_avg_fields + (
-            fields_extracted - old_avg_fields
-        ) / n_new
+        summary.average_fields_extracted = (
+            old_avg_fields + (fields_extracted - old_avg_fields) / n_new
+        )
 
         # Update per-field confidence averages
         for field in ["person", "startup", "partner", "details", "date"]:
             old_field_avg = summary.per_field_confidence_averages[field]
             new_field_conf = per_field_confidence[field]
-            summary.per_field_confidence_averages[field] = old_field_avg + (
-                new_field_conf - old_field_avg
-            ) / n_new
+            summary.per_field_confidence_averages[field] = (
+                old_field_avg + (new_field_conf - old_field_avg) / n_new
+            )
 
         # Calculate standard deviation incrementally (Welford's online algorithm)
         # For simplicity in MVP, we'll use a simplified approach:
@@ -335,7 +331,9 @@ class QualityTracker:
             # Simplified std dev calculation (good enough for monitoring trends)
             # In production, we'd maintain sum_of_squares for exact calculation
             # For now, we use a conservative estimate that updates slowly
-            variance_estimate = abs(overall_confidence - summary.average_overall_confidence)
+            variance_estimate = abs(
+                overall_confidence - summary.average_overall_confidence
+            )
             summary.confidence_std_deviation = (
                 summary.confidence_std_deviation * 0.95 + variance_estimate * 0.05
             )
@@ -468,11 +466,15 @@ class QualityTracker:
         completeness = summary.average_field_completeness / 100  # Convert to 0.0-1.0
         validation_rate = summary.validation_success_rate / 100  # Convert to 0.0-1.0
 
-        quality_score = (0.4 * confidence) + (0.3 * completeness) + (0.3 * validation_rate)
+        quality_score = (
+            (0.4 * confidence) + (0.3 * completeness) + (0.3 * validation_rate)
+        )
 
         return quality_score
 
-    def _calculate_value_score(self, quality_score: float, cost_per_email: float) -> float:
+    def _calculate_value_score(
+        self, quality_score: float, cost_per_email: float
+    ) -> float:
         """Calculate quality-to-cost value score for a provider.
 
         This metric helps identify the best value provider by balancing quality
@@ -552,7 +554,9 @@ class QualityTracker:
             'claude'
         """
         if not quality_to_cost_rankings:
-            raise ValueError("Cannot generate recommendation: no providers have metrics")
+            raise ValueError(
+                "Cannot generate recommendation: no providers have metrics"
+            )
 
         # Best value provider is first in quality_to_cost_rankings (already sorted)
         recommended = quality_to_cost_rankings[0]
@@ -640,14 +644,15 @@ class QualityTracker:
 
         # Filter to providers with metrics
         providers_with_metrics = [
-            name for name in providers_to_compare
+            name
+            for name in providers_to_compare
             if name in self.metrics and self.metrics[name].total_extractions > 0
         ]
 
         if not providers_with_metrics:
             raise ValueError(
-                f"No providers have quality metrics. "
-                f"Process at least one extraction per provider before comparing."
+                "No providers have quality metrics. "
+                "Process at least one extraction per provider before comparing."
             )
 
         # Calculate quality scores and value scores for each provider
@@ -674,26 +679,24 @@ class QualityTracker:
             # Calculate value score
             value_score = self._calculate_value_score(quality_score, cost_per_email)
 
-            provider_scores.append({
-                "provider_name": provider_name,
-                "quality_score": quality_score,
-                "value_score": value_score,
-            })
+            provider_scores.append(
+                {
+                    "provider_name": provider_name,
+                    "quality_score": quality_score,
+                    "value_score": value_score,
+                }
+            )
 
         # Rank providers by quality score (descending)
         provider_rankings = sorted(
-            provider_scores,
-            key=lambda x: x["quality_score"],
-            reverse=True
+            provider_scores, key=lambda x: x["quality_score"], reverse=True
         )
         for rank, provider in enumerate(provider_rankings, start=1):
             provider["rank"] = rank
 
         # Rank providers by value score (descending)
         quality_to_cost_rankings = sorted(
-            provider_scores,
-            key=lambda x: x["value_score"],
-            reverse=True
+            provider_scores, key=lambda x: x["value_score"], reverse=True
         )
         for rank, provider in enumerate(quality_to_cost_rankings, start=1):
             provider["rank"] = rank
@@ -719,9 +722,7 @@ class QualityTracker:
 
         return comparison
 
-    def select_provider_by_quality(
-        self, candidate_providers: list[str]
-    ) -> str | None:
+    def select_provider_by_quality(self, candidate_providers: list[str]) -> str | None:
         """Select provider based on quality metrics.
 
         Takes a list of candidate provider names, filters providers meeting minimum
@@ -776,9 +777,7 @@ class QualityTracker:
                         f"Provider {provider_name} excluded: no extractions recorded"
                     )
             else:
-                logger.debug(
-                    f"Provider {provider_name} excluded: no quality metrics"
-                )
+                logger.debug(f"Provider {provider_name} excluded: no quality metrics")
 
         if not providers_with_metrics:
             logger.warning(

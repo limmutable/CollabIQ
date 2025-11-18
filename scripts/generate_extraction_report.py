@@ -44,9 +44,21 @@ def generate_report(run_id: str):
         print(f"{'-' * 95}")
 
         fields = [
-            ("Person in Charge", data.get("person_in_charge", "N/A"), data["confidence"]["person"]),
-            ("Startup Name", data.get("startup_name", "N/A"), data["confidence"]["startup"]),
-            ("Partner Org", data.get("partner_org", "N/A"), data["confidence"]["partner"]),
+            (
+                "Person in Charge",
+                data.get("person_in_charge", "N/A"),
+                data["confidence"]["person"],
+            ),
+            (
+                "Startup Name",
+                data.get("startup_name", "N/A"),
+                data["confidence"]["startup"],
+            ),
+            (
+                "Partner Org",
+                data.get("partner_org", "N/A"),
+                data["confidence"]["partner"],
+            ),
             ("Date", data.get("date", "N/A"), data["confidence"]["date"]),
         ]
 
@@ -87,7 +99,9 @@ def generate_report(run_id: str):
         provider_counts[provider] = provider_counts.get(provider, 0) + 1
 
     print("Emails Processed by Provider:")
-    for provider, count in sorted(provider_counts.items(), key=lambda x: x[1], reverse=True):
+    for provider, count in sorted(
+        provider_counts.items(), key=lambda x: x[1], reverse=True
+    ):
         print(f"  {provider}: {count}")
 
     # Average confidence by field
@@ -97,7 +111,7 @@ def generate_report(run_id: str):
         "startup": [],
         "partner": [],
         "details": [],
-        "date": []
+        "date": [],
     }
 
     for data in all_data:

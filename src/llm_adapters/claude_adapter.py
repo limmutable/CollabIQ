@@ -82,9 +82,7 @@ class ClaudeAdapter(LLMProvider):
         self.last_input_tokens = 0
         self.last_output_tokens = 0
 
-        logger.info(
-            f"Initialized ClaudeAdapter with model={model}, timeout={timeout}s"
-        )
+        logger.info(f"Initialized ClaudeAdapter with model={model}, timeout={timeout}s")
 
     def extract_entities(
         self,

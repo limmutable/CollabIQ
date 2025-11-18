@@ -78,12 +78,14 @@ def test_command_group_registration():
         result = runner.invoke(app, [group, "--help"])
 
         # Each group should show help successfully
-        assert (
-            result.exit_code == 0
-        ), f"Command group '{group}' failed with exit code {result.exit_code}"
+        assert result.exit_code == 0, (
+            f"Command group '{group}' failed with exit code {result.exit_code}"
+        )
 
         # Help should contain the group name
-        assert group in result.stdout.lower(), f"Help text for '{group}' missing group name"
+        assert group in result.stdout.lower(), (
+            f"Help text for '{group}' missing group name"
+        )
 
 
 def test_global_options():
@@ -133,7 +135,9 @@ def test_notion_verify_command():
     result = runner.invoke(app, ["notion", "verify", "--help"])
 
     # Should exit successfully
-    assert result.exit_code == 0, f"verify command failed with exit code {result.exit_code}"
+    assert result.exit_code == 0, (
+        f"verify command failed with exit code {result.exit_code}"
+    )
 
     # Should show command description
     assert "verify" in result.stdout.lower(), "Missing command description"
@@ -157,7 +161,9 @@ def test_notion_schema_command():
     result = runner.invoke(app, ["notion", "schema", "--help"])
 
     # Should exit successfully
-    assert result.exit_code == 0, f"schema command failed with exit code {result.exit_code}"
+    assert result.exit_code == 0, (
+        f"schema command failed with exit code {result.exit_code}"
+    )
 
     # Should show command description
     assert "schema" in result.stdout.lower(), "Missing command description"
@@ -180,7 +186,9 @@ def test_notion_test_write_command():
     result = runner.invoke(app, ["notion", "test-write", "--help"])
 
     # Should exit successfully
-    assert result.exit_code == 0, f"test-write command failed with exit code {result.exit_code}"
+    assert result.exit_code == 0, (
+        f"test-write command failed with exit code {result.exit_code}"
+    )
 
     # Should show command description
     assert "test" in result.stdout.lower(), "Missing 'test' in description"
@@ -204,10 +212,14 @@ def test_notion_cleanup_tests_command():
     result = runner.invoke(app, ["notion", "cleanup-tests", "--help"])
 
     # Should exit successfully
-    assert result.exit_code == 0, f"cleanup-tests command failed with exit code {result.exit_code}"
+    assert result.exit_code == 0, (
+        f"cleanup-tests command failed with exit code {result.exit_code}"
+    )
 
     # Should show command description
-    assert "cleanup" in result.stdout.lower() or "clean" in result.stdout.lower(), "Missing 'cleanup' in description"
+    assert "cleanup" in result.stdout.lower() or "clean" in result.stdout.lower(), (
+        "Missing 'cleanup' in description"
+    )
 
     # Should support --yes, --json, and --debug flags
     assert "--yes" in result.stdout, "Missing --yes flag for confirmation skip"
@@ -261,9 +273,9 @@ def test_email_clean_contract():
     assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
 
     # Should have description about cleaning/normalizing
-    assert (
-        "clean" in result.stdout.lower() or "normalize" in result.stdout.lower()
-    ), "Missing clean/normalize description"
+    assert "clean" in result.stdout.lower() or "normalize" in result.stdout.lower(), (
+        "Missing clean/normalize description"
+    )
 
     # Should show --json option
     assert "--json" in result.stdout, "Missing --json option in help"
@@ -309,9 +321,9 @@ def test_email_verify_contract():
     assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
 
     # Should have description about verification/connectivity
-    assert (
-        "verify" in result.stdout.lower() or "connect" in result.stdout.lower()
-    ), "Missing verify/connect description"
+    assert "verify" in result.stdout.lower() or "connect" in result.stdout.lower(), (
+        "Missing verify/connect description"
+    )
 
     # Should show --json option
     assert "--json" in result.stdout, "Missing --json option in help"
@@ -339,9 +351,9 @@ def test_email_process_contract():
     assert "--json" in result.stdout, "Missing --json option in help"
 
     # Should have description about pipeline/processing
-    assert (
-        "process" in result.stdout.lower() or "pipeline" in result.stdout.lower()
-    ), "Missing process/pipeline description"
+    assert "process" in result.stdout.lower() or "pipeline" in result.stdout.lower(), (
+        "Missing process/pipeline description"
+    )
 
 
 # ==============================================================================
@@ -368,9 +380,9 @@ def test_llm_status_contract():
     assert "--json" in result.stdout, "Missing --json option in help"
 
     # Should have description about status/health
-    assert (
-        "status" in result.stdout.lower() or "health" in result.stdout.lower()
-    ), "Missing status/health description"
+    assert "status" in result.stdout.lower() or "health" in result.stdout.lower(), (
+        "Missing status/health description"
+    )
 
 
 def test_llm_test_provider_contract():
@@ -390,15 +402,17 @@ def test_llm_test_provider_contract():
     assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
 
     # Should show provider argument
-    assert "provider" in result.stdout.lower() or "PROVIDER" in result.stdout, "Missing provider argument in help"
+    assert "provider" in result.stdout.lower() or "PROVIDER" in result.stdout, (
+        "Missing provider argument in help"
+    )
 
     # Should show --json option
     assert "--json" in result.stdout, "Missing --json option in help"
 
     # Should have description about testing/connectivity
-    assert (
-        "test" in result.stdout.lower() or "connect" in result.stdout.lower()
-    ), "Missing test/connectivity description"
+    assert "test" in result.stdout.lower() or "connect" in result.stdout.lower(), (
+        "Missing test/connectivity description"
+    )
 
 
 def test_llm_policy_contract():
@@ -441,12 +455,14 @@ def test_llm_set_policy_contract():
     assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
 
     # Should show strategy argument
-    assert "strategy" in result.stdout.lower() or "STRATEGY" in result.stdout, "Missing strategy argument in help"
+    assert "strategy" in result.stdout.lower() or "STRATEGY" in result.stdout, (
+        "Missing strategy argument in help"
+    )
 
     # Should have description about setting/changing policy
-    assert (
-        "set" in result.stdout.lower() or "change" in result.stdout.lower()
-    ), "Missing set/change description"
+    assert "set" in result.stdout.lower() or "change" in result.stdout.lower(), (
+        "Missing set/change description"
+    )
 
 
 def test_llm_usage_contract():
@@ -468,9 +484,9 @@ def test_llm_usage_contract():
     assert "--json" in result.stdout, "Missing --json option in help"
 
     # Should have description about usage/statistics
-    assert (
-        "usage" in result.stdout.lower() or "statistics" in result.stdout.lower()
-    ), "Missing usage/statistics description"
+    assert "usage" in result.stdout.lower() or "statistics" in result.stdout.lower(), (
+        "Missing usage/statistics description"
+    )
 
 
 def test_llm_disable_enable_contract():
@@ -487,10 +503,14 @@ def test_llm_disable_enable_contract():
     result = runner.invoke(app, ["llm", "disable", "--help"])
 
     # Should exit successfully
-    assert result.exit_code == 0, f"disable: Expected exit code 0, got {result.exit_code}"
+    assert result.exit_code == 0, (
+        f"disable: Expected exit code 0, got {result.exit_code}"
+    )
 
     # Should show provider argument
-    assert "provider" in result.stdout.lower() or "PROVIDER" in result.stdout, "disable: Missing provider argument in help"
+    assert "provider" in result.stdout.lower() or "PROVIDER" in result.stdout, (
+        "disable: Missing provider argument in help"
+    )
 
     # Should have description about disabling
     assert "disable" in result.stdout.lower(), "disable: Missing disable description"
@@ -499,10 +519,14 @@ def test_llm_disable_enable_contract():
     result = runner.invoke(app, ["llm", "enable", "--help"])
 
     # Should exit successfully
-    assert result.exit_code == 0, f"enable: Expected exit code 0, got {result.exit_code}"
+    assert result.exit_code == 0, (
+        f"enable: Expected exit code 0, got {result.exit_code}"
+    )
 
     # Should show provider argument
-    assert "provider" in result.stdout.lower() or "PROVIDER" in result.stdout, "enable: Missing provider argument in help"
+    assert "provider" in result.stdout.lower() or "PROVIDER" in result.stdout, (
+        "enable: Missing provider argument in help"
+    )
 
     # Should have description about enabling
     assert "enable" in result.stdout.lower(), "enable: Missing enable description"
@@ -540,9 +564,9 @@ def test_errors_list_contract():
     assert "--json" in result.stdout, "Missing --json option in help"
 
     # Should have description about listing/errors
-    assert (
-        "list" in result.stdout.lower() or "error" in result.stdout.lower()
-    ), "Missing list/error description"
+    assert "list" in result.stdout.lower() or "error" in result.stdout.lower(), (
+        "Missing list/error description"
+    )
 
 
 def test_errors_show_contract():
@@ -562,17 +586,17 @@ def test_errors_show_contract():
     assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
 
     # Should show error_id argument
-    assert (
-        "error" in result.stdout.lower() and ("id" in result.stdout.lower() or "ERROR" in result.stdout)
+    assert "error" in result.stdout.lower() and (
+        "id" in result.stdout.lower() or "ERROR" in result.stdout
     ), "Missing error-id argument in help"
 
     # Should show --json option
     assert "--json" in result.stdout, "Missing --json option in help"
 
     # Should have description about showing/details
-    assert (
-        "show" in result.stdout.lower() or "detail" in result.stdout.lower()
-    ), "Missing show/detail description"
+    assert "show" in result.stdout.lower() or "detail" in result.stdout.lower(), (
+        "Missing show/detail description"
+    )
 
 
 def test_errors_retry_contract():
@@ -632,9 +656,9 @@ def test_errors_clear_contract():
     assert "--json" in result.stdout, "Missing --json option in help"
 
     # Should have description about clear/cleanup
-    assert (
-        "clear" in result.stdout.lower() or "clean" in result.stdout.lower()
-    ), "Missing clear/clean description"
+    assert "clear" in result.stdout.lower() or "clean" in result.stdout.lower(), (
+        "Missing clear/clean description"
+    )
 
 
 # ==============================================================================
@@ -669,9 +693,9 @@ def test_status_basic_contract():
     assert "--watch" in result.stdout, "Missing --watch option in help"
 
     # Should have description about status/health
-    assert (
-        "status" in result.stdout.lower() or "health" in result.stdout.lower()
-    ), "Missing status/health description"
+    assert "status" in result.stdout.lower() or "health" in result.stdout.lower(), (
+        "Missing status/health description"
+    )
 
 
 def test_status_detailed_contract():
@@ -696,9 +720,9 @@ def test_status_detailed_contract():
     assert "--json" in result.stdout, "Missing --json option in help"
 
     # Should have description about detailed/metrics
-    assert (
-        "detailed" in result.stdout.lower() or "metrics" in result.stdout.lower()
-    ), "Missing detailed/metrics description"
+    assert "detailed" in result.stdout.lower() or "metrics" in result.stdout.lower(), (
+        "Missing detailed/metrics description"
+    )
 
 
 def test_status_watch_contract():
@@ -720,9 +744,9 @@ def test_status_watch_contract():
     assert "--watch" in result.stdout, "Missing --watch option in help"
 
     # Should have description about watch/monitoring
-    assert (
-        "watch" in result.stdout.lower() or "monitor" in result.stdout.lower()
-    ), "Missing watch/monitoring description"
+    assert "watch" in result.stdout.lower() or "monitor" in result.stdout.lower(), (
+        "Missing watch/monitoring description"
+    )
 
 
 # ==============================================================================
@@ -749,9 +773,9 @@ def test_config_show_contract():
     assert "--json" in result.stdout, "Missing --json option in help"
 
     # Should have description about showing/displaying config
-    assert (
-        "show" in result.stdout.lower() or "display" in result.stdout.lower()
-    ), "Missing show/display description"
+    assert "show" in result.stdout.lower() or "display" in result.stdout.lower(), (
+        "Missing show/display description"
+    )
 
 
 def test_config_validate_contract():
@@ -773,9 +797,9 @@ def test_config_validate_contract():
     assert "--json" in result.stdout, "Missing --json option in help"
 
     # Should have description about validation
-    assert (
-        "validate" in result.stdout.lower() or "check" in result.stdout.lower()
-    ), "Missing validate/check description"
+    assert "validate" in result.stdout.lower() or "check" in result.stdout.lower(), (
+        "Missing validate/check description"
+    )
 
 
 def test_config_test_secrets_contract():
@@ -797,9 +821,9 @@ def test_config_test_secrets_contract():
     assert "--json" in result.stdout, "Missing --json option in help"
 
     # Should have description about testing/secrets
-    assert (
-        "test" in result.stdout.lower() or "secret" in result.stdout.lower()
-    ), "Missing test/secret description"
+    assert "test" in result.stdout.lower() or "secret" in result.stdout.lower(), (
+        "Missing test/secret description"
+    )
 
 
 def test_config_get_contract():
@@ -819,15 +843,17 @@ def test_config_get_contract():
     assert result.exit_code == 0, f"Expected exit code 0, got {result.exit_code}"
 
     # Should show key argument
-    assert "key" in result.stdout.lower() or "KEY" in result.stdout, "Missing key argument in help"
+    assert "key" in result.stdout.lower() or "KEY" in result.stdout, (
+        "Missing key argument in help"
+    )
 
     # Should show --json option
     assert "--json" in result.stdout, "Missing --json option in help"
 
     # Should have description about getting config
-    assert (
-        "get" in result.stdout.lower() or "retrieve" in result.stdout.lower()
-    ), "Missing get/retrieve description"
+    assert "get" in result.stdout.lower() or "retrieve" in result.stdout.lower(), (
+        "Missing get/retrieve description"
+    )
 
 
 # ==============================================================================
@@ -864,9 +890,9 @@ def test_test_e2e_contract():
     assert "--json" in result.stdout, "Missing --json option in help"
 
     # Should have description about E2E testing
-    assert (
-        "e2e" in result.stdout.lower() or "end-to-end" in result.stdout.lower()
-    ), "Missing E2E testing description"
+    assert "e2e" in result.stdout.lower() or "end-to-end" in result.stdout.lower(), (
+        "Missing E2E testing description"
+    )
 
 
 def test_test_select_emails_contract():
@@ -894,9 +920,9 @@ def test_test_select_emails_contract():
     assert "--json" in result.stdout, "Missing --json option in help"
 
     # Should have description about selecting test emails
-    assert (
-        "select" in result.stdout.lower() or "email" in result.stdout.lower()
-    ), "Missing select/email description"
+    assert "select" in result.stdout.lower() or "email" in result.stdout.lower(), (
+        "Missing select/email description"
+    )
 
 
 def test_test_validate_contract():
@@ -918,6 +944,6 @@ def test_test_validate_contract():
     assert "--json" in result.stdout, "Missing --json option in help"
 
     # Should have description about validation/health checks
-    assert (
-        "validate" in result.stdout.lower() or "health" in result.stdout.lower()
-    ), "Missing validate/health description"
+    assert "validate" in result.stdout.lower() or "health" in result.stdout.lower(), (
+        "Missing validate/health description"
+    )

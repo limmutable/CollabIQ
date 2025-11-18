@@ -7,10 +7,8 @@ TDD: These tests are written FIRST and should FAIL before implementation.
 
 import pytest
 from unittest.mock import Mock
-from datetime import datetime
 
 from notion_integrator import FieldMapper
-from llm_provider.types import ExtractedEntitiesWithClassification
 from tests.fixtures import create_valid_extracted_data
 
 

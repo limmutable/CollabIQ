@@ -9,7 +9,6 @@ This script helps identify common Notion API integration problems:
 """
 
 import asyncio
-import json
 import sys
 from pathlib import Path
 
@@ -35,7 +34,9 @@ async def diagnose_notion_access():
     if api_key.startswith("ntn_"):
         print("   ✅ Using new token format (ntn_) - correct!")
     elif api_key.startswith("secret_"):
-        print("   ⚠️  Using old token format (secret_) - still works but consider updating")
+        print(
+            "   ⚠️  Using old token format (secret_) - still works but consider updating"
+        )
     else:
         print(f"   ❌ Unknown token format: {api_key[:10]}")
 
@@ -61,7 +62,7 @@ async def diagnose_notion_access():
             # Retrieve database
             db = await client.databases.retrieve(database_id=clean_id)
 
-            print(f"   ✅ Successfully retrieved database")
+            print("   ✅ Successfully retrieved database")
             print(f"      Object type: {db.get('object')}")
             print(f"      Archived: {db.get('archived', False)}")
 
@@ -70,8 +71,8 @@ async def diagnose_notion_access():
             print(f"      Data sources: {len(data_sources)}")
 
             if len(data_sources) == 0:
-                print(f"      ❌ NO DATA SOURCES")
-                print(f"      This database has no data sources - this is unusual.")
+                print("      ❌ NO DATA SOURCES")
+                print("      This database has no data sources - this is unusual.")
             else:
                 # Retrieve first data source to check properties
                 ds_id = data_sources[0]["id"]
@@ -85,20 +86,22 @@ async def diagnose_notion_access():
                 print(f"      Properties count: {len(properties)}")
 
                 if len(properties) == 0:
-                    print(f"      ❌ NO PROPERTIES ACCESSIBLE")
-                    print(f"      ")
-                    print(f"      This usually means:")
-                    print(f"      1. Integration is not connected to this database")
-                    print(f"      2. Database has no columns defined (empty schema)")
-                    print(f"      ")
-                    print(f"      To fix:")
+                    print("      ❌ NO PROPERTIES ACCESSIBLE")
+                    print("      ")
+                    print("      This usually means:")
+                    print("      1. Integration is not connected to this database")
+                    print("      2. Database has no columns defined (empty schema)")
+                    print("      ")
+                    print("      To fix:")
                     print(f"      - Open: https://notion.so/{clean_id}")
-                    print(f"      - Click '...' menu → 'Connections'")
-                    print(f"      - Verify your integration is listed")
-                    print(f"      - If not, click '+ Add connections' and select it")
+                    print("      - Click '...' menu → 'Connections'")
+                    print("      - Verify your integration is listed")
+                    print("      - If not, click '+ Add connections' and select it")
                 else:
-                    print(f"      ✅ Properties accessible (from data source):")
-                    for prop_name, prop_data in list(properties.items())[:10]:  # Show first 10
+                    print("      ✅ Properties accessible (from data source):")
+                    for prop_name, prop_data in list(properties.items())[
+                        :10
+                    ]:  # Show first 10
                         prop_type = prop_data.get("type", "unknown")
                         print(f"         - {prop_name} ({prop_type})")
                     if len(properties) > 10:
@@ -109,22 +112,22 @@ async def diagnose_notion_access():
             parent_type = parent.get("type")
             print(f"      Parent type: {parent_type}")
             if parent_type == "block_id":
-                print(f"      ℹ️  This is an inline database (embedded in a page)")
+                print("      ℹ️  This is an inline database (embedded in a page)")
             elif parent_type == "page_id":
-                print(f"      ℹ️  This is a full-page database")
+                print("      ℹ️  This is a full-page database")
             elif parent_type == "workspace":
-                print(f"      ℹ️  This is a workspace database")
+                print("      ℹ️  This is a workspace database")
 
         except Exception as e:
             print(f"   ❌ Error accessing database: {type(e).__name__}")
             print(f"      {str(e)}")
 
             if "Could not find database" in str(e):
-                print(f"      ")
-                print(f"      Possible causes:")
-                print(f"      1. Database ID is incorrect")
-                print(f"      2. Integration doesn't have access to this database")
-                print(f"      3. Database was deleted or moved")
+                print("      ")
+                print("      Possible causes:")
+                print("      1. Database ID is incorrect")
+                print("      2. Integration doesn't have access to this database")
+                print("      3. Database was deleted or moved")
 
     await client.aclose()
 

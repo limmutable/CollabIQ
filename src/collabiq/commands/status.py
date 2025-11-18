@@ -12,20 +12,15 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import typer
 from rich.console import Console
-from rich.live import Live
-from rich.panel import Panel
-from rich.table import Table
-from rich.text import Text
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from collabiq.formatters.json_output import output_json
-from collabiq.formatters.tables import create_table
 from collabiq.utils.logging import log_cli_operation, log_cli_error
 
 # Import service components for health checks
@@ -45,9 +40,15 @@ status_app = typer.Typer(
 @status_app.callback()
 def main(
     ctx: typer.Context,
-    detailed: bool = typer.Option(False, "--detailed", help="Show detailed metrics and extended information"),
-    watch: bool = typer.Option(False, "--watch", help="Monitor system health in real-time (30s refresh)"),
-    json_output: bool = typer.Option(False, "--json", help="Output as JSON for automation"),
+    detailed: bool = typer.Option(
+        False, "--detailed", help="Show detailed metrics and extended information"
+    ),
+    watch: bool = typer.Option(
+        False, "--watch", help="Monitor system health in real-time (30s refresh)"
+    ),
+    json_output: bool = typer.Option(
+        False, "--json", help="Output as JSON for automation"
+    ),
 ) -> None:
     """
     Display system health status and component information.
@@ -119,6 +120,7 @@ def main(
 
         if json_output:
             from collabiq.formatters.json_output import format_json_error
+
             output_json(
                 data={},
                 status="failure",
@@ -213,7 +215,7 @@ class SuppressLogs:
 
         # Save original stderr and redirect to devnull
         self._original_stderr = sys.stderr
-        sys.stderr = open(os.devnull, 'w')
+        sys.stderr = open(os.devnull, "w")
 
         return self
 
@@ -258,7 +260,7 @@ async def check_gmail_health() -> ComponentStatus:
                     "Ensure GMAIL_CREDENTIALS_PATH is set correctly",
                     "Download credentials from Google Cloud Console",
                     "Place credentials.json in project root",
-                ]
+                ],
             )
 
         # Try to connect (run in thread pool since it's sync)
@@ -284,7 +286,7 @@ async def check_gmail_health() -> ComponentStatus:
             details={
                 "credentials_path": str(credentials_path),
                 "token_path": str(token_path),
-            }
+            },
         )
 
     except FileNotFoundError as e:
@@ -297,14 +299,18 @@ async def check_gmail_health() -> ComponentStatus:
                 "Check GMAIL_CREDENTIALS_PATH and GMAIL_TOKEN_PATH",
                 "Run Gmail authentication flow",
                 "Verify file permissions",
-            ]
+            ],
         )
     except Exception as e:
         error_msg = str(e)
         response_time = (time.time() - start_time) * 1000
 
         # Determine if degraded or offline
-        status = "degraded" if "rate limit" in error_msg.lower() or "quota" in error_msg.lower() else "offline"
+        status = (
+            "degraded"
+            if "rate limit" in error_msg.lower() or "quota" in error_msg.lower()
+            else "offline"
+        )
 
         remediation = []
         if "authentication" in error_msg.lower() or "credentials" in error_msg.lower():
@@ -347,6 +353,7 @@ async def check_notion_health() -> ComponentStatus:
     try:
         # Get configuration from Infisical or environment
         from config.settings import get_settings
+
         settings = get_settings()
         api_key = settings.get_secret_or_env("NOTION_API_KEY")
         collabiq_db_id = settings.get_secret_or_env("NOTION_DATABASE_ID_COLLABIQ")
@@ -361,7 +368,7 @@ async def check_notion_health() -> ComponentStatus:
                     "Set NOTION_API_KEY environment variable",
                     "Or configure Infisical secrets",
                     "Get API key from Notion integrations page",
-                ]
+                ],
             )
 
         if not collabiq_db_id:
@@ -373,7 +380,7 @@ async def check_notion_health() -> ComponentStatus:
                 remediation=[
                     "Set NOTION_DATABASE_ID_COLLABIQ environment variable",
                     "Get database ID from Notion database URL",
-                ]
+                ],
             )
 
         # Initialize integrator and test connection
@@ -381,7 +388,9 @@ async def check_notion_health() -> ComponentStatus:
 
         # Test by attempting to retrieve database schema
         try:
-            schema = await integrator.discover_database_schema(database_id=collabiq_db_id)
+            schema = await integrator.discover_database_schema(
+                database_id=collabiq_db_id
+            )
             response_time = (time.time() - start_time) * 1000
 
             return ComponentStatus(
@@ -391,15 +400,20 @@ async def check_notion_health() -> ComponentStatus:
                 response_time_ms=response_time,
                 details={
                     "database_id": collabiq_db_id[:8] + "...",
-                    "properties_count": len(schema.database.properties) if schema else 0,
-                }
+                    "properties_count": len(schema.database.properties)
+                    if schema
+                    else 0,
+                },
             )
         except Exception as e:
             error_msg = str(e)
             response_time = (time.time() - start_time) * 1000
 
             # Determine status based on error type
-            if "authentication" in error_msg.lower() or "unauthorized" in error_msg.lower():
+            if (
+                "authentication" in error_msg.lower()
+                or "unauthorized" in error_msg.lower()
+            ):
                 status = "offline"
                 remediation = [
                     "Check NOTION_API_KEY is valid",
@@ -447,7 +461,7 @@ async def check_notion_health() -> ComponentStatus:
                 "Check Notion configuration",
                 "Run: collabiq notion verify",
                 "Try again with --debug flag for details",
-            ]
+            ],
         )
 
 
@@ -463,6 +477,7 @@ async def check_gemini_health() -> ComponentStatus:
     try:
         # Get configuration from Infisical or environment
         from config.settings import get_settings
+
         settings = get_settings()
         api_key = settings.get_secret_or_env("GEMINI_API_KEY")
 
@@ -476,7 +491,7 @@ async def check_gemini_health() -> ComponentStatus:
                     "Set GEMINI_API_KEY environment variable",
                     "Or configure Infisical secrets",
                     "Get API key from Google AI Studio",
-                ]
+                ],
             )
 
         # Initialize adapter and test with minimal request
@@ -497,7 +512,7 @@ async def check_gemini_health() -> ComponentStatus:
                 response_time_ms=response_time,
                 details={
                     "model": adapter.model,
-                }
+                },
             )
         except Exception as e:
             error_msg = str(e)
@@ -552,7 +567,7 @@ async def check_gemini_health() -> ComponentStatus:
                 "Check Gemini configuration",
                 "Run: collabiq llm test gemini",
                 "Try again with --debug flag for details",
-            ]
+            ],
         )
 
 
@@ -568,6 +583,7 @@ async def check_claude_health() -> ComponentStatus:
     try:
         # Get configuration from Infisical or environment
         from config.settings import get_settings
+
         settings = get_settings()
         api_key = settings.get_secret_or_env("ANTHROPIC_API_KEY")
 
@@ -581,7 +597,7 @@ async def check_claude_health() -> ComponentStatus:
                     "Set ANTHROPIC_API_KEY environment variable",
                     "Or configure Infisical secrets",
                     "Get API key from Anthropic Console",
-                ]
+                ],
             )
 
         # Initialize adapter and test with minimal request
@@ -601,7 +617,7 @@ async def check_claude_health() -> ComponentStatus:
                 response_time_ms=response_time,
                 details={
                     "model": adapter.model,
-                }
+                },
             )
         except Exception as e:
             error_msg = str(e)
@@ -656,7 +672,7 @@ async def check_claude_health() -> ComponentStatus:
                 "Check Claude configuration",
                 "Run: collabiq llm test claude",
                 "Try again with --debug flag for details",
-            ]
+            ],
         )
 
 
@@ -672,6 +688,7 @@ async def check_openai_health() -> ComponentStatus:
     try:
         # Get configuration from Infisical or environment
         from config.settings import get_settings
+
         settings = get_settings()
         api_key = settings.get_secret_or_env("OPENAI_API_KEY")
 
@@ -685,7 +702,7 @@ async def check_openai_health() -> ComponentStatus:
                     "Set OPENAI_API_KEY environment variable",
                     "Or configure Infisical secrets",
                     "Get API key from OpenAI Platform",
-                ]
+                ],
             )
 
         # Initialize adapter and test with minimal request
@@ -705,7 +722,7 @@ async def check_openai_health() -> ComponentStatus:
                 response_time_ms=response_time,
                 details={
                     "model": adapter.model,
-                }
+                },
             )
         except Exception as e:
             error_msg = str(e)
@@ -760,7 +777,7 @@ async def check_openai_health() -> ComponentStatus:
                 "Check OpenAI configuration",
                 "Run: collabiq llm test openai",
                 "Try again with --debug flag for details",
-            ]
+            ],
         )
 
 
@@ -788,13 +805,18 @@ async def run_health_checks() -> SystemHealth:
     for i, result in enumerate(results):
         if isinstance(result, Exception):
             component_names = ["Gmail", "Notion", "Gemini", "Claude", "OpenAI"]
-            components.append(ComponentStatus(
-                name=component_names[i],
-                status="offline",
-                message=f"Health check failed: {str(result)}",
-                response_time_ms=None,
-                remediation=["Unexpected error during health check", "Contact support if issue persists"]
-            ))
+            components.append(
+                ComponentStatus(
+                    name=component_names[i],
+                    status="offline",
+                    message=f"Health check failed: {str(result)}",
+                    response_time_ms=None,
+                    remediation=[
+                        "Unexpected error during health check",
+                        "Contact support if issue persists",
+                    ],
+                )
+            )
         else:
             components.append(result)
 
@@ -828,13 +850,19 @@ def render_basic_status(health: SystemHealth) -> None:
     console = Console()
     # Overall health status
     overall_color = get_status_color(health.overall_status)
-    console.print(f"\nSystem Health: [{overall_color}]{health.overall_status.upper()}[/{overall_color}]")
+    console.print(
+        f"\nSystem Health: [{overall_color}]{health.overall_status.upper()}[/{overall_color}]"
+    )
     console.print()
 
     # Component statuses with simple dots and colors
     for component in health.components:
         status_color = get_status_color(component.status)
-        status_symbol = "●" if component.status == "online" else ("◐" if component.status == "degraded" else "○")
+        status_symbol = (
+            "●"
+            if component.status == "online"
+            else ("◐" if component.status == "degraded" else "○")
+        )
         console.print(
             f"  [{status_color}]{status_symbol}[/{status_color}] "
             f"{component.name:12s} "
@@ -845,7 +873,9 @@ def render_basic_status(health: SystemHealth) -> None:
     console.print(f"\nLast checked: {health.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
 
     # Show remediation for degraded/offline components (T105)
-    degraded_components = [c for c in health.components if c.status in ["degraded", "offline"]]
+    degraded_components = [
+        c for c in health.components if c.status in ["degraded", "offline"]
+    ]
     if degraded_components:
         console.print()
         for component in degraded_components:
@@ -865,13 +895,19 @@ def render_detailed_status(health: SystemHealth) -> None:
     console = Console()
     # Overall health status
     overall_color = get_status_color(health.overall_status)
-    console.print(f"\nSystem Health: [{overall_color}]{health.overall_status.upper()}[/{overall_color}]")
+    console.print(
+        f"\nSystem Health: [{overall_color}]{health.overall_status.upper()}[/{overall_color}]"
+    )
     console.print()
 
     # Component statuses with response times
     for component in health.components:
         status_color = get_status_color(component.status)
-        status_symbol = "●" if component.status == "online" else ("◐" if component.status == "degraded" else "○")
+        status_symbol = (
+            "●"
+            if component.status == "online"
+            else ("◐" if component.status == "degraded" else "○")
+        )
 
         response_time = (
             f"{component.response_time_ms:.1f}ms"
@@ -891,7 +927,9 @@ def render_detailed_status(health: SystemHealth) -> None:
     console.print("\nComponent Details:")
     for component in health.components:
         console.print(f"\n  {component.name}:")
-        console.print(f"    Status:   [{get_status_color(component.status)}]{component.status}[/{get_status_color(component.status)}]")
+        console.print(
+            f"    Status:   [{get_status_color(component.status)}]{component.status}[/{get_status_color(component.status)}]"
+        )
         console.print(f"    Message:  {component.message}")
 
         if component.response_time_ms is not None:
@@ -942,7 +980,9 @@ def _run_watch_mode(detailed: bool, json_output: bool, debug: bool) -> None:
             if iteration > 0:
                 console.print("\n" + "=" * 80 + "\n")
 
-            console.print(f"[dim]Refresh #{iteration + 1} - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}[/dim]")
+            console.print(
+                f"[dim]Refresh #{iteration + 1} - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}[/dim]"
+            )
 
             # Run health check
             health = asyncio.run(run_health_checks())
@@ -956,7 +996,9 @@ def _run_watch_mode(detailed: bool, json_output: bool, debug: bool) -> None:
             iteration += 1
 
             # Show next refresh countdown
-            console.print(f"\n[dim]Next refresh in 30 seconds... (Press Ctrl+C to exit)[/dim]")
+            console.print(
+                "\n[dim]Next refresh in 30 seconds... (Press Ctrl+C to exit)[/dim]"
+            )
 
             # Wait 30 seconds
             time.sleep(30)

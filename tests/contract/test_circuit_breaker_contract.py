@@ -15,7 +15,7 @@ Tests all 9 scenarios from contracts/circuit_breaker.md:
 import socket
 import time
 from datetime import datetime, timedelta, UTC
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 

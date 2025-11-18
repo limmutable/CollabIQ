@@ -13,11 +13,9 @@ import pytest
 import json
 from pathlib import Path
 from datetime import datetime
-from unittest.mock import Mock, AsyncMock, patch
-from typing import Optional
 
 from notion_integrator import DLQManager
-from llm_provider.types import DLQEntry, WriteResult
+from llm_provider.types import DLQEntry
 from tests.fixtures import create_valid_extracted_data
 
 

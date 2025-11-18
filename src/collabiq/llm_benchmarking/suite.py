@@ -18,10 +18,9 @@ from collabiq.llm_benchmarking.metrics import (
     aggregate_results,
     calculate_accuracy,
 )
-from collabiq.llm_benchmarking.prompts import get_prompt_by_id, list_prompt_ids
+from collabiq.llm_benchmarking.prompts import get_prompt_by_id
 from llm_provider.base import LLMProvider
 from llm_provider.exceptions import LLMAPIError
-from llm_provider.types import ExtractedEntities
 
 logger = logging.getLogger(__name__)
 
@@ -224,7 +223,7 @@ class BenchmarkSuite:
             email_text = test_sample["email_text"]
             expected_entities = test_sample.get("expected_entities")
 
-            logger.info(f"Running test {i+1}/{len(test_data)}")
+            logger.info(f"Running test {i + 1}/{len(test_data)}")
 
             result = self.run_single_test(
                 provider=provider,
@@ -289,7 +288,9 @@ class BenchmarkSuite:
         logger.info(f"Results saved to {filepath}")
         return filepath
 
-    def load_results(self, filepath: Path) -> Tuple[List[BenchmarkResult], AggregatedMetrics]:
+    def load_results(
+        self, filepath: Path
+    ) -> Tuple[List[BenchmarkResult], AggregatedMetrics]:
         """Load benchmark results from disk.
 
         Args:

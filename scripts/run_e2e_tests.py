@@ -38,7 +38,9 @@ from src.e2e_test.runner import E2ERunner
 from src.e2e_test.detailed_report_generator import DetailedReportGenerator
 
 
-def load_test_email_ids(email_ids_file: str = "data/e2e_test/test_email_ids.json") -> list[str]:
+def load_test_email_ids(
+    email_ids_file: str = "data/e2e_test/test_email_ids.json",
+) -> list[str]:
     """Load test email IDs from JSON file"""
     path = Path(email_ids_file)
 
@@ -204,7 +206,9 @@ Multi-LLM Strategies:
         print(f"Run ID: {test_run.run_id}")
         print(f"Status: {test_run.status}")
         print(f"Emails Processed: {test_run.emails_processed}")
-        print(f"Success: {test_run.success_count} ({test_run.success_count / test_run.emails_processed * 100:.1f}%)")
+        print(
+            f"Success: {test_run.success_count} ({test_run.success_count / test_run.emails_processed * 100:.1f}%)"
+        )
         print(f"Failures: {test_run.failure_count}")
         print(f"Errors: {test_run.error_summary}")
 

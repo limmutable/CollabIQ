@@ -6,15 +6,16 @@ Logs all CLI operations to a file for audit trail and troubleshooting.
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
-from datetime import datetime
+from typing import Any, Optional
 
 
 # CLI audit log file location
 CLI_LOG_FILE = Path("data/logs/cli_audit.log")
 
 
-def setup_cli_logging(log_file: Optional[Path] = None, debug: bool = False) -> logging.Logger:
+def setup_cli_logging(
+    log_file: Optional[Path] = None, debug: bool = False
+) -> logging.Logger:
     """
     Set up CLI audit logger.
 

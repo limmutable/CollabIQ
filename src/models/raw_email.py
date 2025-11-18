@@ -103,7 +103,7 @@ class RawEmail(BaseModel):
         return v
 
     model_config = ConfigDict(
-        json_schema_extra = {
+        json_schema_extra={
             "example": {
                 "metadata": {
                     "message_id": "<CABc123@mail.gmail.com>",

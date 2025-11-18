@@ -5,6 +5,7 @@ import json
 import sys
 from pathlib import Path
 
+
 def show_extractions(run_id: str):
     """Show extracted entities for a test run."""
 
@@ -22,21 +23,24 @@ def show_extractions(run_id: str):
     print(f"{'=' * 100}\n")
     print(f"Status: {run_data['status']}")
     print(f"Emails Processed: {run_data['emails_processed']}")
-    print(f"Success: {run_data['success_count']} ({run_data['success_count'] / run_data['emails_processed'] * 100:.1f}%)")
+    print(
+        f"Success: {run_data['success_count']} ({run_data['success_count'] / run_data['emails_processed'] * 100:.1f}%)"
+    )
     print(f"\n{'=' * 100}")
     print("Extracted Entities by Email")
     print(f"{'=' * 100}\n")
 
     # Load extracted entities for each email
-    for idx, email_id in enumerate(run_data['test_email_ids'], 1):
+    for idx, email_id in enumerate(run_data["test_email_ids"], 1):
         print(f"\n{idx}. Email ID: {email_id}")
         print(f"   {'-' * 90}")
 
         # Try to find extraction in errors directory (successful extractions)
         # E2E runner doesn't save individual extraction files, so we'll note that
-        print(f"   ⚠️  Individual extraction files not saved by E2E runner")
-        print(f"   💡 Extractions were processed but not persisted separately")
-        print(f"   ✅ Quality metrics were collected and saved")
+        print("   ⚠️  Individual extraction files not saved by E2E runner")
+        print("   💡 Extractions were processed but not persisted separately")
+        print("   ✅ Quality metrics were collected and saved")
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

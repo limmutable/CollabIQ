@@ -1,8 +1,8 @@
 # CollabIQ E2E Testing Guide
 
-**Status**: Phase 013 Complete (Multi-LLM Orchestration & Quality Metrics)
-**Last Updated**: 2025-11-09
-**Version**: 2.0.0
+**Status**: Phase 015 Complete (Test Suite Improvements)
+**Last Updated**: 2025-11-18
+**Version**: 2.1.0
 
 **Quick Links**:
 - [Quick Start](#quick-start) - 30-second test run
@@ -590,15 +590,128 @@ Type 'YES' to continue:
 
 **Use Case**: Automated testing in CI/CD or local validation
 
-```bash
-# Run all E2E tests
-pytest tests/e2e/ -v
+#### Phase 015: Real E2E Tests with Gmail/Notion
 
-# Run specific test suite
-pytest tests/e2e/test_full_pipeline.py -v
+As of Phase 015, the automated E2E test suite includes **6 real integration tests** that validate the complete pipeline using production Gmail and Notion APIs.
+
+**Test Suite**: `tests/e2e/test_full_pipeline.py`
+
+**What It Tests**:
+1. **test_gmail_authentication**: Validates Gmail OAuth2 credentials
+2. **test_fetch_real_email**: Fetches actual email from Gmail API
+3. **test_llm_extraction_real**: Extracts entities from real email using LLM
+4. **test_notion_company_lookup**: Queries Notion Companies database
+5. **test_notion_write_real**: Creates entry in CollabIQ database
+6. **test_full_pipeline_e2e**: Complete end-to-end pipeline validation
+
+**Prerequisites**:
+```bash
+# Set required environment variables
+export GOOGLE_CREDENTIALS_PATH=credentials.json
+export GMAIL_TOKEN_PATH=token.json
+export GEMINI_API_KEY=your_gemini_api_key
+export NOTION_API_KEY=your_notion_api_key
+export NOTION_DATABASE_ID_COLLABIQ=your_collabiq_db_id
+export NOTION_DATABASE_ID_COMPANIES=your_companies_db_id
+
+# Or add to .env file
+cat >> .env << EOF
+GOOGLE_CREDENTIALS_PATH=credentials.json
+GMAIL_TOKEN_PATH=token.json
+GEMINI_API_KEY=your_gemini_api_key
+NOTION_API_KEY=your_notion_api_key
+NOTION_DATABASE_ID_COLLABIQ=your_collabiq_db_id
+NOTION_DATABASE_ID_COMPANIES=your_companies_db_id
+EOF
+```
+
+**Running the Tests**:
+
+```bash
+# Run all E2E tests (requires credentials)
+uv run pytest tests/e2e/test_full_pipeline.py -v
+
+# Run specific test
+uv run pytest tests/e2e/test_full_pipeline.py::TestFullPipeline::test_full_pipeline_e2e -v
+
+# Run with detailed output
+uv run pytest tests/e2e/test_full_pipeline.py -v --tb=short
 
 # Run with coverage
-pytest tests/e2e/ --cov=src/e2e_test --cov-report=html
+uv run pytest tests/e2e/ --cov=src --cov-report=html:tests/coverage_reports/e2e_htmlcov -m "e2e"
+
+# Skip E2E tests (for CI without credentials)
+uv run pytest tests/ -v -m "not e2e"
+```
+
+**Expected Runtime**: ~71 seconds for all 6 tests
+
+**Expected Output**:
+```
+tests/e2e/test_full_pipeline.py::TestFullPipeline::test_gmail_authentication PASSED
+tests/e2e/test_full_pipeline.py::TestFullPipeline::test_fetch_real_email PASSED
+tests/e2e/test_full_pipeline.py::TestFullPipeline::test_llm_extraction_real PASSED
+tests/e2e/test_full_pipeline.py::TestFullPipeline::test_notion_company_lookup PASSED
+tests/e2e/test_full_pipeline.py::TestFullPipeline::test_notion_write_real PASSED
+tests/e2e/test_full_pipeline.py::TestFullPipeline::test_full_pipeline_e2e PASSED
+
+======================== 6 passed in 71.23s ========================
+```
+
+**Test Markers**:
+- All tests are marked with `@pytest.mark.e2e`
+- Tests requiring Notion API are marked with `@pytest.mark.notion`
+- Tests requiring LLM API are marked with `@pytest.mark.integration`
+
+**Safety Features**:
+- Uses production Gmail (read-only, safe)
+- Uses production Notion credentials (writes to real database)
+- Automatically cleans up test entries after validation
+- Safe to run multiple times (duplicate detection prevents multiple entries)
+
+**Troubleshooting**:
+
+If tests fail with credential errors:
+```bash
+# Check credentials are available
+ls -la credentials.json token.json
+
+# Verify environment variables
+echo $GOOGLE_CREDENTIALS_PATH
+echo $GMAIL_TOKEN_PATH
+echo $NOTION_API_KEY
+
+# Re-authenticate Gmail if needed
+uv run python scripts/authenticate_gmail.py
+```
+
+If tests are slow:
+```bash
+# Run single test for faster iteration
+uv run pytest tests/e2e/test_full_pipeline.py::TestFullPipeline::test_fetch_real_email -v
+
+# Skip LLM tests (faster)
+uv run pytest tests/e2e/test_full_pipeline.py -v -k "not llm"
+```
+
+**CI/CD Integration**:
+
+For CI/CD environments without credentials:
+```yaml
+# GitHub Actions example
+- name: Run tests
+  run: |
+    # Run all tests except E2E
+    uv run pytest tests/ -v -m "not e2e"
+
+    # Or skip if E2E credentials available
+    if [ -n "$NOTION_API_KEY" ]; then
+      uv run pytest tests/e2e/ -v
+    else
+      echo "Skipping E2E tests (no credentials)"
+    fi
+  env:
+    NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
 ```
 
 ---
@@ -1283,6 +1396,44 @@ uv run python scripts/cleanup_test_entries.py
 - ✅ Quality-based routing validated
 - ✅ Provider comparison dashboard functional
 
+#### Phase 015 Completion (2025-11-18)
+
+**What Was Delivered**:
+- Real E2E testing with Gmail/Notion (6 automated tests)
+- Enhanced date parser library with 98% accuracy target
+- LLM benchmarking with 5 prompt variations
+- Granular coverage reporting (HTML, XML, JSON)
+- Performance testing framework (13 tests with thresholds)
+- Comprehensive negative testing & fuzzing (35+ tests)
+
+**Test Statistics**:
+- **Total Tests**: 100+ tests across all suites
+- **E2E Tests**: 6 tests (71s runtime)
+- **Performance Tests**: 13 tests (8 unit + 5 integration)
+- **Fuzz Tests**: 23 tests (non-integration)
+- **Error Handling**: 12 tests
+- **API Error Tests**: 18 integration tests
+- **Coverage Target**: 85%+ overall
+
+**Key Test Improvements**:
+1. **Real E2E Testing**: `tests/e2e/test_full_pipeline.py` with production credentials
+2. **Performance Monitoring**: `PerformanceMonitor` context manager with automatic thresholds
+3. **Fuzz Testing**: `FuzzGenerator` with 8 categories and reproducible seeds
+4. **Coverage Reporting**: Separate reports for unit/integration/E2E test suites
+5. **Error Handling**: Systematic negative tests across all components
+
+**Success Metrics Achieved**:
+- ✅ User Story 1: Real E2E testing with Gmail/Notion (100% pass rate)
+- ✅ User Story 2: Date parser with 98% target accuracy
+- ✅ User Story 3: LLM prompt benchmarking suite
+- ✅ User Story 4: Granular coverage reports (HTML, XML, JSON)
+- ✅ User Story 5: Performance testing with formal thresholds
+- ✅ User Story 6: Negative testing & fuzzing (35+ tests)
+
+**Related Documentation**:
+- [Quickstart Guide](/Users/jlim/Projects/CollabIQ/specs/015-test-suite-improvements/quickstart.md) - Test commands and setup
+- [Coverage Reports](/Users/jlim/Projects/CollabIQ/tests/coverage_reports/README.md) - Coverage documentation
+
 ---
 
 ## Next Steps
@@ -1307,8 +1458,8 @@ After running E2E tests with quality metrics:
 
 ---
 
-**Document Version**: 2.0.0
-**Last Updated**: 2025-11-09 (Phase 013 complete)
-**Status**: Production Ready - Multi-LLM & Quality Metrics Complete
+**Document Version**: 2.1.0
+**Last Updated**: 2025-11-18 (Phase 015 complete)
+**Status**: Production Ready - Full Test Suite with E2E, Performance, Fuzz Testing
 
 For questions or issues, see [Troubleshooting](#troubleshooting) or create an issue in the repository.

@@ -25,9 +25,7 @@ from typing import Dict, List, Any
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from collabiq.test_utils.fuzz_generator import (
-    FuzzGenerator,
     FuzzConfig,
-    FuzzCategory,
     generate_fuzz_emails,
     generate_fuzz_extraction_results,
     generate_fuzz_date_strings,
@@ -91,9 +89,7 @@ class FuzzTestRunner:
                 print(f"  Progress: {i + 1}/{count}")
 
         success_rate = results["successes"] / count
-        print(
-            f"  Results: {results['successes']}/{count} success ({success_rate:.1%})"
-        )
+        print(f"  Results: {results['successes']}/{count} success ({success_rate:.1%})")
         print(f"  Errors: {results['errors']}, Crashes: {results['crashes']}")
 
         return results
@@ -145,9 +141,7 @@ class FuzzTestRunner:
                 print(f"  Progress: {i + 1}/{count}")
 
         success_rate = results["successes"] / count if count > 0 else 0
-        print(
-            f"  Results: {results['successes']}/{count} success ({success_rate:.1%})"
-        )
+        print(f"  Results: {results['successes']}/{count} success ({success_rate:.1%})")
         print(f"  Errors: {results['errors']}, Crashes: {results['crashes']}")
 
         return results
@@ -173,9 +167,7 @@ class FuzzTestRunner:
             "error_types": {},
         }
 
-        for i, extraction in enumerate(
-            generate_fuzz_extraction_results(count, config)
-        ):
+        for i, extraction in enumerate(generate_fuzz_extraction_results(count, config)):
             try:
                 # Validate extraction structure
                 if isinstance(extraction, dict):
@@ -207,9 +199,7 @@ class FuzzTestRunner:
                 print(f"  Progress: {i + 1}/{count}")
 
         success_rate = results["successes"] / count
-        print(
-            f"  Results: {results['successes']}/{count} success ({success_rate:.1%})"
-        )
+        print(f"  Results: {results['successes']}/{count} success ({success_rate:.1%})")
         print(f"  Errors: {results['errors']}, Crashes: {results['crashes']}")
 
         return results

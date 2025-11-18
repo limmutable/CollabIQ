@@ -7,11 +7,10 @@ TDD: These tests are written FIRST and should FAIL before implementation.
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from typing import Optional
+from unittest.mock import Mock, AsyncMock
 
 from notion_integrator import NotionWriter
-from llm_provider.types import WriteResult, ExtractedEntitiesWithClassification
+from llm_provider.types import WriteResult
 from tests.fixtures import create_valid_extracted_data
 
 
@@ -292,9 +291,7 @@ class TestNotionWriterContract:
 
         # Verify query was called with correct filter
         mock_notion_integrator.client.query_database.assert_called_once()
-        call_kwargs = (
-            mock_notion_integrator.client.query_database.call_args.kwargs
-        )
+        call_kwargs = mock_notion_integrator.client.query_database.call_args.kwargs
         assert "database_id" in call_kwargs
         assert "filter_conditions" in call_kwargs
 

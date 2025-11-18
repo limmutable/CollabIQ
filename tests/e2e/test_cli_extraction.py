@@ -87,7 +87,9 @@ def test_cli_extract_korean_email():
 
     # All confidence scores should be 0.0-1.0
     for field, score in confidence.items():
-        assert 0.0 <= score <= 1.0, f"Confidence score for {field} out of range: {score}"
+        assert 0.0 <= score <= 1.0, (
+            f"Confidence score for {field} out of range: {score}"
+        )
 
 
 @pytest.mark.skipif(

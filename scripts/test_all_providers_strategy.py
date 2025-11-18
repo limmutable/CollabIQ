@@ -55,7 +55,9 @@ try:
     console.print(f"  Startup: {entities.startup_name}")
     console.print(f"  Partner: {entities.partner_org}")
     console.print(f"  Details: {entities.details[:50]}...")
-    console.print(f"  Avg Confidence: {(entities.confidence.person + entities.confidence.startup + entities.confidence.partner + entities.confidence.details + entities.confidence.date) / 5:.2%}\n")
+    console.print(
+        f"  Avg Confidence: {(entities.confidence.person + entities.confidence.startup + entities.confidence.partner + entities.confidence.details + entities.confidence.date) / 5:.2%}\n"
+    )
 
     # Show quality metrics for ALL providers
     console.print("[bold]Quality Metrics (All Providers):[/bold]\n")

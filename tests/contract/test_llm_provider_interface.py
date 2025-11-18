@@ -12,7 +12,6 @@ Contract Test Cases:
 """
 
 import pytest
-from unittest.mock import Mock
 
 from llm_provider.base import LLMProvider
 from llm_provider.types import ExtractedEntities, ConfidenceScores

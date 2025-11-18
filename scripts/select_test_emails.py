@@ -20,7 +20,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.email_receiver.gmail_receiver import GmailReceiver
-from src.e2e_test.models import E2EE2ETestEmailMetadata, SelectionReason
+from src.e2e_test.models import SelectionReason
 
 
 def main():
@@ -50,13 +50,17 @@ def main():
 
     try:
         # Get credentials paths from environment or defaults
-        credentials_path = Path(os.getenv("GOOGLE_CREDENTIALS_PATH", "credentials.json"))
+        credentials_path = Path(
+            os.getenv("GOOGLE_CREDENTIALS_PATH", "credentials.json")
+        )
         token_path = Path(os.getenv("GMAIL_TOKEN_PATH", "token.json"))
 
         # Check if credentials file exists
         if not credentials_path.exists():
             print(f"ERROR: Gmail credentials file not found: {credentials_path}")
-            print("Please ensure GOOGLE_CREDENTIALS_PATH is set or credentials.json exists")
+            print(
+                "Please ensure GOOGLE_CREDENTIALS_PATH is set or credentials.json exists"
+            )
             sys.exit(1)
 
         # Initialize Gmail receiver
@@ -102,7 +106,7 @@ def main():
                 headers = msg_detail.get("payload", {}).get("headers", [])
                 subject = next(
                     (h["value"] for h in headers if h["name"].lower() == "subject"),
-                    "(No Subject)"
+                    "(No Subject)",
                 )
 
                 # Extract received date from internalDate (milliseconds since epoch)
@@ -120,14 +124,20 @@ def main():
                             body_data = part.get("body", {}).get("data", "")
                             if body_data:
                                 import base64
-                                body_text = base64.urlsafe_b64decode(body_data).decode("utf-8", errors="ignore")
+
+                                body_text = base64.urlsafe_b64decode(body_data).decode(
+                                    "utf-8", errors="ignore"
+                                )
                                 break
                 # Handle single-part messages
                 elif payload.get("mimeType") == "text/plain":
                     body_data = payload.get("body", {}).get("data", "")
                     if body_data:
                         import base64
-                        body_text = base64.urlsafe_b64decode(body_data).decode("utf-8", errors="ignore")
+
+                        body_text = base64.urlsafe_b64decode(body_data).decode(
+                            "utf-8", errors="ignore"
+                        )
 
                 # Detect if email contains Korean text
                 has_korean = any(
@@ -137,7 +147,9 @@ def main():
 
                 # Create metadata using Gmail's internal message ID
                 metadata = E2ETestEmailMetadata(
-                    email_id=msg["id"],  # Use Gmail's internal message ID, not Message-ID header
+                    email_id=msg[
+                        "id"
+                    ],  # Use Gmail's internal message ID, not Message-ID header
                     subject=subject,
                     received_date=received_date.isoformat(),
                     collaboration_type=None,  # Will be detected during processing
@@ -160,11 +172,17 @@ def main():
         with output_path.open("w", encoding="utf-8") as f:
             json.dump(test_emails, f, indent=2, ensure_ascii=False)
 
-        print(f"\nSuccessfully wrote {len(test_emails)} email metadata to {args.output}")
-        print(f"  - Emails with Korean text: {sum(1 for e in test_emails if e['has_korean_text'])}")
-        print(f"  - Emails without Korean: {sum(1 for e in test_emails if not e['has_korean_text'])}")
+        print(
+            f"\nSuccessfully wrote {len(test_emails)} email metadata to {args.output}"
+        )
+        print(
+            f"  - Emails with Korean text: {sum(1 for e in test_emails if e['has_korean_text'])}"
+        )
+        print(
+            f"  - Emails without Korean: {sum(1 for e in test_emails if not e['has_korean_text'])}"
+        )
         print("\nNext step: Run E2E tests with:")
-        print(f"  uv run python scripts/run_e2e_tests.py --all")
+        print("  uv run python scripts/run_e2e_tests.py --all")
 
     except Exception as e:
         print(f"ERROR: Failed to fetch emails: {e}")

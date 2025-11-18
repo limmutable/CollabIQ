@@ -62,9 +62,7 @@ def mock_providers():
 @pytest.fixture
 def orchestrator(mock_providers, orchestration_config, tmp_path):
     """Create LLMOrchestrator for testing."""
-    health_tracker = HealthTracker(
-        data_dir=tmp_path / "health", unhealthy_threshold=3
-    )
+    health_tracker = HealthTracker(data_dir=tmp_path / "health", unhealthy_threshold=3)
 
     return LLMOrchestrator(
         providers=mock_providers,
@@ -103,9 +101,7 @@ class TestOrchestratorBasics:
         """Test that company_context is passed to provider."""
         company_context = "## Companies\n- Company A"
 
-        orchestrator.extract_entities(
-            "test email", company_context=company_context
-        )
+        orchestrator.extract_entities("test email", company_context=company_context)
 
         # Verify company_context was passed
         call_kwargs = mock_providers["gemini"].extract_entities.call_args[1]
@@ -146,14 +142,10 @@ class TestProviderStatus:
         assert gemini_status.total_api_calls == 2
         assert gemini_status.circuit_breaker_state == "closed"
 
-    def test_get_provider_status_reflects_failures(
-        self, orchestrator, mock_providers
-    ):
+    def test_get_provider_status_reflects_failures(self, orchestrator, mock_providers):
         """Test that provider status reflects failures."""
         # Make gemini fail 3 times
-        mock_providers["gemini"].extract_entities.side_effect = LLMAPIError(
-            "API Error"
-        )
+        mock_providers["gemini"].extract_entities.side_effect = LLMAPIError("API Error")
 
         for _ in range(3):
             try:
@@ -197,9 +189,7 @@ class TestProviderTesting:
     ):
         """Test that test_provider returns False for unhealthy provider."""
         # Make gemini fail 3 times to mark it unhealthy
-        mock_providers["gemini"].extract_entities.side_effect = LLMAPIError(
-            "API Error"
-        )
+        mock_providers["gemini"].extract_entities.side_effect = LLMAPIError("API Error")
 
         for _ in range(3):
             try:
@@ -260,10 +250,15 @@ class TestOrchestratorFromConfig:
     ):
         """Test that providers without API keys are skipped."""
         # Configure mock_get_secret_or_env to return None for API keys
-        mock_get_secret_or_env.side_effect = lambda key, default=None: None if "API_KEY" in key else os.getenv(key, default)
+        mock_get_secret_or_env.side_effect = (
+            lambda key, default=None: None
+            if "API_KEY" in key
+            else os.getenv(key, default)
+        )
 
         # Clear settings cache to ensure test isolation
         from config.settings import get_settings
+
         get_settings.cache_clear()
 
         orchestrator = LLMOrchestrator.from_config(

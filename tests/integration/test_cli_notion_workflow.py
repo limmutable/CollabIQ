@@ -54,7 +54,9 @@ def test_notion_verify_test_write_cleanup_workflow():
 
     # If verify failed, the rest of the workflow cannot continue
     if result.exit_code == 1:
-        pytest.skip("Notion verification failed - cannot test workflow without valid connection")
+        pytest.skip(
+            "Notion verification failed - cannot test workflow without valid connection"
+        )
 
     # Step 2: Test write (creates and auto-cleans up a test entry)
     result = runner.invoke(app, ["notion", "test-write"])
@@ -67,7 +69,9 @@ def test_notion_verify_test_write_cleanup_workflow():
     result = runner.invoke(app, ["notion", "cleanup-tests", "--yes"])
 
     # Cleanup should succeed (even if no entries to clean)
-    assert result.exit_code == 0, f"cleanup-tests failed with exit code {result.exit_code}"
+    assert result.exit_code == 0, (
+        f"cleanup-tests failed with exit code {result.exit_code}"
+    )
 
 
 @pytest.mark.integration
@@ -85,6 +89,7 @@ def test_notion_verify_json_output():
 
     # Output should be valid JSON
     import json
+
     try:
         data = json.loads(result.stdout)
         assert "status" in data, "JSON output missing 'status' field"
@@ -109,4 +114,8 @@ def test_notion_schema_display():
     # If successful, should show schema information
     if result.exit_code == 0:
         # Should show property information
-        assert "property" in result.stdout.lower() or "field" in result.stdout.lower() or "type" in result.stdout.lower()
+        assert (
+            "property" in result.stdout.lower()
+            or "field" in result.stdout.lower()
+            or "type" in result.stdout.lower()
+        )

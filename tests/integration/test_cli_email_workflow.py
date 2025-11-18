@@ -4,9 +4,7 @@ Integration tests for CLI email command workflows.
 Tests the interaction between email commands (fetch → clean → list → process).
 """
 
-import json
 import pytest
-from pathlib import Path
 from typer.testing import CliRunner
 from collabiq import app
 

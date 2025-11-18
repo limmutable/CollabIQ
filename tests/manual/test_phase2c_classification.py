@@ -78,7 +78,9 @@ async def main():
 
     # Step 3: Load sample email
     print("Step 3: Loading sample email...")
-    sample_email_path = project_root / "tests" / "fixtures" / "sample_emails" / "sample-001.txt"
+    sample_email_path = (
+        project_root / "tests" / "fixtures" / "sample_emails" / "sample-001.txt"
+    )
     if not sample_email_path.exists():
         print(f"❌ Sample email not found: {sample_email_path}")
         return 1
@@ -119,6 +121,7 @@ async def main():
     except Exception as e:
         print(f"❌ Classification failed: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 
@@ -139,13 +142,23 @@ async def main():
     print(f"  Partner org: {result.partner_org}")
     print(f"  Details: {result.details}")
     print(f"  Date: {result.date}")
-    print(f"  Entity confidence: person={result.confidence.person:.2f}, "
-          f"startup={result.confidence.startup:.2f}, partner={result.confidence.partner:.2f}")
+    print(
+        f"  Entity confidence: person={result.confidence.person:.2f}, "
+        f"startup={result.confidence.startup:.2f}, partner={result.confidence.partner:.2f}"
+    )
     print()
 
     print("🏢 Company Matching (Phase 2b):")
-    print(f"  Matched company ID: {result.matched_company_id[:16]}..." if result.matched_company_id else "  Matched company ID: None")
-    print(f"  Matched partner ID: {result.matched_partner_id[:16]}..." if result.matched_partner_id else "  Matched partner ID: None")
+    print(
+        f"  Matched company ID: {result.matched_company_id[:16]}..."
+        if result.matched_company_id
+        else "  Matched company ID: None"
+    )
+    print(
+        f"  Matched partner ID: {result.matched_partner_id[:16]}..."
+        if result.matched_partner_id
+        else "  Matched partner ID: None"
+    )
     print()
 
     print("🏷️  Type Classification (Phase 2c - Deterministic):")
@@ -176,9 +189,15 @@ async def main():
 
     print("🎯 Confidence Scoring (Phase 2c):")
     needs_review = result.needs_manual_review()
-    review_status = "❌ Manual review required" if needs_review else "✅ Auto-accept (high confidence)"
+    review_status = (
+        "❌ Manual review required"
+        if needs_review
+        else "✅ Auto-accept (high confidence)"
+    )
     print(f"  Manual review needed: {review_status}")
-    print(f"  Overall confidence: type={result.type_confidence:.2f}, intensity={result.intensity_confidence:.2f}")
+    print(
+        f"  Overall confidence: type={result.type_confidence:.2f}, intensity={result.intensity_confidence:.2f}"
+    )
     print()
 
     # Step 7: Demonstrate JSON serialization
@@ -188,7 +207,8 @@ async def main():
     print()
 
     import json
-    result_dict = result.model_dump(mode='json')
+
+    result_dict = result.model_dump(mode="json")
     print(json.dumps(result_dict, indent=2, ensure_ascii=False)[:1000] + "...")
     print()
 

@@ -7,7 +7,6 @@ injection attacks and ensure valid input formats.
 
 import re
 from datetime import datetime
-from typing import Optional
 import typer
 from dateparser import parse as parse_date
 

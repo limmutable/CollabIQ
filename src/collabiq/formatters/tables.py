@@ -90,6 +90,8 @@ def render_table(
     table = create_table(title=title, columns=columns)
 
     for row in data:
-        table.add_row(*[str(row.get(col.get("field", col["name"]), "")) for col in columns])
+        table.add_row(
+            *[str(row.get(col.get("field", col["name"]), "")) for col in columns]
+        )
 
     console.print(table)

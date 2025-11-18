@@ -202,9 +202,7 @@ class TestFieldMapperPersonMatching:
 
         # Assert
         assert "담당자" in properties
-        assert properties["담당자"] == {
-            "people": [{"id": "user456" + "0" * 24}]
-        }
+        assert properties["담당자"] == {"people": [{"id": "user456" + "0" * 24}]}
 
     def test_map_to_notion_properties_skips_people_field_if_no_match(
         self, mock_schema, mock_person_matcher, extracted_data_with_person

@@ -8,7 +8,6 @@ It uses synthetic test data to simulate provider responses and measure accuracy.
 """
 
 import asyncio
-import json
 import random
 import sys
 from datetime import datetime, timezone
@@ -30,9 +29,23 @@ from src.llm_provider.types import ConfidenceScores, ExtractedEntities
 GROUND_TRUTH = [
     {
         "email_id": f"test_{i:03d}",
-        "person_in_charge": "김철수" if i % 3 == 0 else "이영희" if i % 3 == 1 else "박민수",
-        "startup_name": "본봄" if i % 4 == 0 else "브레이크앤컴퍼니" if i % 4 == 1 else "테이블매니저" if i % 4 == 2 else "푸드테크",
-        "partner_org": "신세계인터내셔널" if i % 3 == 0 else "롯데쇼핑" if i % 3 == 1 else "CJ제일제당",
+        "person_in_charge": "김철수"
+        if i % 3 == 0
+        else "이영희"
+        if i % 3 == 1
+        else "박민수",
+        "startup_name": "본봄"
+        if i % 4 == 0
+        else "브레이크앤컴퍼니"
+        if i % 4 == 1
+        else "테이블매니저"
+        if i % 4 == 2
+        else "푸드테크",
+        "partner_org": "신세계인터내셔널"
+        if i % 3 == 0
+        else "롯데쇼핑"
+        if i % 3 == 1
+        else "CJ제일제당",
         "details": f"협업 내용 {i}",
         "date": datetime(2025, 11, (i % 28) + 1, tzinfo=timezone.utc),
     }
@@ -176,7 +189,9 @@ async def benchmark_single_provider(
     return metrics
 
 
-async def benchmark_consensus(ground_truth_list: list[dict[str, Any]]) -> dict[str, float]:
+async def benchmark_consensus(
+    ground_truth_list: list[dict[str, Any]],
+) -> dict[str, float]:
     """Benchmark consensus strategy accuracy.
 
     Args:
@@ -221,7 +236,9 @@ async def benchmark_consensus(ground_truth_list: list[dict[str, Any]]) -> dict[s
             health_tracker.record_success(provider_name, 500.0)
 
         # Merge using consensus
-        merged = strategy._merge_results(provider_results, health_tracker, truth["email_id"])
+        merged = strategy._merge_results(
+            provider_results, health_tracker, truth["email_id"]
+        )
         results.append(merged)
 
     metrics = calculate_accuracy(results, ground_truth_list)
@@ -265,9 +282,7 @@ def main():
     consensus_metrics = asyncio.run(benchmark_consensus(GROUND_TRUTH))
 
     # Calculate improvement
-    improvement = (
-        consensus_metrics["overall_accuracy"] - best_single
-    ) / best_single
+    improvement = (consensus_metrics["overall_accuracy"] - best_single) / best_single
 
     # Print summary
     print(f"\n{'=' * 60}")

@@ -226,7 +226,7 @@ class TestFieldMapperEdgeCases:
             details=special_text,
             collaboration_summary=special_summary,
             person_in_charge="김철수 🧑‍💼",
-            matched_person_id="12345678-1234-5678-1234-567812345678"
+            matched_person_id="12345678-1234-5678-1234-567812345678",
         )
 
         properties = field_mapper.map_to_notion_properties(data)

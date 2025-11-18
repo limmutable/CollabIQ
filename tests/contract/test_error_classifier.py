@@ -19,7 +19,6 @@ import socket
 from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock
 
-import pytest
 
 from error_handling.error_classifier import ErrorClassifier
 from error_handling.models import ErrorCategory
@@ -51,26 +50,31 @@ class MockAPIResponseError(Exception):
 # The error_classifier checks type(exception).__name__ for these names
 class ResourceExhausted(Exception):
     """Mock Gemini ResourceExhausted error."""
+
     pass
 
 
 class DeadlineExceeded(Exception):
     """Mock Gemini DeadlineExceeded error."""
+
     pass
 
 
 class Unauthenticated(Exception):
     """Mock Gemini Unauthenticated error."""
+
     pass
 
 
 class PermissionDenied(Exception):
     """Mock Gemini PermissionDenied error."""
+
     pass
 
 
 class InvalidArgument(Exception):
     """Mock Gemini InvalidArgument error."""
+
     pass
 
 

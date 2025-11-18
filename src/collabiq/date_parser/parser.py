@@ -21,9 +21,7 @@ from collabiq.date_parser.models import DateFormat, DateExtractionResult, Parsed
 from llm_provider.date_utils import parse_date as _parse_date_util
 
 
-def parse_date(
-    date_str: str, reference_date: Optional[datetime] = None
-) -> ParsedDate:
+def parse_date(date_str: str, reference_date: Optional[datetime] = None) -> ParsedDate:
     """Parse date string with format detection and confidence scoring.
 
     Args:

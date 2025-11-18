@@ -30,7 +30,12 @@ def reset_circuit_breakers():
     )
 
     # Reset all global circuit breaker instances to CLOSED state
-    for cb in [gmail_circuit_breaker, gemini_circuit_breaker, notion_circuit_breaker, infisical_circuit_breaker]:
+    for cb in [
+        gmail_circuit_breaker,
+        gemini_circuit_breaker,
+        notion_circuit_breaker,
+        infisical_circuit_breaker,
+    ]:
         cb.state_obj.state = CircuitState.CLOSED
         cb.state_obj.failure_count = 0
         cb.state_obj.success_count = 0
@@ -40,7 +45,12 @@ def reset_circuit_breakers():
     yield
 
     # Clean up after test - reset to CLOSED
-    for cb in [gmail_circuit_breaker, gemini_circuit_breaker, notion_circuit_breaker, infisical_circuit_breaker]:
+    for cb in [
+        gmail_circuit_breaker,
+        gemini_circuit_breaker,
+        notion_circuit_breaker,
+        infisical_circuit_breaker,
+    ]:
         cb.state_obj.state = CircuitState.CLOSED
         cb.state_obj.failure_count = 0
         cb.state_obj.success_count = 0
@@ -69,7 +79,9 @@ def gmail_test_account() -> Optional[dict]:
         None if credentials not configured
     """
     # Get production credentials
-    credentials_path = os.getenv("GOOGLE_CREDENTIALS_PATH") or os.getenv("GMAIL_CREDENTIALS_PATH")
+    credentials_path = os.getenv("GOOGLE_CREDENTIALS_PATH") or os.getenv(
+        "GMAIL_CREDENTIALS_PATH"
+    )
     token_path = os.getenv("GMAIL_TOKEN_PATH")
     email_address = os.getenv("EMAIL_ADDRESS")
 

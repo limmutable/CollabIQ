@@ -9,7 +9,7 @@ Tests the best-match strategy with mocked providers to verify:
 """
 
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 

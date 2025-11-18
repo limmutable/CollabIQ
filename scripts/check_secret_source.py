@@ -15,10 +15,7 @@ import sys
 from pathlib import Path
 
 # Setup logging to see detailed output
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(levelname)s - %(name)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(name)s - %(message)s")
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -49,11 +46,11 @@ def main():
         # Check connection
         client = settings.infisical_client
         if client and client.is_connected():
-            print(f"  - Status: ✅ Connected to Infisical")
+            print("  - Status: ✅ Connected to Infisical")
         else:
-            print(f"  - Status: ⚠️  Not connected (will use .env)")
+            print("  - Status: ⚠️  Not connected (will use .env)")
     else:
-        print(f"  - Status: 📄 Using .env file only")
+        print("  - Status: 📄 Using .env file only")
 
     print()
     print("-" * 70)
@@ -77,7 +74,7 @@ def main():
                 value_preview = value[:30] + "..." if len(value) > 30 else value
                 print(f"  ✓ Found: {value_preview}")
             else:
-                print(f"  ⚠️  Not found")
+                print("  ⚠️  Not found")
         except Exception as e:
             print(f"  ❌ Error: {e}")
         print()
@@ -111,7 +108,9 @@ def main():
         print()
         print("  To enable Infisical:")
         print("    1. Set INFISICAL_ENABLED=true in .env")
-        print("    2. Configure Infisical credentials (see docs/setup/INFISICAL_SETUP.md)")
+        print(
+            "    2. Configure Infisical credentials (see docs/setup/INFISICAL_SETUP.md)"
+        )
         print("    3. Run: uv run python tests/manual/test_infisical_connection.py")
 
     print()

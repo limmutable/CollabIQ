@@ -179,7 +179,11 @@ class TestClaudeAdapterDateParsing:
         """Test Claude adapter parses Korean dates correctly."""
         # Mock the Claude API response
         mock_message = MagicMock()
-        mock_message.content = [MagicMock(text='{"person_in_charge": "김철수", "startup_name": "본봄", "partner_org": "신세계", "details": "미팅", "date": "2024년 11월 15일"}')]
+        mock_message.content = [
+            MagicMock(
+                text='{"person_in_charge": "김철수", "startup_name": "본봄", "partner_org": "신세계", "details": "미팅", "date": "2024년 11월 15일"}'
+            )
+        ]
         mock_message.usage = MagicMock(input_tokens=100, output_tokens=50)
 
         with patch.object(adapter.client.messages, "create", return_value=mock_message):
@@ -194,7 +198,11 @@ class TestClaudeAdapterDateParsing:
     def test_iso_date_parsing(self, adapter):
         """Test Claude adapter parses ISO dates correctly."""
         mock_message = MagicMock()
-        mock_message.content = [MagicMock(text='{"person_in_charge": "John", "startup_name": "TechCo", "partner_org": "Corp", "details": "Meeting", "date": "2024-11-15"}')]
+        mock_message.content = [
+            MagicMock(
+                text='{"person_in_charge": "John", "startup_name": "TechCo", "partner_org": "Corp", "details": "Meeting", "date": "2024-11-15"}'
+            )
+        ]
         mock_message.usage = MagicMock(input_tokens=100, output_tokens=50)
 
         with patch.object(adapter.client.messages, "create", return_value=mock_message):

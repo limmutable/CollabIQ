@@ -19,7 +19,7 @@ import json
 import logging
 import subprocess
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -90,7 +90,9 @@ def run_cli_extraction(email_file: Path) -> Optional[Dict[str, Any]]:
         )
 
         if result.returncode != 0:
-            logger.error(f"CLI extraction failed for {email_file.name}: {result.stderr}")
+            logger.error(
+                f"CLI extraction failed for {email_file.name}: {result.stderr}"
+            )
             return None
 
         # Parse JSON output
@@ -135,7 +137,9 @@ def compare_exact_field(
         return False, f"Expected '{expected}', got '{actual}'"
 
 
-def compare_details_field(actual: Optional[str], keywords: List[str]) -> Tuple[bool, str, int]:
+def compare_details_field(
+    actual: Optional[str], keywords: List[str]
+) -> Tuple[bool, str, int]:
     """Compare details field using keyword matching.
 
     Args:
@@ -156,7 +160,7 @@ def compare_details_field(actual: Optional[str], keywords: List[str]) -> Tuple[b
     threshold = len(keywords) * 0.6
     is_correct = matched >= threshold
 
-    reason = f"Matched {matched}/{len(keywords)} keywords ({matched/len(keywords)*100:.0f}%)"
+    reason = f"Matched {matched}/{len(keywords)} keywords ({matched / len(keywords) * 100:.0f}%)"
     return is_correct, reason, matched
 
 
@@ -392,7 +396,9 @@ def generate_report(
         field_results = result.get("field_results", {})
         for field_name, field_data in field_results.items():
             field_icon = "✅" if field_data["correct"] else "❌"
-            report_lines.append(f"- {field_icon} **{field_name}**: {field_data['reason']}")
+            report_lines.append(
+                f"- {field_icon} **{field_name}**: {field_data['reason']}"
+            )
 
             if not field_data["correct"]:
                 report_lines.append(
@@ -429,7 +435,9 @@ def generate_report(
             f"- ⚠️  English accuracy ({english_accuracy:.1f}%) is below target (85%). Consider improving few-shot examples for English emails."
         )
     if overall_accuracy >= 85:
-        report_lines.append("- ✅ Overall accuracy meets target. System is ready for MVP.")
+        report_lines.append(
+            "- ✅ Overall accuracy meets target. System is ready for MVP."
+        )
 
     # Check if we have enough test emails
     if len(results) < 30:

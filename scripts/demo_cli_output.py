@@ -4,8 +4,6 @@
 This script shows what the CLI commands will display.
 """
 
-import sys
-from io import StringIO
 from datetime import datetime, timedelta, timezone
 
 from rich.console import Console

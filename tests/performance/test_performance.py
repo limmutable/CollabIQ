@@ -17,12 +17,10 @@ import pytest
 import time
 from pathlib import Path
 from datetime import datetime, UTC
-from typing import Dict, Any
 
 from collabiq.test_utils.performance_monitor import (
     PerformanceMonitor,
     PerformanceThresholds,
-    PerformanceMetrics,
     measure_performance,
     save_metrics,
 )
@@ -66,9 +64,8 @@ class TestEmailProcessingPerformance:
             from email.policy import default
 
             for _ in range(10):
-                msg = message_from_string(
-                    f"Subject: Test\n\n{sample_email_text}",
-                    policy=default
+                message_from_string(
+                    f"Subject: Test\n\n{sample_email_text}", policy=default
                 )
                 monitor.record_item()
 
@@ -76,7 +73,9 @@ class TestEmailProcessingPerformance:
         assert monitor.metrics.duration < 1.0
         assert monitor.metrics.throughput >= 10.0  # 10 emails/second
 
-    def test_email_text_extraction_performance(self, sample_email_text, performance_thresholds):
+    def test_email_text_extraction_performance(
+        self, sample_email_text, performance_thresholds
+    ):
         """Test email text extraction performance."""
         thresholds = PerformanceThresholds(max_processing_time=0.5)
 
@@ -139,10 +138,14 @@ class TestLLMExtractionPerformance:
                 monitor.record_item(success=True)
 
                 # Record custom metrics
-                monitor.record_custom_metric("startup_found", result.get("startup_name") is not None)
-                monitor.record_custom_metric("person_found", result.get("person_in_charge") is not None)
+                monitor.record_custom_metric(
+                    "startup_found", result.get("startup_name") is not None
+                )
+                monitor.record_custom_metric(
+                    "person_found", result.get("person_in_charge") is not None
+                )
 
-            except Exception as e:
+            except Exception:
                 monitor.record_item(success=False)
                 raise
 
@@ -183,7 +186,8 @@ class TestLLMExtractionPerformance:
         metrics_dir.mkdir(parents=True, exist_ok=True)
         save_metrics(
             monitor.metrics,
-            metrics_dir / f"batch_extraction_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
+            metrics_dir
+            / f"batch_extraction_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json",
         )
 
 
@@ -220,9 +224,11 @@ class TestNotionIntegrationPerformance:
                 monitor.record_item(success=True)
 
                 # Record custom metrics
-                monitor.record_custom_metric("schema_fields", len(schema.get("properties", {})))
+                monitor.record_custom_metric(
+                    "schema_fields", len(schema.get("properties", {}))
+                )
 
-            except Exception as e:
+            except Exception:
                 monitor.record_item(success=False)
                 raise
 
@@ -258,7 +264,7 @@ class TestNotionIntegrationPerformance:
                 # Record custom metrics
                 monitor.record_custom_metric("page_id", result.get("id"))
 
-            except Exception as e:
+            except Exception:
                 monitor.record_item(success=False)
                 # Don't raise - write tests may fail due to validation
 
@@ -296,14 +302,16 @@ class TestEndToEndPipelinePerformance:
         self, sample_email_text, pipeline_performance_thresholds
     ):
         """Test full pipeline performance from email to Notion."""
-        with PerformanceMonitor("full_pipeline", pipeline_performance_thresholds) as monitor:
+        with PerformanceMonitor(
+            "full_pipeline", pipeline_performance_thresholds
+        ) as monitor:
             # Step 1: Email parsing
             monitor.record_custom_metric("step_1_start", time.perf_counter())
             from email import message_from_string
             from email.policy import default
-            msg = message_from_string(
-                f"Subject: Test Partnership\n\n{sample_email_text}",
-                policy=default
+
+            message_from_string(
+                f"Subject: Test Partnership\n\n{sample_email_text}", policy=default
             )
             monitor.record_custom_metric("step_1_end", time.perf_counter())
 
@@ -321,7 +329,7 @@ class TestEndToEndPipelinePerformance:
             # Step 3: Notion integration (dry run - no actual write)
             monitor.record_custom_metric("step_3_start", time.perf_counter())
             try:
-                integrator = NotionIntegrator()
+                NotionIntegrator()
                 # Just validate data structure (no write)
                 assert "startup_name" in extraction
                 monitor.record_custom_metric("step_3_end", time.perf_counter())
@@ -334,12 +342,15 @@ class TestEndToEndPipelinePerformance:
         assert monitor.passed, monitor.failure_message
 
         # Calculate step timings
-        step_1_time = monitor.metrics.custom_metrics.get("step_1_end", 0) - \
-                      monitor.metrics.custom_metrics.get("step_1_start", 0)
-        step_2_time = monitor.metrics.custom_metrics.get("step_2_end", 0) - \
-                      monitor.metrics.custom_metrics.get("step_2_start", 0)
-        step_3_time = monitor.metrics.custom_metrics.get("step_3_end", 0) - \
-                      monitor.metrics.custom_metrics.get("step_3_start", 0)
+        step_1_time = monitor.metrics.custom_metrics.get(
+            "step_1_end", 0
+        ) - monitor.metrics.custom_metrics.get("step_1_start", 0)
+        step_2_time = monitor.metrics.custom_metrics.get(
+            "step_2_end", 0
+        ) - monitor.metrics.custom_metrics.get("step_2_start", 0)
+        step_3_time = monitor.metrics.custom_metrics.get(
+            "step_3_end", 0
+        ) - monitor.metrics.custom_metrics.get("step_3_start", 0)
 
         # Validate step timings
         assert step_1_time < 1.0, f"Email parsing too slow: {step_1_time:.2f}s"
@@ -351,7 +362,8 @@ class TestEndToEndPipelinePerformance:
         metrics_dir.mkdir(parents=True, exist_ok=True)
         save_metrics(
             monitor.metrics,
-            metrics_dir / f"full_pipeline_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
+            metrics_dir
+            / f"full_pipeline_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json",
         )
 
 

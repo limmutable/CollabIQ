@@ -34,7 +34,9 @@ from notion_integrator.integrator import NotionIntegrator
 
 async def main():
     parser = argparse.ArgumentParser(description="Test Phase 2b with real emails")
-    parser.add_argument("--limit", type=int, default=5, help="Number of emails to process")
+    parser.add_argument(
+        "--limit", type=int, default=5, help="Number of emails to process"
+    )
     args = parser.parse_args()
 
     # Initialize settings
@@ -50,8 +52,7 @@ async def main():
 
     credentials_path = settings.get_gmail_credentials_path()
     gmail_receiver = GmailReceiver(
-        credentials_path=credentials_path,
-        token_path=settings.gmail_token_path
+        credentials_path=credentials_path, token_path=settings.gmail_token_path
     )
     gmail_receiver.connect()
 
@@ -62,10 +63,10 @@ async def main():
     )
     notion_integrator = NotionIntegrator()
 
-    print(f"✓ GmailReceiver initialized and connected")
-    print(f"✓ ContentNormalizer initialized")
+    print("✓ GmailReceiver initialized and connected")
+    print("✓ ContentNormalizer initialized")
     print(f"✓ GeminiAdapter initialized (model: {settings.gemini_model})")
-    print(f"✓ NotionIntegrator initialized")
+    print("✓ NotionIntegrator initialized")
     print()
 
     # Step 2: Fetch company data from Notion
@@ -77,7 +78,7 @@ async def main():
         formatted_data = await notion_integrator.format_for_llm(companies_db_id)
         company_context = formatted_data.summary_markdown
 
-        print(f"✓ Fetched companies from Notion")
+        print("✓ Fetched companies from Notion")
         print(f"✓ Formatted as LLM-ready markdown ({len(company_context)} chars)")
         print()
 
@@ -85,7 +86,9 @@ async def main():
         print("Company Database Summary:")
         print(f"  - Total: {formatted_data.metadata.total_companies}")
         print(f"  - Portfolio: {formatted_data.metadata.portfolio_company_count}")
-        print(f"  - SSG Affiliates: {formatted_data.metadata.shinsegae_affiliate_count}")
+        print(
+            f"  - SSG Affiliates: {formatted_data.metadata.shinsegae_affiliate_count}"
+        )
         print()
 
     except Exception as e:
@@ -163,15 +166,25 @@ async def main():
         # Extract entities WITH company matching (Phase 2b)
         print("Phase 2b: Extracting entities WITH company matching...")
         try:
-            entities_with_match = gemini_adapter.extract_entities(cleaned_text, company_context=company_context)
+            entities_with_match = gemini_adapter.extract_entities(
+                cleaned_text, company_context=company_context
+            )
 
             print(f"  담당자: {entities_with_match.person_in_charge or 'N/A'}")
             print(f"  스타트업명: {entities_with_match.startup_name or 'N/A'}")
-            print(f"    → Matched ID: {entities_with_match.matched_company_id or 'None'}")
-            print(f"    → Confidence: {entities_with_match.startup_match_confidence or 'N/A'}")
+            print(
+                f"    → Matched ID: {entities_with_match.matched_company_id or 'None'}"
+            )
+            print(
+                f"    → Confidence: {entities_with_match.startup_match_confidence or 'N/A'}"
+            )
             print(f"  협업기관: {entities_with_match.partner_org or 'N/A'}")
-            print(f"    → Matched ID: {entities_with_match.matched_partner_id or 'None'}")
-            print(f"    → Confidence: {entities_with_match.partner_match_confidence or 'N/A'}")
+            print(
+                f"    → Matched ID: {entities_with_match.matched_partner_id or 'None'}"
+            )
+            print(
+                f"    → Confidence: {entities_with_match.partner_match_confidence or 'N/A'}"
+            )
             print(f"  날짜: {entities_with_match.date or 'N/A'}")
             print()
 
@@ -202,23 +215,25 @@ async def main():
                 else:
                     partner_match_quality = "Low (<0.70)"
 
-            print(f"Match Quality Analysis:")
+            print("Match Quality Analysis:")
             print(f"  Startup: {startup_match_quality}")
             print(f"  Partner: {partner_match_quality}")
 
             # Store result
-            results.append({
-                "email_id": msg_id,
-                "subject": subject,
-                "startup_name": entities_with_match.startup_name,
-                "matched_company_id": entities_with_match.matched_company_id,
-                "startup_confidence": entities_with_match.startup_match_confidence,
-                "startup_match_quality": startup_match_quality,
-                "partner_org": entities_with_match.partner_org,
-                "matched_partner_id": entities_with_match.matched_partner_id,
-                "partner_confidence": entities_with_match.partner_match_confidence,
-                "partner_match_quality": partner_match_quality,
-            })
+            results.append(
+                {
+                    "email_id": msg_id,
+                    "subject": subject,
+                    "startup_name": entities_with_match.startup_name,
+                    "matched_company_id": entities_with_match.matched_company_id,
+                    "startup_confidence": entities_with_match.startup_match_confidence,
+                    "startup_match_quality": startup_match_quality,
+                    "partner_org": entities_with_match.partner_org,
+                    "matched_partner_id": entities_with_match.matched_partner_id,
+                    "partner_confidence": entities_with_match.partner_match_confidence,
+                    "partner_match_quality": partner_match_quality,
+                }
+            )
 
         except Exception as e:
             print(f"  ✗ Matching error: {e}")
@@ -237,14 +252,30 @@ async def main():
         total = len(results)
         startup_matches = sum(1 for r in results if r["matched_company_id"])
         partner_matches = sum(1 for r in results if r["matched_partner_id"])
-        high_confidence_startup = sum(1 for r in results if r["startup_confidence"] and r["startup_confidence"] >= 0.90)
-        high_confidence_partner = sum(1 for r in results if r["partner_confidence"] and r["partner_confidence"] >= 0.90)
+        high_confidence_startup = sum(
+            1
+            for r in results
+            if r["startup_confidence"] and r["startup_confidence"] >= 0.90
+        )
+        high_confidence_partner = sum(
+            1
+            for r in results
+            if r["partner_confidence"] and r["partner_confidence"] >= 0.90
+        )
 
         print(f"Total emails processed: {total}")
-        print(f"Startup matches: {startup_matches}/{total} ({startup_matches/total*100:.1f}%)")
-        print(f"  - High confidence (≥0.90): {high_confidence_startup}/{startup_matches if startup_matches > 0 else 1}")
-        print(f"Partner matches: {partner_matches}/{total} ({partner_matches/total*100:.1f}%)")
-        print(f"  - High confidence (≥0.90): {high_confidence_partner}/{partner_matches if partner_matches > 0 else 1}")
+        print(
+            f"Startup matches: {startup_matches}/{total} ({startup_matches / total * 100:.1f}%)"
+        )
+        print(
+            f"  - High confidence (≥0.90): {high_confidence_startup}/{startup_matches if startup_matches > 0 else 1}"
+        )
+        print(
+            f"Partner matches: {partner_matches}/{total} ({partner_matches / total * 100:.1f}%)"
+        )
+        print(
+            f"  - High confidence (≥0.90): {high_confidence_partner}/{partner_matches if partner_matches > 0 else 1}"
+        )
         print()
 
         # Match quality distribution
@@ -252,14 +283,26 @@ async def main():
         startup_qualities = [r["startup_match_quality"] for r in results]
         partner_qualities = [r["partner_match_quality"] for r in results]
 
-        for quality in ["Exact", "Normalized", "Semantic", "Fuzzy", "Low (<0.70)", "None"]:
+        for quality in [
+            "Exact",
+            "Normalized",
+            "Semantic",
+            "Fuzzy",
+            "Low (<0.70)",
+            "None",
+        ]:
             startup_count = startup_qualities.count(quality)
             partner_count = partner_qualities.count(quality)
             if startup_count > 0 or partner_count > 0:
-                print(f"  {quality}: {startup_count} startups, {partner_count} partners")
+                print(
+                    f"  {quality}: {startup_count} startups, {partner_count} partners"
+                )
 
         # Save results
-        output_file = Path("data/test_results") / f"phase2b_real_emails_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        output_file = (
+            Path("data/test_results")
+            / f"phase2b_real_emails_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
         with open(output_file, "w", encoding="utf-8") as f:

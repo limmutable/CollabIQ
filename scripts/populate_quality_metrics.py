@@ -15,7 +15,6 @@ Usage:
 
 import argparse
 import sys
-from pathlib import Path
 
 from llm_orchestrator.orchestrator import LLMOrchestrator
 from llm_orchestrator.types import OrchestrationConfig
@@ -91,7 +90,9 @@ def main():
 
     args = parser.parse_args()
 
-    console.print("\n[bold cyan]Populating Quality Metrics for All Providers[/bold cyan]\n")
+    console.print(
+        "\n[bold cyan]Populating Quality Metrics for All Providers[/bold cyan]\n"
+    )
     console.print(f"Testing providers: [cyan]{', '.join(args.providers)}[/cyan]")
     console.print(f"Processing [cyan]{args.email_count}[/cyan] test emails\n")
 
@@ -177,9 +178,10 @@ def main():
         failed = sum(1 for r in provider_results if not r["success"])
 
         if successful > 0:
-            avg_conf = sum(
-                r["avg_confidence"] for r in provider_results if r["success"]
-            ) / successful
+            avg_conf = (
+                sum(r["avg_confidence"] for r in provider_results if r["success"])
+                / successful
+            )
             avg_conf_str = f"{avg_conf:.2%}"
         else:
             avg_conf_str = "N/A"
@@ -250,9 +252,7 @@ def main():
     console.print(
         "2. Enable quality routing: [cyan]collabiq llm set-quality-routing --enabled[/cyan]"
     )
-    console.print(
-        "3. Test routing: [cyan]collabiq llm test \"your email text\"[/cyan]\n"
-    )
+    console.print('3. Test routing: [cyan]collabiq llm test "your email text"[/cyan]\n')
 
 
 if __name__ == "__main__":

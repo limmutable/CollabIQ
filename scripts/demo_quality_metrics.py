@@ -38,10 +38,11 @@ SAMPLE_EMAIL_2 = """
 감사합니다.
 """
 
+
 def main():
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("PHASE 1: Initial Processing (Priority-Based Routing)")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     # Create orchestrator with quality routing DISABLED
     config = OrchestrationConfig(
@@ -52,41 +53,47 @@ def main():
 
     orchestrator = LLMOrchestrator.from_config(config)
 
-    print("Processing 3 emails with priority-based routing (gemini → claude → openai)...\n")
+    print(
+        "Processing 3 emails with priority-based routing (gemini → claude → openai)...\n"
+    )
 
     # Process first email (will use Gemini - first in priority)
     print("Email 1: Processing...")
     entities_1 = orchestrator.extract_entities(
-        email_text=SAMPLE_EMAIL_1,
-        email_id="demo_email_001"
+        email_text=SAMPLE_EMAIL_1, email_id="demo_email_001"
     )
     print(f"✓ Email 1 extracted by: {entities_1.provider_name}")
-    print(f"  Person: {entities_1.person_in_charge}, Startup: {entities_1.startup_name}")
+    print(
+        f"  Person: {entities_1.person_in_charge}, Startup: {entities_1.startup_name}"
+    )
     print(f"  Confidence: {entities_1.confidence.person:.2f}\n")
 
     # Process second email
     print("Email 2: Processing...")
     entities_2 = orchestrator.extract_entities(
-        email_text=SAMPLE_EMAIL_2,
-        email_id="demo_email_002"
+        email_text=SAMPLE_EMAIL_2, email_id="demo_email_002"
     )
     print(f"✓ Email 2 extracted by: {entities_2.provider_name}")
-    print(f"  Person: {entities_2.person_in_charge}, Startup: {entities_2.startup_name}")
+    print(
+        f"  Person: {entities_2.person_in_charge}, Startup: {entities_2.startup_name}"
+    )
     print(f"  Confidence: {entities_2.confidence.person:.2f}\n")
 
     # Process third email
     print("Email 3: Processing...")
     entities_3 = orchestrator.extract_entities(
         email_text=SAMPLE_EMAIL_1,  # Reuse email
-        email_id="demo_email_003"
+        email_id="demo_email_003",
     )
     print(f"✓ Email 3 extracted by: {entities_3.provider_name}")
-    print(f"  Person: {entities_3.person_in_charge}, Startup: {entities_3.startup_name}")
+    print(
+        f"  Person: {entities_3.person_in_charge}, Startup: {entities_3.startup_name}"
+    )
     print(f"  Confidence: {entities_3.confidence.person:.2f}\n")
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("PHASE 2: Quality Metrics Summary")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     # Get quality metrics
     quality_metrics = orchestrator.quality_tracker.get_all_metrics()
@@ -101,9 +108,9 @@ def main():
             print(f"  Validation Success: {metrics.validation_success_rate:.1f}%")
             print()
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("PHASE 3: Provider Comparison")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     # Compare providers
     try:
@@ -113,15 +120,19 @@ def main():
 
         print("Quality Rankings:")
         for ranking in comparison.provider_rankings:
-            print(f"  {ranking['rank']}. {ranking['provider_name'].upper()}: "
-                  f"Quality Score = {ranking['quality_score']:.3f}")
+            print(
+                f"  {ranking['rank']}. {ranking['provider_name'].upper()}: "
+                f"Quality Score = {ranking['quality_score']:.3f}"
+            )
 
         print("\nValue Rankings (Quality per Dollar):")
         for ranking in comparison.quality_to_cost_rankings:
-            is_recommended = ranking['provider_name'] == comparison.recommended_provider
+            is_recommended = ranking["provider_name"] == comparison.recommended_provider
             marker = " ✓ RECOMMENDED" if is_recommended else ""
-            print(f"  {ranking['rank']}. {ranking['provider_name'].upper()}: "
-                  f"Value Score = {ranking['value_score']:.3f}{marker}")
+            print(
+                f"  {ranking['rank']}. {ranking['provider_name'].upper()}: "
+                f"Value Score = {ranking['value_score']:.3f}{marker}"
+            )
 
         print(f"\nRecommendation: {comparison.recommended_provider.upper()}")
         print(f"Reason: {comparison.recommendation_reason}")
@@ -129,9 +140,9 @@ def main():
     except ValueError as e:
         print(f"Cannot compare yet: {e}")
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("PHASE 4: Quality-Based Routing (Re-process with highest quality provider)")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     # Create new orchestrator with quality routing ENABLED
     config_with_quality = OrchestrationConfig(
@@ -143,7 +154,9 @@ def main():
     orchestrator_quality = LLMOrchestrator.from_config(config_with_quality)
 
     # Copy existing metrics to new orchestrator
-    orchestrator_quality.quality_tracker.metrics = orchestrator.quality_tracker.metrics.copy()
+    orchestrator_quality.quality_tracker.metrics = (
+        orchestrator.quality_tracker.metrics.copy()
+    )
     orchestrator_quality.cost_tracker.metrics = orchestrator.cost_tracker.metrics.copy()
 
     print("Quality routing is now ENABLED")
@@ -152,24 +165,33 @@ def main():
     # Process new email with quality routing
     print("Email 4: Processing with quality-based routing...")
     entities_4 = orchestrator_quality.extract_entities(
-        email_text=SAMPLE_EMAIL_2,
-        email_id="demo_email_004"
+        email_text=SAMPLE_EMAIL_2, email_id="demo_email_004"
     )
-    print(f"✓ Email 4 extracted by: {entities_4.provider_name} (selected by quality score)")
-    print(f"  Person: {entities_4.person_in_charge}, Startup: {entities_4.startup_name}")
+    print(
+        f"✓ Email 4 extracted by: {entities_4.provider_name} (selected by quality score)"
+    )
+    print(
+        f"  Person: {entities_4.person_in_charge}, Startup: {entities_4.startup_name}"
+    )
     print(f"  Confidence: {entities_4.confidence.person:.2f}\n")
 
     # Show which provider was selected by quality
     available_providers = orchestrator_quality.get_available_providers()
-    selected_by_quality = orchestrator_quality.quality_tracker.select_provider_by_quality(
-        available_providers
+    selected_by_quality = (
+        orchestrator_quality.quality_tracker.select_provider_by_quality(
+            available_providers
+        )
     )
-    print(f"Quality-based selection: {selected_by_quality.upper() if selected_by_quality else 'None'}")
-    print(f"Priority-based would have selected: {config_with_quality.provider_priority[0].upper()}\n")
+    print(
+        f"Quality-based selection: {selected_by_quality.upper() if selected_by_quality else 'None'}"
+    )
+    print(
+        f"Priority-based would have selected: {config_with_quality.provider_priority[0].upper()}\n"
+    )
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("DEMONSTRATION COMPLETE")
-    print("="*80)
+    print("=" * 80)
     print("\nKey Features Demonstrated:")
     print("✓ Quality metrics tracking (confidence, completeness, validation)")
     print("✓ Provider comparison (quality score + value score)")
@@ -180,6 +202,7 @@ def main():
     print("- Run: collabiq llm compare")
     print("- Run: collabiq llm compare --detailed")
     print("- Run: collabiq llm set-quality-routing --enable")
+
 
 if __name__ == "__main__":
     main()

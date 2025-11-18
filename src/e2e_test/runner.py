@@ -79,7 +79,7 @@ class E2ERunner:
 
                 self.gmail_receiver = GmailReceiver(
                     credentials_path=PathLib("credentials.json"),
-                    token_path=PathLib("token.json")
+                    token_path=PathLib("token.json"),
                 )
                 # Connect to Gmail API
                 self.gmail_receiver.connect()
@@ -131,11 +131,17 @@ class E2ERunner:
                 settings = get_settings()
 
                 # Get database IDs from Infisical (with .env fallback)
-                collabiq_db_id = settings.get_secret_or_env("NOTION_DATABASE_ID_COLLABIQ")
-                companies_db_id = settings.get_secret_or_env("NOTION_DATABASE_ID_COMPANIES")
+                collabiq_db_id = settings.get_secret_or_env(
+                    "NOTION_DATABASE_ID_COLLABIQ"
+                )
+                companies_db_id = settings.get_secret_or_env(
+                    "NOTION_DATABASE_ID_COMPANIES"
+                )
 
                 if not collabiq_db_id:
-                    raise ValueError("NOTION_DATABASE_ID_COLLABIQ not found in Infisical or .env")
+                    raise ValueError(
+                        "NOTION_DATABASE_ID_COLLABIQ not found in Infisical or .env"
+                    )
 
                 # Initialize Notion components
                 notion_integrator = NotionIntegrator()
@@ -146,7 +152,9 @@ class E2ERunner:
                     duplicate_behavior="skip",
                     companies_db_id=companies_db_id,
                 )
-                logger.info(f"Auto-initialized NotionWriter for production mode (companies_db_id={'set' if companies_db_id else 'not set'})")
+                logger.info(
+                    f"Auto-initialized NotionWriter for production mode (companies_db_id={'set' if companies_db_id else 'not set'})"
+                )
             except Exception as e:
                 logger.warning(f"Failed to auto-initialize NotionWriter: {str(e)}")
                 self.notion_writer = None
@@ -502,14 +510,18 @@ class E2ERunner:
             )
 
             # Log provider selection if available
-            if hasattr(entities, 'provider_name'):
+            if hasattr(entities, "provider_name"):
                 logger.info(f"Entities extracted by provider: {entities.provider_name}")
 
             # Log quality metrics if quality tracker is available
             if self.llm_orchestrator.quality_tracker:
                 try:
-                    all_metrics = self.llm_orchestrator.quality_tracker.get_all_metrics()
-                    logger.debug(f"Quality metrics available for {len(all_metrics)} providers")
+                    all_metrics = (
+                        self.llm_orchestrator.quality_tracker.get_all_metrics()
+                    )
+                    logger.debug(
+                        f"Quality metrics available for {len(all_metrics)} providers"
+                    )
                 except Exception as metrics_error:
                     logger.debug(f"Could not retrieve quality metrics: {metrics_error}")
 
@@ -560,6 +572,7 @@ class E2ERunner:
                 # Preserve confidence scores and email_id from original extraction
                 # Need to convert date string back to datetime for Pydantic model
                 from datetime import datetime as dt
+
                 date_value = entities.get("date")
                 if isinstance(date_value, str):
                     try:
@@ -580,6 +593,7 @@ class E2ERunner:
             # Classify using ClassificationService
             # This would require async implementation in practice
             from datetime import datetime as dt
+
             date_value = entities.get("date")
             if isinstance(date_value, str):
                 try:
@@ -821,7 +835,9 @@ class E2ERunner:
         except Exception as e:
             logger.error(f"Failed to save quality metrics report: {e}")
 
-    def _save_extraction(self, run_id: str, email_id: str, entities_dict: dict, entities_model):
+    def _save_extraction(
+        self, run_id: str, email_id: str, entities_dict: dict, entities_model
+    ):
         """Save extracted entities to file for later analysis.
 
         Args:
@@ -845,9 +861,11 @@ class E2ERunner:
                 "details": entities_model.confidence.details,
                 "date": entities_model.confidence.date,
             },
-            "provider_name": getattr(entities_model, 'provider_name', 'unknown'),
+            "provider_name": getattr(entities_model, "provider_name", "unknown"),
             "email_id": email_id,
-            "extracted_at": str(entities_model.extracted_at) if hasattr(entities_model, 'extracted_at') else None,
+            "extracted_at": str(entities_model.extracted_at)
+            if hasattr(entities_model, "extracted_at")
+            else None,
         }
 
         with extraction_file.open("w", encoding="utf-8") as f:

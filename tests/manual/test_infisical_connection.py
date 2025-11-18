@@ -47,14 +47,22 @@ def test_configuration():
 
     settings = get_settings()
 
-    print(f"✓ Settings loaded successfully")
+    print("✓ Settings loaded successfully")
     print(f"  - Infisical Enabled: {settings.infisical_enabled}")
     print(f"  - Infisical Host: {settings.infisical_host}")
     print(f"  - Project ID: {settings.infisical_project_id}")
     print(f"  - Environment: {settings.infisical_environment}")
     print(f"  - Cache TTL: {settings.infisical_cache_ttl}s")
-    print(f"  - Client ID: {settings.infisical_client_id[:20]}..." if settings.infisical_client_id else "  - Client ID: None")
-    print(f"  - Client Secret: {'*' * 20}..." if settings.infisical_client_secret else "  - Client Secret: None")
+    print(
+        f"  - Client ID: {settings.infisical_client_id[:20]}..."
+        if settings.infisical_client_id
+        else "  - Client ID: None"
+    )
+    print(
+        f"  - Client Secret: {'*' * 20}..."
+        if settings.infisical_client_secret
+        else "  - Client Secret: None"
+    )
 
     if not settings.infisical_enabled:
         print("\n⚠️  WARNING: INFISICAL_ENABLED=false")
@@ -136,14 +144,21 @@ def test_list_secrets(settings):
         print(f"✓ Retrieved {len(secrets)} secrets from Infisical:")
         print()
         for key in sorted(secrets.keys()):
-            value_preview = secrets[key][:20] + "..." if len(secrets[key]) > 20 else secrets[key]
+            value_preview = (
+                secrets[key][:20] + "..." if len(secrets[key]) > 20 else secrets[key]
+            )
             print(f"  - {key}: {value_preview}")
 
         return True
 
     except InfisicalConnectionError as e:
         error_msg = str(e)
-        if "401" in error_msg or "Token missing" in error_msg or "404" in error_msg or "not found" in error_msg.lower():
+        if (
+            "401" in error_msg
+            or "Token missing" in error_msg
+            or "404" in error_msg
+            or "not found" in error_msg.lower()
+        ):
             print(f"⚠️  LIST SECRETS ERROR: {e}")
             print()
             print("This is a known issue with the Infisical SDK list_secrets() method.")
@@ -157,7 +172,12 @@ def test_list_secrets(settings):
             return False
     except Exception as e:
         error_msg = str(e)
-        if "401" in error_msg or "Token missing" in error_msg or "404" in error_msg or "not found" in error_msg.lower():
+        if (
+            "401" in error_msg
+            or "Token missing" in error_msg
+            or "404" in error_msg
+            or "not found" in error_msg.lower()
+        ):
             print(f"⚠️  LIST SECRETS ERROR: {e}")
             print()
             print("This is a known issue with the Infisical SDK list_secrets() method.")
@@ -192,7 +212,7 @@ def test_get_specific_secret(settings, secret_key: str = "GEMINI_API_KEY"):
         print(f"❌ SECRET NOT FOUND: {e}")
         print(f"\nTip: Add '{secret_key}' to your Infisical project:")
         print(f"  Environment: {settings.infisical_environment}")
-        print(f"  Path: /")
+        print("  Path: /")
         return False
     except Exception as e:
         print(f"❌ ERROR: {e}")
@@ -234,12 +254,13 @@ def test_fallback_behavior(settings):
     try:
         # Try to get a secret that likely doesn't exist in Infisical
         import os
+
         test_key = "TEST_FALLBACK_KEY"
         os.environ[test_key] = "test-value-from-env"
 
         value = settings.get_secret_or_env(test_key)
         if value == "test-value-from-env":
-            print(f"   ✓ Fallback to .env working correctly")
+            print("   ✓ Fallback to .env working correctly")
         else:
             print(f"   ⚠️  Unexpected value: {value}")
 
@@ -309,7 +330,9 @@ def main():
         print("Your Infisical integration is working correctly!")
         print()
         print("Next steps:")
-        print("  1. Add all required secrets to Infisical (GEMINI_API_KEY, NOTION_API_KEY, etc.)")
+        print(
+            "  1. Add all required secrets to Infisical (GEMINI_API_KEY, NOTION_API_KEY, etc.)"
+        )
         print("  2. Test in production environment: INFISICAL_ENVIRONMENT=production")
         print("  3. Update your application code to use settings.get_secret_or_env()")
         sys.exit(0)

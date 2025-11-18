@@ -593,7 +593,9 @@ class ConsensusStrategy:
             details_candidates.append(
                 (entities.details, entities.confidence.details, success_rate)
             )
-            date_candidates.append((entities.date, entities.confidence.date, success_rate))
+            date_candidates.append(
+                (entities.date, entities.confidence.date, success_rate)
+            )
 
         # Perform weighted voting for each field
         person_value = weighted_vote(

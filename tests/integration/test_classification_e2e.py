@@ -74,11 +74,14 @@ class TestClassificationE2E:
 
         # Mock intensity classification (Gemini API response)
         import json
-        mock_intensity_response = json.dumps({
-            "intensity": "협력",
-            "confidence": 0.92,
-            "reasoning": "PoC 킥오프 미팅과 파일럿 테스트 계획이 논의되어 협력 단계로 분류"
-        })
+
+        mock_intensity_response = json.dumps(
+            {
+                "intensity": "협력",
+                "confidence": 0.92,
+                "reasoning": "PoC 킥오프 미팅과 파일럿 테스트 계획이 논의되어 협력 단계로 분류",
+            }
+        )
         mock_gemini._call_with_retry = Mock(return_value=mock_intensity_response)
         mock_gemini._call_gemini_api = Mock()
 
@@ -106,7 +109,9 @@ class TestClassificationE2E:
         assert result.collaboration_intensity == "협력"
         assert result.intensity_confidence == 0.92
         assert result.intensity_reasoning is not None
-        assert "협력" in result.intensity_reasoning or "PoC" in result.intensity_reasoning
+        assert (
+            "협력" in result.intensity_reasoning or "PoC" in result.intensity_reasoning
+        )
 
         # Assertions for extracted entities
         assert result.startup_name == "브레이크앤컴퍼니"
@@ -139,7 +144,9 @@ class TestClassificationE2E:
         option_d = Mock()
         option_d.name = "[D]Other"
         mock_schema.properties = {
-            "협업형태": Mock(type="select", options=[option_a, option_b, option_c, option_d])
+            "협업형태": Mock(
+                type="select", options=[option_a, option_b, option_c, option_d]
+            )
         }
         mock_notion.discover_database_schema.return_value = mock_schema
 
@@ -161,11 +168,13 @@ class TestClassificationE2E:
         )
 
         # Mock intensity classification - should return "투자"
-        mock_intensity_response = json.dumps({
-            "intensity": "투자",
-            "confidence": 0.95,
-            "reasoning": "시리즈 A 투자 유치 성공이 명시되어 투자 단계로 분류"
-        })
+        mock_intensity_response = json.dumps(
+            {
+                "intensity": "투자",
+                "confidence": 0.95,
+                "reasoning": "시리즈 A 투자 유치 성공이 명시되어 투자 단계로 분류",
+            }
+        )
         mock_gemini._call_with_retry = Mock(return_value=mock_intensity_response)
         mock_gemini._call_gemini_api = Mock()
 
@@ -220,7 +229,9 @@ class TestClassificationE2E:
         option_d = Mock()
         option_d.name = "[D]Other"
         mock_schema.properties = {
-            "협업형태": Mock(type="select", options=[option_a, option_b, option_c, option_d])
+            "협업형태": Mock(
+                type="select", options=[option_a, option_b, option_c, option_d]
+            )
         }
         mock_notion.discover_database_schema.return_value = mock_schema
 
@@ -242,11 +253,13 @@ class TestClassificationE2E:
         )
 
         # Mock intensity classification - should return "이해"
-        mock_intensity_response = json.dumps({
-            "intensity": "이해",
-            "confidence": 0.88,
-            "reasoning": "첫 미팅과 협업 가능성 논의로 이해/탐색 단계로 분류"
-        })
+        mock_intensity_response = json.dumps(
+            {
+                "intensity": "이해",
+                "confidence": 0.88,
+                "reasoning": "첫 미팅과 협업 가능성 논의로 이해/탐색 단계로 분류",
+            }
+        )
         mock_gemini._call_with_retry = Mock(return_value=mock_intensity_response)
         mock_gemini._call_gemini_api = Mock()
 

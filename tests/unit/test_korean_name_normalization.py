@@ -169,7 +169,7 @@ class TestEdgeCases:
         """Test: Different Unicode whitespace characters are trimmed."""
         # Various Unicode whitespace characters
         assert normalize_company_name("\u0020웨이크") == "웨이크"  # Regular space
-        assert normalize_company_name("\u00A0웨이크") == "웨이크"  # Non-breaking space
+        assert normalize_company_name("\u00a0웨이크") == "웨이크"  # Non-breaking space
         # Note: Python's str.strip() handles these automatically
 
 

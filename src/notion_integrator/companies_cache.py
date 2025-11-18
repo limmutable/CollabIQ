@@ -18,7 +18,6 @@ Usage:
     >>> await cache.refresh()  # Force refresh
 """
 
-import logging
 from typing import List, Optional, Tuple
 
 from .cache import CacheManager
@@ -309,8 +308,7 @@ class CompaniesCache:
         try:
             # Convert to cache format: list of {page_id, name} dicts
             cache_data = [
-                {"page_id": page_id, "name": name}
-                for page_id, name in companies
+                {"page_id": page_id, "name": name} for page_id, name in companies
             ]
 
             # Use existing CacheManager infrastructure

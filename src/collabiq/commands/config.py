@@ -16,21 +16,17 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import typer
-from rich.console import Console # Import Console directly
-from rich.panel import Panel
-from rich.table import Table
+from rich.console import Console  # Import Console directly
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from .common import console
 from collabiq.formatters.json_output import output_json, format_json_error
 from collabiq.formatters.tables import create_table, render_table
 from collabiq.utils.logging import log_cli_operation, log_cli_error
 
 # Import config management
 from config.settings import get_settings
-from config.infisical_client import InfisicalClient
 
 config_app = typer.Typer(
     name="config",
@@ -228,67 +224,83 @@ def validate_required_settings(settings: Any) -> Tuple[bool, List[Dict[str, str]
     # Gmail requirements
     gmail_creds = settings.get_gmail_credentials_path()
     if not gmail_creds.exists():
-        errors.append({
-            "key": "GMAIL_CREDENTIALS_FILE",
-            "issue": f"File not found: {gmail_creds}",
-            "fix": "Download OAuth2 credentials from Google Cloud Console",
-        })
+        errors.append(
+            {
+                "key": "GMAIL_CREDENTIALS_FILE",
+                "issue": f"File not found: {gmail_creds}",
+                "fix": "Download OAuth2 credentials from Google Cloud Console",
+            }
+        )
 
     # Notion requirements
     notion_key = settings.get_secret_or_env("NOTION_API_KEY")
     if not notion_key:
-        errors.append({
-            "key": "NOTION_API_KEY",
-            "issue": "Not set",
-            "fix": "Set NOTION_API_KEY in .env or Infisical",
-        })
+        errors.append(
+            {
+                "key": "NOTION_API_KEY",
+                "issue": "Not set",
+                "fix": "Set NOTION_API_KEY in .env or Infisical",
+            }
+        )
 
     collabiq_db = settings.notion_database_id_collabiq
     if not collabiq_db:
-        errors.append({
-            "key": "NOTION_DATABASE_ID_COLLABIQ",
-            "issue": "Not set",
-            "fix": "Set NOTION_DATABASE_ID_COLLABIQ in .env or Infisical",
-        })
+        errors.append(
+            {
+                "key": "NOTION_DATABASE_ID_COLLABIQ",
+                "issue": "Not set",
+                "fix": "Set NOTION_DATABASE_ID_COLLABIQ in .env or Infisical",
+            }
+        )
 
     # Gemini requirements
     gemini_key = settings.get_secret_or_env("GEMINI_API_KEY")
     if not gemini_key:
-        errors.append({
-            "key": "GEMINI_API_KEY",
-            "issue": "Not set",
-            "fix": "Set GEMINI_API_KEY in .env or Infisical",
-        })
+        errors.append(
+            {
+                "key": "GEMINI_API_KEY",
+                "issue": "Not set",
+                "fix": "Set GEMINI_API_KEY in .env or Infisical",
+            }
+        )
 
     # Infisical validation (if enabled)
     if settings.infisical_enabled:
         if not settings.infisical_project_id:
-            errors.append({
-                "key": "INFISICAL_PROJECT_ID",
-                "issue": "Required when Infisical is enabled",
-                "fix": "Set INFISICAL_PROJECT_ID or disable Infisical",
-            })
+            errors.append(
+                {
+                    "key": "INFISICAL_PROJECT_ID",
+                    "issue": "Required when Infisical is enabled",
+                    "fix": "Set INFISICAL_PROJECT_ID or disable Infisical",
+                }
+            )
 
         if not settings.infisical_environment:
-            errors.append({
-                "key": "INFISICAL_ENVIRONMENT",
-                "issue": "Required when Infisical is enabled",
-                "fix": "Set INFISICAL_ENVIRONMENT to 'development' or 'production'",
-            })
+            errors.append(
+                {
+                    "key": "INFISICAL_ENVIRONMENT",
+                    "issue": "Required when Infisical is enabled",
+                    "fix": "Set INFISICAL_ENVIRONMENT to 'development' or 'production'",
+                }
+            )
 
         if not settings.infisical_client_id:
-            errors.append({
-                "key": "INFISICAL_CLIENT_ID",
-                "issue": "Required when Infisical is enabled",
-                "fix": "Set INFISICAL_CLIENT_ID from Infisical dashboard",
-            })
+            errors.append(
+                {
+                    "key": "INFISICAL_CLIENT_ID",
+                    "issue": "Required when Infisical is enabled",
+                    "fix": "Set INFISICAL_CLIENT_ID from Infisical dashboard",
+                }
+            )
 
         if not settings.infisical_client_secret:
-            errors.append({
-                "key": "INFISICAL_CLIENT_SECRET",
-                "issue": "Required when Infisical is enabled",
-                "fix": "Set INFISICAL_CLIENT_SECRET from Infisical dashboard",
-            })
+            errors.append(
+                {
+                    "key": "INFISICAL_CLIENT_SECRET",
+                    "issue": "Required when Infisical is enabled",
+                    "fix": "Set INFISICAL_CLIENT_SECRET from Infisical dashboard",
+                }
+            )
 
     return len(errors) == 0, errors
 
@@ -313,7 +325,7 @@ def show_config(
         collabiq config show
         collabiq config show --json
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
     try:
         settings = get_settings()
         categories = categorize_config_keys()
@@ -334,11 +346,13 @@ def show_config(
                 display_value = mask_secret(value) if is_secret_key(key) else value
                 source = get_config_source(key, settings)
 
-                category_data.append({
-                    "key": key,
-                    "value": display_value,
-                    "source": source,
-                })
+                category_data.append(
+                    {
+                        "key": key,
+                        "value": display_value,
+                        "source": source,
+                    }
+                )
 
             if category_data:  # Only include categories with values
                 config_data[category] = category_data
@@ -366,7 +380,9 @@ def show_config(
                     table.add_row(
                         item["key"],
                         item["value"],
-                        f"[green]{item['source']}[/green]" if item["source"] == "Infisical" else f"[yellow]{item['source']}[/yellow]"
+                        f"[green]{item['source']}[/green]"
+                        if item["source"] == "Infisical"
+                        else f"[yellow]{item['source']}[/yellow]",
                     )
 
                 render_table(table)
@@ -402,7 +418,7 @@ def validate_config(
         collabiq config validate
         collabiq config validate --json
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
     try:
         settings = get_settings()
         is_valid, errors = validate_required_settings(settings)
@@ -424,9 +440,13 @@ def validate_config(
         else:
             if is_valid:
                 console.print("\n[bold green]✓ Configuration is valid[/bold green]\n")
-                console.print("All required settings are present and properly configured.")
+                console.print(
+                    "All required settings are present and properly configured."
+                )
             else:
-                console.print("\n[bold red]✗ Configuration validation failed[/bold red]\n")
+                console.print(
+                    "\n[bold red]✗ Configuration validation failed[/bold red]\n"
+                )
 
                 # Create validation errors table
                 table = create_table(
@@ -479,7 +499,7 @@ def test_secrets(
         collabiq config test-secrets
         collabiq config test-secrets --json
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
     try:
         settings = get_settings()
 
@@ -499,7 +519,9 @@ def test_secrets(
                 console.print("1. Set INFISICAL_ENABLED=true in .env")
                 console.print("2. Configure Infisical credentials")
 
-            log_cli_operation("config_test_secrets", success=True, metadata={"source": "env"})
+            log_cli_operation(
+                "config_test_secrets", success=True, metadata={"source": "env"}
+            )
             return
 
         # Test Infisical connection
@@ -510,7 +532,12 @@ def test_secrets(
                 output_json(
                     data={},
                     status="failure",
-                    errors=[{"error_type": "InfisicalError", "message": "Failed to initialize Infisical client"}],
+                    errors=[
+                        {
+                            "error_type": "InfisicalError",
+                            "message": "Failed to initialize Infisical client",
+                        }
+                    ],
                 )
             else:
                 console.print("\n[red]✗ Failed to initialize Infisical client[/red]")
@@ -541,7 +568,9 @@ def test_secrets(
                             status="success",
                         )
                     else:
-                        console.print("\n[bold green]✓ Infisical connection successful[/bold green]\n")
+                        console.print(
+                            "\n[bold green]✓ Infisical connection successful[/bold green]\n"
+                        )
 
                         info_table = create_table(
                             title="Infisical Configuration",
@@ -549,31 +578,53 @@ def test_secrets(
                         )
                         info_table.add_row("Host", settings.infisical_host)
                         info_table.add_row("Project ID", settings.infisical_project_id)
-                        info_table.add_row("Environment", settings.infisical_environment)
-                        info_table.add_row("Cache TTL", f"{settings.infisical_cache_ttl}s")
-                        info_table.add_row("Test Secret", f"{test_key} = {mask_secret(value)}")
+                        info_table.add_row(
+                            "Environment", settings.infisical_environment
+                        )
+                        info_table.add_row(
+                            "Cache TTL", f"{settings.infisical_cache_ttl}s"
+                        )
+                        info_table.add_row(
+                            "Test Secret", f"{test_key} = {mask_secret(value)}"
+                        )
 
                         render_table(info_table)
                         console.print()
 
-                    log_cli_operation("config_test_secrets", success=True, metadata={"source": "infisical"})
+                    log_cli_operation(
+                        "config_test_secrets",
+                        success=True,
+                        metadata={"source": "infisical"},
+                    )
 
                 except Exception as e:
                     if json:
                         output_json(
                             data={},
                             status="failure",
-                            errors=[{"error_type": "SecretRetrievalError", "message": str(e)}],
+                            errors=[
+                                {
+                                    "error_type": "SecretRetrievalError",
+                                    "message": str(e),
+                                }
+                            ],
                         )
                     else:
-                        console.print(f"\n[red]✗ Failed to retrieve test secret: {e}[/red]")
+                        console.print(
+                            f"\n[red]✗ Failed to retrieve test secret: {e}[/red]"
+                        )
                     raise typer.Exit(1)
             else:
                 if json:
                     output_json(
                         data={},
                         status="failure",
-                        errors=[{"error_type": "InfisicalConnectionError", "message": "Not connected to Infisical"}],
+                        errors=[
+                            {
+                                "error_type": "InfisicalConnectionError",
+                                "message": "Not connected to Infisical",
+                            }
+                        ],
                     )
                 else:
                     console.print("\n[red]✗ Not connected to Infisical[/red]")
@@ -589,8 +640,12 @@ def test_secrets(
             else:
                 console.print(f"\n[red]✗ Infisical authentication failed: {e}[/red]")
                 console.print("\n[yellow]Remediation:[/yellow]")
-                console.print("1. Check INFISICAL_CLIENT_ID and INFISICAL_CLIENT_SECRET")
-                console.print("2. Verify machine identity has access to the environment")
+                console.print(
+                    "1. Check INFISICAL_CLIENT_ID and INFISICAL_CLIENT_SECRET"
+                )
+                console.print(
+                    "2. Verify machine identity has access to the environment"
+                )
                 console.print("3. Check network connectivity to Infisical host")
             raise typer.Exit(1)
 
@@ -625,7 +680,7 @@ def get_config_key(
         collabiq config get GEMINI_API_KEY
         collabiq config get LOG_LEVEL --json
     """
-    console = Console() # Initialize Console locally
+    console = Console()  # Initialize Console locally
     try:
         settings = get_settings()
         value = get_config_value(key, settings)
@@ -635,7 +690,12 @@ def get_config_key(
                 output_json(
                     data={},
                     status="failure",
-                    errors=[{"error_type": "ConfigKeyNotFound", "message": f"Configuration key '{key}' not found"}],
+                    errors=[
+                        {
+                            "error_type": "ConfigKeyNotFound",
+                            "message": f"Configuration key '{key}' not found",
+                        }
+                    ],
                 )
             else:
                 console.print(f"\n[red]Configuration key '{key}' not found[/red]\n")
