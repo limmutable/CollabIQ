@@ -1,19 +1,20 @@
 # Implementation Roadmap: CollabIQ System
 
-**Status**: ✅ COMPLETE - 12-phase implementation plan defined
-**Version**: 1.1.0
-**Date**: 2025-11-09
-**Branch**: 001-feasibility-architecture
+**Status**: 🔄 IN PROGRESS - Phase 016 Planning
+**Version**: 2.7.0
+**Date**: 2025-11-18
+**Branch**: main
 
 ---
 
 ## Executive Summary
 
-This roadmap breaks the CollabIQ system into **15 sequential phases** (branches 002-017), each delivering incremental value. Work proceeds at your own pace without deadlines - just complete phases step-by-step.
+This roadmap breaks the CollabIQ system into **19 sequential phases** (branches 002-020), each delivering incremental value. Work proceeds at your own pace without deadlines - just complete phases step-by-step.
 
-**Total Effort**: 38-53 days across 15 phases (including Gmail OAuth2 setup)
+**Total Effort**: 42-58 days across 19 phases (including Gmail OAuth2 setup and project cleanup)
 **MVP Target**: Phases 1a+1b (6-9 days) deliver extraction → JSON output for manual review ✅ **COMPLETE**
-**Current Progress**: 13/18 phases complete (Phases 1a, 1b, 005, 2a, 2b, 2c, 2d, 2e, 3a, 3b, 3c, 3d, 3e/015) ✅
+**Current Progress**: 13/19 phases complete (Phases 1a, 1b, 005, 2a, 2b, 2c, 2d, 2e, 3a, 3b, 3c, 3d, 3e/015) ✅
+**Next Phase**: 016-project-cleanup-refactor (4-5 days) 🔄
 
 ---
 
@@ -546,9 +547,51 @@ Notion users: ["김철수", "이영희", "박지민"]
 
 ---
 
+**Phase 016 - Project Cleanup & Refactoring** (Branch: `016-project-cleanup-refactor`) 🔄 **IN PLANNING**
+**Timeline**: 4-5 days
+**Complexity**: Medium
+**Status**: Planning phase
+
+**Deliverables**:
+- ✨ **Documentation Consolidation**:
+  - Audit all documentation in `docs/` and `specs/` directories
+  - Remove duplicate content and merge related documents
+  - Archive or delete outdated documentation
+  - Establish clear documentation hierarchy and navigation
+  - Update links and cross-references across all docs
+  - Create documentation index/map for easy navigation
+- 🧪 **Test Suite Organization**:
+  - Reorganize test files in `tests/` directory for better structure
+  - Remove redundant or obsolete test files
+  - Consolidate similar test cases across test suites
+  - Clean up test utilities in `src/collabiq/test_utils/`
+  - Ensure clear separation between unit/integration/e2e/performance/fuzz tests
+  - Update test documentation to reflect new organization
+- 🖥️ **CLI Application Polish**:
+  - Implement minimal startup checks (config validation, credential verification)
+  - Improve admin CLI commands for better user experience
+  - Add clearer error messages and user guidance
+  - Streamline command structure and reduce verbosity
+  - Add interactive prompts for common admin tasks
+  - Improve status check commands with actionable feedback
+
+**Tests**: Regression testing to ensure no functionality broken during reorganization
+
+**Success Criteria**:
+- ✅ Documentation audit complete with clear categorization (current/archive/obsolete)
+- ✅ No duplicate documentation remains
+- ✅ Test suite reduced by ≥20% through consolidation while maintaining coverage
+- ✅ All tests still pass after reorganization (98.9%+ pass rate maintained)
+- ✅ CLI startup time <2 seconds with minimal checks
+- ✅ Admin commands have clear help text and interactive prompts
+
+**Why Priority**: After completing major feature development and test suite improvements in Phase 015, the codebase needs cleanup to maintain long-term maintainability. Reducing documentation duplication, organizing tests logically, and polishing the CLI will improve developer experience and make future phases easier to implement.
+
+---
+
 ### Analytics Track (Phases 4a-4c)
 
-**Phase 4a - Basic Reporting** (Branch: `016-basic-reporting`)
+**Phase 4a - Basic Reporting** (Branch: `017-basic-reporting`)
 **Timeline**: 2-3 days
 **Complexity**: Low
 
@@ -566,7 +609,7 @@ Notion users: ["김철수", "이영희", "박지민"]
 
 ---
 
-**Phase 4b - Advanced Analytics** (Branch: `017-advanced-analytics`)
+**Phase 4b - Advanced Analytics** (Branch: `018-advanced-analytics`)
 **Timeline**: 3-4 days
 **Complexity**: Medium
 
@@ -584,7 +627,7 @@ Notion users: ["김철수", "이영희", "박지민"]
 
 ---
 
-**Phase 4c - Automated Admin Reporting** (Branch: `018-admin-reporting`)
+**Phase 4c - Automated Admin Reporting** (Branch: `019-admin-reporting`)
 **Timeline**: 3-4 days
 **Complexity**: Low-Medium
 
@@ -645,13 +688,15 @@ Notion users: ["김철수", "이영희", "박지민"]
             ↓
         → 🎯 Production-Ready with Full Field Mapping (Phases 3a+3b+3c+3d)
             ↓
-        → Phase 3e (015-test-suite-improvements) ← depends on 3d (needs full system for E2E testing)
+        → ✅ Phase 3e (015-test-suite-improvements) ← depends on 3d (needs full system for E2E testing) - COMPLETE
             ↓
-Phase 4a (016-basic-reporting) ← depends on 3e (needs robust testing for reporting), 3d (needs complete field population), 2d (Notion data)
+        → 🔄 Phase 016 (016-project-cleanup-refactor) ← depends on 3e (cleanup after major feature work) - IN PLANNING
+            ↓
+Phase 4a (017-basic-reporting) ← depends on 016 (needs clean codebase), 3e (needs robust testing), 3d (needs complete field population), 2d (Notion data)
     ↓
-Phase 4b (017-advanced-analytics) ← depends on 4a, 3b (multi-LLM for insights)
+Phase 4b (018-advanced-analytics) ← depends on 4a, 3b (multi-LLM for insights)
     ↓
-Phase 4c (018-admin-reporting) ← depends on 3a (uses CLI for metrics), 3b (LLM provider usage)
+Phase 4c (019-admin-reporting) ← depends on 3a (uses CLI for metrics), 3b (LLM provider usage)
     ↓
 → 🎯 Complete System ✅
 ```
@@ -674,6 +719,7 @@ Phase 4c (018-admin-reporting) ← depends on 3a (uses CLI for metrics), 3b (LLM
 | **3c** | Unit + Integration | Metrics calculation, Notion field population, quality reports | pytest, notion-client |
 | **3d** | Unit + Integration + E2E | Fuzzy matching, Notion API, field population | pytest, notion-client, jellyfish |
 | **3e** | Unit + Integration + E2E + Performance + Fuzz | End-to-end automation, date extraction, LLM performance, coverage, negative testing | pytest, pytest-cov, tenacity, rapidfuzz |
+| **016** | Regression | Ensure no functionality broken during cleanup | pytest (all existing test suites) |
 | **4a** | Data accuracy | Stats vs manual calculation | pytest |
 | **4b** | Data quality + Integration | Insights quality, Notion page formatting | pytest, notion-client |
 | **4c** | Unit + Integration | Report generation, email delivery, template rendering | pytest, email testing |
@@ -770,11 +816,12 @@ After each milestone, **STOP and VALIDATE**:
 13. ✅ **Phase 3c Complete** (013-llm-quality-metrics)
 14. ✅ **Phase 3d Complete** (014-enhanced-field-mapping)
 15. ✅ **Phase 3e Complete** (015-test-suite-improvements) → **🎯 PRODUCTION READY WITH STABLE TEST SUITE**
+16. 🔄 **Phase 016 In Planning** (016-project-cleanup-refactor) → **Next: Codebase Cleanup & Organization**
 
-**Current Status**: Full automation complete (Email → Notion without manual intervention). Admin CLI complete with 30+ commands. Multi-LLM Provider Support complete with failover, consensus, and best-match strategies. Quality Metrics & Intelligent Routing complete with provider comparison and automatic quality-based routing. Enhanced Notion Field Mapping complete with fuzzy matching for companies and people. **Test Suite Stable** with 99.6% pass rate (731/734 tests passing).
+**Current Status**: Full automation complete (Email → Notion without manual intervention). Admin CLI complete with 30+ commands. Multi-LLM Provider Support complete with failover, consensus, and best-match strategies. Quality Metrics & Intelligent Routing complete with provider comparison and automatic quality-based routing. Enhanced Notion Field Mapping complete with fuzzy matching for companies and people. **Test Suite Stable** with 98.9% pass rate (727/735 tests passing). **Next Phase**: Project cleanup - documentation consolidation, test organization, CLI polish.
 
 ---
 
-**Document Version**: 2.6.0
-**Last Updated**: 2025-11-15 (Phase 3e/015 Test Suite Improvements Complete)
-**Next Review**: After Phase 4a (Basic Reporting) completion
+**Document Version**: 2.7.0
+**Last Updated**: 2025-11-18 (Phase 016 Project Cleanup & Refactoring - Planning)
+**Next Review**: After Phase 016 completion
