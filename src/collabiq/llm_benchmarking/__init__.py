@@ -17,7 +17,51 @@ Usage (CLI):
 
 __version__ = "0.1.0"
 
-# Library exports will be added as modules are implemented
-# from .suite import run_benchmark
-# from .ab_testing import compare_prompts
-# from .metrics import calculate_metrics
+# Library exports
+from .ab_testing import ABTestFramework, compare_prompts
+from .metrics import (
+    AggregatedMetrics,
+    BenchmarkResult,
+    ComparisonResult,
+    MetricType,
+    aggregate_results,
+    calculate_accuracy,
+    calculate_completeness,
+)
+from .prompts import (
+    BASELINE,
+    EXPLICIT_FORMAT,
+    FEW_SHOT,
+    KOREAN_OPTIMIZED,
+    STRUCTURED_OUTPUT,
+    get_all_prompts,
+    get_prompt_by_id,
+    list_prompt_ids,
+)
+from .suite import BenchmarkSuite, run_benchmark
+
+__all__ = [
+    # Core classes
+    "BenchmarkSuite",
+    "ABTestFramework",
+    # Main functions
+    "run_benchmark",
+    "compare_prompts",
+    # Metrics
+    "BenchmarkResult",
+    "AggregatedMetrics",
+    "ComparisonResult",
+    "MetricType",
+    "calculate_accuracy",
+    "calculate_completeness",
+    "aggregate_results",
+    # Prompts
+    "BASELINE",
+    "KOREAN_OPTIMIZED",
+    "EXPLICIT_FORMAT",
+    "FEW_SHOT",
+    "STRUCTURED_OUTPUT",
+    "get_prompt_by_id",
+    "get_all_prompts",
+    "list_prompt_ids",
+]

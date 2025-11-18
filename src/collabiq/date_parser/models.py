@@ -8,7 +8,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class DateFormat(str, Enum):
@@ -55,10 +55,8 @@ class ParsedDate(BaseModel):
     confidence: float = Field(1.0, ge=0.0, le=1.0, description="Confidence score (0.0-1.0)")
     parse_error: Optional[str] = Field(None, description="Error message if parsing failed")
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "original_text": "2024년 11월 13일",
                 "parsed_date": "2024-11-13T00:00:00",
@@ -68,6 +66,7 @@ class ParsedDate(BaseModel):
                 "parse_error": None,
             }
         }
+    )
 
 
 class DateExtractionResult(BaseModel):
@@ -87,10 +86,8 @@ class DateExtractionResult(BaseModel):
     extraction_method: str = Field("regex", description="Extraction method used")
     confidence: float = Field(1.0, ge=0.0, le=1.0, description="Overall confidence score")
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "email_id": "abc123",
                 "dates_found": [
@@ -115,3 +112,4 @@ class DateExtractionResult(BaseModel):
                 "confidence": 0.95,
             }
         }
+    )

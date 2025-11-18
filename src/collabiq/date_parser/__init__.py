@@ -17,6 +17,21 @@ Usage (CLI):
 
 __version__ = "0.1.0"
 
-# Library exports will be added as modules are implemented
-# from .parser import parse_date, normalize_date
-# from .models import ParsedDate, DateFormat
+# Library exports
+from .models import DateExtractionResult, DateFormat, ParsedDate
+from .parser import (
+    detect_format,
+    extract_dates_from_text,
+    normalize_date,
+    parse_date,
+)
+
+__all__ = [
+    "parse_date",
+    "normalize_date",
+    "detect_format",
+    "extract_dates_from_text",
+    "ParsedDate",
+    "DateFormat",
+    "DateExtractionResult",
+]
