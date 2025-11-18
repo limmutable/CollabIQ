@@ -42,8 +42,15 @@ from .performance_thresholds import (
     validate_thresholds,
 )
 
-# Future exports (to be implemented)
-# from .fuzz_generator import generate_fuzz_input
+# Fuzz testing exports
+from .fuzz_generator import (
+    FuzzGenerator,
+    FuzzConfig,
+    FuzzCategory,
+    generate_fuzz_emails,
+    generate_fuzz_extraction_results,
+    generate_fuzz_date_strings,
+)
 
 __all__ = [
     "cleanup_notion",
@@ -66,4 +73,10 @@ __all__ = [
     "PipelineStepThresholds",
     "PerformanceGoals",
     "validate_thresholds",
+    "FuzzGenerator",
+    "FuzzConfig",
+    "FuzzCategory",
+    "generate_fuzz_emails",
+    "generate_fuzz_extraction_results",
+    "generate_fuzz_date_strings",
 ]
