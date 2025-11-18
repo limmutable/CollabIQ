@@ -51,6 +51,40 @@ markers = [
 # Prevent Pydantic models from being collected as test classes
 norecursedirs = [".*", "build", "dist", "CVS", "_darcs", "{arch}", "*.egg", "venv", ".venv", "src"]
 
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "tests/coverage_reports/htmlcov"
+
+[tool.coverage.xml]
+output = "tests/coverage_reports/coverage.xml"
+
+[tool.coverage.json]
+output = "tests/coverage_reports/coverage.json"
+
 [dependency-groups]
 dev = [
     "pytest>=9.0.1",

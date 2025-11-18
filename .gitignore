@@ -50,7 +50,8 @@ htmlcov/
 .tox/
 .mypy_cache/
 .ruff_cache/
-tests/coverage_reports/
+tests/coverage_reports/*
+!tests/coverage_reports/README.md
 
 # Environment variables
 .env
@@ -80,3 +81,14 @@ specs/001-feasibility-architecture/samples/emails/*.txt
 data/
 data/test_metrics/
 token.*.json
+
+# Coverage reports
+tests/coverage_reports/htmlcov/
+tests/coverage_reports/unit_htmlcov/
+tests/coverage_reports/integration_htmlcov/
+tests/coverage_reports/e2e_htmlcov/
+tests/coverage_reports/*.xml
+tests/coverage_reports/*.json
+.coverage
+.coverage.*
+coverage.xml

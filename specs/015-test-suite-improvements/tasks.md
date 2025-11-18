@@ -233,8 +233,16 @@
 
 ### Implementation for User Story 4
 
-- [ ] T038 [US4] Refine `pytest-cov` configuration for granular reports (unit, integration, E2E) in `pyproject.toml` or `pytest.ini`
-- [ ] T039 [US4] Create `tests/coverage_reports/README.md` to explain how to generate and view reports
+- [X] T038 [US4] Refine `pytest-cov` configuration for granular reports (unit, integration, E2E) in `pyproject.toml` or `pytest.ini`
+- [X] T039 [US4] Create `tests/coverage_reports/README.md` to explain how to generate and view reports
+
+**✅ Phase 8 Complete (2025-11-18)**:
+- Configured pytest-cov with branch coverage in pyproject.toml
+- Added coverage report formats: HTML, XML, JSON, terminal
+- Created comprehensive coverage documentation (360+ lines)
+- Configured granular reports for unit, integration, and E2E tests
+- Added .gitignore entries for coverage artifacts
+- Installed and tested pytest-cov (working correctly)
 
 ---
 
