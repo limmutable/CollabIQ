@@ -19,12 +19,51 @@ __version__ = "0.1.0"
 
 # Library exports
 from .notion_cleanup import cleanup_notion, NotionTestCleanup
+from .performance_monitor import (
+    PerformanceMonitor,
+    PerformanceThresholds,
+    PerformanceMetrics,
+    measure_performance,
+    save_metrics,
+    load_metrics,
+)
+from .performance_thresholds import (
+    EMAIL_PROCESSING_THRESHOLDS,
+    EMAIL_PARSING_THRESHOLDS,
+    EMAIL_TEXT_EXTRACTION_THRESHOLDS,
+    LLM_EXTRACTION_THRESHOLDS,
+    LLM_BATCH_EXTRACTION_THRESHOLDS,
+    NOTION_INTEGRATION_THRESHOLDS,
+    NOTION_READ_THRESHOLDS,
+    NOTION_WRITE_THRESHOLDS,
+    PIPELINE_THRESHOLDS,
+    PipelineStepThresholds,
+    PerformanceGoals,
+    validate_thresholds,
+)
 
 # Future exports (to be implemented)
-# from .performance_monitor import monitor_performance, assert_performance
 # from .fuzz_generator import generate_fuzz_input
 
 __all__ = [
     "cleanup_notion",
     "NotionTestCleanup",
+    "PerformanceMonitor",
+    "PerformanceThresholds",
+    "PerformanceMetrics",
+    "measure_performance",
+    "save_metrics",
+    "load_metrics",
+    "EMAIL_PROCESSING_THRESHOLDS",
+    "EMAIL_PARSING_THRESHOLDS",
+    "EMAIL_TEXT_EXTRACTION_THRESHOLDS",
+    "LLM_EXTRACTION_THRESHOLDS",
+    "LLM_BATCH_EXTRACTION_THRESHOLDS",
+    "NOTION_INTEGRATION_THRESHOLDS",
+    "NOTION_READ_THRESHOLDS",
+    "NOTION_WRITE_THRESHOLDS",
+    "PIPELINE_THRESHOLDS",
+    "PipelineStepThresholds",
+    "PerformanceGoals",
+    "validate_thresholds",
 ]
