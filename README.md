@@ -111,7 +111,7 @@ cp .env.example .env
 **Quick configuration steps**:
 1. Configure `.env` with API keys (or use Infisical for team deployments)
 2. Setup Gmail OAuth2: `uv run python scripts/authenticate_gmail.py`
-3. Verify configuration: `uv run collabiq verify-infisical`
+3. Verify configuration: `uv run collabiq config test-secrets`
 4. Run tests: `make test`
 
 ---
@@ -165,7 +165,7 @@ uv run collabiq llm export-metrics -o quality_report.json --no-health --no-cost
 uv run python scripts/test_specific_email.py --email-id "test_001" --show-metrics
 ```
 
-For complete CLI documentation, see [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)
+For complete CLI documentation, see [docs/cli/CLI_REFERENCE.md](docs/cli/CLI_REFERENCE.md)
 
 ### Legacy Scripts (Deprecated)
 

@@ -418,7 +418,7 @@ Phase 013 E2E testing **successfully validated** core functionality:
 - [Quality Routing Test Results](QUALITY_ROUTING_TEST_RESULTS.md) - Quality selection validation
 - [E2E Real Test Results](E2E_REAL_TEST_RESULTS.md) - Initial real email test results
 - [All-Providers Strategy](../architecture/ALL_PROVIDERS_STRATEGY.md) - Strategy documentation
-- [CLI Reference](../CLI_REFERENCE.md) - Command usage
+- [CLI Reference](../cli/CLI_REFERENCE.md) - Command usage
 
 ---
 

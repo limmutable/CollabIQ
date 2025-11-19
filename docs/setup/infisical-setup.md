@@ -191,7 +191,7 @@ INFISICAL_CACHE_TTL=60
 ### 6.1 Run Verification Command
 
 ```bash
-uv run collabiq verify-infisical
+uv run collabiq config test-secrets
 ```
 
 Expected output:
@@ -472,7 +472,7 @@ INFO | ✓ Cache refreshed with 3 secrets from Infisical (TTL: 60s)
 **Solution**:
 1. Verify `INFISICAL_ENABLED=true` in .env
 2. Check logs for authentication errors: `tail -f data/logs/collabiq.log`
-3. Run `uv run collabiq verify-infisical` for detailed diagnostics
+3. Run `uv run collabiq config test-secrets` for detailed diagnostics
 
 ---
 

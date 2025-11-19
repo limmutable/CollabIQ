@@ -657,7 +657,7 @@ INFISICAL_CACHE_TTL=60                          # Cache TTL in seconds (0-3600)
    # Edit .env with your machine identity credentials
 
    # Verify Infisical connection
-   uv run collabiq verify-infisical
+   uv run collabiq config test-secrets
 
    # Start application (secrets auto-loaded from Infisical)
    uv run collabiq fetch
