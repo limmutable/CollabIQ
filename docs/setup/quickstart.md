@@ -466,7 +466,7 @@ uv run python test_specific_email.py --email-id "test_002" --show-metrics
 - Total cost and cost-per-email
 - Token usage (input/output/total)
 
-**See Also**: [docs/CLI_REFERENCE.md](../CLI_REFERENCE.md) for complete CLI command reference
+**See Also**: [docs/cli/CLI_REFERENCE.md](../cli/CLI_REFERENCE.md) for complete CLI command reference
 
 ## Next Steps
 

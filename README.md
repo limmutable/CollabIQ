@@ -165,7 +165,7 @@ uv run collabiq llm export-metrics -o quality_report.json --no-health --no-cost
 uv run python scripts/test_specific_email.py --email-id "test_001" --show-metrics
 ```
 
-For complete CLI documentation, see [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)
+For complete CLI documentation, see [docs/cli/CLI_REFERENCE.md](docs/cli/CLI_REFERENCE.md)
 
 ### Legacy Scripts (Deprecated)
 

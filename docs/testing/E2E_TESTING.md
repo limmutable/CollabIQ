@@ -1450,7 +1450,7 @@ After running E2E tests with quality metrics:
 
 ## Related Documentation
 
-- [CLI Reference](/Users/jlim/Projects/CollabIQ/docs/CLI_REFERENCE.md) - Complete CLI command documentation
+- [CLI Reference](../cli/CLI_REFERENCE.md) - Complete CLI command documentation
 - [All-Providers Strategy](/Users/jlim/Projects/CollabIQ/docs/architecture/ALL_PROVIDERS_STRATEGY.md) - Strategy details
 - [Quality Metrics Demo](/Users/jlim/Projects/CollabIQ/docs/validation/QUALITY_METRICS_DEMO_RESULTS.md) - Example results
 - [Quickstart Guide](/Users/jlim/Projects/CollabIQ/docs/setup/quickstart.md) - Quality metrics testing section

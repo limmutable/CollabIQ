@@ -92,3 +92,4 @@ tests/coverage_reports/*.json
 .coverage
 .coverage.*
 coverage.xml
+.cleanup_backup/

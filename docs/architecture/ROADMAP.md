@@ -397,7 +397,7 @@ This roadmap breaks the CollabIQ system into **19 sequential phases** (branches 
 
 **Why Priority**: Multi-LLM processing generates valuable quality signals that should be captured for monitoring, debugging, and continuous improvement. Quality-based routing optimizes extraction quality while managing costs.
 
-**Documentation**: See [docs/CLI_REFERENCE.md](../CLI_REFERENCE.md), [docs/validation/QUALITY_METRICS_DEMO_RESULTS.md](../validation/QUALITY_METRICS_DEMO_RESULTS.md), and [docs/architecture/ALL_PROVIDERS_STRATEGY.md](ALL_PROVIDERS_STRATEGY.md)
+**Documentation**: See [docs/cli/CLI_REFERENCE.md](../cli/CLI_REFERENCE.md), [docs/validation/QUALITY_METRICS_DEMO_RESULTS.md](../validation/QUALITY_METRICS_DEMO_RESULTS.md), and [docs/architecture/ALL_PROVIDERS_STRATEGY.md](ALL_PROVIDERS_STRATEGY.md)
 
 **🎯 Production-Ready**: Robust CLI, resilient multi-LLM processing, quality tracking, and intelligent routing
 

@@ -4,14 +4,14 @@
 
 ## Quick Links
 
-- **[CLI_REFERENCE.md](../CLI_REFERENCE.md)**: Complete CLI command reference with examples
+- **[CLI_REFERENCE.md](CLI_REFERENCE.md)**: Complete CLI command reference with examples
 - **[COMMANDS.md](COMMANDS.md)**: Detailed command documentation
 
 ## Documents
 
 ### Command Reference
 
-- [CLI_REFERENCE.md](../CLI_REFERENCE.md): Complete CLI command reference (main reference)
+- [CLI_REFERENCE.md](CLI_REFERENCE.md): Complete CLI command reference (main reference)
 - [COMMANDS.md](COMMANDS.md): Extended command documentation and usage patterns
 
 ### Architecture
