@@ -66,7 +66,7 @@ cp .env.example .env
     ```
 3.  **Verify Configuration**:
     ```bash
-    uv run collabiq verify-infisical
+    uv run collabiq config test-secrets
     ```
 
 ### Running the Application (CLI Usage)

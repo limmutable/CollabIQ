@@ -111,7 +111,7 @@ cp .env.example .env
 **Quick configuration steps**:
 1. Configure `.env` with API keys (or use Infisical for team deployments)
 2. Setup Gmail OAuth2: `uv run python scripts/authenticate_gmail.py`
-3. Verify configuration: `uv run collabiq verify-infisical`
+3. Verify configuration: `uv run collabiq config test-secrets`
 4. Run tests: `make test`
 
 ---

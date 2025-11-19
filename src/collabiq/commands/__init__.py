@@ -18,6 +18,6 @@ This module contains command group implementations:
 # from .errors import app as errors_app
 # from .status import app as status_app
 # from .llm import app as llm_app
-# from .config import app as config_app
+from .config import config_app
 
-__all__ = []
+__all__ = ["config_app"]

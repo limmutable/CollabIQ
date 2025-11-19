@@ -139,7 +139,7 @@ INFISICAL_CLIENT_SECRET=secret-xyz789
 3. Verify connection:
 ```bash
 # Application will automatically fetch secrets from Infisical
-uv run collabiq verify-infisical
+uv run collabiq config test-secrets
 ```
 
 **📖 Full Infisical Setup Guide:** [docs/setup/infisical-setup.md](infisical-setup.md)
@@ -549,7 +549,7 @@ tree src/
 
 ```bash
 # Verify Infisical integration (if enabled)
-uv run collabiq verify-infisical
+uv run collabiq config test-secrets
 
 # Check CLI version
 uv run collabiq version
@@ -701,7 +701,7 @@ git commit     # Pre-commit hooks will run automatically
 
 ```bash
 # Verify Infisical integration (checks Gmail, Gemini, Notion secrets)
-uv run collabiq verify-infisical
+uv run collabiq config test-secrets
 
 # Show CLI version
 uv run collabiq version

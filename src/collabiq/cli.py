@@ -24,6 +24,10 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
+# Register command groups
+from collabiq.commands import config_app
+app.add_typer(config_app, name="config")
+
 
 @app.callback()
 def main(
