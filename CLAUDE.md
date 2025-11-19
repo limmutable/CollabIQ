@@ -1,50 +1,107 @@
 # CollabIQ Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2025-11-08
+Auto-generated from all feature plans. Last updated: 2025-11-19
 
 ## Active Technologies
-- Local in-memory cache for secrets (TTL-based), existing file-based .env fallback (003-infisical-secrets)
-- Python 3.12+ (established in project) (004-gemini-extraction)
-- File-based JSON output (`data/extractions/{email_id}.json`) (004-gemini-extraction)
-- Python 3.12 (established in project) + `notion-client` (official Notion Python SDK), `pydantic` (data validation), `tenacity` (retry logic with exponential backoff) (006-notion-read)
-- File-based JSON cache in `data/notion_cache/` directory (schema cache + data cache with separate TTLs) (006-notion-read)
-- Python 3.12+ (established in project, using UV package manager) (007-llm-matching)
-- Python 3.12 (established in project, using UV package manager) (008-classification-summarization)
-- File-based JSON output (`data/extractions/{email_id}.json`) - no schema changes (008-classification-summarization)
-- Python 3.12 (established in project) + pytest (testing framework), existing MVP components (email_receiver, llm_adapters, notion_integrator, content_normalizer), Gmail/Gemini/Notion APIs (008-mvp-e2e-test)
-- File-based (JSON files for error reports, performance metrics, test results in data/e2e_test/ directory) (008-mvp-e2e-test)
-- Python 3.12+ (established in project, using UV package manager) + Typer (CLI framework), rich (terminal formatting), click (command parsing support) (011-admin-cli)
-- File-based (existing data/ directory structure for emails, extractions, test results, error records) (011-admin-cli)
-- Python 3.12 (established in project) + anthropic (Claude SDK), openai (OpenAI SDK) (012-multi-llm)
-- File-based JSON for provider health metrics and cost tracking (012-multi-llm)
-- Python 3.12 (established in project) + pydantic (data validation), existing LLM adapters (gemini_adapter, claude_adapter, openai_adapter), existing health_tracker and cost_tracker modules (013-llm-quality-metrics)
-- File-based JSON persistence in `data/llm_health/` directory (consistent with existing health_metrics.json and cost_metrics.json patterns) (013-llm-quality-metrics)
-- Python 3.12+ (established in project) + rapidfuzz (fuzzy matching library - already in pyproject.toml), notion-client (Notion API), pydantic (data validation) (014-enhanced-field-mapping)
-- File-based (JSON cache for Notion user list with TTL), Notion API (Companies database CRUD) (014-enhanced-field-mapping)
-
-- Python 3.12 (established in project) + Git (for file operations and history preservation), markdown (for documentation) (002-structure-standards)
-- Python 3.12 (002-email-reception)
+- **Python 3.12+** with UV package manager
+- **Core Libraries**: pytest, pytest-cov, pytest-asyncio, pydantic, tenacity, rapidfuzz
+- **APIs**: Gmail (google-api-python-client), Notion (notion-client), Gemini (google-generativeai), Claude (anthropic), OpenAI (openai)
+- **CLI Framework**: Typer + Rich for terminal formatting
+- **Secrets Management**: Infisical SDK (optional) with .env fallback
 
 ## Project Structure
 
 ```text
-src/
-tests/
+CollabIQ/
+├── src/collabiq/          # Main application code
+│   ├── adapters/          # LLM adapters (Gemini, Claude, OpenAI)
+│   ├── commands/          # CLI command groups
+│   ├── email_receiver/    # Gmail integration
+│   ├── error_handling/    # Error management & retry logic
+│   ├── models/            # Data models & validators
+│   └── notion_integrator/ # Notion API integration
+├── tests/                 # Test suite (989 tests, 86.5% pass rate)
+│   ├── unit/             # 31 test files - isolated components
+│   ├── integration/      # 33 test files - component interactions
+│   ├── e2e/              # 3 test files - full pipeline
+│   ├── contract/         # 20 test files - API contracts
+│   ├── performance/      # 2 test files - benchmarks
+│   └── fuzz/             # 2 test files - randomized input testing
+├── docs/                  # Comprehensive documentation
+│   ├── architecture/     # System design & roadmap
+│   ├── cli/              # CLI reference & commands
+│   ├── setup/            # Installation & configuration
+│   └── testing/          # Testing guides & results
+└── specs/                 # Feature specifications (Phases 001-016)
 ```
 
-## Commands
+## Essential Commands
 
-cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLOGIES] pytest [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLOGIES] ruff check .
+### Development
+```bash
+# Install dependencies
+uv sync
+
+# Run tests
+uv run pytest                    # All tests
+uv run pytest tests/unit/        # Unit tests only
+uv run pytest -m "not e2e"       # Skip E2E tests
+
+# Code quality
+ruff check .                     # Lint
+ruff format .                    # Format
+```
+
+### CLI Operations
+```bash
+# Configuration management
+uv run collabiq config show          # Display all config
+uv run collabiq config validate      # Check required settings
+uv run collabiq config test-secrets  # Test Infisical connection
+uv run collabiq config get KEY       # Get specific value
+```
 
 ## Code Style
 
-Python 3.12 (established in project): Follow standard conventions
+- **Language**: Python 3.12+ with type hints
+- **Formatting**: Ruff (configured in pyproject.toml)
+- **Testing**: pytest with fixtures in src/collabiq/test_utils/
+- **Documentation**: Google-style docstrings
 
-## Recent Changes
-- 014-enhanced-field-mapping: Added Python 3.12+ (established in project) + rapidfuzz (fuzzy matching library - already in pyproject.toml), notion-client (Notion API), pydantic (data validation)
-- 013-llm-quality-metrics: Added Python 3.12 (established in project) + pydantic (data validation), existing LLM adapters (gemini_adapter, claude_adapter, openai_adapter), existing health_tracker and cost_tracker modules
-- 012-multi-llm: Added Python 3.12 (established in project) + anthropic (Claude SDK), openai (OpenAI SDK)
+## Recent Changes (Phases 014-016)
+- **Phase 016** (2025-11-19): Project cleanup & refactoring
+  - Created 6 README indexes for navigation
+  - Registered CLI config commands
+  - Documented 103 test files across 9 categories
+  - Consolidated documentation structure
 
+- **Phase 015** (2025-11-09): Test suite improvements
+  - Added real E2E testing with Gmail/Notion
+  - Simplified to production credentials only
+  - 989 tests, 86.5% baseline pass rate
+
+- **Phase 014** (2025-11-08): Enhanced field mapping
+  - Added rapidfuzz for company/person matching
+  - Notion user list caching with TTL
+  - Companies database CRUD operations
+
+## Quick Reference
+
+### Testing Strategy
+- **Unit Tests**: Fast (<0.1s), fully mocked, run on every commit
+- **Integration Tests**: Moderate (0.1-5s), may use test databases
+- **E2E Tests**: Slow (5-30s), real APIs with credentials, pre-merge validation
+- **Contract Tests**: Validate external API contracts (Notion, Gmail)
+- **Performance Tests**: Benchmark critical paths with defined thresholds
+
+See [tests/README.md](tests/README.md) for detailed testing documentation.
+
+### Documentation Links
+- **Setup**: [docs/setup/quickstart.md](docs/setup/quickstart.md)
+- **CLI Reference**: [docs/cli/CLI_REFERENCE.md](docs/cli/CLI_REFERENCE.md)
+- **Architecture**: [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)
+- **Testing Guide**: [docs/testing/E2E_TESTING.md](docs/testing/E2E_TESTING.md)
+- **Roadmap**: [docs/architecture/ROADMAP.md](docs/architecture/ROADMAP.md)
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
