@@ -1,0 +1,279 @@
+# Gmail OAuth2 Token Refresh Contract
+# Phase 017 - Unattended Gmail Access
+
+api_endpoint:
+  name: OAuth2 Token Refresh
+  method: POST
+  base_url: https://oauth2.googleapis.com
+  path: /token
+  authentication: Client credentials (client_id + client_secret)
+  protocol: OAuth 2.0 RFC 6749
+
+request:
+  headers:
+    Content-Type:
+      required: true
+      value: "application/x-www-form-urlencoded"
+
+  body:
+    format: application/x-www-form-urlencoded
+    parameters:
+      client_id:
+        type: string
+        required: true
+        description: OAuth2 client ID from Google Cloud Console
+        source: Environment variable or Infisical
+
+      client_secret:
+        type: string
+        required: true
+        description: OAuth2 client secret
+        source: Environment variable or Infisical
+
+      refresh_token:
+        type: string
+        required: true
+        description: Long-lived refresh token obtained during initial OAuth flow
+        storage: Encrypted at rest (Fernet)
+
+      grant_type:
+        type: string
+        required: true
+        value: "refresh_token"
+        description: OAuth2 grant type
+
+    example: |
+      client_id=123456.apps.googleusercontent.com&
+      client_secret=SECRET123&
+      refresh_token=1//abc123def456&
+      grant_type=refresh_token
+
+response:
+  success:
+    status_code: 200
+    content_type: application/json
+    schema:
+      access_token: string
+      description: New access token for Gmail API
+      expires_in: 3600 seconds (1 hour)
+
+      token_type: string
+      value: "Bearer"
+
+      scope: string
+      description: Space-separated list of granted scopes
+      example: "https://www.googleapis.com/auth/gmail.readonly"
+
+    example: |
+      {
+        "access_token": "ya29.a0Abc123...",
+        "expires_in": 3600,
+        "scope": "https://www.googleapis.com/auth/gmail.readonly",
+        "token_type": "Bearer"
+      }
+
+    notes:
+      - New refresh_token is NOT returned (existing one remains valid)
+      - Access token expires in 1 hour (3600 seconds)
+      - Must store expires_at = now + expires_in
+
+  errors:
+    - status_code: 400
+      error: invalid_grant
+      message: "Token has been expired or revoked"
+      description: Refresh token is invalid, expired, or revoked by user
+      user_action: Re-authenticate with Gmail OAuth2 flow
+      retry: false
+
+    - status_code: 400
+      error: invalid_client
+      message: "The OAuth client was not found"
+      description: client_id or client_secret is incorrect
+      user_action: Verify credentials in Google Cloud Console
+      retry: false
+
+    - status_code: 401
+      error: invalid_client
+      message: "Unauthorized"
+      description: client_secret is invalid
+      user_action: Regenerate client secret
+      retry: false
+
+    - status_code: 429
+      error: rate_limit_exceeded
+      message: "Rate limit exceeded"
+      description: Too many token refresh requests
+      user_action: Implement exponential backoff
+      retry: true
+      retry_after: 60 seconds
+
+    - status_code: 500
+      error: internal_failure
+      message: "Internal server error"
+      description: Temporary Google API error
+      user_action: Retry with exponential backoff
+      retry: true
+
+token_lifecycle:
+  initial_grant:
+    method: OAuth2 Authorization Code flow
+    scopes: ["https://www.googleapis.com/auth/gmail.readonly"]
+    returns: [access_token, refresh_token]
+    refresh_token_expiry: Several months (unless revoked)
+
+  token_refresh:
+    trigger: Access token expires_soon (within 1 hour)
+    method: POST /token with refresh_token
+    returns: [new_access_token] (refresh_token unchanged)
+    frequency: Approximately every hour during active use
+
+  token_storage:
+    location: data/tokens/gmail_tokens.enc
+    format: Encrypted JSON (Fernet symmetric encryption)
+    permissions: 0600 (read/write owner only)
+    schema: GmailTokenPair model
+
+refresh_strategy:
+  proactive_refresh:
+    description: Refresh before expiration to avoid API failures
+    trigger: expires_at - now < 60 minutes
+    implementation: Check token on daemon cycle or before email fetch
+
+  reactive_refresh:
+    description: Refresh on 401 Unauthorized from Gmail API
+    trigger: Gmail API returns 401 status
+    implementation: Catch exception, refresh token, retry request once
+
+  error_handling:
+    invalid_grant:
+      action: Log critical alert, notify user to re-authenticate
+      daemon_behavior: Skip email fetch, continue daemon (degrade gracefully)
+
+    rate_limit:
+      action: Exponential backoff (10s, 20s, 40s)
+      max_retries: 3
+
+    network_error:
+      action: Retry with backoff
+      max_retries: 2
+
+encryption:
+  algorithm: Fernet (AES-128-CBC + HMAC-SHA256)
+  key_management:
+    source: Environment variable GMAIL_TOKEN_ENCRYPTION_KEY
+    generation: Fernet.generate_key() on first run
+    storage: User must persist key in Infisical or .env
+    rotation: Manual (out of scope for Phase 017)
+
+  encryption_process:
+    1. Serialize token pair to JSON
+    2. Encrypt with Fernet cipher
+    3. Write encrypted bytes to file
+    4. Set file permissions to 0600
+
+  decryption_process:
+    1. Read encrypted bytes from file
+    2. Decrypt with Fernet cipher
+    3. Deserialize JSON to GmailTokenPair model
+
+security_considerations:
+  - Tokens never logged (use SecretStr in Pydantic)
+  - File permissions 0600 prevent other users from reading
+  - Encryption key separate from tokens (environment variable)
+  - Refresh token remains valid until revoked by user
+  - If encryption key lost, user must re-authenticate (acceptable trade-off)
+
+test_scenarios:
+  - name: Successfully refresh token before expiration
+    given: Valid refresh_token, access_token expires in 30 minutes
+    when: Token refresh triggered
+    then: Return 200 with new access_token, update expires_at
+
+  - name: Refresh token revoked by user
+    given: User revoked access in Google Account settings
+    when: Token refresh attempted
+    then: Return 400 invalid_grant, log critical alert, daemon continues
+
+  - name: Network timeout during refresh
+    given: Network connectivity issues
+    when: Token refresh attempted
+    then: Retry with exponential backoff, max 2 attempts
+
+  - name: Rate limit exceeded
+    given: Multiple rapid refresh requests
+    when: Token refresh attempted
+    then: Return 429, wait 60 seconds, retry
+
+  - name: Encrypted token storage and retrieval
+    given: GmailTokenPair with valid tokens
+    when: Encrypt and save to file, then load from file
+    then: Decrypted tokens match original values
+
+requirements_mapping:
+  - FR-014: Automatically detect token expiration (within 1 hour)
+  - FR-015: Use refresh_token to obtain new access_token
+  - FR-016: Encrypt tokens at rest
+  - FR-017: Handle refresh failures gracefully
+  - FR-018: Log critical alerts for refresh failures
+  - FR-019: Support 30+ days unattended operation
+
+example_implementation:
+  python: |
+    import requests
+    from cryptography.fernet import Fernet
+    from datetime import datetime, timedelta
+    import os
+    import json
+
+    class TokenManager:
+        def __init__(self, encryption_key: str):
+            self.cipher = Fernet(encryption_key.encode())
+            self.token_file = Path("data/tokens/gmail_tokens.enc")
+
+        def refresh_if_needed(self, token_pair: GmailTokenPair) -> GmailTokenPair:
+            """Proactively refresh token if expires soon."""
+            if not token_pair.expires_soon(threshold_minutes=60):
+                return token_pair  # Still valid
+
+            try:
+                new_token = self._refresh_token(token_pair.refresh_token)
+                token_pair.access_token = SecretStr(new_token["access_token"])
+                token_pair.expires_at = datetime.utcnow() + timedelta(seconds=new_token["expires_in"])
+                token_pair.last_refreshed_at = datetime.utcnow()
+
+                self._save_encrypted(token_pair)
+                logger.info(f"Token refreshed, expires at {token_pair.expires_at}")
+                return token_pair
+
+            except TokenRefreshError as e:
+                logger.critical(f"Token refresh failed: {e}")
+                if e.error == "invalid_grant":
+                    logger.critical("User must re-authenticate with Gmail")
+                raise
+
+        def _refresh_token(self, refresh_token: SecretStr) -> dict:
+            """Call Google OAuth2 token endpoint."""
+            response = requests.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "client_id": os.getenv("GMAIL_CLIENT_ID"),
+                    "client_secret": os.getenv("GMAIL_CLIENT_SECRET"),
+                    "refresh_token": refresh_token.get_secret_value(),
+                    "grant_type": "refresh_token"
+                },
+                timeout=30
+            )
+
+            if response.status_code == 200:
+                return response.json()
+            elif response.status_code == 400:
+                error = response.json()
+                raise TokenRefreshError(error["error"], error.get("error_description"))
+            else:
+                response.raise_for_status()
+
+references:
+  - Google OAuth2 docs: https://developers.google.com/identity/protocols/oauth2/web-server#offline
+  - Token refresh flow: https://developers.google.com/identity/protocols/oauth2/web-server#refresh-token
+  - Fernet encryption: https://cryptography.io/en/latest/fernet/
+  - RFC 6749 (OAuth 2.0): https://datatracker.ietf.org/doc/html/rfc6749#section-6

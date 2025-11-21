@@ -7,14 +7,19 @@ Command modules import the `app` object from this file.
 
 import os
 import typer
+import logging # Import logging module for basicConfig
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
+# Configure basic logging early for debug visibility
+# This ensures debug messages from module-level loggers are visible immediately
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 # Import formatters and utilities
 from collabiq.formatters.colors import disable_colors
-from collabiq.utils.logging import setup_cli_logging, log_cli_operation
+from collabiq.utils.logging import setup_cli_logging, log_cli_operation # setup_cli_logging will reconfigure later if debug=True is passed
 
 # Create main app instance
 app = typer.Typer(
@@ -26,7 +31,14 @@ app = typer.Typer(
 
 # Register command groups
 from collabiq.commands import config_app
+from collabiq.commands.email import email_app
+from collabiq.commands.run import run
+from collabiq.commands.test import test_app
+
 app.add_typer(config_app, name="config")
+app.add_typer(email_app, name="email")
+app.add_typer(test_app, name="test")
+app.command()(run)
 
 
 @app.callback()

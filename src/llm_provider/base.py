@@ -26,7 +26,7 @@ class LLMProvider(ABC):
     """
 
     @abstractmethod
-    def extract_entities(self, email_text: str) -> ExtractedEntities:
+    async def extract_entities(self, email_text: str) -> ExtractedEntities:
         """Extract 5 key entities from email text with confidence scores.
 
         This method sends the email text to the LLM API and parses the response
@@ -62,10 +62,21 @@ class LLMProvider(ABC):
         Example:
             >>> llm = GeminiAdapter(api_key="AIza...", model="gemini-2.0-flash-exp")
             >>> email = "TableManager kicked off pilot with Shinsegae yesterday"
-            >>> entities = llm.extract_entities(email)
+            >>> entities = await llm.extract_entities(email)
             >>> entities.startup_name
             'TableManager'
             >>> entities.confidence.startup >= 0.85
             True
         """
         pass
+
+    async def generate_summary(self, email_text: str) -> str:
+        """Generate a 1-4 line summary of the email content.
+
+        Args:
+            email_text: Cleaned email body
+
+        Returns:
+            str: Summary text (1-4 lines)
+        """
+        raise NotImplementedError("generate_summary not implemented by this provider")

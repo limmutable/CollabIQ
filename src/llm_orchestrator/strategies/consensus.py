@@ -508,16 +508,11 @@ class ConsensusStrategy:
         start_time = time.time()
 
         try:
-            # Call provider's extract_entities in executor to avoid blocking
-            # Since extract_entities is synchronous, run it in thread pool
-            loop = asyncio.get_event_loop()
-            entities = await loop.run_in_executor(
-                None,
-                lambda: provider.extract_entities(
-                    email_text=email_text,
-                    company_context=company_context,
-                    email_id=email_id,
-                ),
+            # Call provider's extract_entities (now an async method)
+            entities = await provider.extract_entities(
+                email_text=email_text,
+                company_context=company_context,
+                email_id=email_id,
             )
 
             # Calculate response time

@@ -7,9 +7,10 @@ The aggregate confidence is calculated as a weighted average across all entity f
 with higher weights given to more critical fields (person, startup, partner).
 """
 
+import asyncio
 import logging
 import time
-from typing import Optional
+from typing import Optional, Any
 
 from llm_adapters.health_tracker import HealthTracker
 from llm_orchestrator.exceptions import AllProvidersFailedError
@@ -120,7 +121,7 @@ class BestMatchStrategy:
         >>> strategy = BestMatchStrategy(provider_names=["gemini", "claude", "openai"])
         >>> providers = {"gemini": gemini_adapter, "claude": claude_adapter, ...}
         >>> tracker = HealthTracker()
-        >>> result, provider_used = strategy.execute(providers, "email text", tracker)
+        >>> result, provider_used = await strategy.execute(providers, "email text", tracker)
         >>> # Returns result from provider with highest aggregate confidence
     """
 
@@ -134,7 +135,7 @@ class BestMatchStrategy:
         self.provider_names = provider_names
         logger.info(f"Initialized BestMatchStrategy with providers: {provider_names}")
 
-    def execute(
+    async def execute(
         self,
         providers: dict[str, LLMProvider],
         email_text: str,
@@ -142,7 +143,7 @@ class BestMatchStrategy:
         company_context: Optional[str] = None,
         email_id: Optional[str] = None,
     ) -> tuple[ExtractedEntities, str]:
-        """Execute best-match strategy across providers.
+        """Execute best-match strategy across providers (asynchronously).
 
         Queries all healthy providers in parallel, calculates aggregate confidence
         for each result, and selects the result with highest confidence.
@@ -172,126 +173,134 @@ class BestMatchStrategy:
             f"BestMatch: Querying {len(self.provider_names)} providers in parallel"
         )
 
-        # Track results from all providers
-        results: list[tuple[ExtractedEntities, str, float]] = []
-        failed_providers = []
-
-        # Query all healthy providers (synchronous for now)
+        tasks = []
+        available_providers = []
         for provider_name in self.provider_names:
-            # Skip if provider not available
             if provider_name not in providers:
                 logger.warning(f"Provider '{provider_name}' not configured, skipping")
                 continue
 
-            # Skip if provider is unhealthy
             if not health_tracker.is_healthy(provider_name):
                 logger.info(
                     f"Skipping unhealthy provider: {provider_name} "
                     f"(circuit_breaker={health_tracker.get_metrics(provider_name).circuit_breaker_state})"
                 )
                 continue
+            available_providers.append(provider_name)
+            tasks.append(self._query_single_provider(
+                provider_name=provider_name,
+                provider=providers[provider_name],
+                email_text=email_text,
+                health_tracker=health_tracker,
+                company_context=company_context,
+                email_id=email_id,
+            ))
 
-            provider = providers[provider_name]
+        # Gather results from all providers
+        raw_results = await asyncio.gather(*tasks, return_exceptions=True)
 
-            try:
-                logger.info(f"BestMatch: Querying provider: {provider_name}")
+        # Process raw results
+        results: list[tuple[ExtractedEntities, str, float]] = [] # (entities, provider_name, aggregate_confidence)
+        failed_providers_info = [] # (provider_name, error_message)
 
-                # Start timing
-                start_time = time.time()
-
-                # Call provider's extract_entities
-                entities = provider.extract_entities(
-                    email_text=email_text,
-                    company_context=company_context,
-                    email_id=email_id,
-                )
-
-                # Calculate response time
-                response_time_ms = (time.time() - start_time) * 1000
-
-                # Record success
-                health_tracker.record_success(provider_name, response_time_ms)
-
-                # Calculate aggregate confidence
-                aggregate_confidence = calculate_aggregate_confidence(
-                    entities.confidence
-                )
-
-                logger.info(
-                    f"BestMatch: {provider_name} succeeded "
-                    f"(aggregate_confidence={aggregate_confidence:.3f}, "
-                    f"response_time={response_time_ms:.1f}ms)"
-                )
-
-                # Store result with aggregate confidence
+        for provider_name, result in zip(available_providers, raw_results):
+            if isinstance(result, Exception):
+                error_message = f"Failed to query {provider_name}: {type(result).__name__}: {str(result)[:100]}"
+                logger.warning(error_message)
+                failed_providers_info.append((provider_name, error_message))
+                # Failure already recorded in _query_single_provider
+            elif result is not None: # result is (entities, aggregate_confidence) from _query_single_provider
+                entities, aggregate_confidence = result
                 results.append((entities, provider_name, aggregate_confidence))
 
-            except LLMAPIError as e:
-                # Record failure in health tracker
-                health_tracker.record_failure(provider_name, str(e))
-
-                logger.warning(
-                    f"BestMatch: {provider_name} failed: {type(e).__name__}: {str(e)[:100]}"
-                )
-
-                failed_providers.append((provider_name, str(e)))
-
-            except Exception as e:
-                # Unexpected error - still record as failure
-                health_tracker.record_failure(provider_name, f"Unexpected: {str(e)}")
-
-                logger.error(
-                    f"BestMatch: Unexpected error from {provider_name}: {e}",
-                    exc_info=True,
-                )
-
-                failed_providers.append((provider_name, f"Unexpected: {str(e)}"))
-
-        # Check if we have any results
+        # Check if we have any successful results
         if not results:
             error_msg = (
-                f"All providers failed or unhealthy. Attempted: {self.provider_names}"
+                f"All healthy providers failed. Attempted: {available_providers}"
             )
-            if failed_providers:
-                error_msg += f". Failures: {failed_providers}"
+            if failed_providers_info:
+                error_msg += f". Failures: {failed_providers_info}"
 
             logger.error(error_msg)
             raise AllProvidersFailedError(error_msg)
 
         # Select result with highest aggregate confidence
-        # Sort by: 1) aggregate_confidence (descending), 2) priority order (ascending)
-        # Priority order = index in self.provider_names (lower index = higher priority)
-        results_with_priority = [
-            (
-                entities,
-                provider_name,
-                agg_conf,
-                self.provider_names.index(provider_name),
-            )
-            for entities, provider_name, agg_conf in results
-        ]
-
-        # Sort by aggregate confidence (descending), then priority (ascending)
-        # Also use historical success rate as secondary tie-breaker
-        def sort_key(item):
-            entities, provider_name, agg_conf, priority_index = item
+        # Sort by: 1) aggregate_confidence (descending), 2) historical success rate (descending), 3) priority order (ascending)
+        results_with_tie_breakers = []
+        for entities, provider_name, agg_conf in results:
             success_rate = health_tracker.get_metrics(provider_name).success_rate
-            return (
-                -agg_conf,  # Higher confidence first (negative for descending)
-                -success_rate,  # Higher success rate first (tie-breaker)
-                priority_index,  # Lower priority index first (final tie-breaker)
-            )
-
-        results_with_priority.sort(key=sort_key)
+            priority_index = self.provider_names.index(provider_name) # Lower index = higher priority
+            results_with_tie_breakers.append(( 
+                entities, provider_name, agg_conf, success_rate, priority_index
+            ))
+        
+        # Sort based on criteria
+        results_with_tie_breakers.sort(key=lambda x: (-x[2], -x[3], x[4]))
 
         # Select best result
-        best_entities, best_provider, best_confidence, _ = results_with_priority[0]
+        best_entities, best_provider, best_confidence, _, _ = results_with_tie_breakers[0]
 
         logger.info(
             f"BestMatch: Selected {best_provider} "
             f"(aggregate_confidence={best_confidence:.3f}, "
             f"total_providers_queried={len(results)}, "
-            f"total_providers_failed={len(failed_providers)})"
-        )
+            f"total_providers_failed={len(failed_providers_info)})")
 
         return best_entities, best_provider
+
+    async def _query_single_provider(
+        self,
+        provider_name: str,
+        provider: LLMProvider,
+        email_text: str,
+        health_tracker: HealthTracker,
+        company_context: Optional[str] = None,
+        email_id: Optional[str] = None,
+    ) -> Optional[tuple[ExtractedEntities, float]]:
+        """Query a single provider and record result in health tracker (asynchronously).
+
+        Args:
+            provider_name: Provider identifier
+            provider: LLMProvider instance
+            email_text: Email text to extract from
+            health_tracker: Health tracker instance
+            company_context: Optional company context
+            email_id: Optional email ID
+
+        Returns:
+            Tuple of (ExtractedEntities, aggregate_confidence) on success, None on failure.
+        """
+        start_time = time.time()
+
+        try:
+            entities = await provider.extract_entities(
+                email_text=email_text,
+                company_context=company_context,
+                email_id=email_id,
+            )
+
+            response_time_ms = (time.time() - start_time) * 1000
+
+            health_tracker.record_success(provider_name, response_time_ms)
+
+            aggregate_confidence = calculate_aggregate_confidence(entities.confidence)
+
+            logger.info(
+                f"BestMatch: {provider_name} succeeded "
+                f"(aggregate_confidence={aggregate_confidence:.3f}, "
+                f"response_time={response_time_ms:.1f}ms)"
+            )
+
+            return entities, aggregate_confidence
+
+        except LLMAPIError as e:
+            health_tracker.record_failure(provider_name, str(e))
+            logger.warning(f"BestMatch: {provider_name} failed: {type(e).__name__}")
+            return None
+
+        except Exception as e:
+            health_tracker.record_failure(provider_name, f"Unexpected: {str(e)}")
+            logger.error(
+                f"BestMatch: Unexpected error from {provider_name}: {e}", exc_info=True
+            )
+            return None

@@ -90,7 +90,7 @@ class AllProvidersStrategy:
         """
         try:
             logger.debug(f"Calling provider {provider_name}")
-            entities = provider.extract_entities(
+            entities = await provider.extract_entities(
                 email_text=email_text,
                 company_context=company_context,
                 email_id=email_id,
@@ -241,7 +241,7 @@ class AllProvidersStrategy:
         logger.info("Consensus selection not fully implemented, using confidence")
         return self._select_by_confidence(results)
 
-    def execute(
+    async def execute(
         self,
         email_text: str,
         providers: dict[str, LLMProvider],
@@ -249,7 +249,7 @@ class AllProvidersStrategy:
         company_context: Optional[str] = None,
         email_id: Optional[str] = None,
     ) -> tuple[ExtractedEntities, str]:
-        """Execute all providers strategy.
+        """Execute all providers strategy (asynchronously).
 
         Calls ALL providers in parallel, collects results and metrics from all,
         then selects the best result based on configured selection mode.
@@ -282,7 +282,6 @@ class AllProvidersStrategy:
             )
 
         # Call all providers in parallel (asyncio)
-        loop = asyncio.get_event_loop()
         tasks = [
             self._call_provider_async(
                 provider, name, email_text, company_context, email_id
@@ -291,9 +290,7 @@ class AllProvidersStrategy:
         ]
 
         # Gather results (don't fail fast - collect all results/errors)
-        all_results = loop.run_until_complete(
-            asyncio.gather(*tasks, return_exceptions=False)
-        )
+        all_results = await asyncio.gather(*tasks, return_exceptions=False)
 
         # Separate successful and failed results
         successful_results: dict[str, ExtractedEntities] = {}

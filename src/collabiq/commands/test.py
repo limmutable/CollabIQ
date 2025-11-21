@@ -10,6 +10,7 @@ Commands:
 import json
 import signal
 import time
+import asyncio # Added asyncio import
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -20,6 +21,9 @@ from rich.console import Console
 from collabiq.utils.logging import log_cli_error, log_cli_operation
 from collabiq.formatters.progress import create_spinner, create_progress
 from collabiq.formatters.tables import create_table
+
+# Import GmailReceiver directly
+from email_receiver.gmail_receiver import GmailReceiver
 
 # Import E2E test infrastructure (conditional, as it's optional)
 try:
@@ -77,6 +81,8 @@ def e2e(
     debug: bool = typer.Option(False, help="Enable debug logging"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
     quiet: bool = typer.Option(False, help="Suppress non-error output"),
+    report: str = typer.Option("markdown", "--report", help="Report format (markdown, json)"),
+    baseline: Optional[str] = typer.Option(None, "--baseline", help="Baseline run ID for comparison"),
 ):
     """
     Run end-to-end pipeline tests on selected emails.
@@ -93,6 +99,7 @@ def e2e(
         collabiq test e2e --email-id abc123
         collabiq test e2e --production-mode --limit 1  # Test 1 email in production
         collabiq test e2e --resume 20250108_120000
+        collabiq test e2e --baseline 20250101_100000
     """
     global _current_test_run, _interrupted
 
@@ -123,7 +130,6 @@ def e2e(
             # Initialize runner (resume always uses test_mode from saved run)
             runner = E2ERunner(
                 gmail_receiver=None,
-                gemini_adapter=None,
                 classification_service=None,
                 notion_writer=None,
                 output_dir=str(DATA_DIR),
@@ -133,7 +139,7 @@ def e2e(
             # Resume test run
             with create_spinner("Loading interrupted test run...") as progress:
                 task = progress.add_task("", total=None)
-                test_run = runner.resume_test_run(resume)
+                test_run = asyncio.run(runner.resume_test_run(resume))
                 progress.update(task, description="[green]✓ Test run loaded[/green]")
 
             if not quiet and not json_output:
@@ -144,7 +150,7 @@ def e2e(
                 console.print(f"Status: {test_run.status}\n")
 
             # Generate reports
-            _generate_reports(test_run, console, json_output, quiet)
+            _generate_reports(test_run, console, json_output, quiet, baseline)
 
             return
 
@@ -205,19 +211,16 @@ def e2e(
                     # Production mode: Initialize real services
                     # E2ERunner will auto-initialize services when test_mode=False
                     gmail_receiver = None
-                    gemini_adapter = None
                     classification_service = None
                     notion_writer = None
                 else:
                     # Test mode: Use mocked services
                     gmail_receiver = None
-                    gemini_adapter = None
                     classification_service = None
                     notion_writer = None
 
                 runner = E2ERunner(
                     gmail_receiver=gmail_receiver,
-                    gemini_adapter=gemini_adapter,
                     classification_service=classification_service,
                     notion_writer=notion_writer,
                     output_dir=str(DATA_DIR),
@@ -245,9 +248,9 @@ def e2e(
 
                 # Run tests
                 try:
-                    test_run = runner.run_tests(
+                    test_run = asyncio.run(runner.run_tests(
                         email_ids, test_mode=not production_mode
-                    )
+                    ))
                 except KeyboardInterrupt:
                     console.print("\n[yellow]Test run interrupted by user[/yellow]")
                     console.print(
@@ -259,14 +262,14 @@ def e2e(
 
             console.print()
         else:
-            test_run = runner.run_tests(email_ids, test_mode=not production_mode)
+            test_run = asyncio.run(runner.run_tests(email_ids, test_mode=not production_mode))
 
         # Display stage-by-stage results (T081)
         if not quiet and not json_output:
             _display_stage_results(test_run, console)
 
         # Generate and save reports (T082, T083)
-        _generate_reports(test_run, console, json_output, quiet)
+        _generate_reports(test_run, console, json_output, quiet, baseline)
 
         duration_ms = int((time.time() - start_time) * 1000)
 
@@ -296,6 +299,49 @@ def e2e(
             console.print(f"[red]✗ E2E test failed: {e}[/red]")
 
         raise typer.Exit(code=1)
+
+
+@test_app.command()
+def run(
+    all_emails: bool = typer.Option(
+        False, "--all", help="Run tests on all available test emails"
+    ),
+    limit: Optional[int] = typer.Option(
+        None, "--limit", help="Limit number of emails to test"
+    ),
+    email_id: Optional[str] = typer.Option(
+        None, "--email-id", help="Test specific email by ID"
+    ),
+    resume: Optional[str] = typer.Option(
+        None, "--resume", help="Resume interrupted test run by run ID"
+    ),
+    production_mode: bool = typer.Option(
+        False,
+        "--production-mode",
+        help="Run in production mode (writes to real Notion database)",
+    ),
+    debug: bool = typer.Option(False, help="Enable debug logging"),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
+    quiet: bool = typer.Option(False, help="Suppress non-error output"),
+    report: str = typer.Option("markdown", "--report", help="Report format (markdown, json)"),
+    baseline: Optional[str] = typer.Option(None, "--baseline", help="Baseline run ID for comparison"),
+):
+    """
+    Alias for 'e2e' command. Run end-to-end pipeline tests.
+    """
+    e2e(
+        all_emails=all_emails,
+        limit=limit,
+        email_id=email_id,
+        resume=resume,
+        production_mode=production_mode,
+        debug=debug,
+        json_output=json_output,
+        quiet=quiet,
+        report=report,
+        baseline=baseline,
+    )
+
 
 
 @test_app.command()
@@ -359,9 +405,13 @@ def select_emails(
         # Create test email metadata
         test_emails = []
         for email in emails:
+            # Use internal_id (Gmail API ID) if available, otherwise fallback to message_id
+            # E2E fetch requires the internal API ID
+            email_id = email.metadata.internal_id or email.metadata.message_id
+            
             test_emails.append(
                 {
-                    "email_id": email.metadata.message_id,
+                    "email_id": email_id,
                     "subject": email.metadata.subject,
                     "received_date": email.metadata.received_at.date().isoformat(),
                     "collaboration_type": None,  # Would be detected by extraction
@@ -649,12 +699,33 @@ def _display_stage_results(test_run, console):
     console.print()
 
 
-def _generate_reports(test_run, console, json_output, quiet):
+def _generate_reports(test_run, console, json_output, quiet, baseline=None):
     """Generate and save test reports (T082, T083)"""
     report_gen = ReportGenerator(output_dir=str(DATA_DIR))
 
     # Generate summary report
     summary = report_gen.generate_summary(test_run)
+    
+    # If baseline is provided, append comparison (placeholder logic for now)
+    if baseline:
+        # Load baseline run
+        baseline_file = RUNS_DIR / f"{baseline}.json"
+        if baseline_file.exists():
+            try:
+                with baseline_file.open("r") as f:
+                    baseline_data = json.load(f)
+                    # Assuming we can parse it back to E2ETestRun or just use dict
+                    # For simplicity, we'll pass the dict or object if we can deserialize
+                    # Since E2ERunner isn't imported here fully, we might need to handle it carefully.
+                    # Let's just append a note for now as we haven't implemented full comparison logic in ReportGenerator yet.
+                    summary +=f"\n\n## Baseline Comparison ({baseline})\n"
+                    summary += f"- Baseline Success Count: {baseline_data.get('success_count', 'N/A')}\n"
+                    summary += f"- Current Success Count: {test_run.success_count}\n"
+            except Exception as e:
+                summary += f"\n\n## Baseline Comparison Error\nFailed to load baseline {baseline}: {e}\n"
+        else:
+            summary += f"\n\n## Baseline Comparison Error\nBaseline run {baseline} not found.\n"
+
     summary_path = REPORTS_DIR / f"{test_run.run_id}_summary.md"
 
     with summary_path.open("w") as f:

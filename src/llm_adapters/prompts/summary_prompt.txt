@@ -1,0 +1,9 @@
+You are a helpful assistant that summarizes collaboration emails.
+Please generate a concise 1-4 line summary (max 400 characters) of the following email.
+The summary should capture the key collaboration details (who, what, when).
+Focus on the collaboration activity between the startup and the partner organization.
+
+Email Content:
+{email_text}
+
+Summary:

@@ -86,6 +86,11 @@ class E2ETestRun(BaseModel):
     stage_success_rates: dict[str, float] = Field(
         ..., description="Success rate by pipeline stage"
     )
+    # New field to track successful counts per stage (for calculating rates)
+    stage_results: dict[str, int] = Field(
+        default_factory=lambda: {stage.value: 0 for stage in PipelineStage},
+        description="Counts of successfully processed emails per pipeline stage"
+    )
     total_duration_seconds: Optional[float] = Field(
         None, ge=0, description="Total elapsed time"
     )

@@ -11,7 +11,7 @@ Usage:
 
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, List
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -61,6 +61,10 @@ class Settings(BaseSettings):
         ge=1,
         le=500,
         description="Number of emails to fetch per batch (1-500)",
+    )
+    gmail_encryption_key: Optional[str] = Field(
+        default=None,
+        description="Fernet key for encrypting Gmail tokens at rest",
     )
 
     # Google Cloud Pub/Sub Configuration (Future use)
@@ -150,6 +154,10 @@ class Settings(BaseSettings):
     openai_model: str = Field(
         default="gpt-4o-mini",
         description="OpenAI model name (gpt-4o-mini, gpt-4o, gpt-4-turbo)",
+    )
+    llm_provider_priority: List[str] = Field(
+        default_factory=lambda: ["gemini", "claude", "openai"],
+        description="Ordered list of LLM providers to use for orchestration",
     )
 
     # Infisical Secret Management Configuration

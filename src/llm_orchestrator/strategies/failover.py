@@ -5,6 +5,7 @@ in priority order until one succeeds. Unhealthy providers are automatically skip
 """
 
 import logging
+import time
 from typing import TYPE_CHECKING, Optional
 
 from llm_adapters.health_tracker import HealthTracker
@@ -54,7 +55,7 @@ class FailoverStrategy:
             f"quality_routing={'enabled' if quality_tracker else 'disabled'}"
         )
 
-    def execute(
+    async def execute(
         self,
         providers: dict[str, LLMProvider],
         email_text: str,
@@ -62,7 +63,7 @@ class FailoverStrategy:
         company_context: Optional[str] = None,
         email_id: Optional[str] = None,
     ) -> tuple[ExtractedEntities, str]:
-        """Execute failover strategy across providers.
+        """Execute failover strategy across providers (asynchronously).
 
         Tries providers in priority order until one succeeds.
         If quality_tracker is available, quality-ranked providers are tried first,
@@ -91,25 +92,17 @@ class FailoverStrategy:
         last_error: Optional[Exception] = None
         attempted_providers = []
 
-        # Determine provider order: quality-based or priority-based
         provider_order = self.priority_order.copy()
         logger.debug(f"Initial provider_order: {provider_order}")
 
-        # If quality routing is enabled, try quality-ranked providers first
         if self.quality_tracker:
-            # Get available provider names from the providers dict
             available_providers = list(providers.keys())
-
-            # Get quality-ranked provider (best quality score)
             quality_selected = self.quality_tracker.select_provider_by_quality(
                 available_providers
             )
 
             if quality_selected:
-                # Put quality-selected provider first
                 provider_order = [quality_selected]
-
-                # Add remaining providers in priority order
                 for provider_name in self.priority_order:
                     if (
                         provider_name != quality_selected
@@ -132,14 +125,12 @@ class FailoverStrategy:
 
         for provider_name in provider_order:
             logger.debug(f"Attempting provider: {provider_name}")
-            # Skip if provider not available
             if provider_name not in providers:
                 logger.warning(
                     f"Provider '{provider_name}' in priority order but not configured, skipping"
                 )
                 continue
 
-            # Skip if provider is unhealthy
             is_provider_healthy = health_tracker.is_healthy(provider_name)
             logger.debug(
                 f"Provider {provider_name} health status: {is_provider_healthy}"
@@ -157,22 +148,16 @@ class FailoverStrategy:
             try:
                 logger.info(f"Attempting extraction with provider: {provider_name}")
 
-                # Start timing
-                import time
-
                 start_time = time.time()
 
-                # Call provider's extract_entities
-                entities = provider.extract_entities(
+                entities = await provider.extract_entities(
                     email_text=email_text,
                     company_context=company_context,
                     email_id=email_id,
                 )
 
-                # Calculate response time
                 response_time_ms = (time.time() - start_time) * 1000
 
-                # Record success
                 health_tracker.record_success(provider_name, response_time_ms)
 
                 logger.info(
@@ -183,7 +168,6 @@ class FailoverStrategy:
                 return entities, provider_name
 
             except LLMAPIError as e:
-                # Record failure in health tracker
                 health_tracker.record_failure(provider_name, str(e))
 
                 logger.warning(
@@ -191,10 +175,8 @@ class FailoverStrategy:
                 )
 
                 last_error = e
-                # Continue to next provider
 
             except Exception as e:
-                # Unexpected error - still record as failure
                 health_tracker.record_failure(provider_name, f"Unexpected: {str(e)}")
 
                 logger.error(
@@ -203,9 +185,7 @@ class FailoverStrategy:
                 )
 
                 last_error = e
-                # Continue to next provider
 
-        # All providers failed
         error_msg = (
             f"All providers failed or unhealthy. "
             f"Attempted: {attempted_providers}, "

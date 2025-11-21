@@ -73,7 +73,7 @@ class FieldMapper:
 
         # Perform person matching if matcher is available
         if self.person_matcher:
-            self._match_and_populate_person(extracted_data)
+            await self._match_and_populate_person(extracted_data)
 
         # Use sync version for the actual mapping
         return self.map_to_notion_properties(extracted_data)
@@ -189,7 +189,7 @@ class FieldMapper:
                             f"Failed to create partner: '{match_result.company_name}'"
                         )
 
-    def _match_and_populate_person(self, extracted_data) -> None:
+    async def _match_and_populate_person(self, extracted_data) -> None:
         """Match extracted person name to Notion workspace users and populate ID.
 
         Args:
@@ -197,10 +197,17 @@ class FieldMapper:
         """
         # Match person_in_charge to 담당자
         if extracted_data.person_in_charge and not extracted_data.matched_person_id:
-            match_result = self.person_matcher.match(
-                person_name=extracted_data.person_in_charge,
-                similarity_threshold=0.70,
-            )
+            # Use async matching if available, otherwise sync fallback (though unlikely in this context)
+            if hasattr(self.person_matcher, "match_async"):
+                match_result = await self.person_matcher.match_async(
+                    person_name=extracted_data.person_in_charge,
+                    similarity_threshold=0.70,
+                )
+            else:
+                match_result = self.person_matcher.match(
+                    person_name=extracted_data.person_in_charge,
+                    similarity_threshold=0.70,
+                )
 
             # Handle match result
             if match_result.match_type in ["exact", "fuzzy"]:
@@ -265,11 +272,6 @@ class FieldMapper:
         if extracted_data.details:
             properties["협업내용"] = self._format_rich_text(extracted_data.details)
 
-        if extracted_data.collaboration_summary:
-            properties["요약"] = self._format_rich_text(
-                extracted_data.collaboration_summary
-            )
-
         # Relation fields (company IDs)
         if extracted_data.matched_company_id:
             properties["스타트업명"] = self._format_relation(
@@ -295,17 +297,6 @@ class FieldMapper:
         # Date field (using Korean name as it appears in Notion DB)
         if extracted_data.date:
             properties["날짜"] = self._format_date(extracted_data.date)
-
-        # Number fields (confidence scores)
-        if extracted_data.type_confidence is not None:
-            properties["type_confidence"] = self._format_number(
-                extracted_data.type_confidence
-            )
-
-        if extracted_data.intensity_confidence is not None:
-            properties["intensity_confidence"] = self._format_number(
-                extracted_data.intensity_confidence
-            )
 
         # Metadata fields
         properties["Email ID"] = self._format_rich_text(extracted_data.email_id)

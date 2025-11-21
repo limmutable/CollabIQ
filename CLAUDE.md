@@ -8,6 +8,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-19
 - **APIs**: Gmail (google-api-python-client), Notion (notion-client), Gemini (google-generativeai), Claude (anthropic), OpenAI (openai)
 - **CLI Framework**: Typer + Rich for terminal formatting
 - **Secrets Management**: Infisical SDK (optional) with .env fallback
+- Python 3.12+ (established in project) (017-production-readiness-fixes)
+- File-based (JSON for user cache, daemon state, test reports, token storage with encryption) (017-production-readiness-fixes)
 
 ## Project Structure
 

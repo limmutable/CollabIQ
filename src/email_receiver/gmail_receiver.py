@@ -93,6 +93,11 @@ class GmailReceiver(EmailReceiver):
         self.metadata_dir = Path(metadata_dir or "data/metadata")
         self.service = None
         self.creds = None
+        
+        # Initialize TokenManager
+        # Import here to avoid circular imports if necessary, or assume it's available
+        from .token_manager import TokenManager
+        self.token_manager = TokenManager(self.token_path)
 
     def connect(self) -> None:
         """
@@ -108,11 +113,10 @@ class GmailReceiver(EmailReceiver):
             EmailReceiverError: With code AUTHENTICATION_FAILED if OAuth2 fails
         """
         try:
-            # Load existing token
-            if self.token_path.exists():
-                self.creds = Credentials.from_authorized_user_file(
-                    str(self.token_path), self.SCOPES
-                )
+            # Load existing token via TokenManager
+            token_data = self.token_manager.load_token()
+            if token_data:
+                self.creds = Credentials.from_authorized_user_info(token_data, self.SCOPES)
                 logger.info(f"Loaded existing token from {self.token_path}")
 
             # Refresh expired token or run OAuth flow
@@ -129,9 +133,9 @@ class GmailReceiver(EmailReceiver):
                     # This must match the redirect URI configured in Google Cloud Console
                     self.creds = flow.run_local_server(port=8080)
 
-                # Save token for next run
+                # Save token for next run via TokenManager
                 self.token_path.parent.mkdir(parents=True, exist_ok=True)
-                self.token_path.write_text(self.creds.to_json())
+                self.token_manager.save_token(json.loads(self.creds.to_json()))
                 logger.info(f"Saved token to {self.token_path}")
 
             # Build Gmail API service
@@ -365,6 +369,7 @@ class GmailReceiver(EmailReceiver):
             # Create RawEmail
             metadata = EmailMetadata(
                 message_id=message_id,
+                internal_id=msg_detail.get("id"),
                 sender=sender,
                 subject=subject,
                 received_at=received_at,

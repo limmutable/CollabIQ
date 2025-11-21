@@ -167,6 +167,14 @@ GMAIL_CREDENTIALS_PATH=credentials.json
 GMAIL_TOKEN_PATH=token.json
 GMAIL_BATCH_SIZE=50
 
+# Gmail Token Encryption (Phase 017: Production Readiness Fixes)
+# Generate a new Fernet key for encrypting Gmail tokens.
+# Keep this key absolutely secret and regenerate if compromised.
+# To generate a key:
+#   uv run python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# Then, paste the generated key below:
+GMAIL_ENCRYPTION_KEY=YOUR_GENERATED_FERNET_KEY_HERE
+
 # Gemini API Configuration (✅ Implemented - Phase 1b + 2b + 2c)
 GEMINI_API_KEY=AIzaSy...your_actual_key_here
 GEMINI_MODEL=gemini-2.5-flash  # Latest model (2025)

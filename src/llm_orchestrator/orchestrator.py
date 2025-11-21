@@ -264,14 +264,14 @@ class LLMOrchestrator:
             ),
         }
 
-    def extract_entities(
+    async def extract_entities(
         self,
         email_text: str,
         strategy: Optional[str] = None,
         company_context: Optional[str] = None,
         email_id: Optional[str] = None,
     ) -> ExtractedEntities:
-        """Extract entities from email text using configured orchestration strategy.
+        """Extract entities from email text using configured orchestration strategy (asynchronously).
 
         Args:
             email_text: Cleaned email body
@@ -289,7 +289,7 @@ class LLMOrchestrator:
             InvalidStrategyError: Unknown strategy specified
 
         Example:
-            >>> entities = orchestrator.extract_entities("어제 신세계와 본봄 킥오프")
+            >>> entities = await orchestrator.extract_entities("어제 신세계와 본봄 킥오프")
             >>> print(f"Used provider: {entities.provider_name}")
         """
         # Determine strategy to use
@@ -300,32 +300,16 @@ class LLMOrchestrator:
                 f"Unknown strategy: {strategy_name}", strategy_name=strategy_name
             )
 
-        # Execute strategy
+        # Execute strategy (all strategies are now expected to be async)
         strategy_impl = self._strategies[strategy_name]
 
-        # Check if strategy is async (consensus, best_match) or sync (failover)
-        import inspect
-
-        if inspect.iscoroutinefunction(strategy_impl.execute):
-            # Run async strategy
-            entities, provider_used = asyncio.run(
-                strategy_impl.execute(
-                    providers=self.providers,
-                    email_text=email_text,
-                    health_tracker=self.health_tracker,
-                    company_context=company_context,
-                    email_id=email_id,
-                )
-            )
-        else:
-            # Run sync strategy
-            entities, provider_used = strategy_impl.execute(
-                providers=self.providers,
-                email_text=email_text,
-                health_tracker=self.health_tracker,
-                company_context=company_context,
-                email_id=email_id,
-            )
+        entities, provider_used = await strategy_impl.execute(
+            providers=self.providers,
+            email_text=email_text,
+            health_tracker=self.health_tracker,
+            company_context=company_context,
+            email_id=email_id,
+        )
 
         logger.info(
             f"Successfully extracted entities using {provider_used} "

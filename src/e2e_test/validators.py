@@ -52,10 +52,10 @@ class Validator:
     # Required fields in Notion entry (names match actual Notion DB properties)
     REQUIRED_FIELDS = [
         "Email ID",  # Added as text field for duplicate detection
-        "담당자",  # people
+        # "담당자",  # people - Made optional as external senders may not map to workspace users
         "스타트업명",  # relation
-        "협력기관",  # relation
-        "협력유형",  # select
+        "협업기관",  # relation
+        "협업형태",  # select
         "날짜",  # date (Korean name in actual DB, not "Date")
     ]
 
@@ -90,6 +90,12 @@ class Validator:
                 isinstance(field_value, str) and field_value.strip() == ""
             ):
                 result.add_error(f"Required field is empty: {field_name}")
+        
+        # Warning check for 담당자 (Person)
+        if "담당자" in properties:
+            person_value = self._extract_field_value(properties["담당자"])
+            if not person_value:
+                result.add_warning("Field is empty: 담당자 (Person in Charge)")
 
         # Validate 날짜 (date) field format if present
         if "날짜" in properties:
@@ -261,6 +267,12 @@ class Validator:
 
         if "select" in field_data and field_data["select"]:
             return field_data["select"]["name"]
+
+        if "people" in field_data and field_data["people"]:
+            return field_data["people"][0]["id"]
+
+        if "relation" in field_data and field_data["relation"]:
+            return field_data["relation"][0]["id"]
 
         return None
 

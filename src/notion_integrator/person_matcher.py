@@ -218,27 +218,14 @@ class NotionPersonMatcher(PersonMatcher):
         similarity_threshold: float = 0.70,
     ) -> PersonMatch:
         """
-        Match person name using fuzzy matching with ambiguity detection.
-
-        Algorithm:
-        1. Load cached user list (or fetch if stale)
-        2. Search exact match → return similarity 1.0
-        3. Compute Jaro-Winkler similarity for all users
-        4. Check ambiguity: If top 2 scores differ by <0.10 → mark ambiguous
-        5. If best match ≥ threshold → return PersonMatch with user_id
-        6. Otherwise → return PersonMatch with user_id=None, match_type='none'
+        Match person name using fuzzy matching with ambiguity detection (synchronous).
 
         Args:
             person_name: Extracted person name (will be normalized)
             similarity_threshold: Minimum similarity for match (default: 0.70)
 
         Returns:
-            PersonMatch with match_type:
-            - 'exact': Exact match found (similarity 1.0)
-            - 'fuzzy': Fuzzy match ≥ threshold (similarity 0.70-0.99)
-            - 'none': No match found (similarity < 0.70)
-
-            is_ambiguous=True if multiple users have similar scores
+            PersonMatch object
         """
         # Validate inputs
         if not (0.0 <= similarity_threshold <= 1.0):
@@ -250,9 +237,49 @@ class NotionPersonMatcher(PersonMatcher):
         if not normalized_name:
             raise ValueError("Person name cannot be empty or whitespace-only")
 
-        # Load users from cache
+        # Load users from cache (sync)
         users = self.list_users()
 
+        return self._perform_matching_logic(normalized_name, users, similarity_threshold)
+
+    async def match_async(
+        self,
+        person_name: str,
+        *,
+        similarity_threshold: float = 0.70,
+    ) -> PersonMatch:
+        """
+        Match person name using fuzzy matching with ambiguity detection (asynchronous).
+
+        Args:
+            person_name: Extracted person name (will be normalized)
+            similarity_threshold: Minimum similarity for match (default: 0.70)
+
+        Returns:
+            PersonMatch object
+        """
+        # Validate inputs
+        if not (0.0 <= similarity_threshold <= 1.0):
+            raise ValueError(
+                f"similarity_threshold must be between 0.0 and 1.0, got {similarity_threshold}"
+            )
+
+        normalized_name = person_name.strip()
+        if not normalized_name:
+            raise ValueError("Person name cannot be empty or whitespace-only")
+
+        # Load users from cache (async)
+        users = await self.list_users_async()
+
+        return self._perform_matching_logic(normalized_name, users, similarity_threshold)
+
+    def _perform_matching_logic(
+        self,
+        normalized_name: str,
+        users: List[NotionUser],
+        similarity_threshold: float
+    ) -> PersonMatch:
+        """Internal matching logic shared by sync and async match methods."""
         # Convert to candidates format
         candidates = [(user.id, user.name) for user in users]
 

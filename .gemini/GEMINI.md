@@ -27,6 +27,10 @@ CollabIQ is an **automated collaboration tracking system** that extracts collabo
 *   **Testing:** `pytest`
 *   **Linting/Formatting:** `ruff`, `mypy`
 
+### Validation Guidelines
+*   **Person Matching:** `담당자` (Person in Charge) is treated as optional/warning-only in E2E tests to accommodate external senders who do not map to internal Notion workspace users.
+*   **Schema:** Validator is schema-aware for `relation` and `people` property types.
+
 ### Data Handling and Caching
 *   **Email Extractions:** File-based JSON output to `data/extractions/{email_id}.json`.
 *   **Notion Caching:** File-based JSON cache in `data/notion_cache/` for schema and data (with separate TTLs).

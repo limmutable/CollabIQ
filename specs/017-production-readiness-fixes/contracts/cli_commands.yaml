@@ -1,0 +1,309 @@
+# CLI Command Contracts: Production Readiness Fixes
+# Phase 017 - New and Enhanced Commands
+
+commands:
+  # Enhanced run command with daemon mode
+  - name: collabiq run
+    description: Process emails with optional daemon mode for autonomous operation
+    parameters:
+      --daemon:
+        type: boolean
+        required: false
+        default: false
+        description: Run in daemon mode (background continuous operation)
+
+      --interval:
+        type: string
+        required: false
+        default: "15m"
+        description: Check interval for daemon mode (e.g., "5m", "15m", "1h")
+        validation: "Must be ≥5 minutes"
+
+      --max-emails:
+        type: integer
+        required: false
+        default: null
+        description: Maximum number of emails to process per cycle
+
+      --verbose:
+        type: boolean
+        required: false
+        default: false
+        description: Enable verbose logging
+
+    outputs:
+      success:
+        exit_code: 0
+        stdout: |
+          Processing complete: X emails processed
+          - Person assignments: Y successful
+          - Summary generation: Z successful
+          - Errors: N
+
+      daemon_mode:
+        exit_code: 0
+        stdout: |
+          Daemon started (PID: 12345)
+          Check interval: 15 minutes
+          Press Ctrl+C to stop gracefully
+
+      error:
+        exit_code: 1
+        stderr: "Error: {error_message}"
+
+    examples:
+      - command: collabiq run
+        description: Process emails once (manual mode)
+
+      - command: collabiq run --daemon --interval 15m
+        description: Start daemon with 15-minute intervals
+
+      - command: collabiq run --daemon --interval 5m --verbose
+        description: Start daemon with 5-minute intervals and verbose logging
+
+    requirements:
+      - FR-026: Daemon mode CLI command
+      - FR-027: Configurable check intervals (≥5 minutes)
+      - FR-030: Logging with timestamp, email count, status
+
+  # New test command group
+  - name: collabiq test run
+    description: Execute test suite with optional report generation
+    parameters:
+      --category:
+        type: string
+        required: false
+        default: "all"
+        description: Test category to run (unit, integration, e2e, all)
+        enum: ["unit", "integration", "e2e", "contract", "performance", "fuzz", "all"]
+
+      --report:
+        type: string
+        required: false
+        default: null
+        description: Generate test report in specified format (markdown, json)
+        enum: ["markdown", "json"]
+
+      --output:
+        type: string
+        required: false
+        default: "data/test_reports/test_report_{timestamp}.md"
+        description: Output path for test report
+
+      --baseline:
+        type: string
+        required: false
+        default: null
+        description: Path to baseline metrics file for comparison
+
+    outputs:
+      success:
+        exit_code: 0
+        stdout: |
+          Test execution complete
+          Total: 1015 tests
+          Passed: 901 (88.8%)
+          Failed: 12
+          Skipped: 102
+          Duration: 3m 42s
+          Coverage: 84.2%
+
+          Report generated: data/test_reports/test_report_20251119_143522.md
+
+      baseline_not_met:
+        exit_code: 1
+        stderr: |
+          Test execution failed: Pass rate below baseline
+          Current: 82.3%
+          Baseline: 86.5%
+          Difference: -4.2%
+
+      error:
+        exit_code: 1
+        stderr: "Error executing tests: {error_message}"
+
+    examples:
+      - command: collabiq test run
+        description: Run all tests without report
+
+      - command: collabiq test run --category unit
+        description: Run only unit tests
+
+      - command: collabiq test run --report markdown --output phase_017_report.md
+        description: Run all tests and generate Markdown report
+
+      - command: collabiq test run --report markdown --baseline baseline_metrics.json
+        description: Run tests and compare against baseline
+
+    requirements:
+      - FR-034: Test execution command for full suite
+      - FR-036: Generate Markdown test reports
+      - FR-039: Separate commands for quick checks vs comprehensive validation
+
+  # New daemon control commands
+  - name: collabiq daemon status
+    description: Check daemon status and display current state
+    parameters: {}
+
+    outputs:
+      running:
+        exit_code: 0
+        stdout: |
+          Daemon Status: RUNNING
+          PID: 12345
+          Started: 2025-11-19 08:00:00 UTC
+          Uptime: 2h 15m
+          Last check: 2025-11-19 10:15:00 UTC
+          Total cycles: 9
+          Emails processed: 47
+          Errors: 1
+          Check interval: 15 minutes
+
+      stopped:
+        exit_code: 0
+        stdout: "Daemon Status: STOPPED"
+
+      error:
+        exit_code: 1
+        stderr: "Error: {error_message}"
+
+    examples:
+      - command: collabiq daemon status
+        description: Check if daemon is running
+
+    requirements:
+      - FR-032: Health check endpoint or status command
+
+  - name: collabiq daemon stop
+    description: Gracefully stop running daemon
+    parameters:
+      --timeout:
+        type: integer
+        required: false
+        default: 10
+        description: Maximum seconds to wait for graceful shutdown
+
+    outputs:
+      success:
+        exit_code: 0
+        stdout: |
+          Stopping daemon (PID: 12345)...
+          Waiting for current processing to complete...
+          Daemon stopped successfully
+
+      timeout:
+        exit_code: 1
+        stderr: "Error: Daemon did not stop within {timeout} seconds"
+
+      not_running:
+        exit_code: 0
+        stdout: "Daemon is not running"
+
+    examples:
+      - command: collabiq daemon stop
+        description: Stop daemon with 10-second timeout
+
+      - command: collabiq daemon stop --timeout 30
+        description: Stop daemon with 30-second timeout
+
+    requirements:
+      - FR-029: Graceful shutdown on SIGTERM/SIGINT
+      - SC-010: Daemon handles shutdown within 10 seconds
+
+  # Enhanced config command for token status
+  - name: collabiq config token-status
+    description: Display Gmail OAuth2 token status and expiration
+    parameters: {}
+
+    outputs:
+      success:
+        exit_code: 0
+        stdout: |
+          Gmail Token Status
+          ------------------
+          Access token: Valid
+          Expires in: 45 minutes
+          Refresh token: Available
+          Last refreshed: 2025-11-19 10:30:00 UTC
+          Encrypted: Yes
+          Encryption algorithm: Fernet-AES128
+
+      expired:
+        exit_code: 0
+        stdout: |
+          Gmail Token Status
+          ------------------
+          Access token: EXPIRED
+          Refresh token: Available
+          Automatic refresh will occur on next email fetch
+
+      error:
+        exit_code: 1
+        stderr: "Error: {error_message}"
+
+    examples:
+      - command: collabiq config token-status
+        description: Check Gmail token expiration status
+
+    requirements:
+      - FR-014: Detect token expiration (within 1 hour)
+      - FR-016: Display encryption status
+
+signal_handling:
+  - signal: SIGTERM
+    behavior: Graceful shutdown - complete current email processing, save state, exit
+    timeout: 10 seconds
+    requirements: [FR-029]
+
+  - signal: SIGINT
+    behavior: Graceful shutdown - complete current email processing, save state, exit
+    timeout: 10 seconds
+    requirements: [FR-029]
+
+error_handling:
+  - error_type: API Rate Limit
+    strategy: Exponential backoff with jitter
+    max_retries: 3
+    requirements: [FR-033]
+
+  - error_type: Token Refresh Failure
+    strategy: Log critical alert, skip email fetch, continue daemon
+    requirements: [FR-017, FR-018]
+
+  - error_type: Person Matching Low Confidence
+    strategy: Leave 담당자 field empty, log warning
+    requirements: [FR-006, FR-007]
+
+  - error_type: UUID Validation Failure
+    strategy: Retry with corrected prompt (max 2 retries)
+    max_retries: 2
+    requirements: [FR-022, FR-023]
+
+logging_format:
+  daemon_cycle:
+    level: INFO
+    format: "[{timestamp}] Daemon cycle #{cycle_num}: {emails_count} emails processed, {success_count} successful, {error_count} errors"
+    requirements: [FR-030]
+
+  person_matching_warning:
+    level: WARNING
+    format: "[{timestamp}] Person matching confidence below threshold: '{name}' -> best match '{matched_name}' ({confidence}%)"
+    requirements: [FR-006]
+
+  token_refresh:
+    level: INFO
+    format: "[{timestamp}] Gmail token refreshed successfully, expires at {expiry_time}"
+    requirements: [FR-015]
+
+  token_refresh_failure:
+    level: CRITICAL
+    format: "[{timestamp}] Gmail token refresh FAILED: {error_message}"
+    requirements: [FR-018]
+
+requirements_mapping:
+  person_matching: [FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, FR-007]
+  summary_quality: [FR-008, FR-009, FR-010, FR-011, FR-012, FR-013]
+  token_management: [FR-014, FR-015, FR-016, FR-017, FR-018, FR-019]
+  uuid_extraction: [FR-020, FR-021, FR-022, FR-023, FR-024, FR-025]
+  daemon_mode: [FR-026, FR-027, FR-028, FR-029, FR-030, FR-031, FR-032, FR-033]
+  testing: [FR-034, FR-035, FR-036, FR-037, FR-038, FR-039, FR-040]

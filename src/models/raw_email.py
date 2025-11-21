@@ -47,6 +47,9 @@ class EmailMetadata(BaseModel):
     message_id: str = Field(
         ..., description="Unique email message ID from email server"
     )
+    internal_id: Optional[str] = Field(
+        None, description="Internal API ID (e.g., Gmail message ID)"
+    )
     sender: EmailStr = Field(..., description="Sender email address")
     subject: str = Field(..., description="Email subject line")
     received_at: datetime = Field(

@@ -4,6 +4,7 @@ This module provides a concrete implementation of the LLMProvider interface
 using Google's Gemini 2.0 Flash API for entity extraction from emails.
 """
 
+import asyncio
 import json
 import logging
 import random
@@ -46,9 +47,7 @@ except ImportError:
     GEMINI_RETRY_CONFIG = None
     gemini_circuit_breaker = None
 
-
 logger = logging.getLogger(__name__)
-
 
 class GeminiAdapter(LLMProvider):
     """Gemini API adapter for entity extraction.
@@ -107,14 +106,63 @@ class GeminiAdapter(LLMProvider):
         with open(prompt_path, "r", encoding="utf-8") as f:
             self.prompt_template = f.read()
 
+        # Load summary prompt template
+        summary_prompt_path = Path(__file__).parent / "prompts" / "summary_prompt.txt"
+        if summary_prompt_path.exists():
+            with open(summary_prompt_path, "r", encoding="utf-8") as f:
+                self.summary_prompt_template = f.read()
+        else:
+            self.summary_prompt_template = "Summarize the following email in 1-4 lines:\n\n{email_text}"
+
         logger.info(f"Initialized GeminiAdapter with model={model}, timeout={timeout}s")
+
+    async def generate_summary(self, email_text: str) -> str:
+        """Generate a 1-4 line summary of the email content.
+
+        Args:
+            email_text: Cleaned email body
+
+        Returns:
+            str: Summary text (1-4 lines)
+        """
+        if not email_text or not email_text.strip():
+            return ""
+
+        prompt = self.summary_prompt_template.replace("{email_text}", email_text)
+        
+        def _generate():
+            return self.client.generate_content(
+                prompt,
+                generation_config=genai.GenerationConfig(
+                    temperature=0.7, # Increased temperature for more diverse output
+                    max_output_tokens=400, # Increased max output tokens to match summary length limit
+                ),
+            )
+
+        try:
+            # Run blocking API call in thread pool
+            response = await asyncio.to_thread(_generate)
+            
+            # Check if response contains valid parts
+            if response.candidates and response.candidates[0].content.parts:
+                return response.text.strip()
+            else:
+                finish_reason = None
+                if response.candidates and hasattr(response.candidates[0], 'finish_reason'):
+                    finish_reason = response.candidates[0].finish_reason
+                logger.warning(f"Gemini summary generation returned no valid parts. Finish reason: {finish_reason}")
+                return ""
+
+        except Exception as e:
+            logger.error(f"Failed to generate summary: {e}")
+            return ""
 
     @(
         retry_with_backoff(GEMINI_RETRY_CONFIG)
         if retry_with_backoff and GEMINI_RETRY_CONFIG
         else lambda f: f
     )
-    def extract_entities(
+    async def extract_entities(
         self,
         email_text: str,
         company_context: Optional[str] = None,
@@ -152,8 +200,11 @@ class GeminiAdapter(LLMProvider):
                 f"email_text too long ({len(email_text)} chars). Maximum length is 10,000 characters."
             )
 
-        # Call Gemini API with retry
-        response_data = self._call_with_retry(email_text, company_context)
+        # Call Gemini API with retry (in thread pool for async compatibility)
+        # Note: retry_with_backoff decorator needs to handle async functions correctly
+        # If using tenacity, it usually handles both. If custom, might need update.
+        # Assuming _call_with_retry is synchronous and needs wrapping.
+        response_data = await asyncio.to_thread(self._call_with_retry, email_text, company_context)
 
         # Parse response to ExtractedEntities
         entities = self._parse_response(
