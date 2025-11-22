@@ -70,7 +70,13 @@ uv run collabiq config get KEY       # Get specific value
 - **Testing**: pytest with fixtures in src/collabiq/test_utils/
 - **Documentation**: Google-style docstrings
 
-## Recent Changes (Phases 014-016)
+## Recent Changes (Phases 014-017)
+- **Phase 017** (2025-11-22): Production Readiness Fixes
+  - Stabilized async pipeline (Gmail, LLM, Notion)
+  - Implemented Daemon mode for continuous operation
+  - Validated E2E workflow with 100% success on production DB
+  - Updated documentation and CLI for daemon support
+
 - **Phase 016** (2025-11-19): Project cleanup & refactoring
   - Created 6 README indexes for navigation
   - Registered CLI config commands

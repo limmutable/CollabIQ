@@ -143,6 +143,7 @@ CollabIQ is an email-based collaboration tracking system that extracts entities 
 | **NotionIntegrator (Read)** | Fetch company lists with schema discovery, pagination, caching | ✅ Complete (Phase 2a) |
 | **NotionIntegrator (Write)** | Create/update Notion database entries with duplicate detection | ✅ Complete (Phase 2d) |
 | **Error Handling** | Unified retry system, circuit breakers, DLQ, structured logging | ✅ Complete (Phase 010) |
+| **DaemonController** | Orchestrates autonomous background processing with configurable intervals | ✅ Complete (Phase 017) |
 | **VerificationQueue** | Store low-confidence extractions for manual review | 🚧 Future (Phase 3) |
 | **ReportGenerator** | Generate periodic summary reports with trends and insights | 🚧 Future (Phase 4) |
 
@@ -153,6 +154,35 @@ CollabIQ is an email-based collaboration tracking system that extracts entities 
 - Simpler architecture (one less component)
 - Better handling of abbreviations and typos via LLM semantic understanding
 - RapidFuzz library kept as optional fallback if LLM matching insufficient
+
+---
+
+## Autonomous Operation (Daemon Mode)
+
+**Implementation**: `src/daemon/`
+
+**Purpose**: Enable continuous background operation without manual intervention.
+
+**Components**:
+- **DaemonController**: Orchestrates the processing cycle (fetch -> extract -> write).
+- **Scheduler**: Handles periodic execution (default 15 min) and graceful shutdown (SIGINT/SIGTERM).
+- **StateManager**: Persists processing state (last email ID, error counts) to `data/daemon/state.json` for crash recovery.
+
+**Flow**:
+1. **Startup**: Load state, initialize components.
+2. **Loop**:
+   - Wait for next interval.
+   - **Fetch**: Retrieve new emails since last processed ID.
+   - **Process**: Run pipeline (Normalizer -> Orchestrator -> Writer).
+   - **Update State**: Save progress atomically.
+   - **Sleep**: Async sleep until next cycle.
+3. **Shutdown**: Finish current cycle, save state, exit.
+
+**Usage**:
+```bash
+# Run continuously
+uv run collabiq run --daemon --interval 15
+```
 
 ---
 

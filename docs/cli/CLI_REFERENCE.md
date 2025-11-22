@@ -59,6 +59,39 @@ uv run collabiq --debug llm status
 
 ---
 
+## Run Command
+
+Execute the main processing pipeline.
+
+### `run`
+
+Execute the CollabIQ pipeline (fetch -> extract -> write). Can run once or in daemon mode.
+
+**Usage**:
+```bash
+collabiq run [OPTIONS]
+```
+
+**Options**:
+```bash
+--daemon, -d          Run in daemon mode (continuous background processing)
+--interval, -i INT    Check interval in minutes (daemon mode only) [default: 15]
+```
+
+**Examples**:
+```bash
+# Run a single processing cycle
+uv run collabiq run
+
+# Run in daemon mode (check every 15 mins)
+uv run collabiq run --daemon
+
+# Run in daemon mode with custom interval (e.g., every 5 mins)
+uv run collabiq run --daemon --interval 5
+```
+
+---
+
 ## LLM Commands
 
 Manage LLM providers, view metrics, and configure orchestration strategies.

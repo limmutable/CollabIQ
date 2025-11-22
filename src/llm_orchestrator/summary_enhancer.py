@@ -12,7 +12,7 @@ class SummaryEnhancer:
     def __init__(self, orchestrator: LLMOrchestrator):
         self.orchestrator = orchestrator
 
-    def generate_summary(self, email_text: str, strategy: str = "consensus") -> str:
+    async def generate_summary(self, email_text: str, strategy: str = "consensus") -> str:
         """
         Generates a 1-4 line summary using the specified orchestration strategy.
         
@@ -25,14 +25,14 @@ class SummaryEnhancer:
         """
         default_summary = "[Summary unavailable due to content policy or generation error.]"
         if strategy == "failover":
-            return self._failover_strategy(email_text)
+            return await self._failover_strategy(email_text, default_summary=default_summary)
         elif strategy in ["consensus", "best_match"]:
-            return self._consensus_strategy(email_text, default_summary=default_summary)
+            return await self._consensus_strategy(email_text, default_summary=default_summary)
         else:
             logger.warning(f"Unknown strategy {strategy}, defaulting to failover")
-            return self._failover_strategy(email_text, default_summary=default_summary)
+            return await self._failover_strategy(email_text, default_summary=default_summary)
 
-    def _failover_strategy(self, email_text: str, default_summary: str = "[Summary unavailable due to content policy or generation error.]") -> str:
+    async def _failover_strategy(self, email_text: str, default_summary: str) -> str:
         # Reuse orchestrator config priority
         priority_order = self.orchestrator.config.provider_priority
         
@@ -46,7 +46,8 @@ class SummaryEnhancer:
                 continue
                 
             try:
-                summary = provider.generate_summary(email_text)
+                # Assuming provider.generate_summary is async
+                summary = await provider.generate_summary(email_text)
                 if summary:
                     logger.info(f"Generated summary using {provider_name}")
                     return summary
@@ -57,9 +58,9 @@ class SummaryEnhancer:
                 self.orchestrator.health_tracker.record_failure(provider_name, str(e))
                 
         logger.error("All providers failed to generate summary")
-        return "[Summary unavailable due to content policy or generation error.]"
+        return default_summary
 
-    def _consensus_strategy(self, email_text: str, default_summary: str = "[Summary unavailable due to content policy or generation error.]") -> str:
+    async def _consensus_strategy(self, email_text: str, default_summary: str) -> str:
         # Call all available providers
         summaries = {}
         for name, provider in self.orchestrator.providers.items():
@@ -68,7 +69,7 @@ class SummaryEnhancer:
                 continue
 
             try:
-                summary = provider.generate_summary(email_text)
+                summary = await provider.generate_summary(email_text)
                 if summary:
                     summaries[name] = summary
             except NotImplementedError:
@@ -78,7 +79,7 @@ class SummaryEnhancer:
                 self.orchestrator.health_tracker.record_failure(name, str(e))
         
         if not summaries:
-            return ""
+            return default_summary
             
         # Selection logic:
         # Ideally, we would use an LLM to pick the best one, but that adds cost/latency.

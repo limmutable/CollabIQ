@@ -1,4 +1,5 @@
 import typer
+import asyncio
 from daemon.controller import DaemonController
 
 def run(
@@ -15,4 +16,5 @@ def run(
     if daemon:
         controller.run()
     else:
-        controller.process_cycle()
+        # Process cycle is async, needs event loop
+        asyncio.run(controller.process_cycle())
