@@ -72,8 +72,22 @@ class DaemonController:
         self.state_manager.save_state(state)
 
         try:
+            # 0. Fetch Company Context (Cached)
+            company_context = None
+            companies_db = self.settings.get_notion_companies_db_id()
+            if companies_db:
+                try:
+                    # Use format_for_llm to get markdown list of existing companies
+                    formatted = await self.notion_integrator.format_for_llm(
+                        database_id=companies_db, 
+                        use_cache=True
+                    )
+                    company_context = formatted.summary_markdown
+                    logger.info(f"Loaded company context ({formatted.metadata.total_companies} companies)")
+                except Exception as e:
+                    logger.warning(f"Failed to fetch company context: {e}")
+
             # 1. Fetch Emails (Sync -> Thread)
-            # Connect might need thread too if it refreshes token via network
             await asyncio.to_thread(self.receiver.connect)
             
             # Fetch emails
@@ -85,16 +99,28 @@ class DaemonController:
                     continue
                 
                 logger.info(f"Processing email: {raw_email.metadata.subject}")
+
+                # 1.5 Early Duplicate Check in Notion
+                # Avoid expensive LLM calls if entry already exists
+                if self.writer:
+                    try:
+                        existing_id = await self.writer.check_duplicate(raw_email.metadata.message_id)
+                        if existing_id:
+                            logger.info(f"Duplicate found in Notion (page_id={existing_id}). Skipping processing.")
+                            self.receiver.mark_processed(raw_email.metadata.message_id)
+                            processed_count += 1
+                            continue
+                    except Exception as e:
+                        logger.warning(f"Failed to check Notion duplicate: {e}")
                 
                 # Clean (CPU bound, fast enough to run sync or thread)
                 cleaned_email = self.normalizer.process_raw_email(raw_email)
                 
                 # Extract (Async)
-                # TODO: Fetch company context from Notion for better matching?
-                # For now, pass None or cached context if available
                 extracted = await self.orchestrator.extract_entities(
                     email_text=cleaned_email.cleaned_body,
-                    email_id=raw_email.metadata.message_id
+                    email_id=raw_email.metadata.message_id,
+                    company_context=company_context  # Pass context for better matching
                 )
                 
                 if not extracted:
@@ -114,30 +140,20 @@ class DaemonController:
                     summary = "[Summary unavailable due to content policy, generation error, or insufficient length for validation requirements.]"
 
                 # Inject summary into extracted entities (requires field existence)
-                # ExtractedEntities might not have 'collaboration_summary' if it's the base model
-                # But NotionWriter expects ExtractedEntitiesWithClassification usually.
-                # Let's assume we can attach it dynamically or model supports it.
-                # Actually, orchestrator returns ExtractedEntities.
-                # We might need to wrap it or add the field.
-                # Ideally, LLMOrchestrator should return the full object if configured.
-                # For now, we'll hack it: NotionWriter usually takes ExtractedEntitiesWithClassification
-                # We should upgrade the object.
                 from llm_provider.types import ExtractedEntitiesWithClassification
                 
                 classified_data = ExtractedEntitiesWithClassification(
                     **extracted.model_dump(),
                     collaboration_summary=summary,
                     # Classification fields might be missing if extract_entities didn't return them
-                    # The orchestrator's extract_entities DOES return classification if prompt asks for it.
-                    # But the type hint says ExtractedEntities.
-                    # In Phase 017, we saw it returns ExtractedEntities.
-                    # We need to handle defaults if missing.
                     collaboration_type=getattr(extracted, "collaboration_type", "[A]PortCoXSSG"),
                     collaboration_intensity=getattr(extracted, "collaboration_intensity", "협력")
                 )
                 
                 # Write (Async)
                 if self.writer:
+                    # Note: writer.create_collabiq_entry also checks duplicates, 
+                    # but we did it early to save LLM costs.
                     result = await self.writer.create_collabiq_entry(classified_data)
                     
                     if result.success:

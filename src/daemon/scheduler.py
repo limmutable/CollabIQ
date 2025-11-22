@@ -52,16 +52,16 @@ class Scheduler:
             if self._shutdown_requested:
                 break
 
+            # Calculate sleep time
             elapsed = datetime.now() - start_time
             sleep_seconds = (self.interval - elapsed).total_seconds()
             
-            if sleep_seconds > 0:
-                logger.debug(f"Sleeping for {sleep_seconds:.1f}s")
+            # Sleep in 1-second chunks to remain responsive to shutdown signals
+            while sleep_seconds > 0 and not self._shutdown_requested:
+                chunk = min(1.0, sleep_seconds)
                 try:
-                    # Use wait_for to allow interruption if shutdown requested (though loop checks condition)
-                    # Just sleep in chunks or check flag?
-                    # Simple await sleep is fine, it can be cancelled.
-                    await asyncio.sleep(sleep_seconds)
+                    await asyncio.sleep(chunk)
+                    sleep_seconds -= chunk
                 except asyncio.CancelledError:
                     break
         
