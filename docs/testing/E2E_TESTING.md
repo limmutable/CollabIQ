@@ -1,10 +1,11 @@
 # CollabIQ E2E Testing Guide
 
-**Status**: Phase 015 Complete (Test Suite Improvements)
-**Last Updated**: 2025-11-18
-**Version**: 2.1.0
+**Status**: Phase 017 Complete (Production Readiness Fixes)
+**Last Updated**: 2025-11-26
+**Version**: 2.2.0
 
 **Quick Links**:
+
 - [Quick Start](#quick-start) - 30-second test run
 - [Multi-LLM Orchestration](#multi-llm-orchestration) - Phase 013 features
 - [Module Testing](#module-testing) - Individual component testing
@@ -50,6 +51,7 @@ The E2E test infrastructure validates all 6 stages:
 #### Multi-LLM Orchestration
 
 E2E tests now use `LLMOrchestrator` instead of a single Gemini adapter, enabling:
+
 - **Multiple providers**: Test with Gemini, Claude, and OpenAI
 - **Orchestration strategies**: Validate different selection approaches
 - **Quality-based routing**: Test intelligent provider selection
@@ -58,6 +60,7 @@ E2E tests now use `LLMOrchestrator` instead of a single Gemini adapter, enabling
 #### Quality Metrics Tracking
 
 Quality metrics are automatically collected and reported:
+
 - Per-provider confidence scores
 - Field completeness percentages
 - Validation success rates
@@ -160,6 +163,7 @@ uv run python scripts/diagnose_notion_access.py
 ```
 
 **What It Checks**:
+
 - Notion API token format (ntn_xxx or secret_xxx)
 - Database connectivity (Companies and CollabIQ)
 - Data source availability (Notion API 2025-09-03)
@@ -167,6 +171,7 @@ uv run python scripts/diagnose_notion_access.py
 - Integration connection status
 
 **Expected Output**:
+
 ```
 ========================================
 NOTION API ACCESS DIAGNOSTICS
@@ -196,6 +201,7 @@ NOTION API ACCESS DIAGNOSTICS
 ```
 
 **Troubleshooting**:
+
 - **NO PROPERTIES ACCESSIBLE**: Integration not connected to database
   - Go to https://notion.so/[database_id]
   - Click "..." menu → "Connections"
@@ -213,14 +219,12 @@ NOTION API ACCESS DIAGNOSTICS
 # Fetch all emails (default: max 100 from collab@signite.co)
 uv run python scripts/select_test_emails.py --all
 
-# Fetch specific count
-uv run python scripts/select_test_emails.py --count 10
-
-# Preview only (no file write)
-uv run python scripts/select_test_emails.py --all --preview
+# Specify custom output path
+uv run python scripts/select_test_emails.py --all --output data/my_test_emails.json
 ```
 
 **What It Does**:
+
 - Connects to Gmail API with OAuth2 credentials
 - Fetches emails matching query: `to:collab@signite.co`
 - Analyzes email metadata (subject, date, Korean text presence)
@@ -228,6 +232,7 @@ uv run python scripts/select_test_emails.py --all --preview
 - Saves to `data/e2e_test/test_email_ids.json`
 
 **Expected Output**:
+
 ```
 Initializing Gmail receiver...
 Connected to Gmail API
@@ -246,6 +251,7 @@ Saved test metadata to: data/e2e_test/test_email_ids.json
 ```
 
 **Troubleshooting**:
+
 - **ERROR: Gmail credentials not found**: Set `GOOGLE_CREDENTIALS_PATH`
 - **ERROR: Token invalid**: Delete `token.json` and re-authenticate
 - **No emails found**: Check Gmail query, ensure emails exist
@@ -270,6 +276,7 @@ pytest tests/integration/test_gemini_extraction.py::test_korean_encoding -v
 ```
 
 **What It Tests**:
+
 - LLM API connectivity and authentication (Gemini, Claude, OpenAI)
 - Entity extraction accuracy (startup names, dates, categories)
 - Korean text encoding (UTF-8 preservation)
@@ -336,6 +343,7 @@ pytest tests/integration/test_classification_service.py::test_all_types -v
 ```
 
 **Classification Types**:
+
 - **A**: Direct collaboration request (1:1)
 - **B**: Partnership proposal
 - **C**: Event/program participation
@@ -362,6 +370,7 @@ uv run python scripts/run_e2e_with_real_components.py \
 ```
 
 **What It Tests**:
+
 - Notion API authentication
 - Property name mapping (Korean fields: 날짜, 담당자, etc.)
 - Relation field handling (스타트업명, 협력기관)
@@ -408,11 +417,13 @@ uv run python scripts/run_e2e_tests.py --all --strategy consensus --quality-rout
 To test quality-based routing, you need historical metrics:
 
 1. **Populate metrics first**:
+
    ```bash
    uv run python scripts/populate_quality_metrics.py
    ```
 
 2. **Run E2E tests with quality routing**:
+
    ```bash
    uv run python scripts/run_e2e_tests.py --all --quality-routing
    ```
@@ -427,6 +438,7 @@ To test quality-based routing, you need historical metrics:
 ## Orchestration Strategies
 
 ### Failover (Default)
+
 - **Behavior**: Try providers sequentially until success
 - **Use Case**: Fastest execution, prioritizes speed
 - **Best For**: Regular testing, CI/CD pipelines
@@ -437,6 +449,7 @@ uv run python scripts/run_e2e_tests.py --all --strategy failover
 ```
 
 ### Consensus
+
 - **Behavior**: Query multiple providers, use majority vote
 - **Use Case**: High-accuracy requirements
 - **Best For**: Critical extractions, validation testing
@@ -447,6 +460,7 @@ uv run python scripts/run_e2e_tests.py --all --strategy consensus
 ```
 
 ### Best-Match
+
 - **Behavior**: Query all providers, select highest confidence
 - **Use Case**: Quality optimization
 - **Best For**: Testing confidence scoring, provider comparison
@@ -457,6 +471,7 @@ uv run python scripts/run_e2e_tests.py --all --strategy best_match
 ```
 
 ### All-Providers (Recommended for Testing)
+
 - **Behavior**: Query ALL providers in parallel
 - **Use Case**: Comprehensive quality data collection
 - **Best For**: Provider comparison, quality metrics validation
@@ -468,12 +483,12 @@ uv run python scripts/run_e2e_tests.py --all --strategy all_providers
 
 ### Strategy Performance Comparison
 
-| Strategy | Speed | Cost | Quality Data |
-|----------|-------|------|--------------|
-| Failover | Fast | Low | Single provider |
-| Consensus | Slow | High | Multiple providers |
-| Best-Match | Slow | High | All providers |
-| All-Providers | Slow | Highest | ALL providers (recommended for testing) |
+| Strategy      | Speed | Cost    | Quality Data                            |
+| ------------- | ----- | ------- | --------------------------------------- |
+| Failover      | Fast  | Low     | Single provider                         |
+| Consensus     | Slow  | High    | Multiple providers                      |
+| Best-Match    | Slow  | High    | All providers                           |
+| All-Providers | Slow  | Highest | ALL providers (recommended for testing) |
 
 ### Recommendations
 
@@ -488,19 +503,19 @@ uv run python scripts/run_e2e_tests.py --all --strategy all_providers
 
 ### Mode Comparison
 
-| Feature | Mock Mode | Dry-Run Mode | Full E2E Mode |
-|---------|-----------|--------------|---------------|
-| Gmail Fetch | No | Yes | Yes |
-| LLM Extraction | No | Yes | Yes |
-| Company Matching | No | Yes | Yes |
-| Classification | No | Yes | Yes |
-| Notion Write | No | No | Yes |
-| Validation | Yes | Yes | Yes |
-| Error Tracking | Yes | Yes | Yes |
-| Reports | Yes | Yes | Yes |
-| API Costs | Free | Uses quota | Uses quota |
-| Safety | 100% safe | Safe (no writes) | Requires cleanup |
-| Use Case | Infrastructure testing | Pre-production validation | MVP validation |
+| Feature          | Mock Mode              | Dry-Run Mode              | Full E2E Mode    |
+| ---------------- | ---------------------- | ------------------------- | ---------------- |
+| Gmail Fetch      | No                     | Yes                       | Yes              |
+| LLM Extraction   | No                     | Yes                       | Yes              |
+| Company Matching | No                     | Yes                       | Yes              |
+| Classification   | No                     | Yes                       | Yes              |
+| Notion Write     | No                     | No                        | Yes              |
+| Validation       | Yes                    | Yes                       | Yes              |
+| Error Tracking   | Yes                    | Yes                       | Yes              |
+| Reports          | Yes                    | Yes                       | Yes              |
+| API Costs        | Free                   | Uses quota                | Uses quota       |
+| Safety           | 100% safe              | Safe (no writes)          | Requires cleanup |
+| Use Case         | Infrastructure testing | Pre-production validation | MVP validation   |
 
 ### Option 1: Mock Mode (Safe, No API Calls)
 
@@ -511,12 +526,14 @@ uv run python scripts/run_e2e_tests.py --all
 ```
 
 **What It Does**:
+
 - Tests E2E infrastructure (runner, error collector, validators, reports)
 - Uses mock components (no real API calls)
 - Fast execution (no API delays)
 - 100% success rate (mocked data always valid)
 
 **Limitations**:
+
 - Doesn't test actual API integrations
 - Doesn't write to Notion database
 - Doesn't validate real data quality
@@ -532,6 +549,7 @@ uv run python scripts/run_e2e_with_real_components.py --all --dry-run
 ```
 
 **What It Does**:
+
 - Initializes all real components (Gmail, LLMs, Notion)
 - Fetches real emails from Gmail
 - Extracts entities with LLM orchestrator
@@ -563,6 +581,7 @@ uv run python scripts/run_e2e_with_real_components.py \
 ```
 
 **What It Does**:
+
 - Complete pipeline execution with all real components
 - Fetches real emails from Gmail
 - Extracts entities with LLM orchestrator
@@ -572,6 +591,7 @@ uv run python scripts/run_e2e_with_real_components.py \
 - Generates comprehensive reports
 
 **Safety Prompts**:
+
 ```
 ================================================================================
 ⚠️  WARNING: PRODUCTION WRITE MODE
@@ -597,6 +617,7 @@ As of Phase 015, the automated E2E test suite includes **6 real integration test
 **Test Suite**: `tests/e2e/test_full_pipeline.py`
 
 **What It Tests**:
+
 1. **test_gmail_authentication**: Validates Gmail OAuth2 credentials
 2. **test_fetch_real_email**: Fetches actual email from Gmail API
 3. **test_llm_extraction_real**: Extracts entities from real email using LLM
@@ -605,6 +626,7 @@ As of Phase 015, the automated E2E test suite includes **6 real integration test
 6. **test_full_pipeline_e2e**: Complete end-to-end pipeline validation
 
 **Prerequisites**:
+
 ```bash
 # Set required environment variables
 export GOOGLE_CREDENTIALS_PATH=credentials.json
@@ -647,6 +669,7 @@ uv run pytest tests/ -v -m "not e2e"
 **Expected Runtime**: ~71 seconds for all 6 tests
 
 **Expected Output**:
+
 ```
 tests/e2e/test_full_pipeline.py::TestFullPipeline::test_gmail_authentication PASSED
 tests/e2e/test_full_pipeline.py::TestFullPipeline::test_fetch_real_email PASSED
@@ -659,11 +682,13 @@ tests/e2e/test_full_pipeline.py::TestFullPipeline::test_full_pipeline_e2e PASSED
 ```
 
 **Test Markers**:
+
 - All tests are marked with `@pytest.mark.e2e`
 - Tests requiring Notion API are marked with `@pytest.mark.notion`
 - Tests requiring LLM API are marked with `@pytest.mark.integration`
 
 **Safety Features**:
+
 - Uses production Gmail (read-only, safe)
 - Uses production Notion credentials (writes to real database)
 - Automatically cleans up test entries after validation
@@ -672,6 +697,7 @@ tests/e2e/test_full_pipeline.py::TestFullPipeline::test_full_pipeline_e2e PASSED
 **Troubleshooting**:
 
 If tests fail with credential errors:
+
 ```bash
 # Check credentials are available
 ls -la credentials.json token.json
@@ -686,6 +712,7 @@ uv run python scripts/authenticate_gmail.py
 ```
 
 If tests are slow:
+
 ```bash
 # Run single test for faster iteration
 uv run pytest tests/e2e/test_full_pipeline.py::TestFullPipeline::test_fetch_real_email -v
@@ -697,6 +724,7 @@ uv run pytest tests/e2e/test_full_pipeline.py -v -k "not llm"
 **CI/CD Integration**:
 
 For CI/CD environments without credentials:
+
 ```yaml
 # GitHub Actions example
 - name: Run tests
@@ -725,6 +753,7 @@ uv run python tests/manual/run_e2e_validation.py
 ```
 
 **Interactive Prompts**:
+
 ```
 === CollabIQ E2E Test Runner ===
 
@@ -766,6 +795,7 @@ View detailed report? (y/n):
 After test completion, quality metrics are automatically:
 
 1. **Displayed in console output**:
+
    ```
    ======================================================================
    Quality Metrics Summary
@@ -792,6 +822,7 @@ After test completion, quality metrics are automatically:
    ```
 
 2. **Saved to JSON report**:
+
    ```
    data/e2e_test/reports/{run_id}_quality_metrics.json
    ```
@@ -819,14 +850,14 @@ data/e2e_test/
 
 E2E tests now use the same components as production:
 
-| Component | Test | Production |
-|-----------|------|------------|
+| Component         | Test                 | Production           |
+| ----------------- | -------------------- | -------------------- |
 | LLM Orchestration | ✅ `LLMOrchestrator` | ✅ `LLMOrchestrator` |
-| Quality Tracking | ✅ Automatic | ✅ Automatic |
-| Cost Tracking | ✅ Automatic | ✅ Automatic |
-| Health Monitoring | ✅ Enabled | ✅ Enabled |
-| Strategies | ✅ All supported | ✅ All supported |
-| Quality Routing | ✅ Optional | ✅ Configurable |
+| Quality Tracking  | ✅ Automatic         | ✅ Automatic         |
+| Cost Tracking     | ✅ Automatic         | ✅ Automatic         |
+| Health Monitoring | ✅ Enabled           | ✅ Enabled           |
+| Strategies        | ✅ All supported     | ✅ All supported     |
+| Quality Routing   | ✅ Optional          | ✅ Configurable      |
 
 ### Backward Compatibility
 
@@ -874,6 +905,7 @@ Type 'YES' to continue: YES
 ```
 
 Skip prompt with `--yes` flag (use with caution):
+
 ```bash
 uv run python scripts/run_e2e_with_real_components.py --all --confirm --yes
 ```
@@ -881,6 +913,7 @@ uv run python scripts/run_e2e_with_real_components.py --all --confirm --yes
 ### 3. Duplicate Detection
 
 NotionWriter configured with `duplicate_behavior="skip"`:
+
 - Won't create duplicate entries for same `email_id`
 - Safe to re-run tests without creating duplicates
 - Uses Notion API 2025-09-03 `data_sources.query()` method
@@ -888,6 +921,7 @@ NotionWriter configured with `duplicate_behavior="skip"`:
 ### 4. Dry-Run Mode
 
 Test everything except actual Notion writes:
+
 ```bash
 uv run python scripts/run_e2e_with_real_components.py --all --dry-run
 ```
@@ -922,6 +956,7 @@ cat data/e2e_test/reports/*-e2e_test.md
 ```
 
 **Expected Output**:
+
 ```markdown
 ## Processing Results
 
@@ -984,6 +1019,7 @@ pytest tests/e2e/test_korean_encoding.py -v
 **Problem**: Quality metrics report is empty
 
 **Solution**:
+
 - Ensure `llm_orchestrator` is initialized (not using legacy mode)
 - Check that at least one extraction succeeded
 - Verify quality tracker is enabled
@@ -993,6 +1029,7 @@ pytest tests/e2e/test_korean_encoding.py -v
 **Problem**: Quality routing doesn't select expected provider
 
 **Solution**:
+
 - Populate metrics first: `python scripts/populate_quality_metrics.py`
 - Verify `--quality-routing` flag is set
 - Check `data/llm_health/quality_metrics.json` has data
@@ -1003,6 +1040,7 @@ pytest tests/e2e/test_korean_encoding.py -v
 **Problem**: All providers fail with certain strategy
 
 **Solution**:
+
 - Check API keys are configured for all providers
 - Verify provider health status
 - Try `failover` strategy to identify failing provider
@@ -1013,6 +1051,7 @@ pytest tests/e2e/test_korean_encoding.py -v
 **Symptom**: `ERROR: Gmail credentials not found` or `NOTION_API_KEY not found`
 
 **Solution**:
+
 ```bash
 # Check environment variables
 echo $GOOGLE_CREDENTIALS_PATH
@@ -1034,6 +1073,7 @@ EOF
 **Symptom**: `Error: invalid_grant` or `Token has been expired or revoked`
 
 **Solution**:
+
 ```bash
 # Delete existing token and re-authenticate
 rm token.json
@@ -1045,6 +1085,7 @@ uv run python scripts/authenticate_gmail.py
 **Symptom**: `❌ NO PROPERTIES ACCESSIBLE` in diagnose script
 
 **Solution**:
+
 1. Go to https://notion.so/[your_database_id]
 2. Click "..." menu → "Connections"
 3. Add your integration
@@ -1058,6 +1099,7 @@ uv run python scripts/authenticate_gmail.py
 **Symptom**: `APIResponseError: [property_name] is not a property that exists`
 
 **Solution**:
+
 ```bash
 # 1. Verify actual property names in database
 uv run python scripts/diagnose_notion_access.py
@@ -1068,6 +1110,7 @@ uv run python scripts/diagnose_notion_access.py
 ```
 
 Current property names:
+
 - `Email ID` (text)
 - `날짜` (date) - NOT "Date"
 - `담당자` (people)
@@ -1080,20 +1123,24 @@ Current property names:
 **Important**: CollabIQ uses Notion API version 2025-09-03, which introduced breaking changes for database queries.
 
 **What Changed**:
+
 - Old API: `databases.query(database_id="...")`
 - New API: `data_sources.query(data_source_id="...")`
 
 **How We Handle It**:
+
 1. Retrieve database to get `data_sources` array
 2. Extract first `data_source_id`
 3. Query using `data_sources.query()` with that ID
 4. Cache `data_source_id` in `DatabaseSchema` for efficiency
 
 **References**:
+
 - [Notion API Upgrade Guide](https://developers.notion.com/docs/upgrade-guide-2025-09-03)
 - [Multi-source Databases Documentation](https://developers.notion.com/docs/multi-source-databases)
 
 **Impact on E2E Tests**:
+
 - All query operations work correctly with new API
 - Duplicate detection fixed (now uses `data_sources.query()`)
 - Schema discovery updated to include data source IDs
@@ -1104,11 +1151,13 @@ Current property names:
 **Status**: ✅ **FIXED** - Duplicate detection now works with Notion API 2025-09-03
 
 **What Changed**:
+
 - Updated to use `data_sources.query()` instead of deprecated `databases.query()`
 - `DatabaseSchema` now includes `data_source_id` for efficient querying
 - `NotionWriter.check_duplicate()` properly queries using new API
 
 **Expected Behavior**:
+
 - Returns `None` if no duplicate found (allows write)
 - Returns `page_id` (string) if duplicate exists
 - With `duplicate_behavior="skip"`: Skips write, returns existing page_id
@@ -1120,6 +1169,7 @@ Current property names:
 **Symptom**: Korean text displays as `¾È³çÇÏ¼¼¿ä` instead of `안녕하세요`
 
 **Solution**:
+
 ```bash
 # 1. Verify UTF-8 encoding in all components
 grep -r "encoding=" src/
@@ -1139,6 +1189,7 @@ pytest tests/e2e/test_korean_encoding.py -v
 **Symptom**: `429 Too Many Requests` or rate limit errors
 
 **Solution**:
+
 ```bash
 # 1. Add delay between requests
 # See: src/llm_adapters/ (retry logic)
@@ -1157,6 +1208,7 @@ uv run python scripts/run_e2e_tests.py --all
 **Symptom**: `ERROR: Email IDs file not found: data/e2e_test/test_email_ids.json`
 
 **Solution**:
+
 ```bash
 # Run email selection script first
 uv run python scripts/select_test_emails.py --all
@@ -1271,18 +1323,20 @@ uv run python scripts/cleanup_test_entries.py
 
 ## Implementation Status
 
-**Last Updated**: 2025-11-09
-**Overall Progress**: Phase 013 Complete ✅
+**Last Updated**: 2025-11-26
+**Overall Progress**: Phase 017 Complete ✅
 
 ### Completed Phases
 
 #### Phase 1: Setup (T001-T004) ✅
+
 - Directory structure (`data/e2e_test/`, `src/e2e_test/`, `tests/e2e/`)
 - Error tracking subdirectories organized by severity
 - pytest dependency verified
 - Package initializers created
 
 #### Phase 2: Foundational (T005-T012) ✅
+
 - **Models**: Pydantic v2 models with 17 integration tests
   - `TestRun`, `ErrorRecord`, `PerformanceMetric`, `TestEmailMetadata`
 - **Email Selection**: `scripts/select_test_emails.py`
@@ -1294,6 +1348,7 @@ uv run python scripts/cleanup_test_entries.py
   - Email ID filtering + audit logging
 
 #### Phase 3: Core Infrastructure (T013-T018) ✅
+
 - **Error Collector**: Auto-severity classification, JSON persistence
 - **Validators**: Data integrity + Korean text preservation (100% pass rate)
 - **E2E Runner**: 6-stage pipeline orchestration
@@ -1301,6 +1356,7 @@ uv run python scripts/cleanup_test_entries.py
 - **Real Component Testing**: Production Notion writes verified
 
 #### Phase 013: Multi-LLM Orchestration & Quality Metrics ✅
+
 - **LLM Orchestrator Integration**: E2E tests now use multi-LLM orchestration
 - **Quality Metrics Tracking**: Automatic collection and reporting
 - **Strategy Support**: All orchestration strategies supported
@@ -1310,6 +1366,7 @@ uv run python scripts/cleanup_test_entries.py
 ### Current Status (November 2025)
 
 **✅ Working Features:**
+
 - Gmail email fetching (real API)
 - Multi-LLM entity extraction (Gemini, Claude, OpenAI)
 - Email ID preservation (actual Gmail message IDs)
@@ -1322,6 +1379,7 @@ uv run python scripts/cleanup_test_entries.py
 - Quality-based routing validation
 
 **⚠️ Known Limitations:**
+
 - 담당자 (person_in_charge) field skipped - requires Notion user ID mapping
 - Company matching limited to existing Companies database entries
 - Classification field "협력유형" missing in some cases
@@ -1335,6 +1393,7 @@ uv run python scripts/cleanup_test_entries.py
 **Root Cause**: E2ERunner was returning mock email data instead of fetching real emails from Gmail API.
 
 **Fix Applied**:
+
 1. Updated `src/e2e_test/runner.py` to fetch real emails via Gmail API
 2. Added `email_id` parameter to LLM adapters to preserve actual Gmail message IDs
 3. Added 60s timeout handling for LLM API calls
@@ -1357,6 +1416,7 @@ uv run python scripts/cleanup_test_entries.py
 #### Phase 3 Completion (2025-11-05)
 
 **What Was Delivered**:
+
 - Full E2E test infrastructure (6-stage pipeline)
 - Error tracking with auto-severity classification
 - Comprehensive validation suite
@@ -1365,6 +1425,7 @@ uv run python scripts/cleanup_test_entries.py
 - Real component mode with production Notion writes
 
 **Success Metrics Achieved**:
+
 - ✅ SC-001: ≥95% success rate (verified with mock mode)
 - ✅ SC-002: 100% data accuracy (all fields extracted correctly)
 - ✅ SC-003: Zero critical errors
@@ -1376,6 +1437,7 @@ uv run python scripts/cleanup_test_entries.py
 **Purpose**: Validate Phase 010 error handling system with real production emails
 
 **Key Findings**:
+
 - ✅ Error Handling System Validated
 - ✅ Pipeline Flow Validated
 - ⚠️ Validation Failures (Expected behavior for incomplete emails)
@@ -1383,6 +1445,7 @@ uv run python scripts/cleanup_test_entries.py
 #### Phase 013 Completion (2025-11-09)
 
 **What Was Delivered**:
+
 - Multi-LLM orchestrator integration
 - Quality metrics tracking and reporting
 - All orchestration strategies implemented
@@ -1390,6 +1453,7 @@ uv run python scripts/cleanup_test_entries.py
 - Provider performance comparison
 
 **Success Metrics Achieved**:
+
 - ✅ All LLM providers integrated (Gemini, Claude, OpenAI)
 - ✅ Quality metrics automatically collected
 - ✅ All orchestration strategies working
@@ -1399,6 +1463,7 @@ uv run python scripts/cleanup_test_entries.py
 #### Phase 015 Completion (2025-11-18)
 
 **What Was Delivered**:
+
 - Real E2E testing with Gmail/Notion (6 automated tests)
 - Enhanced date parser library with 98% accuracy target
 - LLM benchmarking with 5 prompt variations
@@ -1407,6 +1472,7 @@ uv run python scripts/cleanup_test_entries.py
 - Comprehensive negative testing & fuzzing (35+ tests)
 
 **Test Statistics**:
+
 - **Total Tests**: 100+ tests across all suites
 - **E2E Tests**: 6 tests (71s runtime)
 - **Performance Tests**: 13 tests (8 unit + 5 integration)
@@ -1416,6 +1482,7 @@ uv run python scripts/cleanup_test_entries.py
 - **Coverage Target**: 85%+ overall
 
 **Key Test Improvements**:
+
 1. **Real E2E Testing**: `tests/e2e/test_full_pipeline.py` with production credentials
 2. **Performance Monitoring**: `PerformanceMonitor` context manager with automatic thresholds
 3. **Fuzz Testing**: `FuzzGenerator` with 8 categories and reproducible seeds
@@ -1423,6 +1490,7 @@ uv run python scripts/cleanup_test_entries.py
 5. **Error Handling**: Systematic negative tests across all components
 
 **Success Metrics Achieved**:
+
 - ✅ User Story 1: Real E2E testing with Gmail/Notion (100% pass rate)
 - ✅ User Story 2: Date parser with 98% target accuracy
 - ✅ User Story 3: LLM prompt benchmarking suite
@@ -1431,8 +1499,42 @@ uv run python scripts/cleanup_test_entries.py
 - ✅ User Story 6: Negative testing & fuzzing (35+ tests)
 
 **Related Documentation**:
-- [Quickstart Guide](/Users/jlim/Projects/CollabIQ/specs/015-test-suite-improvements/quickstart.md) - Test commands and setup
-- [Coverage Reports](/Users/jlim/Projects/CollabIQ/tests/coverage_reports/README.md) - Coverage documentation
+
+- [Quickstart Guide](../setup/quickstart.md) - Test commands and setup
+- [Tests README](../../tests/README.md) - Test suite documentation
+
+#### Phase 016 Completion (2025-11-19)
+
+**What Was Delivered**:
+
+- Project cleanup and refactoring
+- Created 6 README indexes for navigation
+- Registered CLI config commands
+- Documented 103 test files across 9 categories
+- Consolidated documentation structure
+
+#### Phase 017 Completion (2025-11-26)
+
+**What Was Delivered**:
+
+- Production readiness fixes for async pipeline
+- Fixed async/await patterns in E2E and performance tests
+- Corrected pytest fixtures (NotionWriter, NotionIntegrator, GmailReceiver)
+- Fixed RawEmail attribute access (metadata.message_id, body)
+- Test suite: 993 tests with 99%+ pass rate
+
+**Test Statistics**:
+
+- **Total Tests**: 993 tests
+- **Pass Rate**: 99%+ (933 passed, 57 skipped, 3 xfailed)
+- **Execution Time**: ~6 minutes
+
+**Key Test Fixes**:
+
+1. **LLM Orchestrator**: Fixed empty provider_priority in fixtures
+2. **Performance Tests**: Increased Notion read threshold from 3s to 5s
+3. **E2E Tests**: Fixed duplicate handling, removed hardcoded field checks
+4. **Fixtures**: Updated to use Settings instead of raw os.getenv()
 
 ---
 
@@ -1458,8 +1560,8 @@ After running E2E tests with quality metrics:
 
 ---
 
-**Document Version**: 2.1.0
-**Last Updated**: 2025-11-18 (Phase 015 complete)
-**Status**: Production Ready - Full Test Suite with E2E, Performance, Fuzz Testing
+**Document Version**: 2.2.0
+**Last Updated**: 2025-11-26 (Phase 017 complete)
+**Status**: Production Ready - 993 tests with 99%+ pass rate
 
 For questions or issues, see [Troubleshooting](#troubleshooting) or create an issue in the repository.

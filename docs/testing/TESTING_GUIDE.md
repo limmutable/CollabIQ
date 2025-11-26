@@ -1,8 +1,8 @@
 # CollabIQ Testing Guide
 
-**Last Updated**: November 16, 2024
-**Test Suite Status**: ✅ 100% Pass Rate (735/735 non-manual tests)
-**Phase**: 015 Test Suite Improvements Complete
+**Last Updated**: November 26, 2025
+**Test Suite Status**: ✅ 99%+ Pass Rate (993 tests, 933 passed, 57 skipped, 3 xfailed)
+**Phase**: 017 Production Readiness Complete
 
 ## Quick Start
 
@@ -64,35 +64,42 @@ GMAIL_OAUTH_CREDENTIALS_PATH=path/to/credentials.json
 
 ### Test Categories
 
-| Category | Count | Purpose | Speed |
-|----------|-------|---------|-------|
-| **Unit Tests** | ~90 | Test individual functions/classes | Fast (< 1s) |
-| **Integration Tests** | ~200 | Test component interactions | Medium (1-5s) |
-| **Contract Tests** | ~50 | Verify API contracts | Fast (< 1s) |
-| **E2E Tests** | ~5 | Full pipeline validation | Slow (10-30s) |
-| **Manual Tests** | 4 | Require manual auth setup | N/A |
-| **Total** | **735** | All automated tests | ~3-4 min |
+| Category | Files | Tests | Purpose | Speed |
+|----------|-------|-------|---------|-------|
+| **Unit Tests** | 31 | ~300 | Test individual functions/classes | Fast (< 0.1s) |
+| **Integration Tests** | 33 | ~350 | Test component interactions | Medium (0.1-5s) |
+| **Contract Tests** | 20 | ~150 | Verify API contracts | Fast (< 1s) |
+| **E2E Tests** | 3 | ~10 | Full pipeline validation | Slow (5-30s) |
+| **Performance Tests** | 2 | ~15 | Benchmark with thresholds | Variable |
+| **Fuzz Tests** | 2 | ~25 | Randomized input testing | Variable |
+| **Manual Tests** | 6 | ~10 | Require manual auth setup | N/A |
+| **Total** | **97** | **993** | All automated tests | ~6 min |
 
 ### Test Organization
 
 ```
 tests/
-├── unit/                    # Fast, isolated tests
+├── unit/                    # Fast, isolated tests (31 files)
 │   ├── test_*.py
 │   └── ...
-├── integration/             # Component interaction tests
+├── integration/             # Component interaction tests (33 files)
 │   ├── test_*.py
 │   └── ...
-├── contract/                # API contract tests
+├── contract/                # API contract tests (20 files)
 │   ├── test_*.py
 │   └── ...
-├── e2e/                     # End-to-end tests
+├── e2e/                     # End-to-end tests (3 files)
 │   ├── test_full_pipeline.py
-│   └── ...
-├── manual/                  # Manual authentication tests
+│   ├── test_real_gmail_notion.py
+│   └── test_cli_extraction.py
+├── performance/             # Performance benchmarks (2 files)
+│   └── test_performance.py
+├── fuzz/                    # Fuzz tests (2 files)
+│   └── test_fuzzing.py
+├── manual/                  # Manual authentication tests (6 files)
 │   └── test_infisical_connection.py
 ├── fixtures/                # Shared test fixtures
-│   └── test_data.py
+│   └── sample_emails/
 └── conftest.py             # Global pytest configuration
 ```
 

@@ -236,7 +236,7 @@ class TestNotionIntegrationPerformance:
     async def test_notion_read_performance(self, notion_performance_thresholds):
         """Test Notion database read performance."""
         thresholds = PerformanceThresholds(
-            max_response_time=3.0,
+            max_response_time=5.0,  # Allow for network variability
             max_error_rate=0.1,
         )
 

@@ -20,7 +20,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.email_receiver.gmail_receiver import GmailReceiver
-from src.e2e_test.models import SelectionReason
+from src.e2e_test.models import SelectionReason, E2ETestEmailMetadata
 
 
 def main():

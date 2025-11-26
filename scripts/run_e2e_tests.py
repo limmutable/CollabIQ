@@ -156,7 +156,6 @@ Multi-LLM Strategies:
     runner = E2ERunner(
         gmail_receiver=None,  # Components will be initialized based on test_mode
         llm_orchestrator=None,  # Will be auto-initialized with config
-        gemini_adapter=None,  # Deprecated
         classification_service=None,
         notion_writer=None,
         test_mode=args.test_mode,

@@ -67,27 +67,34 @@ def reset_circuit_breakers():
 def gmail_test_account() -> Optional[dict]:
     """Provide Gmail account credentials for E2E testing.
 
-    Uses production credentials from environment variables or Infisical.
+    Uses production credentials from Settings (which loads from .env or Infisical).
 
-    Required Environment Variables:
-        GOOGLE_CREDENTIALS_PATH or GMAIL_CREDENTIALS_PATH: Gmail OAuth credentials JSON
-        GMAIL_TOKEN_PATH: Gmail OAuth token JSON
-        EMAIL_ADDRESS: Gmail account email address
+    Required Configuration:
+        - gmail_credentials_path: Gmail OAuth credentials JSON file
+        - gmail_token_path: Gmail OAuth token JSON file
+        - EMAIL_ADDRESS: Gmail account email address (env var)
 
     Returns:
         dict with keys: credentials_path, token_path, email_address
         None if credentials not configured
     """
-    # Get production credentials
-    credentials_path = os.getenv("GOOGLE_CREDENTIALS_PATH") or os.getenv(
-        "GMAIL_CREDENTIALS_PATH"
-    )
-    token_path = os.getenv("GMAIL_TOKEN_PATH")
+    from config.settings import get_settings
+    from dotenv import load_dotenv
+
+    # Load .env to get EMAIL_ADDRESS (not in Settings)
+    load_dotenv()
+
+    settings = get_settings()
+
+    # Get production credentials from Settings
+    credentials_path = settings.get_gmail_credentials_path()
+    token_path = settings.gmail_token_path
+    # EMAIL_ADDRESS is in .env but not in Settings class
     email_address = os.getenv("EMAIL_ADDRESS")
 
     if not all([credentials_path, token_path, email_address]):
         pytest.skip(
-            "Gmail credentials not configured. Required environment variables:\n"
+            "Gmail credentials not configured. Required settings:\n"
             "  - GOOGLE_CREDENTIALS_PATH (or GMAIL_CREDENTIALS_PATH)\n"
             "  - GMAIL_TOKEN_PATH\n"
             "  - EMAIL_ADDRESS\n"
@@ -105,8 +112,8 @@ def gmail_test_account() -> Optional[dict]:
         return None
 
     return {
-        "credentials_path": credentials_path,
-        "token_path": token_path,
+        "credentials_path": str(credentials_path),
+        "token_path": str(token_path),
         "email_address": email_address,
     }
 
@@ -143,23 +150,27 @@ def gmail_receiver(gmail_test_account):
 def notion_test_database() -> Optional[dict]:
     """Provide Notion database configuration for E2E testing.
 
-    Uses production credentials from environment variables or Infisical.
+    Uses production credentials from Settings (which loads from .env or Infisical).
 
-    Required Environment Variables:
-        NOTION_API_KEY: Notion API token
-        NOTION_DATABASE_ID_COLLABIQ: CollabIQ database ID
+    Required Configuration:
+        - notion_api_key: Notion API token
+        - notion_database_id_collabiq: CollabIQ database ID
 
     Returns:
         dict with keys: token, database_id
         None if not configured
     """
-    # Get production credentials
-    token = os.getenv("NOTION_API_KEY")
-    database_id = os.getenv("NOTION_DATABASE_ID_COLLABIQ")
+    from config.settings import get_settings
+
+    settings = get_settings()
+
+    # Get production credentials from Settings
+    token = settings.get_notion_api_key()
+    database_id = settings.get_notion_collabiq_db_id()
 
     if not all([token, database_id]):
         pytest.skip(
-            "Notion database not configured. Required environment variables:\n"
+            "Notion database not configured. Required settings:\n"
             "  - NOTION_API_KEY\n"
             "  - NOTION_DATABASE_ID_COLLABIQ\n"
             "These can be set in .env file or retrieved from Infisical."
