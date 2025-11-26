@@ -7,6 +7,8 @@ Last updated: 2025-11-21
 CollabIQ is an email-to-Notion automation system that processes collaboration emails and stores structured data in Notion databases.
 
 ## Active Technologies
+- Python 3.12+ + uv (package manager), Google Cloud SDK (CLI tools), potentially `google-cloud-storage`, `google-cloud-run` client libraries. (018-deploy-google-cloud)
+- File-based JSON for extractions, caching, metrics (current project); will need persistent storage on Google Cloud (e.g., Cloud Storage, Persistent Disks for Compute Engine). (018-deploy-google-cloud)
 
 - **Python 3.12+** with UV package manager
 - **Core Libraries**: pytest, pytest-cov, pytest-asyncio, pydantic, tenacity, rapidfuzz

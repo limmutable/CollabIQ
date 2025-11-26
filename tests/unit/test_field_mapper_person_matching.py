@@ -38,7 +38,12 @@ class TestFieldMapperPersonMatching:
     @pytest.fixture
     def mock_person_matcher(self):
         """Mock PersonMatcher for testing."""
-        matcher = MagicMock(spec=NotionPersonMatcher)
+        from unittest.mock import Mock
+        matcher = Mock(spec=NotionPersonMatcher)
+        # Explicitly configure match as a regular (non-async) mock
+        matcher.match = Mock()
+        # Ensure match_async doesn't exist so the code uses match()
+        delattr(matcher, 'match_async') if hasattr(matcher, 'match_async') else None
         return matcher
 
     @pytest.fixture
@@ -62,7 +67,8 @@ class TestFieldMapperPersonMatching:
             collaboration_intensity="협력",
         )
 
-    def test_person_matching_populates_matched_person_id(
+    @pytest.mark.asyncio
+    async def test_person_matching_populates_matched_person_id(
         self, mock_schema, mock_person_matcher, extracted_data_with_person
     ):
         """
@@ -91,7 +97,7 @@ class TestFieldMapperPersonMatching:
         )
 
         # Act
-        field_mapper._match_and_populate_person(extracted_data_with_person)
+        await field_mapper._match_and_populate_person(extracted_data_with_person)
 
         # Assert
         assert extracted_data_with_person.matched_person_id == "user123" + "0" * 24

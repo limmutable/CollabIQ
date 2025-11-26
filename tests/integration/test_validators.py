@@ -25,8 +25,8 @@ class TestValidateNotionEntry:
                 "스타트업명": {
                     "rich_text": [{"text": {"content": "브레이크앤컴퍼니"}}]
                 },
-                "협력기관": {"rich_text": [{"text": {"content": "신세계푸드"}}]},
-                "협력유형": {"select": {"name": "[A] 포트폴리오 x SSG"}},
+                "협업기관": {"rich_text": [{"text": {"content": "신세계푸드"}}]},
+                "협업형태": {"select": {"name": "[A] 포트폴리오 x SSG"}},
                 "날짜": {"date": {"start": "2025-10-28"}},
                 "Company ID": {"rich_text": [{"text": {"content": "comp_123"}}]},
             }
@@ -41,19 +41,18 @@ class TestValidateNotionEntry:
         """Test validation fails when required field is missing"""
         validator = Validator()
 
-        # Missing "담당자" field
+        # Missing "스타트업명" field
         notion_entry = {
             "properties": {
                 "Email ID": {"rich_text": [{"text": {"content": "msg_002"}}]},
-                "스타트업명": {"rich_text": [{"text": {"content": "Test Corp"}}]},
-                # Missing 담당자
+                # Missing 스타트업명
             }
         }
 
         result = validator.validate_notion_entry(notion_entry)
 
         assert result.is_valid is False
-        assert any("담당자" in error for error in result.errors)
+        assert any("스타트업명" in error for error in result.errors)
 
     def test_validate_empty_field_value(self):
         """Test validation fails when required field has empty value"""
@@ -62,8 +61,7 @@ class TestValidateNotionEntry:
         notion_entry = {
             "properties": {
                 "Email ID": {"rich_text": [{"text": {"content": "msg_003"}}]},
-                "담당자": {"title": [{"text": {"content": ""}}]},  # Empty string
-                "스타트업명": {"rich_text": [{"text": {"content": "Test Corp"}}]},
+                "스타트업명": {"rich_text": [{"text": {"content": ""}}]},  # Empty string
             }
         }
 
@@ -161,7 +159,7 @@ class TestKoreanTextValidation:
 
         notion_entry = {
             "properties": {
-                "협력기관": {
+                "협업기관": {
                     "rich_text": [
                         {
                             "text": {
@@ -283,8 +281,8 @@ class TestValidationResult:
                 "Email ID": {"rich_text": [{"text": {"content": "msg_006"}}]},
                 "담당자": {"title": [{"text": {"content": "김철수"}}]},
                 "스타트업명": {"rich_text": [{"text": {"content": "Test Corp"}}]},
-                "협력기관": {"rich_text": [{"text": {"content": "신세계"}}]},
-                "협력유형": {"select": {"name": "[A]"}},
+                "협업기관": {"rich_text": [{"text": {"content": "신세계"}}]},
+                "협업형태": {"select": {"name": "[A]"}},
                 "날짜": {"date": {"start": "2025-10-28"}},
                 "Company ID": {"rich_text": [{"text": {"content": "comp_123"}}]},
             }

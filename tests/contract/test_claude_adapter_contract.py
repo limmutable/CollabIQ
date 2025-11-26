@@ -43,7 +43,8 @@ class TestClaudeAdapterContract:
         assert hasattr(claude_adapter, "extract_entities")
         assert callable(claude_adapter.extract_entities)
 
-    def test_extract_entities_accepts_email_text(self, claude_adapter):
+    @pytest.mark.asyncio
+    async def test_extract_entities_accepts_email_text(self, claude_adapter):
         """Contract 1: extract_entities accepts email_text string parameter."""
         # Mock successful API response
         mock_response = MagicMock()
@@ -60,12 +61,13 @@ class TestClaudeAdapterContract:
         claude_adapter.client.messages.create.return_value = mock_response
 
         # Call with email_text string
-        result = claude_adapter.extract_entities("sample email text")
+        result = await claude_adapter.extract_entities("sample email text")
 
         # Verify it returns ExtractedEntities
         assert isinstance(result, ExtractedEntities)
 
-    def test_extract_entities_returns_extracted_entities(self, claude_adapter):
+    @pytest.mark.asyncio
+    async def test_extract_entities_returns_extracted_entities(self, claude_adapter):
         """Contract 2: extract_entities returns ExtractedEntities with all attributes."""
         mock_response = MagicMock()
         mock_response.content = [
@@ -80,7 +82,7 @@ class TestClaudeAdapterContract:
         mock_response.usage.output_tokens = 50
         claude_adapter.client.messages.create.return_value = mock_response
 
-        result = claude_adapter.extract_entities("collaboration update email")
+        result = await claude_adapter.extract_entities("collaboration update email")
 
         # Verify all required attributes exist
         assert hasattr(result, "person_in_charge")
@@ -92,15 +94,17 @@ class TestClaudeAdapterContract:
         assert hasattr(result, "email_id")
         assert hasattr(result, "extracted_at")
 
-    def test_extract_entities_raises_llm_api_error_on_failure(self, claude_adapter):
+    @pytest.mark.asyncio
+    async def test_extract_entities_raises_llm_api_error_on_failure(self, claude_adapter):
         """Contract 3: extract_entities raises LLMAPIError on failure."""
         # Simulate API error
         claude_adapter.client.messages.create.side_effect = Exception("API Error")
 
         with pytest.raises(LLMAPIError):
-            claude_adapter.extract_entities("email text")
+            await claude_adapter.extract_entities("email text")
 
-    def test_confidence_scores_are_0_to_1(self, claude_adapter):
+    @pytest.mark.asyncio
+    async def test_confidence_scores_are_0_to_1(self, claude_adapter):
         """Contract 4: Confidence scores are in range [0.0, 1.0]."""
         mock_response = MagicMock()
         mock_response.content = [
@@ -115,7 +119,7 @@ class TestClaudeAdapterContract:
         mock_response.usage.output_tokens = 50
         claude_adapter.client.messages.create.return_value = mock_response
 
-        result = claude_adapter.extract_entities("sample email")
+        result = await claude_adapter.extract_entities("sample email")
 
         # Verify confidence scores are in valid range
         assert 0.0 <= result.confidence.person <= 1.0
@@ -124,7 +128,8 @@ class TestClaudeAdapterContract:
         assert 0.0 <= result.confidence.details <= 1.0
         assert 0.0 <= result.confidence.date <= 1.0
 
-    def test_missing_entities_return_none_with_zero_confidence(self, claude_adapter):
+    @pytest.mark.asyncio
+    async def test_missing_entities_return_none_with_zero_confidence(self, claude_adapter):
         """Contract 5: Missing entities return None with confidence 0.0."""
         mock_response = MagicMock()
         mock_response.content = [
@@ -139,7 +144,7 @@ class TestClaudeAdapterContract:
         mock_response.usage.output_tokens = 50
         claude_adapter.client.messages.create.return_value = mock_response
 
-        result = claude_adapter.extract_entities("email with missing person")
+        result = await claude_adapter.extract_entities("email with missing person")
 
         # Verify None values have 0.0 confidence
         if result.person_in_charge is None:

@@ -36,7 +36,8 @@ class TestGeminiAdapterDateParsing:
         """Create Gemini adapter instance."""
         return GeminiAdapter(api_key="test-key", model="gemini-2.0-flash-exp")
 
-    def test_korean_full_date_parsing(self, adapter):
+    @pytest.mark.asyncio
+    async def test_korean_full_date_parsing(self, adapter):
         """Test parsing Korean full date format (2024년 11월 15일)."""
         mock_response = {
             "person_in_charge": {"value": "김철수", "confidence": 0.95},
@@ -47,7 +48,7 @@ class TestGeminiAdapterDateParsing:
         }
 
         with patch.object(adapter, "_call_gemini_api", return_value=mock_response):
-            result = adapter.extract_entities(KOREAN_FULL_DATE)
+            result = await adapter.extract_entities(KOREAN_FULL_DATE)
 
         # Verify date was parsed correctly
         assert result.date is not None
@@ -56,7 +57,8 @@ class TestGeminiAdapterDateParsing:
         assert result.date.day == 15
         assert result.confidence.date == 0.95
 
-    def test_korean_week_notation(self, adapter):
+    @pytest.mark.asyncio
+    async def test_korean_week_notation(self, adapter):
         """Test parsing Korean week notation (11월 2주)."""
         mock_response = {
             "person_in_charge": {"value": "김철수", "confidence": 0.95},
@@ -67,7 +69,7 @@ class TestGeminiAdapterDateParsing:
         }
 
         with patch.object(adapter, "_call_gemini_api", return_value=mock_response):
-            result = adapter.extract_entities(KOREAN_WEEK)
+            result = await adapter.extract_entities(KOREAN_WEEK)
 
         # Verify date was parsed (week notation → second Monday of November)
         assert result.date is not None
@@ -75,7 +77,8 @@ class TestGeminiAdapterDateParsing:
         # Week 2 should be between 8th and 14th
         assert 8 <= result.date.day <= 14
 
-    def test_korean_partial_date(self, adapter):
+    @pytest.mark.asyncio
+    async def test_korean_partial_date(self, adapter):
         """Test parsing Korean partial date without year (11월 15일)."""
         mock_response = {
             "person_in_charge": {"value": "김철수", "confidence": 0.95},
@@ -86,7 +89,7 @@ class TestGeminiAdapterDateParsing:
         }
 
         with patch.object(adapter, "_call_gemini_api", return_value=mock_response):
-            result = adapter.extract_entities(KOREAN_PARTIAL)
+            result = await adapter.extract_entities(KOREAN_PARTIAL)
 
         # Verify date was parsed with current year
         assert result.date is not None
@@ -95,7 +98,8 @@ class TestGeminiAdapterDateParsing:
         # Year should default to current year
         assert result.date.year in [datetime.now().year, datetime.now().year + 1]
 
-    def test_english_date_format(self, adapter):
+    @pytest.mark.asyncio
+    async def test_english_date_format(self, adapter):
         """Test parsing English date format."""
         mock_response = {
             "person_in_charge": {"value": "John Doe", "confidence": 0.95},
@@ -106,7 +110,7 @@ class TestGeminiAdapterDateParsing:
         }
 
         with patch.object(adapter, "_call_gemini_api", return_value=mock_response):
-            result = adapter.extract_entities(ENGLISH_DATE)
+            result = await adapter.extract_entities(ENGLISH_DATE)
 
         # Verify date was parsed correctly
         assert result.date is not None
@@ -114,7 +118,8 @@ class TestGeminiAdapterDateParsing:
         assert result.date.month == 11
         assert result.date.day == 15
 
-    def test_iso_date_format(self, adapter):
+    @pytest.mark.asyncio
+    async def test_iso_date_format(self, adapter):
         """Test parsing ISO 8601 date format."""
         mock_response = {
             "person_in_charge": {"value": "John Doe", "confidence": 0.95},
@@ -125,7 +130,7 @@ class TestGeminiAdapterDateParsing:
         }
 
         with patch.object(adapter, "_call_gemini_api", return_value=mock_response):
-            result = adapter.extract_entities(ISO_DATE)
+            result = await adapter.extract_entities(ISO_DATE)
 
         # Verify date was parsed correctly
         assert result.date is not None
@@ -133,7 +138,8 @@ class TestGeminiAdapterDateParsing:
         assert result.date.month == 11
         assert result.date.day == 15
 
-    def test_missing_date(self, adapter):
+    @pytest.mark.asyncio
+    async def test_missing_date(self, adapter):
         """Test handling emails without dates."""
         mock_response = {
             "person_in_charge": {"value": "김철수", "confidence": 0.95},
@@ -144,13 +150,14 @@ class TestGeminiAdapterDateParsing:
         }
 
         with patch.object(adapter, "_call_gemini_api", return_value=mock_response):
-            result = adapter.extract_entities(NO_DATE)
+            result = await adapter.extract_entities(NO_DATE)
 
         # Verify date is None when not found
         assert result.date is None
         assert result.confidence.date == 0.0
 
-    def test_invalid_date_format(self, adapter):
+    @pytest.mark.asyncio
+    async def test_invalid_date_format(self, adapter):
         """Test handling invalid date strings."""
         mock_response = {
             "person_in_charge": {"value": "김철수", "confidence": 0.95},
@@ -161,7 +168,7 @@ class TestGeminiAdapterDateParsing:
         }
 
         with patch.object(adapter, "_call_gemini_api", return_value=mock_response):
-            result = adapter.extract_entities("테스트 이메일")
+            result = await adapter.extract_entities("테스트 이메일")
 
         # Enhanced date_parser should return None for invalid dates
         assert result.date is None
@@ -175,7 +182,8 @@ class TestClaudeAdapterDateParsing:
         """Create Claude adapter instance."""
         return ClaudeAdapter(api_key="test-key")
 
-    def test_korean_date_parsing(self, adapter):
+    @pytest.mark.asyncio
+    async def test_korean_date_parsing(self, adapter):
         """Test Claude adapter parses Korean dates correctly."""
         # Mock the Claude API response
         mock_message = MagicMock()
@@ -187,7 +195,7 @@ class TestClaudeAdapterDateParsing:
         mock_message.usage = MagicMock(input_tokens=100, output_tokens=50)
 
         with patch.object(adapter.client.messages, "create", return_value=mock_message):
-            result = adapter.extract_entities(KOREAN_FULL_DATE)
+            result = await adapter.extract_entities(KOREAN_FULL_DATE)
 
         # Verify date was parsed
         assert result.date is not None
@@ -195,7 +203,8 @@ class TestClaudeAdapterDateParsing:
         assert result.date.month == 11
         assert result.date.day == 15
 
-    def test_iso_date_parsing(self, adapter):
+    @pytest.mark.asyncio
+    async def test_iso_date_parsing(self, adapter):
         """Test Claude adapter parses ISO dates correctly."""
         mock_message = MagicMock()
         mock_message.content = [
@@ -206,7 +215,7 @@ class TestClaudeAdapterDateParsing:
         mock_message.usage = MagicMock(input_tokens=100, output_tokens=50)
 
         with patch.object(adapter.client.messages, "create", return_value=mock_message):
-            result = adapter.extract_entities(ISO_DATE)
+            result = await adapter.extract_entities(ISO_DATE)
 
         assert result.date is not None
         assert result.date.year == 2024
@@ -222,7 +231,8 @@ class TestOpenAIAdapterDateParsing:
         """Create OpenAI adapter instance."""
         return OpenAIAdapter(api_key="test-key")
 
-    def test_korean_date_parsing(self, adapter):
+    @pytest.mark.asyncio
+    async def test_korean_date_parsing(self, adapter):
         """Test OpenAI adapter parses Korean dates correctly."""
         # Mock the OpenAI API response
         mock_response = MagicMock()
@@ -238,7 +248,7 @@ class TestOpenAIAdapterDateParsing:
         with patch.object(
             adapter.client.chat.completions, "create", return_value=mock_response
         ):
-            result = adapter.extract_entities(KOREAN_FULL_DATE)
+            result = await adapter.extract_entities(KOREAN_FULL_DATE)
 
         # Verify date was parsed
         assert result.date is not None
@@ -246,7 +256,8 @@ class TestOpenAIAdapterDateParsing:
         assert result.date.month == 11
         assert result.date.day == 15
 
-    def test_iso_date_parsing(self, adapter):
+    @pytest.mark.asyncio
+    async def test_iso_date_parsing(self, adapter):
         """Test OpenAI adapter parses ISO dates correctly."""
         mock_response = MagicMock()
         mock_response.choices = [
@@ -261,7 +272,7 @@ class TestOpenAIAdapterDateParsing:
         with patch.object(
             adapter.client.chat.completions, "create", return_value=mock_response
         ):
-            result = adapter.extract_entities(ISO_DATE)
+            result = await adapter.extract_entities(ISO_DATE)
 
         assert result.date is not None
         assert result.date.year == 2024

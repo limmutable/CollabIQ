@@ -44,7 +44,6 @@ def runner():
     """Initialize E2ERunner with test mode enabled"""
     return E2ERunner(
         gmail_receiver=None,  # Mock components for now
-        gemini_adapter=None,
         classification_service=None,
         notion_writer=None,
         test_mode=True,
@@ -58,7 +57,8 @@ def report_generator():
 
 
 @pytest.mark.e2e
-def test_full_pipeline_with_all_emails(test_email_ids, runner, report_generator):
+@pytest.mark.asyncio
+async def test_full_pipeline_with_all_emails(test_email_ids, runner, report_generator):
     """
     Test complete pipeline with all available emails
 
@@ -71,7 +71,7 @@ def test_full_pipeline_with_all_emails(test_email_ids, runner, report_generator)
     Without API credentials, test will pass but with reduced success rate.
     """
     # Run E2E tests
-    test_run = runner.run_tests(test_email_ids, test_mode=True)
+    test_run = await runner.run_tests(test_email_ids, test_mode=True)
 
     # Generate summary report
     summary = report_generator.generate_summary(test_run)
@@ -113,7 +113,8 @@ def test_full_pipeline_with_all_emails(test_email_ids, runner, report_generator)
         print(f"    See report for details: {report_path}\n")
 
 
-def test_single_email_processing(test_email_ids, runner):
+@pytest.mark.asyncio
+async def test_single_email_processing(test_email_ids, runner):
     """
     Test processing of a single email to verify pipeline integration
 
@@ -123,7 +124,7 @@ def test_single_email_processing(test_email_ids, runner):
         pytest.skip("No test emails available")
 
     # Process first email only
-    test_run = runner.run_tests([test_email_ids[0]], test_mode=True)
+    test_run = await runner.run_tests([test_email_ids[0]], test_mode=True)
 
     # Basic assertions
     assert test_run.emails_processed == 1, "Should process exactly 1 email"
@@ -133,36 +134,41 @@ def test_single_email_processing(test_email_ids, runner):
     assert test_run.success_count >= 0, "Success count should be non-negative"
 
 
-def test_error_collection(test_email_ids, runner, report_generator):
+@pytest.mark.asyncio
+async def test_error_collection(test_email_ids, runner, report_generator):
     """
     Test that errors are properly collected and reported
 
     This test validates that the ErrorCollector and ReportGenerator work correctly.
     """
     # Run tests
-    test_run = runner.run_tests(
+    test_run = await runner.run_tests(
         test_email_ids[:5] if len(test_email_ids) >= 5 else test_email_ids,
         test_mode=True,
     )
 
     # Generate error report
     error_report = report_generator.generate_error_report(test_run.run_id)
-    report_path = Path(f"data/e2e_test/reports/{test_run.run_id}_errors.md")
-    report_path.write_text(error_report, encoding="utf-8")
 
-    # Verify error summary structure
+    # Verify errors are being captured
+    # Note: we don't assert on specific error counts as it varies by configuration
+    assert error_report is not None
+    assert isinstance(error_report, str)
     assert "critical" in test_run.error_summary
     assert "high" in test_run.error_summary
     assert "medium" in test_run.error_summary
     assert "low" in test_run.error_summary
 
     # Verify error report was generated
+    report_path = Path(f"data/e2e_test/reports/{test_run.run_id}_errors.md")
+    report_path.write_text(error_report, encoding="utf-8")
     assert report_path.exists(), "Error report should be generated"
     assert len(error_report) > 0, "Error report should have content"
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("email_count", [1, 3, 5])
-def test_pipeline_with_varying_email_counts(email_count, test_email_ids, runner):
+async def test_pipeline_with_varying_email_counts(email_count, test_email_ids, runner):
     """
     Test pipeline with varying numbers of emails
 
@@ -174,7 +180,7 @@ def test_pipeline_with_varying_email_counts(email_count, test_email_ids, runner)
         )
 
     # Process subset of emails
-    test_run = runner.run_tests(test_email_ids[:email_count], test_mode=True)
+    test_run = await runner.run_tests(test_email_ids[:email_count], test_mode=True)
 
     # Basic validation
     assert test_run.emails_processed == email_count

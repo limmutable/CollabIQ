@@ -30,9 +30,10 @@ def reset_circuit_breaker():
 class TestGeminiRetryFlow:
     """Test Gemini extract_entities with retry on rate limits and transient failures."""
 
+    @pytest.mark.asyncio
     @patch("builtins.open", new_callable=mock_open, read_data="Mock prompt template")
     @patch("llm_adapters.gemini_adapter.genai")
-    def test_gemini_rate_limit_retry_with_header(self, mock_genai, mock_file):
+    async def test_gemini_rate_limit_retry_with_header(self, mock_genai, mock_file):
         """
         Test that Gemini extract_entities retries on 429 rate limit with Retry-After header.
 
@@ -49,7 +50,7 @@ class TestGeminiRetryFlow:
         # Create rate limit error with Retry-After header
         rate_limit_error = Exception("429 Resource Exhausted")
         rate_limit_error.response = Mock()
-        rate_limit_error.response.headers = {"Retry-After": "2"}  # 2 seconds
+        rate_limit_error.response.headers = {"Retry-After": "0.1"}  # Reduced for test speed
 
         # First call: rate limit
         # Second call: success
@@ -68,7 +69,7 @@ class TestGeminiRetryFlow:
         email_text = "Meeting with John Doe from Acme Corp at john@example.com"
 
         try:
-            result = adapter.extract_entities(email_text, email_id="test_email_001")
+            result = await adapter.extract_entities(email_text, email_id="test_email_001")
 
             # Verify retry happened
             assert mock_model.generate_content.call_count == 2
@@ -83,9 +84,10 @@ class TestGeminiRetryFlow:
         except Exception as e:
             pytest.fail(f"Unexpected exception: {e}")
 
+    @pytest.mark.asyncio
     @patch("builtins.open", new_callable=mock_open, read_data="Mock prompt template")
     @patch("llm_adapters.gemini_adapter.genai")
-    def test_gemini_all_retries_exhausted(self, mock_genai, mock_file):
+    async def test_gemini_all_retries_exhausted(self, mock_genai, mock_file):
         """
         Test that Gemini extract_entities exhausts retries after all attempts fail.
 
@@ -107,14 +109,15 @@ class TestGeminiRetryFlow:
         email_text = "Test email content"
 
         with pytest.raises(Exception):
-            adapter.extract_entities(email_text, email_id="test_email_002")
+            await adapter.extract_entities(email_text, email_id="test_email_002")
 
         # Verify retry attempts (should be 3 with GEMINI_RETRY_CONFIG)
         assert mock_model.generate_content.call_count == 3
 
+    @pytest.mark.asyncio
     @patch("builtins.open", new_callable=mock_open, read_data="Mock prompt template")
     @patch("llm_adapters.gemini_adapter.genai")
-    def test_gemini_transient_error_retry_success(self, mock_genai, mock_file):
+    async def test_gemini_transient_error_retry_success(self, mock_genai, mock_file):
         """
         Test that Gemini extract_entities retries on transient connection errors.
 
@@ -150,7 +153,7 @@ class TestGeminiRetryFlow:
         email_text = "Please follow up with Test Co"
 
         try:
-            result = adapter.extract_entities(email_text, email_id="test_email_003")
+            result = await adapter.extract_entities(email_text, email_id="test_email_003")
 
             # Verify retry happened
             assert mock_model.generate_content.call_count == 2
@@ -162,9 +165,10 @@ class TestGeminiRetryFlow:
         except Exception as e:
             pytest.fail(f"Unexpected exception: {e}")
 
+    @pytest.mark.asyncio
     @patch("builtins.open", new_callable=mock_open, read_data="Mock prompt template")
     @patch("llm_adapters.gemini_adapter.genai")
-    def test_gemini_circuit_breaker_opens_on_repeated_failures(
+    async def test_gemini_circuit_breaker_opens_on_repeated_failures(
         self, mock_genai, mock_file
     ):
         """
@@ -193,7 +197,7 @@ class TestGeminiRetryFlow:
 
         for i in range(failures_needed):
             try:
-                adapter.extract_entities(email_text, email_id=f"test_{i}")
+                await adapter.extract_entities(email_text, email_id=f"test_{i}")
             except Exception:
                 pass  # Expected to fail
 

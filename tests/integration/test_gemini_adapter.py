@@ -50,12 +50,13 @@ def english_email_001():
         return f.read()
 
 
-def test_gemini_adapter_korean_email(gemini_adapter, korean_email_001):
+@pytest.mark.asyncio
+async def test_gemini_adapter_korean_email(gemini_adapter, korean_email_001):
     """Test extraction from Korean email with mocked API."""
     mock_response = MOCK_RESPONSES["korean_001"]
 
     with patch.object(gemini_adapter, "_call_gemini_api", return_value=mock_response):
-        result = gemini_adapter.extract_entities(korean_email_001)
+        result = await gemini_adapter.extract_entities(korean_email_001)
 
         # Verify result is ExtractedEntities
         assert isinstance(result, ExtractedEntities)
@@ -68,12 +69,13 @@ def test_gemini_adapter_korean_email(gemini_adapter, korean_email_001):
         assert result.confidence.person >= 0.85
 
 
-def test_gemini_adapter_english_email(gemini_adapter, english_email_001):
+@pytest.mark.asyncio
+async def test_gemini_adapter_english_email(gemini_adapter, english_email_001):
     """Test extraction from English email with mocked API."""
     mock_response = MOCK_RESPONSES["english_001"]
 
     with patch.object(gemini_adapter, "_call_gemini_api", return_value=mock_response):
-        result = gemini_adapter.extract_entities(english_email_001)
+        result = await gemini_adapter.extract_entities(english_email_001)
 
         # Verify result is ExtractedEntities
         assert isinstance(result, ExtractedEntities)
@@ -86,13 +88,14 @@ def test_gemini_adapter_english_email(gemini_adapter, english_email_001):
         assert result.confidence.startup >= 0.85
 
 
-def test_gemini_adapter_missing_person(gemini_adapter):
+@pytest.mark.asyncio
+async def test_gemini_adapter_missing_person(gemini_adapter):
     """Test extraction from email with missing person_in_charge."""
     mock_response = MOCK_RESPONSES["english_002"]
 
     with patch.object(gemini_adapter, "_call_gemini_api", return_value=mock_response):
         email_text = "We had a kickoff meeting with Shinsegae International for BonBom."
-        result = gemini_adapter.extract_entities(email_text)
+        result = await gemini_adapter.extract_entities(email_text)
 
         # Verify missing person_in_charge
         assert result.person_in_charge is None
@@ -103,7 +106,8 @@ def test_gemini_adapter_missing_person(gemini_adapter):
         assert result.partner_org == "Shinsegae International"
 
 
-def test_gemini_adapter_rate_limit_error(gemini_adapter, korean_email_001):
+@pytest.mark.asyncio
+async def test_gemini_adapter_rate_limit_error(gemini_adapter, korean_email_001):
     """Test rate limit error handling (429)."""
     # Create a mock error with status_code attribute (simulates HTTP 429)
     mock_error = Exception("Rate limit exceeded")
@@ -115,10 +119,11 @@ def test_gemini_adapter_rate_limit_error(gemini_adapter, korean_email_001):
         side_effect=mock_error,
     ):
         with pytest.raises(LLMRateLimitError):
-            gemini_adapter.extract_entities(korean_email_001)
+            await gemini_adapter.extract_entities(korean_email_001)
 
 
-def test_gemini_adapter_timeout_error(gemini_adapter, korean_email_001):
+@pytest.mark.asyncio
+async def test_gemini_adapter_timeout_error(gemini_adapter, korean_email_001):
     """Test timeout error handling."""
     with patch.object(
         gemini_adapter,
@@ -129,10 +134,11 @@ def test_gemini_adapter_timeout_error(gemini_adapter, korean_email_001):
             gemini_adapter, "_handle_api_error", side_effect=LLMTimeoutError()
         ):
             with pytest.raises(LLMTimeoutError):
-                gemini_adapter.extract_entities(korean_email_001)
+                await gemini_adapter.extract_entities(korean_email_001)
 
 
-def test_gemini_adapter_authentication_error(gemini_adapter, korean_email_001):
+@pytest.mark.asyncio
+async def test_gemini_adapter_authentication_error(gemini_adapter, korean_email_001):
     """Test authentication error handling (401/403)."""
     # Create a mock error with status_code attribute (simulates HTTP 401)
     mock_error = Exception("Invalid API key")
@@ -144,22 +150,24 @@ def test_gemini_adapter_authentication_error(gemini_adapter, korean_email_001):
         side_effect=mock_error,
     ):
         with pytest.raises(LLMAuthenticationError):
-            gemini_adapter.extract_entities(korean_email_001)
+            await gemini_adapter.extract_entities(korean_email_001)
 
 
-def test_gemini_adapter_validates_email_text(gemini_adapter):
+@pytest.mark.asyncio
+async def test_gemini_adapter_validates_email_text(gemini_adapter):
     """Test input validation for email_text."""
     # Empty string should raise validation error
     with pytest.raises((ValueError, LLMAPIError)):
-        gemini_adapter.extract_entities("")
+        await gemini_adapter.extract_entities("")
 
 
-def test_gemini_adapter_confidence_scores_valid_range(gemini_adapter, korean_email_001):
+@pytest.mark.asyncio
+async def test_gemini_adapter_confidence_scores_valid_range(gemini_adapter, korean_email_001):
     """Test that all confidence scores are in 0.0-1.0 range."""
     mock_response = MOCK_RESPONSES["korean_001"]
 
     with patch.object(gemini_adapter, "_call_gemini_api", return_value=mock_response):
-        result = gemini_adapter.extract_entities(korean_email_001)
+        result = await gemini_adapter.extract_entities(korean_email_001)
 
         # Verify all confidence scores are valid
         assert 0.0 <= result.confidence.person <= 1.0

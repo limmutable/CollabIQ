@@ -57,7 +57,8 @@ def company_context_markdown(mock_notion_data: List[Dict]) -> str:
 class TestGeminiAdapterMatchingContract:
     """Contract tests for Phase 2b company matching extension."""
 
-    def test_backward_compatibility_without_company_context(self):
+    @pytest.mark.asyncio
+    async def test_backward_compatibility_without_company_context(self):
         """MUST: Phase 1b mode works when company_context=None.
 
         Contract: When company_context is not provided, GeminiAdapter must:
@@ -72,7 +73,7 @@ class TestGeminiAdapterMatchingContract:
         adapter = GeminiAdapter(api_key=os.getenv("GEMINI_API_KEY"))
 
         # Call without company_context (Phase 1b mode)
-        entities = adapter.extract_entities("브레이크앤컴퍼니와 협업 진행 중")
+        entities = await adapter.extract_entities("브레이크앤컴퍼니와 협업 진행 중")
 
         # Validate return type
         assert isinstance(entities, ExtractedEntities)
@@ -83,7 +84,8 @@ class TestGeminiAdapterMatchingContract:
         assert entities.startup_match_confidence is None
         assert entities.partner_match_confidence is None
 
-    def test_matching_enabled_with_company_context(self, company_context_markdown: str):
+    @pytest.mark.asyncio
+    async def test_matching_enabled_with_company_context(self, company_context_markdown: str):
         """MUST: Phase 2b matching populates matched_* fields when company_context provided.
 
         Contract: When company_context is provided, GeminiAdapter must:
@@ -98,7 +100,7 @@ class TestGeminiAdapterMatchingContract:
         adapter = GeminiAdapter(api_key=os.getenv("GEMINI_API_KEY"))
 
         # Call WITH company_context (Phase 2b mode)
-        entities = adapter.extract_entities(
+        entities = await adapter.extract_entities(
             email_text="브레이크앤컴퍼니와 협업 진행 중",
             company_context=company_context_markdown,
         )
@@ -125,7 +127,8 @@ class TestGeminiAdapterMatchingContract:
         if entities.partner_match_confidence is not None:
             assert 0.0 <= entities.partner_match_confidence <= 1.0
 
-    def test_confidence_threshold_enforcement(self, company_context_markdown: str):
+    @pytest.mark.asyncio
+    async def test_confidence_threshold_enforcement(self, company_context_markdown: str):
         """MUST: Low confidence (<0.70) returns null matched_company_id.
 
         Contract: When LLM confidence is below threshold (0.70), adapter must:
@@ -138,7 +141,7 @@ class TestGeminiAdapterMatchingContract:
         adapter = GeminiAdapter(api_key=os.getenv("GEMINI_API_KEY"))
 
         # Test with unknown company (should have low confidence)
-        entities = adapter.extract_entities(
+        entities = await adapter.extract_entities(
             email_text="UnknownStartupXYZ와 협업 제안",
             company_context=company_context_markdown,
         )
@@ -151,7 +154,8 @@ class TestGeminiAdapterMatchingContract:
             if entities.startup_match_confidence < 0.70:
                 assert entities.matched_company_id is None
 
-    def test_return_type_validation(self):
+    @pytest.mark.asyncio
+    async def test_return_type_validation(self):
         """MUST: Return value is always valid ExtractedEntities.
 
         Contract: GeminiAdapter.extract_entities() must:
@@ -164,7 +168,7 @@ class TestGeminiAdapterMatchingContract:
 
         adapter = GeminiAdapter(api_key=os.getenv("GEMINI_API_KEY"))
 
-        entities = adapter.extract_entities("테스트 이메일")
+        entities = await adapter.extract_entities("테스트 이메일")
 
         # Validate return type
         assert isinstance(entities, ExtractedEntities)

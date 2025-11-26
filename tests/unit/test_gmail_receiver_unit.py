@@ -115,7 +115,7 @@ def test_gmail_receiver_connect(
     mock_creds.valid = True
     mock_creds.expired = False
     mock_creds.refresh_token = "mock_refresh_token"
-    mock_creds_class.from_authorized_user_file.return_value = mock_creds
+    mock_creds_class.from_authorized_user_info.return_value = mock_creds
 
     # Setup mock Gmail service
     mock_service = Mock()

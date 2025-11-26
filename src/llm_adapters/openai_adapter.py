@@ -84,7 +84,7 @@ class OpenAIAdapter(LLMProvider):
 
         logger.info(f"Initialized OpenAIAdapter with model={model}, timeout={timeout}s")
 
-    def extract_entities(
+    async def extract_entities(
         self,
         email_text: str,
         company_context: Optional[str] = None,

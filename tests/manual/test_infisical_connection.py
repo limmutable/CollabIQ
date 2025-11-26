@@ -41,6 +41,15 @@ def print_banner(text: str, char: str = "=") -> None:
     print(f"{char * 70}\n")
 
 
+import pytest
+
+@pytest.fixture
+def settings():
+    """Get application settings."""
+    return get_settings()
+
+
+
 def test_configuration():
     """Test 1: Validate Infisical configuration."""
     print_banner("Test 1: Configuration Validation", "=")

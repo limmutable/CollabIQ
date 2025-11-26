@@ -8,7 +8,7 @@ Tests the failover strategy with mocked providers to verify:
 """
 
 from datetime import datetime, timezone
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
 import pytest
 
@@ -32,7 +32,7 @@ def mock_providers():
 
     for name in ["gemini", "claude", "openai"]:
         provider = MagicMock()
-        provider.extract_entities.return_value = ExtractedEntities(
+        provider.extract_entities = AsyncMock(return_value=ExtractedEntities(
             person_in_charge=f"Person from {name}",
             startup_name=f"Startup from {name}",
             partner_org="Partner",
@@ -43,7 +43,7 @@ def mock_providers():
             ),
             email_id="test123",
             extracted_at=datetime.now(timezone.utc),
-        )
+        ))
         providers[name] = provider
 
     return providers
@@ -52,11 +52,12 @@ def mock_providers():
 class TestFailoverBasics:
     """Test basic failover functionality."""
 
-    def test_uses_first_provider_when_available(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_uses_first_provider_when_available(self, mock_providers, health_tracker):
         """Test that failover uses the first provider in priority order."""
         strategy = FailoverStrategy(priority_order=["gemini", "claude", "openai"])
 
-        result, provider_used = strategy.execute(
+        result, provider_used = await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -71,7 +72,8 @@ class TestFailoverBasics:
         assert mock_providers["claude"].extract_entities.call_count == 0
         assert mock_providers["openai"].extract_entities.call_count == 0
 
-    def test_tries_providers_in_priority_order(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_tries_providers_in_priority_order(self, mock_providers, health_tracker):
         """Test that providers are tried in specified priority order."""
         # Make first provider fail
         mock_providers["gemini"].extract_entities.side_effect = LLMAPIError(
@@ -80,7 +82,7 @@ class TestFailoverBasics:
 
         strategy = FailoverStrategy(priority_order=["gemini", "claude", "openai"])
 
-        result, provider_used = strategy.execute(
+        result, provider_used = await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -95,7 +97,8 @@ class TestFailoverBasics:
         assert mock_providers["claude"].extract_entities.call_count == 1
         assert mock_providers["openai"].extract_entities.call_count == 0
 
-    def test_returns_first_successful_result(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_returns_first_successful_result(self, mock_providers, health_tracker):
         """Test that failover returns first successful result."""
         # Make first two fail
         mock_providers["gemini"].extract_entities.side_effect = LLMTimeoutError()
@@ -105,7 +108,7 @@ class TestFailoverBasics:
 
         strategy = FailoverStrategy(priority_order=["gemini", "claude", "openai"])
 
-        result, provider_used = strategy.execute(
+        result, provider_used = await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -119,7 +122,8 @@ class TestFailoverBasics:
 class TestHealthTracking:
     """Test integration with HealthTracker."""
 
-    def test_skips_unhealthy_providers(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_skips_unhealthy_providers(self, mock_providers, health_tracker):
         """Test that unhealthy providers are skipped."""
         # Mark gemini as unhealthy by recording failures
         for _ in range(3):
@@ -130,7 +134,7 @@ class TestHealthTracking:
 
         strategy = FailoverStrategy(priority_order=["gemini", "claude", "openai"])
 
-        result, provider_used = strategy.execute(
+        result, provider_used = await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -141,11 +145,12 @@ class TestHealthTracking:
         assert mock_providers["gemini"].extract_entities.call_count == 0
         assert mock_providers["claude"].extract_entities.call_count == 1
 
-    def test_records_success_in_health_tracker(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_records_success_in_health_tracker(self, mock_providers, health_tracker):
         """Test that successful calls are recorded in health tracker."""
         strategy = FailoverStrategy(priority_order=["gemini"])
 
-        strategy.execute(
+        await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -156,14 +161,15 @@ class TestHealthTracking:
         assert metrics.success_count == 1
         assert metrics.consecutive_failures == 0
 
-    def test_records_failure_in_health_tracker(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_records_failure_in_health_tracker(self, mock_providers, health_tracker):
         """Test that failed calls are recorded in health tracker."""
         # Make provider fail
         mock_providers["gemini"].extract_entities.side_effect = LLMAPIError("API Error")
 
         strategy = FailoverStrategy(priority_order=["gemini", "claude"])
 
-        strategy.execute(
+        await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -182,7 +188,8 @@ class TestHealthTracking:
 class TestErrorHandling:
     """Test error handling scenarios."""
 
-    def test_raises_all_providers_failed_when_all_fail(
+    @pytest.mark.asyncio
+    async def test_raises_all_providers_failed_when_all_fail(
         self, mock_providers, health_tracker
     ):
         """Test that AllProvidersFailedError is raised when all providers fail."""
@@ -193,7 +200,7 @@ class TestErrorHandling:
         strategy = FailoverStrategy(priority_order=["gemini", "claude", "openai"])
 
         with pytest.raises(AllProvidersFailedError) as exc_info:
-            strategy.execute(
+            await strategy.execute(
                 providers=mock_providers,
                 email_text="test email",
                 health_tracker=health_tracker,
@@ -201,7 +208,8 @@ class TestErrorHandling:
 
         assert "All providers failed" in str(exc_info.value)
 
-    def test_handles_unexpected_exceptions(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_handles_unexpected_exceptions(self, mock_providers, health_tracker):
         """Test that unexpected exceptions are handled gracefully."""
         # Make first provider raise unexpected exception
         mock_providers["gemini"].extract_entities.side_effect = ValueError(
@@ -210,7 +218,7 @@ class TestErrorHandling:
 
         strategy = FailoverStrategy(priority_order=["gemini", "claude"])
 
-        result, provider_used = strategy.execute(
+        result, provider_used = await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -223,11 +231,12 @@ class TestErrorHandling:
         gemini_metrics = health_tracker.get_metrics("gemini")
         assert gemini_metrics.failure_count == 1
 
-    def test_skips_unconfigured_providers(self, health_tracker):
+    @pytest.mark.asyncio
+    async def test_skips_unconfigured_providers(self, health_tracker):
         """Test that providers in priority order but not in providers dict are skipped."""
         # Only configure gemini, not claude
         providers = {"gemini": MagicMock()}
-        providers["gemini"].extract_entities.return_value = ExtractedEntities(
+        providers["gemini"].extract_entities = AsyncMock(return_value=ExtractedEntities(
             person_in_charge="Person",
             startup_name="Startup",
             partner_org="Partner",
@@ -238,12 +247,12 @@ class TestErrorHandling:
             ),
             email_id="test123",
             extracted_at=datetime.now(timezone.utc),
-        )
+        ))
 
         # Priority includes claude, but it's not in providers dict
         strategy = FailoverStrategy(priority_order=["claude", "gemini"])
 
-        result, provider_used = strategy.execute(
+        result, provider_used = await strategy.execute(
             providers=providers, email_text="test email", health_tracker=health_tracker
         )
 
@@ -254,13 +263,14 @@ class TestErrorHandling:
 class TestCompanyContext:
     """Test company context parameter passing."""
 
-    def test_passes_company_context_to_provider(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_passes_company_context_to_provider(self, mock_providers, health_tracker):
         """Test that company_context is passed to provider's extract_entities."""
         strategy = FailoverStrategy(priority_order=["gemini"])
 
         company_context = "## Companies\n- Startup A\n- Partner B"
 
-        strategy.execute(
+        await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -271,13 +281,14 @@ class TestCompanyContext:
         call_kwargs = mock_providers["gemini"].extract_entities.call_args[1]
         assert call_kwargs["company_context"] == company_context
 
-    def test_passes_email_id_to_provider(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_passes_email_id_to_provider(self, mock_providers, health_tracker):
         """Test that email_id is passed to provider's extract_entities."""
         strategy = FailoverStrategy(priority_order=["gemini"])
 
         email_id = "msg_12345"
 
-        strategy.execute(
+        await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,

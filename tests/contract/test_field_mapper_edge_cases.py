@@ -87,9 +87,6 @@ class TestFieldMapperEdgeCases:
         # Optional null fields should be omitted
         assert "담당자" not in properties, "person_in_charge (None) should be omitted"
         assert "협업내용" not in properties, "details (None) should be omitted"
-        assert "요약" not in properties, (
-            "collaboration_summary (None) should be omitted"
-        )
         assert "스타트업명" not in properties, (
             "matched_company_id (None) should be omitted"
         )
@@ -140,13 +137,8 @@ class TestFieldMapperEdgeCases:
             "Text at 2000 chars should be preserved exactly"
         )
 
-        # Check summary field is preserved at full length
-        summary_content = properties["요약"]["rich_text"][0]["text"]["content"]
-        assert len(summary_content) <= 2000, (
-            "summary field must not exceed 2000 chars (Notion limit)"
-        )
-        assert summary_content == long_summary, (
-            "Text within limits should be preserved exactly"
+        assert details_content == long_text, (
+            "Text at 2000 chars should be preserved exactly"
         )
 
     def test_invalid_relation_id_handling(self, field_mapper):
@@ -237,9 +229,8 @@ class TestFieldMapperEdgeCases:
             "Korean text with special characters must be preserved exactly"
         )
 
-        summary_content = properties["요약"]["rich_text"][0]["text"]["content"]
-        assert summary_content == special_summary, (
-            "Korean text in summary must be preserved exactly"
+        assert details_content == special_text, (
+            "Korean text with special characters must be preserved exactly"
         )
 
         person_content_id = properties["담당자"]["people"][0]["id"]

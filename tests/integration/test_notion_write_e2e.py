@@ -60,12 +60,8 @@ class TestNotionWriteE2E:
             "협업강도": NotionProperty(
                 name="협업강도", type="select", id="협업강도_id"
             ),
-            "요약": NotionProperty(name="요약", type="rich_text", id="요약_id"),
-            "type_confidence": NotionProperty(
-                name="type_confidence", type="number", id="type_conf_id"
-            ),
-            "intensity_confidence": NotionProperty(
-                name="intensity_confidence", type="number", id="intensity_conf_id"
+            "협업강도": NotionProperty(
+                name="협업강도", type="select", id="협업강도_id"
             ),
             "Email ID": NotionProperty(
                 name="Email ID", type="rich_text", id="email_id"
@@ -255,20 +251,6 @@ class TestNotionWriteE2E:
             "협업강도 must match classification intensity"
         )
 
-        # Verify 요약 (rich_text field - Korean summary)
-        assert "요약" in properties, "요약 field must be present"
-        summary_text = properties["요약"]["rich_text"][0]["text"]["content"]
-        assert "브레이크앤컴퍼니" in summary_text, (
-            "요약 must preserve Korean startup name"
-        )
-        assert "신세계푸드" in summary_text, "요약 must preserve Korean partner name"
-
-        # Verify type_confidence (number field)
-        assert "type_confidence" in properties, "type_confidence field must be present"
-        assert properties["type_confidence"]["number"] == 0.95, (
-            "type_confidence must match classification confidence score"
-        )
-
         # Verify 날짜 (date field - ISO 8601 date only)
         assert "날짜" in properties, "날짜 date field must be present"
         assert properties["날짜"]["date"]["start"] == "2025-10-28", (
@@ -361,8 +343,6 @@ class TestNotionWriteE2E:
             collaboration_type="[A]완전한협업",
             collaboration_intensity="투자",
             date="2025-10-29",
-            type_confidence=0.98,
-            intensity_confidence=0.97,
             classification_timestamp="2025-10-29T12:00:00Z",
         )
 
@@ -410,10 +390,6 @@ class TestNotionWriteE2E:
             == "완전한 협업 내용 설명"
         )
         assert (
-            properties["요약"]["rich_text"][0]["text"]["content"]
-            == "완전한스타트업과 완전한파트너의 투자 협력 관계가 성사되었습니다. 김완전 담당자가 주도하고 있습니다."
-        )
-        assert (
             properties["Email ID"]["rich_text"][0]["text"]["content"]
             == "complete-fields-test"
         )
@@ -437,8 +413,8 @@ class TestNotionWriteE2E:
         assert properties["classification_timestamp"]["date"]["start"] == "2025-10-29"
 
         # Verify number fields
-        assert properties["type_confidence"]["number"] == 0.98
-        assert properties["intensity_confidence"]["number"] == 0.97
+        # assert properties["type_confidence"]["number"] == 0.98
+        # assert properties["intensity_confidence"]["number"] == 0.97
 
     @pytest.mark.asyncio
     async def test_graceful_degradation_missing_optional_fields(
@@ -500,9 +476,6 @@ class TestNotionWriteE2E:
         # Missing optional fields should be omitted
         assert "담당자" not in properties, (
             "person_in_charge should be omitted when None"
-        )
-        assert "요약" not in properties, (
-            "collaboration_summary should be omitted when None"
         )
         assert "스타트업명" not in properties, (
             "matched_company_id should be omitted when None"

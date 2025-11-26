@@ -119,7 +119,7 @@ def gmail_receiver(gmail_test_account):
     Will skip test if credentials not available.
 
     Yields:
-        GmailReceiver: Configured Gmail receiver instance
+        GmailReceiver: Configured and connected Gmail receiver instance
     """
     if gmail_test_account is None:
         pytest.skip("Gmail test account not configured")
@@ -130,6 +130,9 @@ def gmail_receiver(gmail_test_account):
         credentials_path=gmail_test_account["credentials_path"],
         token_path=gmail_test_account["token_path"],
     )
+
+    # Connect to Gmail service before yielding
+    receiver.connect()
 
     yield receiver
 
@@ -170,7 +173,7 @@ def notion_test_database() -> Optional[dict]:
 
 
 @pytest.fixture
-def notion_writer(notion_test_database):
+def notion_writer(notion_test_database, notion_integrator):
     """Initialize NotionWriter with test database configuration.
 
     Uses notion_test_database fixture to get configuration.
@@ -192,9 +195,53 @@ def notion_writer(notion_test_database):
     os.environ["NOTION_DATABASE_ID"] = notion_test_database["database_id"]
     os.environ["NOTION_TOKEN"] = notion_test_database["token"]
 
-    writer = NotionWriter()
+    writer = NotionWriter(
+        notion_integrator=notion_integrator,
+        collabiq_db_id=notion_test_database["database_id"],
+    )
 
     yield writer
 
     # Teardown: Cleanup is handled by cleanup mechanism (T018)
     # Test entries are marked with test_run_id and cleaned up after test run
+
+
+@pytest.fixture
+def notion_integrator(notion_test_database):
+    """Initialize NotionIntegrator with test database configuration.
+
+    Uses notion_test_database fixture to get configuration.
+    Will skip test if database not configured.
+
+    Yields:
+        NotionIntegrator: Configured Notion integrator instance
+    """
+    if notion_test_database is None:
+        pytest.skip("Notion test database not configured")
+
+    from notion_integrator.integrator import NotionIntegrator
+
+    # Set environment variables for NotionIntegrator
+    os.environ["NOTION_API_KEY"] = notion_test_database["token"]
+
+    integrator = NotionIntegrator(api_key=notion_test_database["token"])
+
+    yield integrator
+
+
+@pytest.fixture
+def gemini_adapter():
+    """Initialize GeminiAdapter with API key from environment.
+
+    Will skip test if GEMINI_API_KEY not set.
+
+    Yields:
+        GeminiAdapter: Configured Gemini adapter instance
+    """
+    from llm_adapters.gemini_adapter import GeminiAdapter
+
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        pytest.skip("GEMINI_API_KEY not set")
+
+    yield GeminiAdapter(api_key=api_key)

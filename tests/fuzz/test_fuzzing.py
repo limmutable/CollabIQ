@@ -211,13 +211,14 @@ class TestLLMAdapterFuzzing:
         """Create fuzz generator with fixed seed."""
         return FuzzGenerator(FuzzConfig(seed=456, include_valid=False))
 
-    def test_empty_email_handling(self, gemini_adapter):
+    @pytest.mark.asyncio
+    async def test_empty_email_handling(self, gemini_adapter):
         """Test LLM adapter handles empty emails gracefully."""
         empty_inputs = ["", " ", "\n\n\n", "   "]
 
         for email_text in empty_inputs:
             try:
-                result = gemini_adapter.extract_entities(email_text)
+                result = await gemini_adapter.extract_entities(email_text)
                 # Should return structured result, not crash
                 assert isinstance(result, dict)
             except Exception as e:

@@ -1,6 +1,6 @@
 # CollabIQ Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2025-11-19
+Auto-generated from all feature plans. Last updated: 2025-11-26
 
 ## Active Technologies
 - **Python 3.12+** with UV package manager
@@ -22,7 +22,7 @@ CollabIQ/
 │   ├── error_handling/    # Error management & retry logic
 │   ├── models/            # Data models & validators
 │   └── notion_integrator/ # Notion API integration
-├── tests/                 # Test suite (989 tests, 86.5% pass rate)
+├── tests/                 # Test suite (993 tests, 99%+ pass rate)
 │   ├── unit/             # 31 test files - isolated components
 │   ├── integration/      # 33 test files - component interactions
 │   ├── e2e/              # 3 test files - full pipeline
@@ -71,11 +71,13 @@ uv run collabiq config get KEY       # Get specific value
 - **Documentation**: Google-style docstrings
 
 ## Recent Changes (Phases 014-017)
-- **Phase 017** (2025-11-22): Production Readiness Fixes
+- **Phase 017** (2025-11-26): Production Readiness Fixes + Test Suite Fixes
   - Stabilized async pipeline (Gmail, LLM, Notion)
   - Implemented Daemon mode for continuous operation
   - Validated E2E workflow with 100% success on production DB
-  - Updated documentation and CLI for daemon support
+  - Fixed async/await patterns in E2E and performance tests
+  - Corrected pytest fixtures (NotionWriter, NotionIntegrator, GmailReceiver)
+  - Test suite: 993 tests with 99%+ pass rate
 
 - **Phase 016** (2025-11-19): Project cleanup & refactoring
   - Created 6 README indexes for navigation
@@ -86,7 +88,7 @@ uv run collabiq config get KEY       # Get specific value
 - **Phase 015** (2025-11-09): Test suite improvements
   - Added real E2E testing with Gmail/Notion
   - Simplified to production credentials only
-  - 989 tests, 86.5% baseline pass rate
+  - Stabilized test infrastructure
 
 - **Phase 014** (2025-11-08): Enhanced field mapping
   - Added rapidfuzz for company/person matching

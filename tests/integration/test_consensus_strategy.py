@@ -9,7 +9,7 @@ Tests the consensus strategy with mocked providers to verify:
 """
 
 from datetime import datetime, timezone
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
 import pytest
 
@@ -33,7 +33,7 @@ def mock_providers():
 
     # Gemini - high confidence result
     gemini = MagicMock()
-    gemini.extract_entities = MagicMock(
+    gemini.extract_entities = AsyncMock(
         return_value=ExtractedEntities(
             person_in_charge="김철수",
             startup_name="본봄",
@@ -51,7 +51,7 @@ def mock_providers():
 
     # Claude - similar result with slight variations
     claude = MagicMock()
-    claude.extract_entities = MagicMock(
+    claude.extract_entities = AsyncMock(
         return_value=ExtractedEntities(
             person_in_charge="김철수",  # Same
             startup_name="본봄",  # Same
@@ -69,7 +69,7 @@ def mock_providers():
 
     # OpenAI - different result (minority opinion)
     openai = MagicMock()
-    openai.extract_entities = MagicMock(
+    openai.extract_entities = AsyncMock(
         return_value=ExtractedEntities(
             person_in_charge="김영희",  # Different
             startup_name="본봄",  # Same
@@ -117,6 +117,43 @@ class TestConsensusBasics:
         assert provider_used == "consensus"
 
     @pytest.mark.asyncio
+    async def test_achieves_consensus_with_identical_results(
+        self, mock_providers, health_tracker
+    ):
+        """Test that identical results achieve consensus."""
+        # All providers return same result
+        for provider in mock_providers.values():
+            provider.extract_entities.return_value = ExtractedEntities(
+                person_in_charge="Kim",
+                startup_name="Startup A",
+                partner_org="Partner B",
+                details="Meeting",
+                date=None,
+                confidence=ConfidenceScores(
+                    person=0.9, startup=0.9, partner=0.9, details=0.9, date=0.9
+                ),
+                email_id="test123",
+                extracted_at=datetime.now(timezone.utc),
+            )
+
+        strategy = ConsensusStrategy(
+            provider_names=["gemini", "claude", "openai"],
+            min_agreement=2,
+        )
+
+        result, provider_used = await strategy.execute(
+            providers=mock_providers,
+            email_text="test email",
+            health_tracker=health_tracker,
+        )
+        assert result.person_in_charge == "Kim"
+        assert result.startup_name == "Startup A"
+        assert result.partner_org == "Partner B"
+        assert result.details == "Meeting"
+        assert result.confidence.person == 1.0  # Perfect consensus = 1.0 confidence
+        assert provider_used == "consensus"
+
+    @pytest.mark.asyncio
     async def test_merges_results_with_fuzzy_matching(
         self, mock_providers, health_tracker
     ):
@@ -139,7 +176,7 @@ class TestConsensusBasics:
         # Partner org should be merged from "신세계인터내셔널" and "신세계"
         # Fuzzy matching should recognize these as similar
         # Majority vote: "신세계" (2 votes) vs "신세계인터내셔널" (1 vote)
-        # But weighted by confidence, "신세계인터내셔널" has higher confidence (0.88)
+        # But weighted by confidence, "신세계인터내널" has higher confidence (0.88)
         # Expected: higher confidence + specificity wins
         assert result.partner_org in ["신세계인터내셔널", "신세계"]
 
@@ -147,6 +184,53 @@ class TestConsensusBasics:
         # "김철수": 2 votes (gemini 0.95, claude 0.90)
         # "김영희": 1 vote (openai 0.75)
         assert result.person_in_charge == "김철수"
+
+    @pytest.mark.asyncio
+    async def test_handles_minor_differences_with_fuzzy_matching(
+        self, mock_providers, health_tracker
+    ):
+        """Test that minor differences are handled via fuzzy matching."""
+        # Provider 1
+        mock_providers["gemini"].extract_entities.return_value = ExtractedEntities(
+            person_in_charge="Kim Chul-soo",  # Full name
+            startup_name="Startup A",
+            partner_org="Partner B",
+            details="Meeting",
+            date=None,
+            confidence=ConfidenceScores(
+                person=0.9, startup=0.9, partner=0.9, details=0.9, date=0.9
+            ),
+            email_id="test123",
+            extracted_at=datetime.now(timezone.utc),
+        )
+
+        # Provider 2
+        mock_providers["claude"].extract_entities.return_value = ExtractedEntities(
+            person_in_charge="Kim Chulsoo",  # Slight variation
+            startup_name="Startup A",
+            partner_org="Partner B",
+            details="Meeting",
+            date=None,
+            confidence=ConfidenceScores(
+                person=0.9, startup=0.9, partner=0.9, details=0.9, date=0.9
+            ),
+            email_id="test123",
+            extracted_at=datetime.now(timezone.utc),
+        )
+
+        strategy = ConsensusStrategy(
+            provider_names=["gemini", "claude"],
+            min_agreement=2,
+        )
+
+        result, provider_used = await strategy.execute(
+            providers=mock_providers,
+            email_text="test email",
+            health_tracker=health_tracker,
+        )
+
+        assert result.person_in_charge == "Kim Chul-soo"  # Fuzzy match should pick one
+        assert provider_used == "consensus"
 
     @pytest.mark.asyncio
     async def test_recalculates_confidence_scores(self, mock_providers, health_tracker):
@@ -243,6 +327,23 @@ class TestMinimumProviderValidation:
         assert gemini_metrics.success_count == 1
         assert claude_metrics.success_count == 1
         assert openai_metrics.failure_count == 1
+
+    @pytest.mark.asyncio
+    async def test_requires_minimum_providers(self, mock_providers, health_tracker):
+        """Test that consensus requires a minimum number of providers."""
+        # Only 1 provider available
+        strategy = ConsensusStrategy(
+            provider_names=["gemini"], min_agreement=2
+        )
+
+        with pytest.raises(AllProvidersFailedError) as exc_info:
+            await strategy.execute(
+                providers=mock_providers,
+                email_text="test email",
+                health_tracker=health_tracker,
+            )
+
+        assert "Insufficient healthy providers" in str(exc_info.value)
 
 
 class TestHealthTracking:

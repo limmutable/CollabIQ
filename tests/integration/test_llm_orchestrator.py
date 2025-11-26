@@ -8,7 +8,7 @@ Tests the complete orchestration system with mocked providers to verify:
 """
 
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 
 import pytest
 
@@ -42,7 +42,8 @@ def mock_providers():
 
     for name in ["gemini", "claude", "openai"]:
         provider = MagicMock()
-        provider.extract_entities.return_value = ExtractedEntities(
+        # Use AsyncMock for extract_entities to simulate async behavior
+        provider.extract_entities = AsyncMock(return_value=ExtractedEntities(
             person_in_charge=f"Person from {name}",
             startup_name=f"Startup from {name}",
             partner_org="Partner",
@@ -53,7 +54,7 @@ def mock_providers():
             ),
             email_id="test123",
             extracted_at=datetime.now(timezone.utc),
-        )
+        ))
         providers[name] = provider
 
     return providers
@@ -74,14 +75,16 @@ def orchestrator(mock_providers, orchestration_config, tmp_path):
 class TestOrchestratorBasics:
     """Test basic orchestrator functionality."""
 
-    def test_extract_entities_uses_default_strategy(self, orchestrator):
+    @pytest.mark.asyncio
+    async def test_extract_entities_uses_default_strategy(self, orchestrator):
         """Test that extract_entities uses the default strategy (failover)."""
-        result = orchestrator.extract_entities("test email")
+        result = await orchestrator.extract_entities("test email")
 
         # Should use gemini (first in priority)
         assert result.startup_name == "Startup from gemini"
 
-    def test_extract_entities_with_strategy_override(
+    @pytest.mark.asyncio
+    async def test_extract_entities_with_strategy_override(
         self, orchestrator, mock_providers
     ):
         """Test that strategy can be overridden per call."""
@@ -90,27 +93,29 @@ class TestOrchestratorBasics:
             "Gemini failed"
         )
 
-        result = orchestrator.extract_entities("test email", strategy="failover")
+        result = await orchestrator.extract_entities("test email", strategy="failover")
 
         # Should use claude (second in priority)
         assert result.startup_name == "Startup from claude"
 
-    def test_extract_entities_passes_company_context(
+    @pytest.mark.asyncio
+    async def test_extract_entities_passes_company_context(
         self, orchestrator, mock_providers
     ):
         """Test that company_context is passed to provider."""
         company_context = "## Companies\n- Company A"
 
-        orchestrator.extract_entities("test email", company_context=company_context)
+        await orchestrator.extract_entities("test email", company_context=company_context)
 
         # Verify company_context was passed
         call_kwargs = mock_providers["gemini"].extract_entities.call_args[1]
         assert call_kwargs["company_context"] == company_context
 
-    def test_extract_entities_raises_invalid_strategy_error(self, orchestrator):
+    @pytest.mark.asyncio
+    async def test_extract_entities_raises_invalid_strategy_error(self, orchestrator):
         """Test that invalid strategy raises InvalidStrategyError."""
         with pytest.raises(InvalidStrategyError) as exc_info:
-            orchestrator.extract_entities("test email", strategy="invalid_strategy")
+            await orchestrator.extract_entities("test email", strategy="invalid_strategy")
 
         assert "invalid_strategy" in str(exc_info.value)
 
@@ -127,11 +132,12 @@ class TestProviderStatus:
         assert "claude" in status
         assert "openai" in status
 
-    def test_get_provider_status_includes_health_metrics(self, orchestrator):
+    @pytest.mark.asyncio
+    async def test_get_provider_status_includes_health_metrics(self, orchestrator):
         """Test that provider status includes health metrics."""
         # Record some successes
-        orchestrator.extract_entities("test email 1")
-        orchestrator.extract_entities("test email 2")
+        await orchestrator.extract_entities("test email 1")
+        await orchestrator.extract_entities("test email 2")
 
         status = orchestrator.get_provider_status()
 
@@ -142,14 +148,15 @@ class TestProviderStatus:
         assert gemini_status.total_api_calls == 2
         assert gemini_status.circuit_breaker_state == "closed"
 
-    def test_get_provider_status_reflects_failures(self, orchestrator, mock_providers):
+    @pytest.mark.asyncio
+    async def test_get_provider_status_reflects_failures(self, orchestrator, mock_providers):
         """Test that provider status reflects failures."""
         # Make gemini fail 3 times
         mock_providers["gemini"].extract_entities.side_effect = LLMAPIError("API Error")
 
         for _ in range(3):
             try:
-                orchestrator.extract_entities("test email")
+                await orchestrator.extract_entities("test email")
             except (LLMAPIError, AllProvidersFailedError):
                 pass
 
@@ -180,11 +187,13 @@ class TestStrategyManagement:
 class TestProviderTesting:
     """Test provider health testing."""
 
-    def test_test_provider_returns_true_for_healthy(self, orchestrator):
+    @pytest.mark.asyncio
+    async def test_test_provider_returns_true_for_healthy(self, orchestrator):
         """Test that test_provider returns True for healthy provider."""
         assert orchestrator.test_provider("gemini") is True
 
-    def test_test_provider_returns_false_for_unhealthy(
+    @pytest.mark.asyncio
+    async def test_test_provider_returns_false_for_unhealthy(
         self, orchestrator, mock_providers
     ):
         """Test that test_provider returns False for unhealthy provider."""
@@ -193,13 +202,14 @@ class TestProviderTesting:
 
         for _ in range(3):
             try:
-                orchestrator.extract_entities("test email")
+                await orchestrator.extract_entities("test email")
             except (LLMAPIError, AllProvidersFailedError):
                 pass
 
         assert orchestrator.test_provider("gemini") is False
 
-    def test_test_provider_raises_invalid_provider_error(self, orchestrator):
+    @pytest.mark.asyncio
+    async def test_test_provider_raises_invalid_provider_error(self, orchestrator):
         """Test that testing unknown provider raises InvalidProviderError."""
         with pytest.raises(InvalidProviderError):
             orchestrator.test_provider("unknown_provider")
@@ -249,6 +259,7 @@ class TestOrchestratorFromConfig:
         self, mock_get_secret_or_env, orchestration_config, tmp_path
     ):
         """Test that providers without API keys are skipped."""
+        import os
         # Configure mock_get_secret_or_env to return None for API keys
         mock_get_secret_or_env.side_effect = (
             lambda key, default=None: None

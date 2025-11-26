@@ -41,13 +41,19 @@ def llm_orchestrator():
         enable_quality_routing=False,
         max_retries=2,
     )
-    return LLMOrchestrator(config=config)
+    return LLMOrchestrator.from_config(config=config)
 
 
 @pytest.fixture
-def classification_service():
+def classification_service(notion_integrator, gemini_adapter):
     """Initialize classification service."""
-    return ClassificationService()
+    # Get the CollabIQ database ID from environment
+    collabiq_db_id = os.getenv("NOTION_DATABASE_ID", "test-db-id")
+    return ClassificationService(
+        notion_integrator=notion_integrator,
+        gemini_adapter=gemini_adapter,
+        collabiq_db_id=collabiq_db_id,
+    )
 
 
 @pytest.fixture
@@ -87,30 +93,33 @@ def test_fetch_real_email_from_gmail(gmail_receiver, gmail_test_account):
     # For tests: Fetch a fixed number of emails (unlike live processing which only fetches unprocessed)
     query = f"to:{gmail_test_account['email_address']} newer_than:30d"
 
-    raw_emails = gmail_receiver.fetch_emails(max_results=MAX_EMAILS, query=query)
+    raw_emails = gmail_receiver.fetch_emails(max_emails=MAX_EMAILS, query=query)
 
     # Verify emails were fetched
     assert len(raw_emails) > 0, (
         f"Should fetch at least 1 email (tried to fetch {MAX_EMAILS})"
     )
-    assert all(hasattr(email, "email_id") for email in raw_emails), (
-        "All emails should have email_id"
+    # RawEmail has metadata.message_id, metadata.subject, and body attributes
+    assert all(hasattr(email, "metadata") for email in raw_emails), (
+        "All emails should have metadata"
     )
-    assert all(hasattr(email, "subject") for email in raw_emails), (
-        "All emails should have subject"
+    assert all(email.metadata.message_id for email in raw_emails), (
+        "All emails should have metadata.message_id"
     )
-    assert all(hasattr(email, "cleaned_body") for email in raw_emails), (
-        "All emails should have cleaned_body"
+    assert all(hasattr(email, "body") for email in raw_emails), (
+        "All emails should have body"
     )
 
     print(f"\n✓ Successfully fetched {len(raw_emails)} real emails from Gmail")
     for email in raw_emails[:3]:  # Show first 3
-        print(f"  - {email.email_id}: {email.subject[:50]}")
+        subject = email.metadata.subject[:50] if email.metadata.subject else "(no subject)"
+        print(f"  - {email.metadata.message_id}: {subject}")
 
 
 @pytest.mark.e2e
 @pytest.mark.integration
-def test_process_real_email_to_notion(
+@pytest.mark.asyncio
+async def test_process_real_email_to_notion(
     e2e_runner, gmail_test_account, notion_test_database
 ):
     """
@@ -135,15 +144,15 @@ def test_process_real_email_to_notion(
 
     # Get email IDs to process
     raw_emails = e2e_runner.gmail_receiver.fetch_emails(
-        max_results=MAX_EMAILS, query=query
+        max_emails=MAX_EMAILS, query=query
     )
 
     assert len(raw_emails) > 0, f"Should have at least 1 email (tried {MAX_EMAILS})"
 
-    email_ids = [email.email_id for email in raw_emails]
+    email_ids = [email.metadata.message_id for email in raw_emails]
 
-    # Run E2E test with real APIs
-    test_run = e2e_runner.run_tests(
+    # Run E2E test with real APIs (async method)
+    test_run = await e2e_runner.run_tests(
         email_ids=email_ids,
         test_mode=False,  # Real API calls
     )
@@ -177,7 +186,8 @@ def test_process_real_email_to_notion(
 
 @pytest.mark.e2e
 @pytest.mark.integration
-def test_notion_write_validation(e2e_runner, notion_writer, gmail_test_account):
+@pytest.mark.asyncio
+async def test_notion_write_validation(e2e_runner, notion_writer, gmail_test_account):
     """
     T017: Validate Notion entries after creation
 
@@ -186,15 +196,15 @@ def test_notion_write_validation(e2e_runner, notion_writer, gmail_test_account):
     """
     # Fetch one test email
     query = f"to:{gmail_test_account['email_address']} newer_than:7d"
-    raw_emails = e2e_runner.gmail_receiver.fetch_emails(max_results=1, query=query)
+    raw_emails = e2e_runner.gmail_receiver.fetch_emails(max_emails=1, query=query)
 
     assert len(raw_emails) > 0, "Should have test email"
 
     email = raw_emails[0]
-    email_id = email.email_id
+    email_id = email.metadata.message_id
 
-    # Process email through LLM extraction
-    extracted_data = e2e_runner.llm_orchestrator.extract_entities(email.cleaned_body)
+    # Process email through LLM extraction (async method)
+    extracted_data = await e2e_runner.llm_orchestrator.extract_entities(email.body)
 
     # Add email metadata
     extracted_data.email_id = email_id
@@ -205,8 +215,12 @@ def test_notion_write_validation(e2e_runner, notion_writer, gmail_test_account):
     else:
         classified_data = extracted_data
 
-    # Write to Notion
-    page_id = notion_writer.write_entry(classified_data)
+    # Write to Notion (async method - use create_collabiq_entry)
+    write_result = await notion_writer.create_collabiq_entry(classified_data)
+
+    assert write_result is not None, "Write result should be returned"
+    assert write_result.success, f"Write should succeed: {write_result.error}"
+    page_id = write_result.page_id
 
     assert page_id is not None, "Notion page ID should be returned"
     assert len(page_id) >= 32, (
@@ -214,7 +228,9 @@ def test_notion_write_validation(e2e_runner, notion_writer, gmail_test_account):
     )
 
     # Read back from Notion to validate
-    notion_page = notion_writer.client.client.pages.retrieve(page_id=page_id)
+    notion_page = await notion_writer.notion_integrator.client.client.pages.retrieve(
+        page_id=page_id
+    )
 
     # Validate page properties exist
     assert "properties" in notion_page, "Notion page should have properties"
@@ -247,7 +263,8 @@ def test_notion_write_validation(e2e_runner, notion_writer, gmail_test_account):
 
 @pytest.mark.e2e
 @pytest.mark.integration
-def test_batch_processing_real_emails(e2e_runner, gmail_test_account):
+@pytest.mark.asyncio
+async def test_batch_processing_real_emails(e2e_runner, gmail_test_account):
     """
     Test processing multiple real emails in batch
 
@@ -256,15 +273,15 @@ def test_batch_processing_real_emails(e2e_runner, gmail_test_account):
     """
     # Fetch recent emails
     query = f"to:{gmail_test_account['email_address']} newer_than:7d"
-    raw_emails = e2e_runner.gmail_receiver.fetch_emails(max_results=3, query=query)
+    raw_emails = e2e_runner.gmail_receiver.fetch_emails(max_emails=3, query=query)
 
     if len(raw_emails) < 2:
         pytest.skip("Need at least 2 test emails for batch processing test")
 
-    email_ids = [email.email_id for email in raw_emails]
+    email_ids = [email.metadata.message_id for email in raw_emails]
 
-    # Run batch E2E test
-    test_run = e2e_runner.run_tests(email_ids=email_ids, test_mode=False)
+    # Run batch E2E test (async method)
+    test_run = await e2e_runner.run_tests(email_ids=email_ids, test_mode=False)
 
     # Verify batch processing
     assert test_run.status == "completed", "Batch test run should complete"

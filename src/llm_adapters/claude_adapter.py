@@ -84,7 +84,7 @@ class ClaudeAdapter(LLMProvider):
 
         logger.info(f"Initialized ClaudeAdapter with model={model}, timeout={timeout}s")
 
-    def extract_entities(
+    async def extract_entities(
         self,
         email_text: str,
         company_context: Optional[str] = None,

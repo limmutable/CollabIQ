@@ -9,7 +9,7 @@ Tests the best-match strategy with mocked providers to verify:
 """
 
 from datetime import datetime, timezone
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
 import pytest
 
@@ -33,7 +33,7 @@ def mock_providers():
 
     # Gemini - medium confidence
     gemini = MagicMock()
-    gemini.extract_entities.return_value = ExtractedEntities(
+    gemini.extract_entities = AsyncMock(return_value=ExtractedEntities(
         person_in_charge="John Doe",
         startup_name="Gemini Startup",
         partner_org="Gemini Partner",
@@ -44,12 +44,12 @@ def mock_providers():
         ),
         email_id="test123",
         extracted_at=datetime.now(timezone.utc),
-    )
+    ))
     providers["gemini"] = gemini
 
     # Claude - high confidence (should win)
     claude = MagicMock()
-    claude.extract_entities.return_value = ExtractedEntities(
+    claude.extract_entities = AsyncMock(return_value=ExtractedEntities(
         person_in_charge="Jane Smith",
         startup_name="Claude Startup",
         partner_org="Claude Partner",
@@ -60,12 +60,12 @@ def mock_providers():
         ),
         email_id="test123",
         extracted_at=datetime.now(timezone.utc),
-    )
+    ))
     providers["claude"] = claude
 
     # OpenAI - low confidence
     openai = MagicMock()
-    openai.extract_entities.return_value = ExtractedEntities(
+    openai.extract_entities = AsyncMock(return_value=ExtractedEntities(
         person_in_charge="Bob Johnson",
         startup_name="OpenAI Startup",
         partner_org="OpenAI Partner",
@@ -76,7 +76,7 @@ def mock_providers():
         ),
         email_id="test123",
         extracted_at=datetime.now(timezone.utc),
-    )
+    ))
     providers["openai"] = openai
 
     return providers
@@ -85,11 +85,12 @@ def mock_providers():
 class TestBestMatchBasics:
     """Test basic best-match functionality."""
 
-    def test_selects_highest_confidence_result(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_selects_highest_confidence_result(self, mock_providers, health_tracker):
         """Test that best-match selects the result with highest aggregate confidence."""
         strategy = BestMatchStrategy(provider_names=["gemini", "claude", "openai"])
 
-        result, provider_used = strategy.execute(
+        result, provider_used = await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -104,11 +105,12 @@ class TestBestMatchBasics:
         assert mock_providers["claude"].extract_entities.call_count == 1
         assert mock_providers["openai"].extract_entities.call_count == 1
 
-    def test_queries_all_providers_in_parallel(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_queries_all_providers_in_parallel(self, mock_providers, health_tracker):
         """Test that all providers are queried in parallel."""
         strategy = BestMatchStrategy(provider_names=["gemini", "claude", "openai"])
 
-        result, provider_used = strategy.execute(
+        result, provider_used = await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -118,7 +120,8 @@ class TestBestMatchBasics:
         for provider in mock_providers.values():
             assert provider.extract_entities.call_count == 1
 
-    def test_skips_unhealthy_providers(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_skips_unhealthy_providers(self, mock_providers, health_tracker):
         """Test that unhealthy providers are skipped."""
         # Mark gemini as unhealthy
         for _ in range(3):
@@ -128,7 +131,7 @@ class TestBestMatchBasics:
 
         strategy = BestMatchStrategy(provider_names=["gemini", "claude", "openai"])
 
-        result, provider_used = strategy.execute(
+        result, provider_used = await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -146,30 +149,31 @@ class TestBestMatchBasics:
 class TestAggregateConfidence:
     """Test aggregate confidence calculation."""
 
-    def test_uses_weighted_average_for_confidence(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_uses_weighted_average_for_confidence(self, mock_providers, health_tracker):
         """Test that aggregate confidence uses weighted average."""
-        # Create provider with high confidence in important fields
+        # Create provider with high confidence in important fields (person/startup/partner)
         high_priority_provider = MagicMock()
-        high_priority_provider.extract_entities.return_value = ExtractedEntities(
+        high_priority_provider.extract_entities = AsyncMock(return_value=ExtractedEntities(
             person_in_charge="High Priority",
             startup_name="High Startup",
             partner_org="High Partner",
             details="Details",
             date=None,
             confidence=ConfidenceScores(
-                person=0.95,  # weight=1.5
-                startup=0.95,  # weight=1.5
-                partner=0.95,  # weight=1.0
-                details=0.60,  # weight=0.8
-                date=0.40,  # weight=0.5
+                person=0.90,  # weight=1.5 → 0.9 * 1.5 = 1.35
+                startup=0.90,  # weight=1.5 → 0.9 * 1.5 = 1.35
+                partner=0.90,  # weight=1.0 → 0.9 * 1.0 = 0.90
+                details=0.50,  # weight=0.8 → 0.5 * 0.8 = 0.40
+                date=0.50,  # weight=0.5 → 0.5 * 0.5 = 0.25
             ),
             email_id="test123",
             extracted_at=datetime.now(timezone.utc),
-        )
+        ))
 
         # Create provider with high confidence in less important fields
         low_priority_provider = MagicMock()
-        low_priority_provider.extract_entities.return_value = ExtractedEntities(
+        low_priority_provider.extract_entities = AsyncMock(return_value=ExtractedEntities(
             person_in_charge="Low Priority",
             startup_name="Low Startup",
             partner_org="Low Partner",
@@ -184,7 +188,7 @@ class TestAggregateConfidence:
             ),
             email_id="test123",
             extracted_at=datetime.now(timezone.utc),
-        )
+        ))
 
         providers = {
             "high_priority": high_priority_provider,
@@ -193,7 +197,7 @@ class TestAggregateConfidence:
 
         strategy = BestMatchStrategy(provider_names=["high_priority", "low_priority"])
 
-        result, provider_used = strategy.execute(
+        result, provider_used = await strategy.execute(
             providers=providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -206,11 +210,12 @@ class TestAggregateConfidence:
 class TestTieBreaking:
     """Test tie-breaking logic."""
 
-    def test_tie_breaking_uses_priority_order(self, health_tracker):
+    @pytest.mark.asyncio
+    async def test_tie_breaking_uses_priority_order(self, health_tracker):
         """Test that tie-breaking uses priority order when confidence is equal."""
         # Create two providers with identical confidence
         provider1 = MagicMock()
-        provider1.extract_entities.return_value = ExtractedEntities(
+        provider1.extract_entities = AsyncMock(return_value=ExtractedEntities(
             person_in_charge="Provider 1",
             startup_name="Startup 1",
             partner_org="Partner 1",
@@ -221,10 +226,10 @@ class TestTieBreaking:
             ),
             email_id="test123",
             extracted_at=datetime.now(timezone.utc),
-        )
+        ))
 
         provider2 = MagicMock()
-        provider2.extract_entities.return_value = ExtractedEntities(
+        provider2.extract_entities = AsyncMock(return_value=ExtractedEntities(
             person_in_charge="Provider 2",
             startup_name="Startup 2",
             partner_org="Partner 2",
@@ -235,14 +240,14 @@ class TestTieBreaking:
             ),
             email_id="test123",
             extracted_at=datetime.now(timezone.utc),
-        )
+        ))
 
         providers = {"provider1": provider1, "provider2": provider2}
 
         # provider2 has higher priority (appears first in list)
         strategy = BestMatchStrategy(provider_names=["provider2", "provider1"])
 
-        result, provider_used = strategy.execute(
+        result, provider_used = await strategy.execute(
             providers=providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -252,13 +257,14 @@ class TestTieBreaking:
         assert provider_used == "provider2"
         assert result.startup_name == "Startup 2"
 
-    def test_tie_breaking_uses_health_tracker_success_rate(
+    @pytest.mark.asyncio
+    async def test_tie_breaking_uses_health_tracker_success_rate(
         self, mock_providers, health_tracker
     ):
         """Test that tie-breaking prefers provider with higher historical success rate."""
         # Make providers have same confidence
         for provider in mock_providers.values():
-            provider.extract_entities.return_value = ExtractedEntities(
+            provider.extract_entities = AsyncMock(return_value=ExtractedEntities(
                 person_in_charge="Person",
                 startup_name="Startup",
                 partner_org="Partner",
@@ -269,7 +275,7 @@ class TestTieBreaking:
                 ),
                 email_id="test123",
                 extracted_at=datetime.now(timezone.utc),
-            )
+            ))
 
         # Give gemini better historical success rate
         for _ in range(10):
@@ -283,7 +289,7 @@ class TestTieBreaking:
 
         strategy = BestMatchStrategy(provider_names=["claude", "gemini", "openai"])
 
-        result, provider_used = strategy.execute(
+        result, provider_used = await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -296,7 +302,8 @@ class TestTieBreaking:
 class TestErrorHandling:
     """Test error handling scenarios."""
 
-    def test_handles_partial_failures(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_handles_partial_failures(self, mock_providers, health_tracker):
         """Test that strategy handles when some providers fail."""
         # Make gemini fail
         mock_providers["gemini"].extract_entities.side_effect = LLMAPIError(
@@ -305,7 +312,7 @@ class TestErrorHandling:
 
         strategy = BestMatchStrategy(provider_names=["gemini", "claude", "openai"])
 
-        result, provider_used = strategy.execute(
+        result, provider_used = await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -318,7 +325,8 @@ class TestErrorHandling:
         gemini_metrics = health_tracker.get_metrics("gemini")
         assert gemini_metrics.failure_count == 1
 
-    def test_raises_all_providers_failed_when_all_fail(
+    @pytest.mark.asyncio
+    async def test_raises_all_providers_failed_when_all_fail(
         self, mock_providers, health_tracker
     ):
         """Test that AllProvidersFailedError is raised when all providers fail."""
@@ -329,22 +337,23 @@ class TestErrorHandling:
         strategy = BestMatchStrategy(provider_names=["gemini", "claude", "openai"])
 
         with pytest.raises(AllProvidersFailedError) as exc_info:
-            strategy.execute(
+            await strategy.execute(
                 providers=mock_providers,
                 email_text="test email",
                 health_tracker=health_tracker,
             )
 
-        assert "All providers failed" in str(exc_info.value)
+        assert "All healthy providers failed" in str(exc_info.value)
 
-    def test_handles_timeout_errors(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_handles_timeout_errors(self, mock_providers, health_tracker):
         """Test that timeout errors are handled gracefully."""
         # Make gemini timeout
         mock_providers["gemini"].extract_entities.side_effect = LLMTimeoutError()
 
         strategy = BestMatchStrategy(provider_names=["gemini", "claude", "openai"])
 
-        result, provider_used = strategy.execute(
+        result, provider_used = await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -357,7 +366,8 @@ class TestErrorHandling:
 class TestCompanyContext:
     """Test company context parameter passing."""
 
-    def test_passes_company_context_to_all_providers(
+    @pytest.mark.asyncio
+    async def test_passes_company_context_to_all_providers(
         self, mock_providers, health_tracker
     ):
         """Test that company_context is passed to all providers."""
@@ -365,7 +375,7 @@ class TestCompanyContext:
 
         company_context = "## Companies\n- Startup A\n- Partner B"
 
-        strategy.execute(
+        await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -377,13 +387,14 @@ class TestCompanyContext:
             call_kwargs = provider.extract_entities.call_args[1]
             assert call_kwargs["company_context"] == company_context
 
-    def test_passes_email_id_to_all_providers(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_passes_email_id_to_all_providers(self, mock_providers, health_tracker):
         """Test that email_id is passed to all providers."""
         strategy = BestMatchStrategy(provider_names=["gemini", "claude", "openai"])
 
         email_id = "msg_12345"
 
-        strategy.execute(
+        await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -399,11 +410,12 @@ class TestCompanyContext:
 class TestHealthTracking:
     """Test integration with HealthTracker."""
 
-    def test_records_success_for_all_providers(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_records_success_for_all_providers(self, mock_providers, health_tracker):
         """Test that successful calls are recorded for all queried providers."""
         strategy = BestMatchStrategy(provider_names=["gemini", "claude", "openai"])
 
-        strategy.execute(
+        await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -415,7 +427,8 @@ class TestHealthTracking:
             assert metrics.success_count == 1
             assert metrics.consecutive_failures == 0
 
-    def test_records_failures_correctly(self, mock_providers, health_tracker):
+    @pytest.mark.asyncio
+    async def test_records_failures_correctly(self, mock_providers, health_tracker):
         """Test that failures are recorded in health tracker."""
         # Make gemini fail
         mock_providers["gemini"].extract_entities.side_effect = LLMAPIError(
@@ -424,7 +437,7 @@ class TestHealthTracking:
 
         strategy = BestMatchStrategy(provider_names=["gemini", "claude", "openai"])
 
-        strategy.execute(
+        await strategy.execute(
             providers=mock_providers,
             email_text="test email",
             health_tracker=health_tracker,
@@ -445,10 +458,11 @@ class TestHealthTracking:
 class TestSingleProvider:
     """Test edge case with single provider."""
 
-    def test_works_with_single_provider(self, health_tracker):
+    @pytest.mark.asyncio
+    async def test_works_with_single_provider(self, health_tracker):
         """Test that best-match works with just one provider."""
         provider = MagicMock()
-        provider.extract_entities.return_value = ExtractedEntities(
+        provider.extract_entities = AsyncMock(return_value=ExtractedEntities(
             person_in_charge="Person",
             startup_name="Startup",
             partner_org="Partner",
@@ -459,13 +473,13 @@ class TestSingleProvider:
             ),
             email_id="test123",
             extracted_at=datetime.now(timezone.utc),
-        )
+        ))
 
         providers = {"only_provider": provider}
 
         strategy = BestMatchStrategy(provider_names=["only_provider"])
 
-        result, provider_used = strategy.execute(
+        result, provider_used = await strategy.execute(
             providers=providers,
             email_text="test email",
             health_tracker=health_tracker,

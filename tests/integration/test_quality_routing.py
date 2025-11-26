@@ -23,7 +23,7 @@ class MockProvider:
         self.last_input_tokens = 100
         self.last_output_tokens = 50
 
-    def extract_entities(self, email_text: str, **kwargs) -> ExtractedEntities:
+    async def extract_entities(self, email_text: str, **kwargs) -> ExtractedEntities:
         """Mock extraction that returns test data."""
         if self.should_fail:
             raise Exception(f"Mock failure from {self.provider_name}")
@@ -100,7 +100,8 @@ def health_tracker(tmp_path):
     return HealthTracker(data_dir=tmp_path / "llm_health")
 
 
-def test_quality_routing_selects_highest_quality_provider(
+@pytest.mark.asyncio
+async def test_quality_routing_selects_highest_quality_provider(
     quality_tracker, health_tracker
 ):
     """Test that quality routing selects provider with highest quality score."""
@@ -122,7 +123,7 @@ def test_quality_routing_selects_highest_quality_provider(
     )
 
     # Execute strategy
-    entities, provider_used = strategy.execute(
+    entities, provider_used = await strategy.execute(
         providers=providers,
         email_text="Test email text",
         health_tracker=health_tracker,
@@ -133,7 +134,8 @@ def test_quality_routing_selects_highest_quality_provider(
     assert entities.person_in_charge == "Person from claude"
 
 
-def test_quality_routing_disabled_uses_priority_order(health_tracker):
+@pytest.mark.asyncio
+async def test_quality_routing_disabled_uses_priority_order(health_tracker):
     """Test that without quality_tracker, strategy uses priority order."""
     # Create providers
     providers = {
@@ -149,7 +151,7 @@ def test_quality_routing_disabled_uses_priority_order(health_tracker):
     )
 
     # Execute strategy
-    entities, provider_used = strategy.execute(
+    entities, provider_used = await strategy.execute(
         providers=providers,
         email_text="Test email text",
         health_tracker=health_tracker,
@@ -159,7 +161,8 @@ def test_quality_routing_disabled_uses_priority_order(health_tracker):
     assert provider_used == "gemini"
 
 
-def test_quality_routing_falls_back_to_priority_when_no_metrics(
+@pytest.mark.asyncio
+async def test_quality_routing_falls_back_to_priority_when_no_metrics(
     health_tracker, tmp_path
 ):
     """Test fallback to priority order when no quality metrics available."""
@@ -180,7 +183,7 @@ def test_quality_routing_falls_back_to_priority_when_no_metrics(
     )
 
     # Execute strategy
-    entities, provider_used = strategy.execute(
+    entities, provider_used = await strategy.execute(
         providers=providers,
         email_text="Test email text",
         health_tracker=health_tracker,
@@ -190,7 +193,8 @@ def test_quality_routing_falls_back_to_priority_when_no_metrics(
     assert provider_used == "gemini"
 
 
-def test_quality_routing_skips_unhealthy_providers(quality_tracker, health_tracker):
+@pytest.mark.asyncio
+async def test_quality_routing_skips_unhealthy_providers(quality_tracker, health_tracker):
     """Test that quality routing still respects health checks."""
     # Create providers
     providers = {
@@ -210,7 +214,7 @@ def test_quality_routing_skips_unhealthy_providers(quality_tracker, health_track
     )
 
     # Execute strategy
-    entities, provider_used = strategy.execute(
+    entities, provider_used = await strategy.execute(
         providers=providers,
         email_text="Test email text",
         health_tracker=health_tracker,
@@ -222,7 +226,8 @@ def test_quality_routing_skips_unhealthy_providers(quality_tracker, health_track
     assert provider_used == "gemini"
 
 
-def test_quality_routing_tries_next_provider_on_failure(
+@pytest.mark.asyncio
+async def test_quality_routing_tries_next_provider_on_failure(
     quality_tracker, health_tracker
 ):
     """Test that quality routing tries next provider if first fails."""
@@ -240,7 +245,7 @@ def test_quality_routing_tries_next_provider_on_failure(
     )
 
     # Execute strategy
-    entities, provider_used = strategy.execute(
+    entities, provider_used = await strategy.execute(
         providers=providers,
         email_text="Test email text",
         health_tracker=health_tracker,
