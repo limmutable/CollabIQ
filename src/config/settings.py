@@ -156,8 +156,8 @@ class Settings(BaseSettings):
         description="OpenAI model name (gpt-4o-mini, gpt-4o, gpt-4-turbo)",
     )
     llm_provider_priority: List[str] = Field(
-        default_factory=lambda: ["gemini", "claude", "openai"],
-        description="Ordered list of LLM providers to use for orchestration",
+        default_factory=lambda: ["claude", "openai", "gemini"],
+        description="Ordered list of LLM providers to use for orchestration (Claude first for best success rate)",
     )
 
     # Infisical Secret Management Configuration
