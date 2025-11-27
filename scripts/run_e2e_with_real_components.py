@@ -20,6 +20,7 @@ Safety:
 """
 
 import argparse
+import asyncio
 import json
 import os
 import sys
@@ -31,12 +32,11 @@ sys.path.insert(0, str(project_root))
 
 from src.config.settings import get_settings
 from src.email_receiver.gmail_receiver import GmailReceiver
-from src.llm_adapters.gemini_adapter import GeminiAdapter
-from src.models.classification_service import ClassificationService
 from src.notion_integrator.integrator import NotionIntegrator
 from src.notion_integrator.writer import NotionWriter
 from src.e2e_test.runner import E2ERunner
 from src.e2e_test.report_generator import ReportGenerator
+
 
 
 def load_test_email_ids(
@@ -85,19 +85,7 @@ def initialize_components():
     )
     gmail_receiver.connect()
 
-    # 2. Gemini Adapter
-    print("  - GeminiAdapter...")
-    gemini_api_key = settings.get_secret_or_env("GEMINI_API_KEY")
-    if not gemini_api_key:
-        print("ERROR: GEMINI_API_KEY not found")
-        sys.exit(1)
-
-    gemini_adapter = GeminiAdapter(
-        api_key=gemini_api_key,
-        model=settings.gemini_model,
-    )
-
-    # 3. Notion Integrator
+    # 2. Notion Integrator
     print("  - NotionIntegrator...")
     notion_api_key = settings.get_secret_or_env("NOTION_API_KEY")
     if not notion_api_key:
@@ -106,21 +94,13 @@ def initialize_components():
 
     notion_integrator = NotionIntegrator(api_key=notion_api_key)
 
-    # 4. Classification Service
-    print("  - ClassificationService...")
+    # 3. Notion Writer
+    print("  - NotionWriter...")
     collabiq_db_id = settings.get_notion_collabiq_db_id()
     if not collabiq_db_id:
         print("ERROR: NOTION_DATABASE_ID_COLLABIQ not found in environment")
         sys.exit(1)
 
-    classification_service = ClassificationService(
-        notion_integrator=notion_integrator,
-        gemini_adapter=gemini_adapter,
-        collabiq_db_id=collabiq_db_id,
-    )
-
-    # 5. Notion Writer
-    print("  - NotionWriter...")
     notion_writer = NotionWriter(
         notion_integrator=notion_integrator,
         collabiq_db_id=collabiq_db_id,
@@ -131,13 +111,11 @@ def initialize_components():
 
     return {
         "gmail_receiver": gmail_receiver,
-        "gemini_adapter": gemini_adapter,
-        "classification_service": classification_service,
         "notion_writer": notion_writer,
     }
 
 
-def main():
+async def main():
     parser = argparse.ArgumentParser(
         description="Run E2E tests with real components (WRITES TO NOTION!)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -238,8 +216,6 @@ Examples:
     print("Initializing E2E runner with real components...")
     runner = E2ERunner(
         gmail_receiver=components["gmail_receiver"],
-        gemini_adapter=components["gemini_adapter"],
-        classification_service=components["classification_service"],
         notion_writer=components["notion_writer"],
         test_mode=args.dry_run,  # Use test_mode only for dry-run
     )
@@ -256,7 +232,7 @@ Examples:
     # Run E2E tests
     print("Running E2E tests...")
     print("=" * 70)
-    test_run = runner.run_tests(email_ids, test_mode=args.dry_run)
+    test_run = await runner.run_tests(email_ids, test_mode=args.dry_run)
 
     # Generate reports
     print("\nGenerating reports...")
@@ -305,7 +281,7 @@ Examples:
 
 if __name__ == "__main__":
     try:
-        main()
+        asyncio.run(main())
     except KeyboardInterrupt:
         print("\n\nInterrupted by user.")
         sys.exit(130)

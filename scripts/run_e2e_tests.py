@@ -26,6 +26,7 @@ Usage:
 """
 
 import argparse
+import asyncio
 import json
 import sys
 from pathlib import Path
@@ -173,7 +174,7 @@ Multi-LLM Strategies:
         # Resume interrupted run
         print(f"Resuming test run: {args.resume}")
         try:
-            test_run = runner.resume_test_run(args.resume)
+            test_run = asyncio.run(runner.resume_test_run(args.resume))
             print(f"Resumed test run {args.resume}")
         except FileNotFoundError as e:
             print(f"ERROR: {e}")
@@ -182,7 +183,7 @@ Multi-LLM Strategies:
     elif args.email_id:
         # Single email
         print(f"Processing single email: {args.email_id}")
-        test_run = runner.run_tests([args.email_id], test_mode=args.test_mode)
+        test_run = asyncio.run(runner.run_tests([args.email_id], test_mode=args.test_mode))
 
     elif args.all:
         # All emails
@@ -194,7 +195,7 @@ Multi-LLM Strategies:
             sys.exit(1)
 
         print(f"Processing {len(email_ids)} emails...")
-        test_run = runner.run_tests(email_ids, test_mode=args.test_mode)
+        test_run = asyncio.run(runner.run_tests(email_ids, test_mode=args.test_mode))
 
     # Generate consolidated report
     if test_run:
