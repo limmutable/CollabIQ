@@ -137,6 +137,12 @@ class GeminiAdapter(LLMProvider):
                     temperature=0.7, # Increased temperature for more diverse output
                     max_output_tokens=400, # Increased max output tokens to match summary length limit
                 ),
+                safety_settings={
+                    "HARASSMENT": "BLOCK_NONE",
+                    "HATE_SPEECH": "BLOCK_NONE",
+                    "SEXUALLY_EXPLICIT": "BLOCK_NONE",
+                    "DANGEROUS_CONTENT": "BLOCK_NONE",
+                },
             )
 
         try:
@@ -384,6 +390,12 @@ class GeminiAdapter(LLMProvider):
                     response_schema=response_schema,
                     temperature=0.1,  # Low temperature for consistent extraction
                 ),
+                safety_settings={
+                    "HARASSMENT": "BLOCK_NONE",
+                    "HATE_SPEECH": "BLOCK_NONE",
+                    "SEXUALLY_EXPLICIT": "BLOCK_NONE",
+                    "DANGEROUS_CONTENT": "BLOCK_NONE",
+                },
             )
 
         try:
