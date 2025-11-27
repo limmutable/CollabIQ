@@ -300,6 +300,25 @@ class LLMOrchestrator:
                 f"Unknown strategy: {strategy_name}", strategy_name=strategy_name
             )
 
+        # Truncate email text if too long (10,000 char limit)
+        MAX_CHARS = 10000
+        original_length = len(email_text)
+        truncated = False
+        
+        if original_length > MAX_CHARS:
+            # Keep first 8000 chars and last 1500 chars with truncation marker
+            head_chars = 8000
+            tail_chars = 1500
+            email_text = (
+                email_text[:head_chars] +
+                f"\n\n[... TRUNCATED {original_length - MAX_CHARS + 500} CHARACTERS ...]\n\n" +
+                email_text[-tail_chars:]
+            )
+            truncated = True
+            logger.warning(
+                f"Email text truncated from {original_length} to {len(email_text)} characters"
+            )
+
         # Execute strategy (all strategies are now expected to be async)
         strategy_impl = self._strategies[strategy_name]
 
