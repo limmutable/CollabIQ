@@ -46,7 +46,7 @@ Goal: Ensure the deployment guide is comprehensive, user-friendly, and addresses
 - [ ] T016 Document guidance on monitoring the Cloud Run Job via Google Cloud Logging and Cloud Monitoring in `docs/deployment/google-cloud-guide.md`.
 - [ ] T017 Add a section on cost optimization for Google Cloud services used in `docs/deployment/google-cloud-guide.md`.
 - [ ] T018 Document a plan for future application updates and redeployments in `docs/deployment/google-cloud-guide.md` (e.g., updating Docker image, rolling out new Cloud Run Job revisions).
-- [ ] T019 Document or create utility scripts for common maintenance tasks (e.g., `deploy.sh` for redeployment, `status.sh` for checking job status) in `scripts/deployment/` and describe their usage in `docs/deployment/google-cloud-guide.md`.
+- [ ] T019 Document or create utilty scripts for common maintenance tasks (e.g., `deploy.sh` for redeployment, `status.sh` for checking job status) in `scripts/deployment/` and describe their usage in `docs/deployment/google-cloud-guide.md`.
 - [ ] T020 Document how to monitor the running status and history of the CollabIQ Cloud Run Job, including links to Cloud Monitoring dashboards and relevant `gcloud` logging commands, in `docs/deployment/google-cloud-guide.md`.
 
 ## Dependencies
