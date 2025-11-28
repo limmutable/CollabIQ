@@ -1,10 +1,12 @@
 # CollabIQ Project Overview for Gemini
 
+Last updated: 2025-11-29
+
 This document provides a comprehensive overview of the CollabIQ project, designed to serve as instructional context for the Gemini CLI agent.
 
 ## 1. Project Overview
 
-CollabIQ is an **automated collaboration tracking system** that extracts collaboration activities from Korean/English emails and syncs them to Notion databases. It leverages Multi-LLM orchestration (Gemini, Claude, OpenAI) for intelligent entity extraction, semantic company matching, and dynamic classification. The system is built with robust error handling, secure secrets management (Infisical integration), and a comprehensive CLI for administration.
+CollabIQ is an **automated collaboration tracking system** that extracts collaboration activities from Korean/English emails and syncs them to Notion databases. It leverages Multi-LLM orchestration (Gemini, Claude, OpenAI) for intelligent entity extraction, semantic company matching, and dynamic classification. The system is deployed on **Google Cloud Run** with GCS state persistence, and is built with robust error handling, secure secrets management (Infisical/Secret Manager integration), and a comprehensive CLI for administration.
 
 **Key Features:**
 *   **Multi-LLM Orchestration:** Supports Gemini, Claude, and OpenAI with failover, health monitoring, quality-based routing, and cost tracking.
@@ -14,6 +16,7 @@ CollabIQ is an **automated collaboration tracking system** that extracts collabo
 *   **Robust Error Handling:** Implements automatic retries, circuit breakers, and a Dead Letter Queue (DLQ).
 *   **Notion Integration:** Handles duplicate detection, schema-aware field mapping, and relationship resolution.
 *   **Secure Secrets Management:** Integrates with Infisical for centralized secret management, with fallback to local `.env` files.
+*   **Cloud Deployment:** Containerized with Docker, deployed on Google Cloud Run Jobs with GCS state persistence.
 
 **Core Technologies:**
 *   **Language:** Python 3.12+
@@ -26,6 +29,7 @@ CollabIQ is an **automated collaboration tracking system** that extracts collabo
 *   **Package Manager:** UV
 *   **Testing:** `pytest`
 *   **Linting/Formatting:** `ruff`, `mypy`
+*   **Cloud:** Google Cloud Run, Cloud Storage, Secret Manager
 
 ### Validation Guidelines
 *   **Person Matching:** `담당자` (Person in Charge) is treated as optional/warning-only in E2E tests to accommodate external senders who do not map to internal Notion workspace users.
@@ -119,6 +123,26 @@ make format
 *   **Quality Assurance:** All changes require corresponding tests and documentation updates.
 *   **Pre-commit Hooks:** Automated `ruff` and `mypy` checks are enforced via pre-commit hooks to maintain code quality.
 
+## 5. Recent Changes (Phases 014-018)
+
+*   **Phase 018** (2025-11-29): Google Cloud Deployment
+    - Containerized application with Docker (multi-stage build, UV package manager)
+    - Deployed to Cloud Run Jobs with Secret Manager integration
+    - Implemented GCS state persistence for daemon (prevents duplicate email processing)
+    - Created deployment scripts (`deploy.sh`, `status.sh`, `execute.sh`, `delete.sh`, `secrets.sh`)
+    - Comprehensive deployment documentation in `docs/deployment/google-cloud-guide.md`
+
+*   **Phase 017** (2025-11-26): Production Readiness Fixes
+    - Stabilized async pipeline (Gmail, LLM, Notion)
+    - Implemented Daemon mode for continuous operation
+    - Validated E2E workflow with 100% success on production DB
+
+*   **Phase 016** (2025-11-19): Project cleanup & refactoring
+
+*   **Phase 015** (2025-11-09): Test suite improvements with real E2E testing
+
+*   **Phase 014** (2025-11-08): Enhanced field mapping with fuzzy matching
+
 ## 6. Implementation Guidelines
 
 *   **Modular Design:** Adhere to the existing modular structure within the `src/` directory, ensuring clear separation of concerns for new features or modifications.
@@ -141,7 +165,7 @@ make format
 *   **Mocking:** Employ mocking judiciously for external dependencies (e.g., Notion API, Gmail API, LLM APIs) in unit and integration tests to ensure test isolation and speed.
 *   **Pre-commit Hooks:** Ensure all new tests pass the pre-commit hooks (ruff, mypy) before committing.
 
-## 5. Project Structure
+## 8. Project Structure
 
 The project follows a modular structure:
 
@@ -166,3 +190,12 @@ CollabIQ/
 ├── Dockerfile                 # Container definition for Cloud Run deployment
 └── .env.example               # Environment variable template
 ```
+
+## 9. Documentation Links
+
+- **Setup**: [docs/setup/quickstart.md](docs/setup/quickstart.md)
+- **CLI Reference**: [docs/cli/CLI_REFERENCE.md](docs/cli/CLI_REFERENCE.md)
+- **Architecture**: [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)
+- **Deployment**: [docs/deployment/google-cloud-guide.md](docs/deployment/google-cloud-guide.md)
+- **Testing**: [tests/README.md](tests/README.md)
+- **Roadmap**: [docs/architecture/ROADMAP.md](docs/architecture/ROADMAP.md)
