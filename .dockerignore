@@ -1,0 +1,86 @@
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+tests/
+*.test
+*.spec
+
+# Linting and type checking
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Credentials and secrets
+credentials.json
+token.json
+*.pem
+*.key
+
+# Data and logs
+data/
+logs/
+*.log
+
+# Documentation
+docs/
+specs/
+*.md
+!README.md
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Reports and analysis
+coverage_reports/
+test_reports/
+*.html
+*.xml
+*.json
+!pyproject.toml
+!uv.lock

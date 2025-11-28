@@ -1,11 +1,13 @@
 import logging
 import asyncio
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 from config.settings import get_settings
 from daemon.state_manager import StateManager
+from daemon.gcs_state_manager import GCSStateManager
 from daemon.scheduler import Scheduler
 from email_receiver.gmail_receiver import GmailReceiver
 from content_normalizer.normalizer import ContentNormalizer
@@ -20,7 +22,20 @@ logger = logging.getLogger(__name__)
 class DaemonController:
     def __init__(self, interval_minutes: int = 15):
         self.settings = get_settings()
-        self.state_manager = StateManager(Path("data/daemon/state.json"))
+
+        # Use GCS state manager if bucket is configured (for Cloud Run persistence)
+        gcs_bucket = os.getenv("GCS_STATE_BUCKET")
+        if gcs_bucket:
+            self.state_manager = GCSStateManager(
+                bucket_name=gcs_bucket,
+                blob_name="daemon/state.json",
+                local_fallback_path=Path("data/daemon/state.json")
+            )
+            logger.info(f"Using GCS state manager with bucket: {gcs_bucket}")
+        else:
+            self.state_manager = StateManager(Path("data/daemon/state.json"))
+            logger.info("Using local state manager")
+
         self.scheduler = Scheduler(interval_minutes * 60)
         
         # Initialize components
@@ -89,9 +104,22 @@ class DaemonController:
 
             # 1. Fetch Emails (Sync -> Thread)
             await asyncio.to_thread(self.receiver.connect)
-            
-            # Fetch emails
-            emails = await asyncio.to_thread(self.receiver.fetch_emails, max_emails=10)
+
+            # Fetch only NEW emails since last successful run
+            # This prevents re-processing emails on subsequent runs
+            since_timestamp = state.last_successful_fetch_timestamp
+            fetch_start_time = datetime.now()
+
+            if since_timestamp:
+                logger.info(f"Fetching emails since {since_timestamp.isoformat()}")
+            else:
+                logger.info("No previous run timestamp found, fetching recent emails")
+
+            emails = await asyncio.to_thread(
+                self.receiver.fetch_emails,
+                since=since_timestamp,
+                max_emails=10
+            )
             
             processed_count = 0
             for raw_email in emails:
@@ -168,7 +196,12 @@ class DaemonController:
 
             state.emails_processed_count += processed_count
             state.total_processing_cycles += 1
-            logger.info(f"Cycle complete. Processed {processed_count} emails.")
+
+            # Update the fetch timestamp ONLY on successful completion
+            # This ensures we don't skip emails if there was an error mid-cycle
+            state.last_successful_fetch_timestamp = fetch_start_time
+
+            logger.info(f"Cycle complete. Processed {processed_count} emails. Next fetch will start from {fetch_start_time.isoformat()}")
 
         except Exception as e:
             logger.error(f"Error in daemon cycle: {e}", exc_info=True)

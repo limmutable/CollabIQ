@@ -37,6 +37,7 @@ CollabIQ is an **automated collaboration tracking system** that extracts collabo
 *   **LLM Metrics:** File-based JSON for provider health metrics and cost tracking in `data/llm_health/`.
 *   **E2E Test Results:** File-based JSON for error reports, performance metrics, and test results in `data/e2e_test/`.
 *   **Notion User List:** File-based JSON cache for Notion user lists (with TTL).
+*   **Daemon State (Cloud Run):** GCS-backed JSON for cross-execution state persistence (`gs://{bucket}/daemon/state.json`).
 
 ## 2. Building and Running
 
@@ -158,8 +159,10 @@ CollabIQ/
 │   ├── error_handling/        # Unified retry system & circuit breakers
 │   └── models/                # Pydantic data models
 ├── tests/                     # Comprehensive test suites (unit, integration, e2e, manual)
-├── docs/                      # Project documentation (setup, architecture, validation)
+├── docs/                      # Project documentation (setup, architecture, validation, deployment)
 ├── scripts/                   # Utility scripts
+│   └── deployment/            # Cloud deployment scripts (deploy.sh, status.sh, etc.)
 ├── data/                      # Runtime data (emails, extractions, cache, DLQ)
+├── Dockerfile                 # Container definition for Cloud Run deployment
 └── .env.example               # Environment variable template
 ```

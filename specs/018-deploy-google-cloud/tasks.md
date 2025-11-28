@@ -7,47 +7,47 @@
 
 This document outlines the tasks required to create a step-by-step deployment guide for the CollabIQ Python CLI application on Google Cloud, primarily using Cloud Run Jobs, Cloud Storage, and Secret Manager. The tasks are structured to guide a user with no prior server-side deployment experience through the process, ensuring a smooth setup and operation.
 
-## Phase 1: Setup - Google Cloud & Local Tools
+## Phase 1: Setup - Google Cloud & Local Tools ✅
 
 Goal: Prepare the Google Cloud environment and local machine with necessary tools.
 
-- [ ] T001 Document Google Cloud account and project setup, including enabling billing, in `docs/deployment/google-cloud-guide.md`.
-- [ ] T002 Document `gcloud CLI` installation, initialization, and Docker Desktop installation in `docs/deployment/google-cloud-guide.md`.
-- [ ] T003 Document enabling necessary Google Cloud APIs (Cloud Run, Artifact Registry, Secret Manager) in `docs/deployment/google-cloud-guide.md`.
+- [x] T001 Document Google Cloud account and project setup, including enabling billing, in `docs/deployment/google-cloud-guide.md`.
+- [x] T002 Document `gcloud CLI` installation, initialization, and Docker Desktop installation in `docs/deployment/google-cloud-guide.md`.
+- [x] T003 Document enabling necessary Google Cloud APIs (Cloud Run, Artifact Registry, Secret Manager) in `docs/deployment/google-cloud-guide.md`.
 
-## Phase 2: Foundational - Containerization
+## Phase 2: Foundational - Containerization ✅
 
 Goal: Prepare the CollabIQ application for containerized deployment.
 
-- [ ] T004 Create a `Dockerfile` in the project root (`./Dockerfile`) that containerizes the CollabIQ application, ensuring Python 3.12+ and `uv` are used for dependencies.
-- [ ] T005 Document the `Dockerfile` creation and its purpose in `docs/deployment/google-cloud-guide.md`.
-- [ ] T006 Document setting up Google Artifact Registry (creating repository, configuring Docker auth) in `docs/deployment/google-cloud-guide.md`.
-- [ ] T007 Document building the Docker image and pushing it to Artifact Registry in `docs/deployment/google-cloud-guide.md`.
+- [x] T004 Create a `Dockerfile` in the project root (`./Dockerfile`) that containerizes the CollabIQ application, ensuring Python 3.12+ and `uv` are used for dependencies.
+- [x] T005 Document the `Dockerfile` creation and its purpose in `docs/deployment/google-cloud-guide.md`.
+- [x] T006 Document setting up Google Artifact Registry (creating repository, configuring Docker auth) in `docs/deployment/google-cloud-guide.md`.
+- [x] T007 Document building the Docker image and pushing it to Artifact Registry in `docs/deployment/google-cloud-guide.md`.
 
-## Phase 3: User Story 1 - Deploy CollabIQ to Google Cloud (Priority: P1)
+## Phase 3: User Story 1 - Deploy CollabIQ to Google Cloud (Priority: P1) ✅
 
 Goal: Successfully deploy the CollabIQ application to Google Cloud Run Jobs.
 
 Independent Test: A user can follow the provided documentation to successfully deploy CollabIQ to a Google Cloud environment, and the deployed application processes emails as expected. This can be fully tested by verifying the operational status of the deployed application and its ability to perform core functions.
 
-- [ ] T008 [US1] Document deploying the containerized CollabIQ application as a Cloud Run Job, including example `gcloud run jobs create` command with image, region, command, and args, in `docs/deployment/google-cloud-guide.md`.
-- [ ] T009 [US1] Document configuring non-sensitive environment variables for the Cloud Run Job using `--set-env-vars` in `docs/deployment/google-cloud-guide.md`.
-- [ ] T010 [US1] Document setting up Google Secret Manager for sensitive data (creating secrets, granting IAM permissions to service account) in `docs/deployment/google-cloud-guide.md`.
-- [ ] T011 [US1] Document integrating Google Secret Manager secrets with the Cloud Run Job using `--set-secrets` (or mounting secrets as files) in `docs/deployment/google-cloud-guide.md`.
-- [ ] T012 [US1] Document configuring persistent storage for CollabIQ's `data/` directory using Google Cloud Storage (creating bucket, mounting via Cloud Storage FUSE or programmatic access) in `docs/deployment/google-cloud-guide.md`.
-- [ ] T013 [US1] Document instructions on how to execute the deployed Cloud Run Job and verify its output/logs in `docs/deployment/google-cloud-guide.md`.
+- [x] T008 [US1] Document deploying the containerized CollabIQ application as a Cloud Run Job, including example `gcloud run jobs create` command with image, region, command, and args, in `docs/deployment/google-cloud-guide.md`.
+- [x] T009 [US1] Document configuring non-sensitive environment variables for the Cloud Run Job using `--set-env-vars` in `docs/deployment/google-cloud-guide.md`.
+- [x] T010 [US1] Document setting up Google Secret Manager for sensitive data (creating secrets, granting IAM permissions to service account) in `docs/deployment/google-cloud-guide.md`.
+- [x] T011 [US1] Document integrating Google Secret Manager secrets with the Cloud Run Job using `--set-secrets` (or mounting secrets as files) in `docs/deployment/google-cloud-guide.md`.
+- [x] T012 [US1] Document configuring persistent storage for CollabIQ's `data/` directory using Google Cloud Storage (creating bucket, mounting via Cloud Storage FUSE or programmatic access) in `docs/deployment/google-cloud-guide.md`.
+- [x] T013 [US1] Document instructions on how to execute the deployed Cloud Run Job and verify its output/logs in `docs/deployment/google-cloud-guide.md`.
 
-## Final Phase: Polish & Cross-Cutting Concerns
+## Final Phase: Polish & Cross-Cutting Concerns ✅
 
 Goal: Ensure the deployment guide is comprehensive, user-friendly, and addresses potential issues.
 
-- [ ] T014 Review `docs/deployment/google-cloud-guide.md` for clarity, completeness, and adherence to user's experience level, making sure all steps are detailed.
-- [ ] T015 Add a troubleshooting section to `docs/deployment/google-cloud-guide.md` addressing common Google Cloud API permission errors, conflicting configurations, and billing issues (derived from Edge Cases in spec.md).
-- [ ] T016 Document guidance on monitoring the Cloud Run Job via Google Cloud Logging and Cloud Monitoring in `docs/deployment/google-cloud-guide.md`.
-- [ ] T017 Add a section on cost optimization for Google Cloud services used in `docs/deployment/google-cloud-guide.md`.
-- [ ] T018 Document a plan for future application updates and redeployments in `docs/deployment/google-cloud-guide.md` (e.g., updating Docker image, rolling out new Cloud Run Job revisions).
-- [ ] T019 Document or create utilty scripts for common maintenance tasks (e.g., `deploy.sh` for redeployment, `status.sh` for checking job status) in `scripts/deployment/` and describe their usage in `docs/deployment/google-cloud-guide.md`.
-- [ ] T020 Document how to monitor the running status and history of the CollabIQ Cloud Run Job, including links to Cloud Monitoring dashboards and relevant `gcloud` logging commands, in `docs/deployment/google-cloud-guide.md`.
+- [x] T014 Review `docs/deployment/google-cloud-guide.md` for clarity, completeness, and adherence to user's experience level, making sure all steps are detailed.
+- [x] T015 Add a troubleshooting section to `docs/deployment/google-cloud-guide.md` addressing common Google Cloud API permission errors, conflicting configurations, and billing issues (derived from Edge Cases in spec.md).
+- [x] T016 Document guidance on monitoring the Cloud Run Job via Google Cloud Logging and Cloud Monitoring in `docs/deployment/google-cloud-guide.md`.
+- [x] T017 Add a section on cost optimization for Google Cloud services used in `docs/deployment/google-cloud-guide.md`.
+- [x] T018 Document a plan for future application updates and redeployments in `docs/deployment/google-cloud-guide.md` (e.g., updating Docker image, rolling out new Cloud Run Job revisions).
+- [x] T019 Document or create utilty scripts for common maintenance tasks (e.g., `deploy.sh` for redeployment, `status.sh` for checking job status) in `scripts/deployment/` and describe their usage in `docs/deployment/google-cloud-guide.md`.
+- [x] T020 Document how to monitor the running status and history of the CollabIQ Cloud Run Job, including links to Cloud Monitoring dashboards and relevant `gcloud` logging commands, in `docs/deployment/google-cloud-guide.md`.
 
 ## Dependencies
 

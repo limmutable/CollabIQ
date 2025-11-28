@@ -26,6 +26,8 @@ dependencies = [
     "email-validator>=2.3.0",
     "dateparser>=1.2.2",
     "cryptography>=46.0.3",
+    "infisicalsdk>=1.0.12",
+    "google-cloud-storage>=3.4.1",
 ]
 
 [build-system]

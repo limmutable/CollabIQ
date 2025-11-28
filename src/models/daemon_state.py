@@ -8,6 +8,7 @@ class DaemonProcessState(BaseModel):
     """
     daemon_start_timestamp: datetime = Field(default_factory=datetime.now, description="Timestamp when the daemon was started.")
     last_check_timestamp: Optional[datetime] = Field(None, description="Timestamp of the last email check.")
+    last_successful_fetch_timestamp: Optional[datetime] = Field(None, description="Timestamp of last successful email fetch. Used as 'since' filter for next run.")
     check_interval_duration: timedelta = Field(timedelta(minutes=15), description="Duration between email checks.")
     total_processing_cycles: int = Field(0, description="Total number of processing cycles completed.")
     emails_processed_count: int = Field(0, description="Total number of emails processed successfully.")

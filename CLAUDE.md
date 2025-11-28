@@ -1,6 +1,6 @@
 # CollabIQ Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2025-11-26
+Auto-generated from all feature plans. Last updated: 2025-11-29
 
 ## Active Technologies
 - **Python 3.12+** with UV package manager
@@ -34,7 +34,8 @@ CollabIQ/
 │   ├── cli/              # CLI reference & commands
 │   ├── setup/            # Installation & configuration
 │   └── testing/          # Testing guides & results
-└── specs/                 # Feature specifications (Phases 001-016)
+├── scripts/deployment/    # Cloud deployment scripts
+└── specs/                 # Feature specifications (Phases 001-018)
 ```
 
 ## Essential Commands
@@ -70,7 +71,14 @@ uv run collabiq config get KEY       # Get specific value
 - **Testing**: pytest with fixtures in src/collabiq/test_utils/
 - **Documentation**: Google-style docstrings
 
-## Recent Changes (Phases 014-017)
+## Recent Changes (Phases 014-018)
+- **Phase 018** (2025-11-29): Google Cloud Deployment
+  - Containerized application with Docker (multi-stage build, UV package manager)
+  - Deployed to Cloud Run Jobs with Secret Manager integration
+  - Implemented GCS state persistence for daemon (prevents duplicate email processing)
+  - Created deployment scripts (`deploy.sh`, `status.sh`, `execute.sh`, `delete.sh`, `secrets.sh`)
+  - Comprehensive deployment documentation in `docs/deployment/google-cloud-guide.md`
+
 - **Phase 017** (2025-11-26): Production Readiness Fixes + Test Suite Fixes
   - Stabilized async pipeline (Gmail, LLM, Notion)
   - Implemented Daemon mode for continuous operation
@@ -111,6 +119,7 @@ See [tests/README.md](tests/README.md) for detailed testing documentation.
 - **CLI Reference**: [docs/cli/CLI_REFERENCE.md](docs/cli/CLI_REFERENCE.md)
 - **Architecture**: [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)
 - **Testing Guide**: [docs/testing/E2E_TESTING.md](docs/testing/E2E_TESTING.md)
+- **Deployment**: [docs/deployment/google-cloud-guide.md](docs/deployment/google-cloud-guide.md)
 - **Roadmap**: [docs/architecture/ROADMAP.md](docs/architecture/ROADMAP.md)
 
 <!-- MANUAL ADDITIONS START -->
