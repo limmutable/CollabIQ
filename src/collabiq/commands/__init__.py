@@ -9,6 +9,7 @@ This module contains command group implementations:
 - status: System health monitoring
 - llm: LLM provider management
 - config: Configuration management
+- report: Admin reporting and email delivery
 """
 
 # Command group apps will be imported as they are implemented
@@ -19,5 +20,6 @@ This module contains command group implementations:
 # from .status import app as status_app
 # from .llm import app as llm_app
 from .config import config_app
+from .report import report_app
 
-__all__ = ["config_app"]
+__all__ = ["config_app", "report_app"]

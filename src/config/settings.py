@@ -210,6 +210,40 @@ class Settings(BaseSettings):
         description="Behavior when duplicate entry detected: 'skip' (default) or 'update'",
     )
 
+    # Admin Reporting Configuration (Phase 019)
+    admin_report_recipients: str = Field(
+        default="jeffreylim@signite.co",
+        description="Comma-separated email addresses for report delivery",
+    )
+    admin_report_time: str = Field(
+        default="07:00",
+        description="Daily report time in HH:MM format (24-hour)",
+    )
+    admin_report_timezone: str = Field(
+        default="Asia/Seoul",
+        description="IANA timezone for report schedule (KST)",
+    )
+    admin_error_rate_threshold: float = Field(
+        default=0.05,
+        ge=0.0,
+        le=1.0,
+        description="Error rate (0-1) to trigger warning alert",
+    )
+    admin_cost_limit_daily: float = Field(
+        default=10.0,
+        ge=0.0,
+        description="Daily LLM cost limit in USD",
+    )
+    admin_report_archive_dir: Path = Field(
+        default=Path("data/reports"),
+        description="Directory for archived reports",
+    )
+    admin_report_retention_days: int = Field(
+        default=30,
+        ge=1,
+        description="Days to retain archived reports",
+    )
+
     @field_validator("duplicate_behavior")
     @classmethod
     def validate_duplicate_behavior(cls, v: str) -> str:

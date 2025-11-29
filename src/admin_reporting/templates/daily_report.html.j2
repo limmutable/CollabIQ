@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CollabIQ Daily Report - {{ report.report_date | format_date }}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .summary-box {
+            background-color: #ecf0f1;
+            border-radius: 6px;
+            padding: 15px 20px;
+            margin: 15px 0;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        .status-operational { background-color: #28a745; }
+        .status-degraded { background-color: #ffc107; color: #333; }
+        .status-unavailable { background-color: #dc3545; }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .metric-card {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+            border-left: 4px solid #3498db;
+        }
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .metric-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #34495e;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .alert-box {
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .alert-critical {
+            background-color: #fce4e4;
+            border-left: 4px solid #dc3545;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+        .alert-info {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+        }
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .alert-message {
+            font-size: 0.95em;
+        }
+        .remediation {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #ddd;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 0.85em;
+            color: #7f8c8d;
+            text-align: center;
+        }
+        .no-data {
+            color: #95a5a6;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CollabIQ Daily Report</h1>
+
+        <div class="summary-box">
+            <strong>Report Date:</strong> {{ report.report_date | format_date }}<br>
+            <strong>Period:</strong> {{ report.period_start | format_datetime }} to {{ report.period_end | format_datetime }}<br>
+            <strong>Overall Status:</strong>
+            <span class="status-badge status-{{ report.health_status.overall_status.value }}">
+                {{ report.health_status.overall_status.value | upper }}
+            </span>
+        </div>
+
+        <!-- System Health Section -->
+        <h2>{{ report.health_status.overall_status | status_emoji }} System Health</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Component</th>
+                    <th>Status</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Gmail API</td>
+                    <td>
+                        <span class="status-badge status-{{ report.health_status.gmail_status.value }}">
+                            {{ report.health_status.gmail_status.value | upper }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if report.health_status.gmail_token_expiry %}
+                        Token expires: {{ report.health_status.gmail_token_expiry | format_datetime }}
+                        {% else %}
+                        No token expiry info
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Notion API</td>
+                    <td>
+                        <span class="status-badge status-{{ report.health_status.notion_status.value }}">
+                            {{ report.health_status.notion_status.value | upper }}
+                        </span>
+                    </td>
+                    <td>{{ report.notion_stats.validation_failures }} validation failures</td>
+                </tr>
+                {% for provider, status in report.health_status.llm_providers.items() %}
+                <tr>
+                    <td>LLM: {{ provider | capitalize }}</td>
+                    <td>
+                        <span class="status-badge status-{{ status.value }}">
+                            {{ status.value | upper }}
+                        </span>
+                    </td>
+                    <td>{{ report.llm_usage.calls_by_provider.get(provider, 0) }} calls</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Processing Metrics Section -->
+        <h2>📊 Processing Metrics</h2>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value">{{ report.processing_metrics.emails_received }}</div>
+                <div class="metric-label">Emails Received</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">{{ report.processing_metrics.emails_processed }}</div>
+                <div class="metric-label">Emails Processed</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">{{ report.processing_metrics.success_rate | format_percentage }}</div>
+                <div class="metric-label">Success Rate</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">{{ report.processing_metrics.processing_cycles }}</div>
+                <div class="metric-label">Processing Cycles</div>
+            </div>
+        </div>
+
+        <!-- Error Summary Section -->
+        <h2>⚠️ Error Summary</h2>
+
+        <div class="summary-box">
+            <strong>Total Errors:</strong> {{ report.error_summary.total_error_count }} |
+            <strong>Error Rate:</strong> {{ report.error_summary.error_rate | format_percentage }} |
+            <strong>Critical:</strong> {{ report.error_summary.critical_errors | length }} |
+            <strong>High:</strong> {{ report.error_summary.high_errors | length }} |
+            <strong>Low:</strong> {{ report.error_summary.low_error_count }}
+        </div>
+
+        {% if report.error_summary.critical_errors %}
+        <h3>Critical Errors</h3>
+        {% for error in report.error_summary.critical_errors[:5] %}
+        <div class="alert-box alert-critical">
+            <div class="alert-title">🚨 {{ error.component | capitalize }} - {{ error.timestamp }}</div>
+            <div class="alert-message">{{ error.message }}</div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if report.error_summary.top_error_categories %}
+        <h3>Top Error Categories</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Count</th>
+                    <th>Sample Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in report.error_summary.top_error_categories[:5] %}
+                <tr>
+                    <td>{{ cat.category }}</td>
+                    <td>{{ cat.count }}</td>
+                    <td>{{ cat.sample_message[:100] }}{% if cat.sample_message | length > 100 %}...{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        <!-- LLM Usage Section -->
+        <h2>🤖 LLM Provider Usage</h2>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value">{{ report.llm_usage.total_calls }}</div>
+                <div class="metric-label">Total API Calls</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">{{ report.llm_usage.total_cost | format_currency }}</div>
+                <div class="metric-label">Total Cost (USD)</div>
+            </div>
+            {% if report.llm_usage.primary_provider %}
+            <div class="metric-card">
+                <div class="metric-value">{{ report.llm_usage.primary_provider | capitalize }}</div>
+                <div class="metric-label">Primary Provider</div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if report.llm_usage.calls_by_provider %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Provider</th>
+                    <th>Calls</th>
+                    <th>Cost</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for provider, calls in report.llm_usage.calls_by_provider.items() %}
+                <tr>
+                    <td>{{ provider | capitalize }}</td>
+                    <td>{{ calls }}</td>
+                    <td>{{ report.llm_usage.costs_by_provider.get(provider, 0) | format_currency }}</td>
+                    <td>
+                        {% if provider in report.llm_usage.provider_health %}
+                        {{ report.llm_usage.provider_health[provider] | status_emoji }}
+                        {% else %}
+                        ❓
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        <!-- Notion Stats Section -->
+        <h2>📝 Notion Database Stats</h2>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value">{{ report.notion_stats.entries_created }}</div>
+                <div class="metric-label">Entries Created</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">{{ report.notion_stats.entries_updated }}</div>
+                <div class="metric-label">Entries Updated</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">{{ report.notion_stats.entries_skipped }}</div>
+                <div class="metric-label">Entries Skipped</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">{{ report.notion_stats.validation_failures }}</div>
+                <div class="metric-label">Validation Failures</div>
+            </div>
+        </div>
+
+        <!-- Actionable Alerts Section -->
+        {% if report.actionable_alerts %}
+        <h2>🔔 Actionable Alerts</h2>
+
+        {% for alert in report.actionable_alerts %}
+        <div class="alert-box alert-{{ alert.severity.value }}">
+            <div class="alert-title">
+                {{ alert.severity | severity_emoji }} [{{ alert.category.value | replace('_', ' ') | title }}] {{ alert.title }}
+            </div>
+            <div class="alert-message">{{ alert.message }}</div>
+            <div class="remediation">
+                <strong>Recommended Action:</strong> {{ alert.remediation }}
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <h2>🔔 Actionable Alerts</h2>
+        <p class="no-data">No actionable alerts at this time.</p>
+        {% endif %}
+
+        <div class="footer">
+            <p>
+                Generated by CollabIQ Admin Reporting<br>
+                Report ID: {{ report.report_id }}<br>
+                Generated at: {{ report.generated_at | format_datetime }}
+            </p>
+        </div>
+    </div>
+</body>
+</html>

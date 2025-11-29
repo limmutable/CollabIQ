@@ -30,7 +30,7 @@ app = typer.Typer(
 )
 
 # Register command groups
-from collabiq.commands import config_app
+from collabiq.commands import config_app, report_app
 from collabiq.commands.email import email_app
 from collabiq.commands.run import run
 from collabiq.commands.test import test_app
@@ -38,6 +38,7 @@ from collabiq.commands.test import test_app
 app.add_typer(config_app, name="config")
 app.add_typer(email_app, name="email")
 app.add_typer(test_app, name="test")
+app.add_typer(report_app, name="report")
 app.command()(run)
 
 

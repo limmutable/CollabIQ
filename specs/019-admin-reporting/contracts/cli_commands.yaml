@@ -1,0 +1,304 @@
+# CLI Commands Contract: Admin Reporting
+# Feature: 019-admin-reporting
+# Date: 2025-11-29
+
+version: "1.0"
+feature: admin-reporting
+cli_group: report
+
+commands:
+  # ============================================================
+  # collabiq report generate
+  # ============================================================
+  generate:
+    description: Generate and optionally send a daily report immediately
+    synopsis: collabiq report generate [OPTIONS]
+
+    options:
+      - name: --send
+        type: flag
+        default: false
+        description: Send report via email after generation
+
+      - name: --output
+        type: path
+        short: -o
+        description: Save report to specified file path (JSON or HTML based on extension)
+
+      - name: --format
+        type: choice
+        choices: [json, html, text]
+        default: json
+        description: Output format for report
+
+      - name: --period
+        type: string
+        default: "24h"
+        description: Reporting period (e.g., "24h", "7d", "2025-11-28")
+
+    examples:
+      - command: collabiq report generate
+        description: Generate report and display JSON to stdout
+
+      - command: collabiq report generate --send
+        description: Generate and email report to configured recipients
+
+      - command: collabiq report generate --format html -o report.html
+        description: Generate HTML report and save to file
+
+    output:
+      success:
+        format: json
+        schema:
+          type: object
+          properties:
+            report_id:
+              type: string
+              description: UUID of generated report
+            generated_at:
+              type: string
+              format: datetime
+            period:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: datetime
+                end:
+                  type: string
+                  format: datetime
+            metrics_summary:
+              type: object
+              description: Key metrics from the report
+            sent:
+              type: boolean
+              description: Whether email was sent
+          example: |
+            {
+              "report_id": "550e8400-e29b-41d4-a716-446655440000",
+              "generated_at": "2025-11-29T07:00:00Z",
+              "period": {
+                "start": "2025-11-28T07:00:00Z",
+                "end": "2025-11-29T07:00:00Z"
+              },
+              "metrics_summary": {
+                "emails_processed": 45,
+                "success_rate": 0.98,
+                "total_errors": 1,
+                "overall_health": "operational"
+              },
+              "sent": true
+            }
+
+      error:
+        format: json
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+            code:
+              type: string
+            details:
+              type: object
+
+    exit_codes:
+      0: Report generated successfully
+      1: Report generation failed
+      2: Email delivery failed (when --send)
+
+  # ============================================================
+  # collabiq report list
+  # ============================================================
+  list:
+    description: List archived reports
+    synopsis: collabiq report list [OPTIONS]
+
+    options:
+      - name: --limit
+        type: integer
+        short: -n
+        default: 10
+        description: Maximum number of reports to list
+
+      - name: --format
+        type: choice
+        choices: [table, json]
+        default: table
+        description: Output format
+
+    examples:
+      - command: collabiq report list
+        description: Show last 10 reports in table format
+
+      - command: collabiq report list -n 30 --format json
+        description: List 30 reports as JSON
+
+    output:
+      success:
+        format: table | json
+        columns:
+          - report_date
+          - generated_at
+          - emails_processed
+          - success_rate
+          - alert_count
+          - archive_path
+
+    exit_codes:
+      0: Success
+      1: Error reading archive
+
+  # ============================================================
+  # collabiq report show
+  # ============================================================
+  show:
+    description: Display a specific archived report
+    synopsis: collabiq report show <DATE> [OPTIONS]
+
+    arguments:
+      - name: DATE
+        type: string
+        required: true
+        description: Report date (YYYY-MM-DD) or "latest"
+
+    options:
+      - name: --format
+        type: choice
+        choices: [json, html, text]
+        default: text
+        description: Output format
+
+      - name: --section
+        type: choice
+        choices: [health, metrics, errors, llm, notion, alerts, all]
+        default: all
+        description: Show only specific section
+
+    examples:
+      - command: collabiq report show latest
+        description: Display most recent report
+
+      - command: collabiq report show 2025-11-28 --section errors
+        description: Show only error summary for specific date
+
+    exit_codes:
+      0: Success
+      1: Report not found
+      2: Invalid date format
+
+  # ============================================================
+  # collabiq report config
+  # ============================================================
+  config:
+    description: View or update reporting configuration
+    synopsis: collabiq report config [OPTIONS]
+
+    options:
+      - name: --show
+        type: flag
+        default: true
+        description: Display current configuration
+
+      - name: --set
+        type: key-value
+        multiple: true
+        description: Set configuration value
+
+      - name: --validate
+        type: flag
+        description: Validate configuration and test email delivery
+
+    examples:
+      - command: collabiq report config
+        description: Show current report configuration
+
+      - command: collabiq report config --set recipients=admin@example.com --set time=08:00
+        description: Update report recipients and schedule time
+
+      - command: collabiq report config --validate
+        description: Validate config and send test email
+
+    configuration_keys:
+      recipients:
+        type: list[email]
+        description: Email addresses for report delivery
+      time:
+        type: string
+        format: HH:MM
+        description: Daily report time (24-hour)
+      timezone:
+        type: string
+        description: Timezone for schedule
+      error_threshold:
+        type: float
+        description: Error rate to trigger warning (0-1)
+      cost_limit:
+        type: float
+        description: Daily LLM cost limit in USD
+      retention_days:
+        type: integer
+        description: Days to retain archived reports
+
+    exit_codes:
+      0: Success
+      1: Invalid configuration
+      2: Validation/test email failed
+
+  # ============================================================
+  # collabiq report alerts
+  # ============================================================
+  alerts:
+    description: View and manage active alerts
+    synopsis: collabiq report alerts [SUBCOMMAND] [OPTIONS]
+
+    subcommands:
+      list:
+        description: List active alerts
+        options:
+          - name: --severity
+            type: choice
+            choices: [critical, warning, info, all]
+            default: all
+          - name: --limit
+            type: integer
+            default: 20
+
+      acknowledge:
+        description: Acknowledge an alert
+        arguments:
+          - name: ALERT_ID
+            type: string
+            required: true
+
+      test:
+        description: Trigger a test alert for validation
+        options:
+          - name: --severity
+            type: choice
+            choices: [critical, warning]
+            default: warning
+
+    examples:
+      - command: collabiq report alerts list --severity critical
+        description: Show only critical alerts
+
+      - command: collabiq report alerts acknowledge abc123
+        description: Mark alert as acknowledged
+
+      - command: collabiq report alerts test --severity warning
+        description: Send test warning alert
+
+    exit_codes:
+      0: Success
+      1: Alert not found
+      2: Delivery failed
+
+# ============================================================
+# Integration with existing CLI structure
+# ============================================================
+registration:
+  parent_group: collabiq
+  import_path: collabiq.commands.report
+  app_variable: report_app
+  help_text: "Admin reporting and alert management"

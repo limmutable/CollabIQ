@@ -2,8 +2,8 @@
 
 Complete command-line interface reference for CollabIQ administration and operations.
 
-**Last Updated**: November 9, 2025
-**Version**: 1.0 (includes Quality Metrics features)
+**Last Updated**: November 29, 2025
+**Version**: 1.1 (includes Admin Reporting features)
 
 ---
 
@@ -11,9 +11,11 @@ Complete command-line interface reference for CollabIQ administration and operat
 
 - [Overview](#overview)
 - [Global Options](#global-options)
+- [Run Command](#run-command)
 - [LLM Commands](#llm-commands)
 - [Email Commands](#email-commands)
 - [Notion Commands](#notion-commands)
+- [Report Commands](#report-commands)
 - [Test Commands](#test-commands)
 - [Error Commands](#error-commands)
 - [Status Commands](#status-commands)
@@ -509,6 +511,220 @@ uv run collabiq notion cleanup
 # Clean up without confirmation
 uv run collabiq notion cleanup --confirm
 ```
+
+---
+
+## Report Commands
+
+Admin reporting and monitoring commands for system health, metrics, and alert management.
+
+### `report generate`
+
+Generate an admin report from current daemon state.
+
+**Usage**:
+```bash
+collabiq report generate [OPTIONS]
+```
+
+**Options**:
+```bash
+--send, -s           Send report via email
+--to, -t TEXT        Override recipients (comma-separated emails)
+--output, -o PATH    Save HTML report to file
+--json               Output report data as JSON
+```
+
+**Examples**:
+```bash
+# Generate and display report
+uv run collabiq report generate
+
+# Generate and send via email
+uv run collabiq report generate --send
+
+# Send to specific recipients
+uv run collabiq report generate --send --to admin@example.com,ops@example.com
+
+# Save to file
+uv run collabiq report generate --output daily-report.html
+
+# Output as JSON
+uv run collabiq report generate --json
+```
+
+---
+
+### `report config`
+
+Display current reporting configuration.
+
+**Usage**:
+```bash
+collabiq report config
+```
+
+**Output**:
+- Recipients list
+- Report time and timezone
+- Error rate threshold
+- Daily cost limit
+- Archive directory and retention settings
+
+---
+
+### `report status`
+
+Display current system health status.
+
+**Usage**:
+```bash
+collabiq report status
+```
+
+**Output**:
+- Gmail API health (OPERATIONAL/DEGRADED/UNAVAILABLE)
+- Notion API health
+- LLM provider health (per provider)
+- Overall system status
+
+---
+
+### `report metrics`
+
+Display current processing metrics.
+
+**Usage**:
+```bash
+collabiq report metrics
+```
+
+**Output**:
+- Emails received, processed, and skipped
+- Total processing cycles
+- Success rate
+- LLM provider usage (calls and costs)
+- Notion database stats (entries created, updated, validation failures)
+
+---
+
+### `report list`
+
+List archived reports.
+
+**Usage**:
+```bash
+collabiq report list [OPTIONS]
+```
+
+**Options**:
+```bash
+--limit, -n INTEGER    Maximum number of archives to show [default: 10]
+```
+
+**Examples**:
+```bash
+# List recent 10 archives
+uv run collabiq report list
+
+# List 20 archives
+uv run collabiq report list --limit 20
+```
+
+---
+
+### `report show`
+
+Show a specific archived report.
+
+**Usage**:
+```bash
+collabiq report show [REPORT_DATE] [OPTIONS]
+```
+
+**Arguments**:
+```bash
+REPORT_DATE    Date of report to show (YYYY-MM-DD). Defaults to today.
+```
+
+**Options**:
+```bash
+--json    Output as JSON
+--html    Output HTML content
+```
+
+**Examples**:
+```bash
+# Show today's report
+uv run collabiq report show
+
+# Show specific date
+uv run collabiq report show 2024-01-15
+
+# Output as JSON
+uv run collabiq report show --json
+
+# Output HTML content
+uv run collabiq report show --html
+```
+
+---
+
+### `report alerts list`
+
+List current pending alerts.
+
+**Usage**:
+```bash
+collabiq report alerts list
+```
+
+**Output**:
+- Active alerts with severity, category, message, and remediation
+- Pending alerts in batch
+- Alerts sent this hour (rate limiting info)
+
+---
+
+### `report alerts test`
+
+Send a test alert to verify email delivery.
+
+**Usage**:
+```bash
+collabiq report alerts test [OPTIONS]
+```
+
+**Options**:
+```bash
+--to, -t TEXT    Override recipients (comma-separated emails)
+```
+
+**Examples**:
+```bash
+# Send test alert to configured recipients
+uv run collabiq report alerts test
+
+# Send to specific recipient
+uv run collabiq report alerts test --to admin@example.com
+```
+
+---
+
+### `report alerts config`
+
+Display current alert configuration.
+
+**Usage**:
+```bash
+collabiq report alerts config
+```
+
+**Output**:
+- Alert recipients
+- Error rate threshold
+- Batch window (minutes)
+- Max alerts per hour (rate limiting)
 
 ---
 

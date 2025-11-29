@@ -1,0 +1,107 @@
+================================================================================
+                        COLLABIQ DAILY REPORT
+================================================================================
+
+Report Date: {{ report.report_date | format_date }}
+Period: {{ report.period_start | format_datetime }} to {{ report.period_end | format_datetime }}
+Overall Status: {{ report.health_status.overall_status | status_emoji }} {{ report.health_status.overall_status.value | upper }}
+
+--------------------------------------------------------------------------------
+                          SYSTEM HEALTH
+--------------------------------------------------------------------------------
+
+Component            Status          Details
+---------            ------          -------
+Gmail API            {{ report.health_status.gmail_status | status_emoji }} {{ report.health_status.gmail_status.value | upper | ljust(13) }}{% if report.health_status.gmail_token_expiry %}Token expires: {{ report.health_status.gmail_token_expiry | format_datetime }}{% else %}No token expiry info{% endif %}
+
+Notion API           {{ report.health_status.notion_status | status_emoji }} {{ report.health_status.notion_status.value | upper | ljust(13) }}{{ report.notion_stats.validation_failures }} validation failures
+{% for provider, status in report.health_status.llm_providers.items() %}
+LLM: {{ provider | capitalize | ljust(13) }} {{ status | status_emoji }} {{ status.value | upper | ljust(13) }}{{ report.llm_usage.calls_by_provider.get(provider, 0) }} calls
+{% endfor %}
+
+--------------------------------------------------------------------------------
+                        PROCESSING METRICS
+--------------------------------------------------------------------------------
+
+Emails Received:      {{ report.processing_metrics.emails_received }}
+Emails Processed:     {{ report.processing_metrics.emails_processed }}
+Emails Skipped:       {{ report.processing_metrics.emails_skipped }}
+Success Rate:         {{ report.processing_metrics.success_rate | format_percentage }}
+Processing Cycles:    {{ report.processing_metrics.processing_cycles }}
+Avg Processing Time:  {{ "%.2f" | format(report.processing_metrics.average_processing_time_seconds) }}s
+
+--------------------------------------------------------------------------------
+                          ERROR SUMMARY
+--------------------------------------------------------------------------------
+
+Total Errors:         {{ report.error_summary.total_error_count }}
+Error Rate:           {{ report.error_summary.error_rate | format_percentage }}
+Critical Errors:      {{ report.error_summary.critical_errors | length }}
+High Errors:          {{ report.error_summary.high_errors | length }}
+Low Errors:           {{ report.error_summary.low_error_count }}
+
+{% if report.error_summary.critical_errors %}
+CRITICAL ERRORS:
+{% for error in report.error_summary.critical_errors[:5] %}
+  * [{{ error.timestamp }}] {{ error.component | capitalize }}: {{ error.message }}
+{% endfor %}
+{% endif %}
+
+{% if report.error_summary.top_error_categories %}
+TOP ERROR CATEGORIES:
+{% for cat in report.error_summary.top_error_categories[:5] %}
+  {{ loop.index }}. {{ cat.category }} ({{ cat.count }}x): {{ cat.sample_message[:60] }}{% if cat.sample_message | length > 60 %}...{% endif %}
+
+{% endfor %}
+{% endif %}
+
+--------------------------------------------------------------------------------
+                       LLM PROVIDER USAGE
+--------------------------------------------------------------------------------
+
+Total API Calls:      {{ report.llm_usage.total_calls }}
+Total Cost (USD):     {{ report.llm_usage.total_cost | format_currency }}
+{% if report.llm_usage.primary_provider %}
+Primary Provider:     {{ report.llm_usage.primary_provider | capitalize }}
+{% endif %}
+
+{% if report.llm_usage.calls_by_provider %}
+Provider         Calls       Cost        Status
+--------         -----       ----        ------
+{% for provider, calls in report.llm_usage.calls_by_provider.items() %}
+{{ provider | capitalize | ljust(16) }} {{ calls | string | ljust(11) }} {{ report.llm_usage.costs_by_provider.get(provider, 0) | format_currency | ljust(11) }} {% if provider in report.llm_usage.provider_health %}{{ report.llm_usage.provider_health[provider] | status_emoji }}{% else %}?{% endif %}
+
+{% endfor %}
+{% endif %}
+
+--------------------------------------------------------------------------------
+                      NOTION DATABASE STATS
+--------------------------------------------------------------------------------
+
+Entries Created:       {{ report.notion_stats.entries_created }}
+Entries Updated:       {{ report.notion_stats.entries_updated }}
+Entries Skipped:       {{ report.notion_stats.entries_skipped }}
+Validation Failures:   {{ report.notion_stats.validation_failures }}
+Database Status:       {{ report.notion_stats.database_health | status_emoji }} {{ report.notion_stats.database_health.value | upper }}
+
+--------------------------------------------------------------------------------
+                        ACTIONABLE ALERTS
+--------------------------------------------------------------------------------
+
+{% if report.actionable_alerts %}
+{% for alert in report.actionable_alerts %}
+{{ alert.severity | severity_emoji }} [{{ alert.severity.value | upper }}] {{ alert.title }}
+   Category: {{ alert.category.value | replace('_', ' ') | title }}
+   Message: {{ alert.message }}
+   Action: {{ alert.remediation }}
+
+{% endfor %}
+{% else %}
+No actionable alerts at this time.
+{% endif %}
+
+================================================================================
+Generated by CollabIQ Admin Reporting
+Report ID: {{ report.report_id }}
+Generated at: {{ report.generated_at | format_datetime }}
+================================================================================

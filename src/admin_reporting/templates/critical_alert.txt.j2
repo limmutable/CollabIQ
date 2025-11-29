@@ -1,0 +1,23 @@
+================================================================================
+COLLABIQ ALERT NOTIFICATION
+================================================================================
+{{ alerts|length }} issue{{ 's' if alerts|length != 1 else '' }} detected - Immediate attention required
+================================================================================
+
+{% for alert in alerts %}
+--------------------------------------------------------------------------------
+[{{ alert.severity.value | upper }}] {{ alert.category | upper }}
+--------------------------------------------------------------------------------
+
+{{ alert.message }}
+
+RECOMMENDED ACTION:
+{{ alert.remediation }}
+
+Detected: {{ alert.created_at | format_datetime }}
+
+{% endfor %}
+================================================================================
+This is an automated alert from CollabIQ Admin Reporting.
+Generated: {{ generated_at | format_datetime }}
+================================================================================
