@@ -26,7 +26,7 @@ Successfully tested multi-LLM orchestration with real email data:
 ### E2E Test Settings
 
 ```bash
-uv run python scripts/run_e2e_tests.py \
+uv run python scripts/testing/run_e2e_tests.py \
   --all \
   --no-test-mode \
   --strategy all_providers \
@@ -406,7 +406,7 @@ data/e2e_test/
 ### Command Used
 
 ```bash
-uv run python scripts/run_e2e_tests.py \
+uv run python scripts/testing/run_e2e_tests.py \
   --all \
   --no-test-mode \
   --strategy all_providers \

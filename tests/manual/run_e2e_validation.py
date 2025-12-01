@@ -45,7 +45,7 @@ def load_test_emails():
         print("ERROR: Test email IDs file not found")
         print()
         print("Please run the email selection script first:")
-        print("  uv run python scripts/select_test_emails.py --all")
+        print("  uv run python scripts/testing/select_test_emails.py --all")
         print()
         sys.exit(1)
 

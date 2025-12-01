@@ -215,7 +215,7 @@ This roadmap breaks the CollabIQ system into **19 sequential phases** (branches 
 - ✅ NotionWriter with duplicate detection (skip/update modes)
 - ✅ FieldMapper for schema-aware property mapping
 - ✅ DLQManager for failed write handling
-- ✅ Manual retry script (`scripts/retry_dlq.py`)
+- ✅ Manual retry script (`scripts/maintenance/retry_dlq.py`)
 - ✅ Map extracted entities + matched companies → Notion fields
 - ✅ Handle relation links (스타트업명, 협업기관)
 - ✅ Auto-generate 협력주체 field (startup-org format)

@@ -53,7 +53,7 @@ NOTION_API_TOKEN=your_notion_token
 NOTION_DATABASE_ID=your_database_id
 
 # Gmail Configuration (for E2E tests)
-# Run: uv run python scripts/authenticate_gmail.py
+# Run: uv run python scripts/setup/authenticate_gmail.py
 GMAIL_OAUTH_TOKEN_PATH=path/to/token.json
 GMAIL_OAUTH_CREDENTIALS_PATH=path/to/credentials.json
 ```
@@ -401,7 +401,7 @@ python --version  # Should be 3.12+
 cat .env
 
 # Re-run Gmail OAuth authentication
-uv run python scripts/authenticate_gmail.py
+uv run python scripts/setup/authenticate_gmail.py
 ```
 
 ### Issue: Slow Tests

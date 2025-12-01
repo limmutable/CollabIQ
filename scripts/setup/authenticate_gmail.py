@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 # Add src to path so we can import modules
-project_root = Path(__file__).parent.parent
+project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
 from email_receiver.gmail_receiver import GmailReceiver

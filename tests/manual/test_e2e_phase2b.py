@@ -110,7 +110,7 @@ async def main():
 
     except Exception as e:
         print(f"✗ Error retrieving emails: {e}")
-        print("  Make sure Gmail OAuth2 is set up (run scripts/authenticate_gmail.py)")
+        print("  Make sure Gmail OAuth2 is set up (run scripts/setup/authenticate_gmail.py)")
         return 1
 
     if not messages:

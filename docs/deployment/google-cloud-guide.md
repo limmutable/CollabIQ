@@ -1188,7 +1188,7 @@ Create a Cloud Run Job to run CollabIQ commands:
 export PROJECT_ID=$(gcloud config get-value project)
 export REGION="asia-northeast1"
 export JOB_NAME="collabiq-processor"
-export IMAGE_URL="us-central1-docker.pkg.dev/${PROJECT_ID}/collabiq/collabiq:latest"
+export IMAGE_URL="asia-northeast1-docker.pkg.dev/${PROJECT_ID}/collabiq-repo/collabiq:latest"
 
 # Create the Cloud Run Job
 gcloud run jobs create ${JOB_NAME} \
@@ -3204,13 +3204,13 @@ Threshold: > 1800 seconds (30 minutes)
 # List recent executions
 gcloud run jobs executions list \
   --job=JOB_NAME \
-  --region=us-central1 \
+  --region=asia-northeast1 \
   --limit=10
 
 # Filter by status
 gcloud run jobs executions list \
   --job=JOB_NAME \
-  --region=us-central1 \
+  --region=asia-northeast1 \
   --filter="status.conditions[0].type=Completed AND status.conditions[0].status=True"
 ```
 

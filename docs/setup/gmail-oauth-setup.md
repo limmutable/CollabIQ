@@ -178,7 +178,7 @@ grep -qxF 'token.json' .gitignore || echo 'token.json' >> .gitignore
 
 2. Run the authentication script (this will trigger OAuth flow):
    ```bash
-   uv run python scripts/authenticate_gmail.py
+   uv run python scripts/setup/authenticate_gmail.py
    ```
 
 **Expected Behavior**:

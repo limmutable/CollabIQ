@@ -58,7 +58,7 @@ uv run collabiq --help
 **Option 1: Use `uv run` (Recommended)**
 ```bash
 # UV automatically activates the virtual environment
-uv run python scripts/authenticate_gmail.py
+uv run python scripts/setup/authenticate_gmail.py
 uv run collabiq --help
 uv run pytest
 ```
@@ -71,7 +71,7 @@ source .venv/bin/activate  # macOS/Linux
 .venv\Scripts\activate     # Windows
 
 # Now you can run commands directly
-python scripts/authenticate_gmail.py
+python scripts/setup/authenticate_gmail.py
 collabiq --help
 pytest
 
@@ -103,7 +103,7 @@ deactivate
 **Error Handling**: CollabIQ includes comprehensive error handling with automatic retry logic:
 - **Automatic Retries**: Transient failures (timeouts, rate limits) retry automatically with exponential backoff
 - **Circuit Breakers**: Prevents cascading failures by failing fast when services are degraded
-- **Dead Letter Queue (DLQ)**: Failed operations are preserved for later replay via `scripts/retry_dlq.py`
+- **Dead Letter Queue (DLQ)**: Failed operations are preserved for later replay via `scripts/maintenance/retry_dlq.py`
 - **Structured Logging**: All errors logged with full context for debugging (JSON-formatted)
 - **Service-Specific Configs**: Pre-configured retry settings for Gmail, Gemini, Notion, and Infisical
 
@@ -223,7 +223,7 @@ cat docs/setup/gmail-oauth-setup.md
 **Quick Steps**:
 1. Create OAuth2 credentials in Google Cloud Console
 2. Download `credentials.json` to project root
-3. Run authentication flow: `uv run python scripts/authenticate_gmail.py`
+3. Run authentication flow: `uv run python scripts/setup/authenticate_gmail.py`
 4. Authenticate as a **group member** (e.g., jeffreylim@signite.co), NOT as collab@signite.co
 5. Verify: `token.json` should be created after successful authentication
 
@@ -496,7 +496,7 @@ uv run python test_specific_email.py --email-id "test_002" --show-metrics
   - Duplicate detection with configurable strategies (skip/update)
   - Schema-aware property mapping via FieldMapper
   - Dead Letter Queue (DLQ) for failed writes
-  - Retry script for manual DLQ replay (`scripts/retry_dlq.py`)
+  - Retry script for manual DLQ replay (`scripts/maintenance/retry_dlq.py`)
 ✅ **Phase 010 Complete**: Error Handling & Retry Logic
   - Unified `@retry_with_backoff` decorator replacing ad-hoc retry logic
   - Circuit breaker pattern for Gmail, Gemini, Notion, and Infisical
@@ -654,10 +654,10 @@ ls -la data/dlq/
 cat data/dlq/notion_write_YYYYMMDD_HHMMSS_*.json
 
 # Replay ALL failed operations
-uv run python scripts/retry_dlq.py
+uv run python scripts/maintenance/retry_dlq.py
 
 # Replay specific failed operation
-uv run python scripts/retry_dlq.py --file data/dlq/notion_write_*.json
+uv run python scripts/maintenance/retry_dlq.py --file data/dlq/notion_write_*.json
 
 # Check DLQ replay logs
 tail -f logs/email_processor.log | grep DLQ
@@ -746,19 +746,19 @@ uv run python src/cli.py verify
 
 ```bash
 # Replay ALL failed operations from Dead Letter Queue
-uv run python scripts/retry_dlq.py
+uv run python scripts/maintenance/retry_dlq.py
 
 # Replay specific DLQ entry
-uv run python scripts/retry_dlq.py --file data/dlq/notion_write_*.json
+uv run python scripts/maintenance/retry_dlq.py --file data/dlq/notion_write_*.json
 
 # Diagnose Infisical connectivity
-uv run python scripts/diagnose_infisical.py
+uv run python scripts/setup/diagnose_infisical.py
 
 # Check where secrets are loaded from (Infisical vs .env)
-uv run python scripts/check_secret_source.py
+uv run python scripts/setup/check_secret_source.py
 
 # Clean up test entries from Notion (use with caution!)
-uv run python scripts/cleanup_test_entries.py
+uv run python scripts/testing/cleanup_test_entries.py
 ```
 
 ## What's Next?
@@ -780,7 +780,7 @@ Now you're ready to:
 - **Use the Full MVP Pipeline**: Fetch emails → extract entities → match companies → classify type/intensity → generate summaries → write to Notion
 - **Test the Complete Flow**: Run end-to-end tests to see the full pipeline in action
 - **Explore Error Handling**: Review retry logic, circuit breakers, and DLQ management
-- **Monitor DLQ**: Check `data/dlq/` for failed operations and replay them with `scripts/retry_dlq.py`
+- **Monitor DLQ**: Check `data/dlq/` for failed operations and replay them with `scripts/maintenance/retry_dlq.py`
 - **Review Confidence Scores**: Understand auto-acceptance vs manual review routing
 - **Production Planning**: Prepare for deployment with monitoring and operational workflows
 - **Add more features**: Follow the implementation roadmap for future phases

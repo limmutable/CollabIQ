@@ -297,25 +297,25 @@ Extracted entities map to Notion database fields:
 
 ### New Scripts Created
 
-1. **`scripts/generate_extraction_report.py`**
+1. **`scripts/analysis/generate_extraction_report.py`**
    - Generates markdown report of extracted entities
    - Shows per-email extraction details
    - Calculates summary statistics
-   - Usage: `uv run python scripts/generate_extraction_report.py [run_id]`
+   - Usage: `uv run python scripts/analysis/generate_extraction_report.py [run_id]`
 
-2. **`scripts/show_e2e_extractions.py`**
+2. **`scripts/analysis/show_e2e_extractions.py`**
    - Displays extracted entities for a test run
    - Shows provider selection and confidence scores
-   - Usage: `uv run python scripts/show_e2e_extractions.py [run_id]`
+   - Usage: `uv run python scripts/analysis/show_e2e_extractions.py [run_id]`
 
 ### Viewing Results
 
 ```bash
 # View extraction report for most recent run
-uv run python scripts/generate_extraction_report.py
+uv run python scripts/analysis/generate_extraction_report.py
 
 # View extraction report for specific run
-uv run python scripts/generate_extraction_report.py 20251109_205933
+uv run python scripts/analysis/generate_extraction_report.py 20251109_205933
 
 # View quality metrics
 cat data/e2e_test/reports/20251109_205933_quality_metrics.json | python3 -m json.tool

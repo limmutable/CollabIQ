@@ -110,7 +110,7 @@ cp .env.example .env
 
 **Quick configuration steps**:
 1. Configure `.env` with API keys (or use Infisical for team deployments)
-2. Setup Gmail OAuth2: `uv run python scripts/authenticate_gmail.py`
+2. Setup Gmail OAuth2: `uv run python scripts/setup/authenticate_gmail.py`
 3. Verify configuration: `uv run collabiq config test-secrets`
 4. Run tests: `make test`
 
@@ -162,7 +162,7 @@ uv run collabiq llm export-metrics
 uv run collabiq llm export-metrics -o quality_report.json --no-health --no-cost
 
 # Test with specific email ID
-uv run python scripts/test_specific_email.py --email-id "test_001" --show-metrics
+uv run python scripts/testing/test_specific_email.py --email-id "test_001" --show-metrics
 ```
 
 For complete CLI documentation, see [docs/cli/CLI_REFERENCE.md](docs/cli/CLI_REFERENCE.md)
@@ -305,7 +305,7 @@ CollabIQ/
 │   ├── setup/                 # Setup & configuration guides
 │   ├── architecture/          # System design documents
 │   └── validation/            # API validation reports
-├── scripts/                   # Utility scripts
+├── scripts/                   # Utility scripts (setup, testing, analysis, deployment)
 ├── data/                      # Runtime data (emails, extractions, cache, DLQ)
 └── .env.example              # Environment template
 ```

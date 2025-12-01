@@ -115,13 +115,13 @@ export NOTION_DATABASE_ID_COMPANIES=your_companies_db_id
 
 ```bash
 # 1. Verify system status
-uv run python scripts/diagnose_notion_access.py
+uv run python scripts/setup/diagnose_notion_access.py
 
 # 2. Select test emails (read-only, safe)
-uv run python scripts/select_test_emails.py --all
+uv run python scripts/testing/select_test_emails.py --all
 
 # 3. Run E2E tests in mock mode (safe, no writes)
-uv run python scripts/run_e2e_tests.py --all
+uv run python scripts/testing/run_e2e_tests.py --all
 
 # 4. View results
 cat data/e2e_test/reports/*-e2e_test.md
@@ -131,19 +131,19 @@ cat data/e2e_test/reports/*-e2e_test.md
 
 ```bash
 # Run E2E tests with all emails (default: failover strategy)
-uv run python scripts/run_e2e_tests.py --all
+uv run python scripts/testing/run_e2e_tests.py --all
 
 # Process single email
-uv run python scripts/run_e2e_tests.py --email-id msg_001
+uv run python scripts/testing/run_e2e_tests.py --email-id msg_001
 
 # Use specific orchestration strategy
-uv run python scripts/run_e2e_tests.py --all --strategy consensus
+uv run python scripts/testing/run_e2e_tests.py --all --strategy consensus
 
 # Enable quality-based routing
-uv run python scripts/run_e2e_tests.py --all --quality-routing
+uv run python scripts/testing/run_e2e_tests.py --all --quality-routing
 
 # Generate detailed error report
-uv run python scripts/run_e2e_tests.py --all --report
+uv run python scripts/testing/run_e2e_tests.py --all --report
 ```
 
 ---
@@ -156,10 +156,10 @@ Test each pipeline stage independently before running full E2E tests.
 
 **Purpose**: Verify Notion API access, database connectivity, and schema
 
-**Script**: `scripts/diagnose_notion_access.py`
+**Script**: `scripts/setup/diagnose_notion_access.py`
 
 ```bash
-uv run python scripts/diagnose_notion_access.py
+uv run python scripts/setup/diagnose_notion_access.py
 ```
 
 **What It Checks**:
@@ -213,14 +213,14 @@ NOTION API ACCESS DIAGNOSTICS
 
 **Purpose**: Fetch real emails from Gmail and create test metadata
 
-**Script**: `scripts/select_test_emails.py`
+**Script**: `scripts/testing/select_test_emails.py`
 
 ```bash
 # Fetch all emails (default: max 100 from collab@signite.co)
-uv run python scripts/select_test_emails.py --all
+uv run python scripts/testing/select_test_emails.py --all
 
 # Specify custom output path
-uv run python scripts/select_test_emails.py --all --output data/my_test_emails.json
+uv run python scripts/testing/select_test_emails.py --all --output data/my_test_emails.json
 ```
 
 **What It Does**:
@@ -359,12 +359,12 @@ pytest tests/integration/test_classification_service.py::test_all_types -v
 
 ```bash
 # Test with single entry (dry-run mode)
-uv run python scripts/run_e2e_with_real_components.py \
+uv run python scripts/testing/run_e2e_with_real_components.py \
   --email-id "msg_abc123" \
   --dry-run
 
 # Test actual write (REQUIRES CONFIRMATION)
-uv run python scripts/run_e2e_with_real_components.py \
+uv run python scripts/testing/run_e2e_with_real_components.py \
   --email-id "msg_abc123" \
   --confirm
 ```
@@ -388,16 +388,16 @@ Test different orchestration strategies:
 
 ```bash
 # Failover strategy (sequential provider attempts)
-uv run python scripts/run_e2e_tests.py --all --strategy failover
+uv run python scripts/testing/run_e2e_tests.py --all --strategy failover
 
 # Consensus strategy (majority voting across providers)
-uv run python scripts/run_e2e_tests.py --all --strategy consensus
+uv run python scripts/testing/run_e2e_tests.py --all --strategy consensus
 
 # Best-match strategy (select highest confidence result)
-uv run python scripts/run_e2e_tests.py --all --strategy best_match
+uv run python scripts/testing/run_e2e_tests.py --all --strategy best_match
 
 # All-providers strategy (collect metrics from ALL providers)
-uv run python scripts/run_e2e_tests.py --all --strategy all_providers
+uv run python scripts/testing/run_e2e_tests.py --all --strategy all_providers
 ```
 
 ### Quality-Based Routing
@@ -406,10 +406,10 @@ Enable intelligent provider selection based on historical performance:
 
 ```bash
 # Enable quality-based routing
-uv run python scripts/run_e2e_tests.py --all --quality-routing
+uv run python scripts/testing/run_e2e_tests.py --all --quality-routing
 
 # Combine with specific strategy
-uv run python scripts/run_e2e_tests.py --all --strategy consensus --quality-routing
+uv run python scripts/testing/run_e2e_tests.py --all --strategy consensus --quality-routing
 ```
 
 ### Testing Quality-Based Routing
@@ -419,13 +419,13 @@ To test quality-based routing, you need historical metrics:
 1. **Populate metrics first**:
 
    ```bash
-   uv run python scripts/populate_quality_metrics.py
+   uv run python scripts/analysis/populate_quality_metrics.py
    ```
 
 2. **Run E2E tests with quality routing**:
 
    ```bash
-   uv run python scripts/run_e2e_tests.py --all --quality-routing
+   uv run python scripts/testing/run_e2e_tests.py --all --quality-routing
    ```
 
 3. **Verify provider selection**:
@@ -445,7 +445,7 @@ To test quality-based routing, you need historical metrics:
 - **Metrics**: Only tracks metrics from successful provider
 
 ```bash
-uv run python scripts/run_e2e_tests.py --all --strategy failover
+uv run python scripts/testing/run_e2e_tests.py --all --strategy failover
 ```
 
 ### Consensus
@@ -456,7 +456,7 @@ uv run python scripts/run_e2e_tests.py --all --strategy failover
 - **Metrics**: Tracks metrics from all providers queried
 
 ```bash
-uv run python scripts/run_e2e_tests.py --all --strategy consensus
+uv run python scripts/testing/run_e2e_tests.py --all --strategy consensus
 ```
 
 ### Best-Match
@@ -467,7 +467,7 @@ uv run python scripts/run_e2e_tests.py --all --strategy consensus
 - **Metrics**: Tracks metrics from all providers
 
 ```bash
-uv run python scripts/run_e2e_tests.py --all --strategy best_match
+uv run python scripts/testing/run_e2e_tests.py --all --strategy best_match
 ```
 
 ### All-Providers (Recommended for Testing)
@@ -478,7 +478,7 @@ uv run python scripts/run_e2e_tests.py --all --strategy best_match
 - **Metrics**: Tracks metrics from ALL providers (essential for quality-based routing)
 
 ```bash
-uv run python scripts/run_e2e_tests.py --all --strategy all_providers
+uv run python scripts/testing/run_e2e_tests.py --all --strategy all_providers
 ```
 
 ### Strategy Performance Comparison
@@ -522,7 +522,7 @@ uv run python scripts/run_e2e_tests.py --all --strategy all_providers
 **Use Case**: Validate test infrastructure, no Notion writes
 
 ```bash
-uv run python scripts/run_e2e_tests.py --all
+uv run python scripts/testing/run_e2e_tests.py --all
 ```
 
 **What It Does**:
@@ -545,7 +545,7 @@ uv run python scripts/run_e2e_tests.py --all
 **Use Case**: Test with real APIs without writing to Notion
 
 ```bash
-uv run python scripts/run_e2e_with_real_components.py --all --dry-run
+uv run python scripts/testing/run_e2e_with_real_components.py --all --dry-run
 ```
 
 **What It Does**:
@@ -569,13 +569,13 @@ uv run python scripts/run_e2e_with_real_components.py --all --dry-run
 
 ```bash
 # Process all emails (REQUIRES --confirm)
-uv run python scripts/run_e2e_with_real_components.py --all --confirm
+uv run python scripts/testing/run_e2e_with_real_components.py --all --confirm
 
 # Skip confirmation prompt (use with caution)
-uv run python scripts/run_e2e_with_real_components.py --all --confirm --yes
+uv run python scripts/testing/run_e2e_with_real_components.py --all --confirm --yes
 
 # Process single email for testing
-uv run python scripts/run_e2e_with_real_components.py \
+uv run python scripts/testing/run_e2e_with_real_components.py \
   --email-id "msg_abc123" \
   --confirm
 ```
@@ -598,7 +598,7 @@ uv run python scripts/run_e2e_with_real_components.py \
 ================================================================================
 This will create REAL entries in your Notion database!
 Remember to run cleanup script after testing:
-  uv run python scripts/cleanup_test_entries.py
+  uv run python scripts/testing/cleanup_test_entries.py
 ================================================================================
 
 Type 'YES' to continue:
@@ -708,7 +708,7 @@ echo $GMAIL_TOKEN_PATH
 echo $NOTION_API_KEY
 
 # Re-authenticate Gmail if needed
-uv run python scripts/authenticate_gmail.py
+uv run python scripts/setup/authenticate_gmail.py
 ```
 
 If tests are slow:
@@ -885,11 +885,11 @@ All scripts that write to Notion require explicit confirmation:
 
 ```bash
 # ERROR: Must use --confirm or --dry-run
-uv run python scripts/run_e2e_with_real_components.py --all
+uv run python scripts/testing/run_e2e_with_real_components.py --all
 # Output: ERROR: Must use --confirm flag to write to Notion, or --dry-run for testing
 
 # Correct usage
-uv run python scripts/run_e2e_with_real_components.py --all --confirm
+uv run python scripts/testing/run_e2e_with_real_components.py --all --confirm
 ```
 
 ### 2. Interactive Confirmation Prompts
@@ -907,7 +907,7 @@ Type 'YES' to continue: YES
 Skip prompt with `--yes` flag (use with caution):
 
 ```bash
-uv run python scripts/run_e2e_with_real_components.py --all --confirm --yes
+uv run python scripts/testing/run_e2e_with_real_components.py --all --confirm --yes
 ```
 
 ### 3. Duplicate Detection
@@ -923,7 +923,7 @@ NotionWriter configured with `duplicate_behavior="skip"`:
 Test everything except actual Notion writes:
 
 ```bash
-uv run python scripts/run_e2e_with_real_components.py --all --dry-run
+uv run python scripts/testing/run_e2e_with_real_components.py --all --dry-run
 ```
 
 ### 5. Cleanup Script
@@ -932,13 +932,13 @@ Remove test entries after validation:
 
 ```bash
 # Preview what will be deleted (safe)
-uv run python scripts/cleanup_test_entries.py --dry-run
+uv run python scripts/testing/cleanup_test_entries.py --dry-run
 
 # Actually delete test entries (after verification)
-uv run python scripts/cleanup_test_entries.py
+uv run python scripts/testing/cleanup_test_entries.py
 
 # Delete specific run
-uv run python scripts/cleanup_test_entries.py --run-id e2e_20251105_123456
+uv run python scripts/testing/cleanup_test_entries.py --run-id e2e_20251105_123456
 ```
 
 ---
@@ -1030,7 +1030,7 @@ pytest tests/e2e/test_korean_encoding.py -v
 
 **Solution**:
 
-- Populate metrics first: `python scripts/populate_quality_metrics.py`
+- Populate metrics first: `python scripts/analysis/populate_quality_metrics.py`
 - Verify `--quality-routing` flag is set
 - Check `data/llm_health/quality_metrics.json` has data
 - Review logs for provider selection reasoning
@@ -1077,7 +1077,7 @@ EOF
 ```bash
 # Delete existing token and re-authenticate
 rm token.json
-uv run python scripts/authenticate_gmail.py
+uv run python scripts/setup/authenticate_gmail.py
 ```
 
 #### 6. Notion Integration Not Connected
@@ -1091,7 +1091,7 @@ uv run python scripts/authenticate_gmail.py
 3. Add your integration
 4. Run diagnose script again:
    ```bash
-   uv run python scripts/diagnose_notion_access.py
+   uv run python scripts/setup/diagnose_notion_access.py
    ```
 
 #### 7. Property Name Mismatch
@@ -1102,7 +1102,7 @@ uv run python scripts/authenticate_gmail.py
 
 ```bash
 # 1. Verify actual property names in database
-uv run python scripts/diagnose_notion_access.py
+uv run python scripts/setup/diagnose_notion_access.py
 
 # 2. Update validators.py and field_mapper.py to match
 # See: src/e2e_test/validators.py
@@ -1195,12 +1195,12 @@ pytest tests/e2e/test_korean_encoding.py -v
 # See: src/llm_adapters/ (retry logic)
 
 # 2. Process fewer emails at once
-uv run python scripts/run_e2e_with_real_components.py \
+uv run python scripts/testing/run_e2e_with_real_components.py \
   --count 5 \
   --confirm
 
 # 3. Use mock mode for infrastructure testing
-uv run python scripts/run_e2e_tests.py --all
+uv run python scripts/testing/run_e2e_tests.py --all
 ```
 
 #### 12. Test Email IDs File Not Found
@@ -1211,7 +1211,7 @@ uv run python scripts/run_e2e_tests.py --all
 
 ```bash
 # Run email selection script first
-uv run python scripts/select_test_emails.py --all
+uv run python scripts/testing/select_test_emails.py --all
 
 # Verify file created
 ls -l data/e2e_test/test_email_ids.json
@@ -1226,13 +1226,13 @@ cat data/e2e_test/test_email_ids.json | jq '.'
 
 ```bash
 # 1. Populate quality metrics (one-time setup)
-uv run python scripts/populate_quality_metrics.py
+uv run python scripts/analysis/populate_quality_metrics.py
 
 # 2. Run E2E tests with all-providers strategy (collect metrics)
-uv run python scripts/run_e2e_tests.py --all --strategy all_providers --report
+uv run python scripts/testing/run_e2e_tests.py --all --strategy all_providers --report
 
 # 3. Test quality-based routing
-uv run python scripts/run_e2e_tests.py --all --quality-routing --report
+uv run python scripts/testing/run_e2e_tests.py --all --quality-routing --report
 
 # 4. Compare provider performance
 uv run collabiq llm compare --detailed
@@ -1245,13 +1245,13 @@ cat data/e2e_test/reports/*/quality_metrics.json
 
 ```bash
 # Test with single email and consensus
-uv run python scripts/run_e2e_tests.py --email-id msg_001 --strategy consensus
+uv run python scripts/testing/run_e2e_tests.py --email-id msg_001 --strategy consensus
 
 # Test quality routing with best-match
-uv run python scripts/run_e2e_tests.py --all --strategy best_match --quality-routing
+uv run python scripts/testing/run_e2e_tests.py --all --strategy best_match --quality-routing
 
 # Resume interrupted run
-uv run python scripts/run_e2e_tests.py --resume 20251109_143000
+uv run python scripts/testing/run_e2e_tests.py --resume 20251109_143000
 ```
 
 ### Complete Test Workflow
@@ -1270,29 +1270,29 @@ export NOTION_DATABASE_ID_COLLABIQ=your_db_id
 export NOTION_DATABASE_ID_COMPANIES=your_db_id
 
 # 2. Authenticate Gmail
-uv run python scripts/authenticate_gmail.py
+uv run python scripts/setup/authenticate_gmail.py
 
 # 3. Verify Notion access
-uv run python scripts/diagnose_notion_access.py
+uv run python scripts/setup/diagnose_notion_access.py
 ```
 
 #### Testing Workflow
 
 ```bash
 # Step 1: Verify system status
-uv run python scripts/diagnose_notion_access.py
+uv run python scripts/setup/diagnose_notion_access.py
 
 # Step 2: Select test emails
-uv run python scripts/select_test_emails.py --all
+uv run python scripts/testing/select_test_emails.py --all
 
 # Step 3: Run mock mode tests (infrastructure validation)
-uv run python scripts/run_e2e_tests.py --all
+uv run python scripts/testing/run_e2e_tests.py --all
 
 # Step 4: Run dry-run mode (real APIs, no writes)
-uv run python scripts/run_e2e_with_real_components.py --all --dry-run
+uv run python scripts/testing/run_e2e_with_real_components.py --all --dry-run
 
 # Step 5: Test single email with real writes
-uv run python scripts/run_e2e_with_real_components.py \
+uv run python scripts/testing/run_e2e_with_real_components.py \
   --email-id "$(cat data/e2e_test/test_email_ids.json | jq -r '.[0].email_id')" \
   --confirm
 
@@ -1302,7 +1302,7 @@ uv run python scripts/run_e2e_with_real_components.py \
 # - Validate all fields
 
 # Step 7: Run full E2E tests
-uv run python scripts/run_e2e_with_real_components.py --all --confirm --report
+uv run python scripts/testing/run_e2e_with_real_components.py --all --confirm --report
 
 # Step 8: Review reports
 cat data/e2e_test/reports/*-e2e_test.md
@@ -1315,8 +1315,8 @@ cat data/e2e_test/reports/*-e2e_test.md
 # - ✅ SC-007: Korean text preservation
 
 # Step 10: Clean up test entries
-uv run python scripts/cleanup_test_entries.py --dry-run
-uv run python scripts/cleanup_test_entries.py
+uv run python scripts/testing/cleanup_test_entries.py --dry-run
+uv run python scripts/testing/cleanup_test_entries.py
 ```
 
 ---
@@ -1339,11 +1339,11 @@ uv run python scripts/cleanup_test_entries.py
 
 - **Models**: Pydantic v2 models with 17 integration tests
   - `TestRun`, `ErrorRecord`, `PerformanceMetric`, `TestEmailMetadata`
-- **Email Selection**: `scripts/select_test_emails.py`
+- **Email Selection**: `scripts/testing/select_test_emails.py`
   - Fetches all emails from `collab@signite.co`
   - Korean text detection (\uac00-\ud7a3)
   - Creates `test_email_ids.json`
-- **Cleanup Script**: `scripts/cleanup_test_entries.py`
+- **Cleanup Script**: `scripts/testing/cleanup_test_entries.py`
   - Dry-run mode + explicit confirmation
   - Email ID filtering + audit logging
 

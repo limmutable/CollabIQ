@@ -119,7 +119,7 @@ CollabIQ is an email-based collaboration tracking system that extracts entities 
                                 │
                                 ▼
                        ┌──────────────────┐
-                       │  Manual Retry    │ ← scripts/retry_dlq.py
+                       │  Manual Retry    │ ← scripts/maintenance/retry_dlq.py
                        │     Script       │  (Idempotent replay)
                        └──────────────────┘
 
@@ -451,8 +451,8 @@ class LLMProvider(ABC):
 **DLQ Replay Process**:
 1. Review DLQ items: `ls -la data/dlq/`
 2. View specific entry: `cat data/dlq/notion_write_*.json`
-3. Replay all: `uv run python scripts/retry_dlq.py`
-4. Replay specific: `uv run python scripts/retry_dlq.py --file data/dlq/notion_write_*.json`
+3. Replay all: `uv run python scripts/maintenance/retry_dlq.py`
+4. Replay specific: `uv run python scripts/maintenance/retry_dlq.py --file data/dlq/notion_write_*.json`
 
 **Idempotency**: DLQ replay uses same duplicate detection as normal flow
 

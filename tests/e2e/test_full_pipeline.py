@@ -25,7 +25,7 @@ def test_email_ids():
     if not email_ids_file.exists():
         pytest.skip(
             "Test email IDs file not found. Run email selection script first:\n"
-            "  uv run python scripts/select_test_emails.py --all"
+            "  uv run python scripts/testing/select_test_emails.py --all"
         )
 
     with email_ids_file.open("r", encoding="utf-8") as f:

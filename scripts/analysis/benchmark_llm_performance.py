@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Any
 
 # Add src to path
-src_path = Path(__file__).parent.parent / "src"
+src_path = Path(__file__).parent.parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
 # Import directly from llm_benchmarking to avoid CLI imports

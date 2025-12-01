@@ -324,7 +324,7 @@ uv sync
 pre-commit install
 
 # Verify setup
-./scripts/verify_setup.sh
+./scripts/setup/verify_setup.sh
 ```
 
 ---
@@ -860,7 +860,7 @@ cp .env.example .env
 # Edit .env with your credentials
 
 # Verify setup
-./scripts/verify_setup.sh
+./scripts/setup/verify_setup.sh
 
 # Run CLI
 uv run collabiq verify

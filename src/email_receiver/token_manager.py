@@ -22,16 +22,25 @@ class TokenManager:
         """
         Saves the token data to file, optionally encrypted.
         """
-        if self._fernet:
-            # Encrypt the refresh token and access token if needed
-            # For now, we'll just encrypt the entire JSON string
-            json_data = json.dumps(token_data)
-            encrypted_data = self._fernet.encrypt(json_data.encode())
-            self.token_path.write_bytes(encrypted_data)
-            logger.info(f"Saved encrypted token to {self.token_path}")
-        else:
-            self.token_path.write_text(json.dumps(token_data, indent=2))
-            logger.warning(f"Saved UNENCRYPTED token to {self.token_path} (no encryption key provided)")
+        try:
+            if self._fernet:
+                # Encrypt the refresh token and access token if needed
+                # For now, we'll just encrypt the entire JSON string
+                json_data = json.dumps(token_data)
+                encrypted_data = self._fernet.encrypt(json_data.encode())
+                self.token_path.write_bytes(encrypted_data)
+                logger.info(f"Saved encrypted token to {self.token_path}")
+            else:
+                self.token_path.write_text(json.dumps(token_data, indent=2))
+                logger.warning(f"Saved UNENCRYPTED token to {self.token_path} (no encryption key provided)")
+        except OSError as e:
+            if e.errno == 30:  # Read-only file system
+                logger.warning(f"Could not save token to {self.token_path}: Read-only file system. "
+                             "This is expected in Cloud Run with mounted secrets. "
+                             "The new token will be used for this session but not persisted.")
+            else:
+                logger.error(f"Failed to save token to {self.token_path}: {e}")
+                raise
 
     def load_token(self) -> Optional[dict]:
         """

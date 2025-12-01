@@ -15,16 +15,16 @@ While the current strategy is strong, key areas for enhancement include achievin
     *   **Unit Tests:** Focused on isolated components (e.g., `ContentNormalizer`), ensuring individual functions work as expected.
     *   **Integration Tests:** Cover interactions between modules, often using mocks for external APIs (e.g., `LLMOrchestrator` with mocked LLM providers, `NotionIntegrator` with mocked Notion API). These are extensive and well-written.
     *   **E2E Tests:** Validate the full pipeline logic, with various modes (mock, dry-run, full E2E with real writes via scripts).
-5.  **Robust Safety Features:** Explicit confirmation for Notion writes, duplicate detection, a dry-run mode, and a cleanup script (`scripts/cleanup_test_entries.py`) ensure safe interactions with production environments.
+5.  **Robust Safety Features:** Explicit confirmation for Notion writes, duplicate detection, a dry-run mode, and a cleanup script (`scripts/testing/cleanup_test_entries.py`) ensure safe interactions with production environments.
 6.  **Excellent Documentation:** The `docs/testing/E2E_TESTING.md` and `docs/testing/E2E_TEST_RESULTS_FINAL_20251109.md` provide detailed guides, setup instructions, troubleshooting tips, and historical test results, making the testing process transparent and manageable.
-7.  **Dedicated Testing Scripts:** Utility scripts (e.g., `scripts/select_test_emails.py`, `scripts/run_e2e_with_real_components.py`) streamline test setup and execution.
+7.  **Dedicated Testing Scripts:** Utility scripts (e.g., `scripts/testing/select_test_emails.py`, `scripts/testing/run_e2e_with_real_components.py`) streamline test setup and execution.
 8.  **Clear Success Criteria:** Defined success criteria (SC-001: ≥95% success rate, SC-002: 100% data accuracy, SC-003: No critical errors, SC-007: Korean text preservation) provide measurable goals for testing.
 
 ## Areas for Improvement and Recommendations
 
 ### 1. Achieve Truly End-to-End Automated Testing
 
-**Observation:** The automated E2E tests (`tests/e2e/test_full_pipeline.py`) currently use mock email bodies because `GmailReceiver` is not initialized. While `scripts/run_e2e_with_real_components.py` can perform real email fetching and Notion writes, these are typically run manually or semi-automatically.
+**Observation:** The automated E2E tests (`tests/e2e/test_full_pipeline.py`) currently use mock email bodies because `GmailReceiver` is not initialized. While `scripts/testing/run_e2e_with_real_components.py` can perform real email fetching and Notion writes, these are typically run manually or semi-automatically.
 
 **Recommendation:**
 *   **Integrate Real GmailReceiver into Automated E2E:** Develop a `pytest` fixture or a dedicated test suite that initializes `GmailReceiver` with test credentials (e.g., from a secure, ephemeral test account) and fetches real emails. This would enable the automated E2E suite to test the "Reception" stage with actual data.

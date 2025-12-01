@@ -22,7 +22,7 @@ from datetime import datetime, UTC
 from typing import Dict, List, Any
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from collabiq.test_utils.fuzz_generator import (
     FuzzConfig,

@@ -8,7 +8,7 @@ import time
 from typing import Dict, List
 
 # Add src to path
-src_path = Path(__file__).parent.parent / "src"
+src_path = Path(__file__).parent.parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
 from llm_adapters.gemini_adapter import GeminiAdapter

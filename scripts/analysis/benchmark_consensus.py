@@ -18,7 +18,7 @@ from typing import Any
 random.seed(42)
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.llm_adapters.health_tracker import HealthTracker
 from src.llm_orchestrator.strategies.consensus import ConsensusStrategy

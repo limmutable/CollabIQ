@@ -140,7 +140,7 @@ Example:
 
 ```bash
 # Single email (fastest)
-uv run python scripts/run_e2e_tests.py \
+uv run python scripts/testing/run_e2e_tests.py \
   --email-id 19a52c4ce89a4cc4 \
   --no-test-mode \
   --strategy failover \
@@ -148,7 +148,7 @@ uv run python scripts/run_e2e_tests.py \
   --report
 
 # All test emails
-uv run python scripts/run_e2e_tests.py \
+uv run python scripts/testing/run_e2e_tests.py \
   --all \
   --no-test-mode \
   --strategy failover \
@@ -156,7 +156,7 @@ uv run python scripts/run_e2e_tests.py \
   --report
 
 # All emails with all providers (comprehensive metrics)
-uv run python scripts/run_e2e_tests.py \
+uv run python scripts/testing/run_e2e_tests.py \
   --all \
   --no-test-mode \
   --strategy all_providers \
@@ -326,7 +326,7 @@ CollabIQ/
 
 ```bash
 # With all required components:
-uv run python scripts/run_e2e_tests.py \
+uv run python scripts/testing/run_e2e_tests.py \
   --all \
   --no-test-mode \
   --strategy failover \

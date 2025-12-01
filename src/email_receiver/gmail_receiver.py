@@ -134,7 +134,14 @@ class GmailReceiver(EmailReceiver):
                     self.creds = flow.run_local_server(port=8080)
 
                 # Save token for next run via TokenManager
-                self.token_path.parent.mkdir(parents=True, exist_ok=True)
+                try:
+                    self.token_path.parent.mkdir(parents=True, exist_ok=True)
+                except OSError as e:
+                    if e.errno == 30:  # Read-only file system
+                        pass  # Directory likely exists, ignore
+                    else:
+                        logger.warning(f"Failed to create token directory: {e}")
+
                 self.token_manager.save_token(json.loads(self.creds.to_json()))
                 logger.info(f"Saved token to {self.token_path}")
 
