@@ -19,13 +19,14 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
 from email_receiver.gmail_receiver import GmailReceiver
+from email_sender.gmail_sender import GmailSender
 from config.settings import Settings
 
 
 def main():
     """Run Gmail OAuth2 authentication flow."""
     print("=" * 60)
-    print("Gmail API Authentication")
+    print("Gmail API Authentication (Read + Send Scopes)")
     print("=" * 60)
     print()
 
@@ -52,16 +53,17 @@ def main():
     print()
     print("Starting OAuth2 authentication flow...")
     print("A browser window will open for you to authenticate.")
+    print("NOTE: You must approve 'Send email on your behalf' permissions.")
     print()
 
     try:
-        # Create receiver instance with credentials and token paths
-        receiver = GmailReceiver(
+        # Create sender instance (requests both read and send scopes)
+        sender = GmailSender(
             credentials_path=credentials_path, token_path=settings.gmail_token_path
         )
 
         # Connect (this triggers the browser OAuth flow if no token exists)
-        receiver.connect()
+        sender.connect()
 
         print()
         print("=" * 60)
@@ -70,7 +72,7 @@ def main():
         print()
         print(f"Token saved to: {settings.gmail_token_path}")
         print()
-        print("You can now use the Gmail API to retrieve emails.")
+        print("You can now use the Gmail API to retrieve and SEND emails.")
         print("The token will be automatically refreshed when needed.")
         print()
 

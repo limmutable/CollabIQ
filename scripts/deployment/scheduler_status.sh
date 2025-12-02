@@ -18,7 +18,7 @@ echo " 🚀 Latest Cloud Run Execution Triggered"
 echo "========================================================"
 
 # Get the most recent execution ID
-LATEST_EXECUTION=$(gcloud run jobs executions list --job=$RUN_JOB --region=$REGION --limit=1 --format="value(name)")
+LATEST_EXECUTION=$(gcloud run jobs executions list --job=$RUN_JOB --region=$REGION --limit=1 --sort-by="~creationTimestamp" --format="value(name)")
 
 if [ -z "$LATEST_EXECUTION" ]; then
   echo "No executions found for job: $RUN_JOB"
