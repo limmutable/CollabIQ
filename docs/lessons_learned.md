@@ -92,3 +92,19 @@ We have built a Ferrari engine. Now we need to build the dashboard.
 - **Next Steps**: Building automated reports and analytics. We have the data; now we need to visualize it to see trends in our collaboration network.
 
 CollabIQ is now a robust, self-healing system. It doesn't just "run scripts"; it manages its own health, chooses the best AI for the job, and recovers from errors automatically. That is the difference between a prototype and a product.
+
+---
+
+## Project Statistics (as of Dec 3, 2025)
+
+**Timeline & Activity**
+*   **Project Duration:** ~35 days (Oct 28, 2025 - Present)
+*   **Total Commits:** 300+
+*   **Development Velocity:** ~8.5 commits/day average
+
+**Codebase Scale**
+*   **Source Code:** ~37,800 lines (Python)
+*   **Test Suite:** ~32,500 lines
+*   **Documentation:** ~21,300 lines
+*   **Scripts:** ~7,500 lines
+*   **AI Config/Prompts:** ~3,300 lines
