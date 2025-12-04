@@ -109,6 +109,8 @@ class DaemonController:
                     logger.info(
                         f"Loaded company context ({formatted.metadata.total_companies} companies)"
                     )
+                    # Track Notion check for health monitoring
+                    state.last_notion_check = datetime.now(UTC)
                 except Exception as e:
                     logger.warning(f"Failed to fetch company context: {e}")
 
@@ -248,13 +250,20 @@ class DaemonController:
             state.emails_skipped_count += skipped_count
             state.total_processing_cycles += 1
 
-            # Update the fetch timestamp ONLY on successful completion
-            # This ensures we don't skip emails if there was an error mid-cycle
-            state.last_successful_fetch_timestamp = fetch_start_time
-
-            logger.info(
-                f"Cycle complete. Processed {processed_count} emails, skipped {skipped_count}. Next fetch will start from {fetch_start_time.isoformat()}"
-            )
+            # Update the fetch timestamp ONLY if all emails in batch were handled
+            # (processed or skipped). If any failed, we don't update timestamp
+            # so we can retry them in the next cycle.
+            if processed_count + skipped_count == len(emails):
+                state.last_successful_fetch_timestamp = fetch_start_time
+                logger.info(
+                    f"Cycle complete. Processed {processed_count}, Skipped {skipped_count}. "
+                    f"Updated fetch timestamp to {fetch_start_time.isoformat()}"
+                )
+            else:
+                logger.warning(
+                    f"Cycle had failures (processed {processed_count} + skipped {skipped_count} != total {len(emails)}). "
+                    "Keeping old fetch timestamp to retry failed emails."
+                )
 
             # Check if daily report should be generated
             await self._check_daily_report(state)
