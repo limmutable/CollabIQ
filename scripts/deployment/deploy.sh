@@ -166,7 +166,7 @@ if [ ! -f "Dockerfile" ]; then
 fi
 
 # Build the image
-docker build -t "$IMAGE_NAME" . || error "Docker build failed"
+docker build --platform linux/amd64 -t "$IMAGE_NAME" . || error "Docker build failed"
 success "Docker image built successfully"
 
 ################################################################################

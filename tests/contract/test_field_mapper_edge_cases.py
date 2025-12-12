@@ -22,7 +22,7 @@ class TestFieldMapperEdgeCases:
         # Create property mocks with both dict access and attribute access
         properties = {}
         property_defs = {
-            "협력주체": {"type": "title"},
+            "제목": {"type": "title"},
             "담당자": {"type": "people"},
             "스타트업명": {"type": "relation"},
             "협업기관": {"type": "relation"},
@@ -61,7 +61,7 @@ class TestFieldMapperEdgeCases:
 
         Contract:
         - Fields with None values are NOT included in properties dict
-        - Required fields (협력주체, email_id) are still present
+        - Required fields (제목, email_id) are still present
         - Optional fields (person_in_charge, details, etc.) are omitted when None
         """
         # Create data with several null fields
@@ -81,7 +81,7 @@ class TestFieldMapperEdgeCases:
         properties = field_mapper.map_to_notion_properties(data)
 
         # Required fields should always be present
-        assert "협력주체" in properties, "Title field must be present"
+        assert "제목" in properties, "Title field must be present"
         assert "Email ID" in properties, "Email ID must be present"
 
         # Optional null fields should be omitted
@@ -167,7 +167,7 @@ class TestFieldMapperEdgeCases:
         assert "협업기관" not in properties, "None matched_partner_id should be omitted"
 
         # Other fields should still be present
-        assert "협력주체" in properties, "Title field should still be present"
+        assert "제목" in properties, "Title field should still be present"
         assert "Email ID" in properties, "Email ID should still be present"
 
     def test_valid_relation_id_formats(self, field_mapper):

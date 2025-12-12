@@ -38,7 +38,7 @@ class TestNotionWriterContract:
         # Mock schema discovery (async)
         # This needs to replicate the nested structure: schema -> database -> properties
         mock_schema_properties = {
-            "협력주체": {"type": "title"},
+            "제목": {"type": "title"},
             "담당자": {"type": "people"},
             "스타트업명": {"type": "relation"},
             "협업기관": {"type": "relation"},

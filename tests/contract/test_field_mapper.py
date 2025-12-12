@@ -21,7 +21,7 @@ class TestFieldMapperContract:
         # Create property mocks with both dict access and attribute access
         properties = {}
         property_defs = {
-            "협력주체": {"type": "title", "id": "title"},
+            "제목": {"type": "title", "id": "title"},
             "담당자": {"type": "rich_text", "id": "담당자_id"},
             "스타트업명": {"type": "relation", "id": "스타트업명_id"},
             "협업기관": {"type": "relation", "id": "협업기관_id"},

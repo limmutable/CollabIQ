@@ -23,7 +23,7 @@ class TestFieldMapperPersonMatching:
         """Mock database schema for FieldMapper initialization."""
         schema = MagicMock()
         schema.database.properties = {
-            "협력주체": MagicMock(type="title"),
+            "제목": MagicMock(type="title"),
             "담당자": MagicMock(type="people"),
             "협업내용": MagicMock(type="rich_text"),
             "스타트업명": MagicMock(type="relation"),

@@ -258,11 +258,11 @@ class FieldMapper:
         """
         properties = {}
 
-        # Title field: 협력주체 (auto-generated: startup-partner)
+        # Title field: 제목 (auto-generated: startup-partner)
         collaboration_subject = (
             f"{extracted_data.startup_name}-{extracted_data.partner_org}"
         )
-        properties["협력주체"] = self._format_title(collaboration_subject)
+        properties["제목"] = self._format_title(collaboration_subject)
 
         # People field: 담당자
         if extracted_data.matched_person_id:

@@ -234,10 +234,16 @@ class GmailReceiver(EmailReceiver):
             if query is None:
                 # Default query filters emails sent to group alias (T022)
                 # Using 'to:' operator which works reliably with Gmail API
-                # Note: 'in:inbox' filter is omitted because group-forwarded emails
-                # may not retain inbox label in the authenticated user's mailbox
-                query_str = "to:collab@signite.co"
+                # Explicitly exclude TRASH and SPAM to avoid processing deleted messages
+                # Note: Gmail API default excludes trash/spam but Google Groups forwarded
+                # emails may have different label behavior
+                query_str = "to:collab@signite.co -in:trash -in:spam"
             else:
+                # For custom queries, also exclude trash and spam unless explicitly included
+                if "-in:trash" not in query.lower() and "in:trash" not in query.lower():
+                    query = f"{query} -in:trash"
+                if "-in:spam" not in query.lower() and "in:spam" not in query.lower():
+                    query = f"{query} -in:spam"
                 query_str = query
 
             # Add timestamp filter if provided
@@ -245,11 +251,17 @@ class GmailReceiver(EmailReceiver):
                 query_str += f" after:{int(since.timestamp())}"
 
             # Fetch message list
+            # includeSpamTrash=False is the default, but we set it explicitly for clarity
             logger.info(f"Fetching emails with query: {query_str}, max: {max_emails}")
             results = (
                 self.service.users()
                 .messages()
-                .list(userId="me", q=query_str, maxResults=max_emails)
+                .list(
+                    userId="me",
+                    q=query_str,
+                    maxResults=max_emails,
+                    includeSpamTrash=False,
+                )
                 .execute()
             )
 

@@ -21,7 +21,7 @@
 - **담당자**: People (2 person(s))
 - **스타트업명**: Relation (1 linked item(s))
 - **포폴 여부**: Rollup
-- **협력주체**: Title (sample: '리메세-신세계인터내셔날')
+- **제목**: Title (sample: '리메세-신세계인터내셔날')
 - **협업강도**: Select (value: '이해')
 - **협업기관**: Relation (1 linked item(s))
 - **협업내용**: Rich Text (sample: '인도의 뷰티 리테일러 Nykaa 대표 방한시 윌리엄킴 ...')

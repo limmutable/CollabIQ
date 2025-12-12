@@ -34,7 +34,7 @@ class TestDuplicateDetection:
         mock_schema = Mock()
         mock_schema.database = Mock()
         mock_schema.database.properties = {
-            "협력주체": {"type": "title"},
+            "제목": {"type": "title"},
             "담당자": {"type": "people"},
             "스타트업명": {"type": "relation"},
             "협업기관": {"type": "relation"},

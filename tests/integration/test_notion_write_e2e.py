@@ -42,7 +42,7 @@ class TestNotionWriteE2E:
 
         # Create proper DatabaseSchema with NotionProperty objects
         properties = {
-            "협력주체": NotionProperty(name="협력주체", type="title", id="title"),
+            "제목": NotionProperty(name="제목", type="title", id="title"),
             "담당자": NotionProperty(name="담당자", type="people", id="담당자_id"),
             "스타트업명": NotionProperty(
                 name="스타트업명", type="relation", id="스타트업명_id"
@@ -137,7 +137,7 @@ class TestNotionWriteE2E:
         5. Verify all fields were mapped correctly
         6. Verify Korean text preserved
         7. Verify relation fields linked to company IDs
-        8. Verify auto-generated 협력주체 field
+        8. Verify auto-generated 제목 field
 
         This test verifies the COMPLETE user journey for User Story 1.
         """
@@ -148,7 +148,7 @@ class TestNotionWriteE2E:
             "object": "page",
             "created_time": "2025-10-28T10:35:00.000Z",
             "properties": {
-                "협력주체": {
+                "제목": {
                     "id": "title",
                     "type": "title",
                     "title": [{"text": {"content": "브레이크앤컴퍼니-신세계푸드"}}],
@@ -211,12 +211,12 @@ class TestNotionWriteE2E:
         # Verify properties payload
         properties = call_args.kwargs["properties"]
 
-        # Verify 협력주체 (title field - auto-generated)
-        assert "협력주체" in properties, "협력주체 title field must be present"
+        # Verify 제목 (title field - auto-generated)
+        assert "제목" in properties, "제목 title field must be present"
         assert (
-            properties["협력주체"]["title"][0]["text"]["content"]
+            properties["제목"]["title"][0]["text"]["content"]
             == "브레이크앤컴퍼니-신세계푸드"
-        ), "협력주체 must be auto-generated as '{startup}-{partner}'"
+        ), "제목 must be auto-generated as '{startup}-{partner}'"
 
         # Verify 담당자 (people field - matched person ID)
         assert "담당자" in properties, "담당자 field must be present"
@@ -320,7 +320,7 @@ class TestNotionWriteE2E:
         """T047: Test that all Notion property types are formatted correctly.
 
         Property Types Tested:
-        - title: 협력주체 (auto-generated)
+        - title: 제목 (auto-generated)
         - rich_text: 담당자, 협업내용, 요약, email_id
         - relation: 스타트업명, 협업기관
         - select: 협업형태, 협업강도
@@ -374,7 +374,7 @@ class TestNotionWriteE2E:
 
         # Verify title field
         assert (
-            properties["협력주체"]["title"][0]["text"]["content"]
+            properties["제목"]["title"][0]["text"]["content"]
             == "완전한스타트업-완전한파트너"
         )
 
@@ -467,7 +467,7 @@ class TestNotionWriteE2E:
         ]
 
         # Required fields should be present
-        assert "협력주체" in properties, "Title field is required"
+        assert "제목" in properties, "Title field is required"
         assert "Email ID" in properties, "Email ID is required"
         assert "협업내용" in properties, "details is required"
         assert "협업형태" in properties, "collaboration_type is required"
