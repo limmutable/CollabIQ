@@ -1,84 +1,38 @@
 # CollabIQ Documentation
 
-Welcome to the CollabIQ documentation. This guide will help you navigate all available resources.
+Welcome to the CollabIQ documentation.
 
-## Getting Started
+## Core Documentation
 
-If you're new to CollabIQ, start here:
+### Getting Started
+- **[Quick Start Guide](setup/quickstart.md)**: Set up development environment (15 mins).
+- **[Gmail OAuth Setup](setup/gmail-oauth-setup.md)**: Configure Gmail API access.
+- **[Infisical Setup](setup/infisical-setup.md)**: Secret management configuration.
 
-- [Quick Start Guide](setup/quickstart.md) - Set up your development environment in under 15 minutes
-- [Infisical Secret Management](setup/infisical-setup.md) - Optional centralized secret management for teams
+### Deployment (New 🚀)
+- **[Google Cloud Deployment Guide](deployment/google-cloud-guide.md)**: Comprehensive guide for deploying CollabIQ to Google Cloud Run Jobs, including Docker containerization, Secret Manager setup, and GCS state persistence.
 
-## Architecture & Design
+### Architecture
+- **[System Architecture](architecture/ARCHITECTURE.md)**: High-level design and components.
+- **[Roadmap](architecture/ROADMAP.md)**: Implementation phases and status.
+- **[Tech Stack](architecture/TECHSTACK.md)**: Dependencies and technology choices.
 
-Learn about the system design and implementation strategy:
+### Operations & CLI
+- **[CLI Reference](cli/CLI_REFERENCE.md)**: Complete command reference for `collabiq`.
+- **[Commands Guide](cli/COMMANDS.md)**: Detailed usage patterns.
 
-- [System Architecture](architecture/ARCHITECTURE.md) - High-level component design, data flow, deployment architecture
-- [Tech Stack](architecture/TECHSTACK.md) - Implementation details, dependencies, patterns, technical debt, and Infisical integration
-- [API Contracts](architecture/API_CONTRACTS.md) - Interface specifications for all components
-- [Implementation Roadmap](architecture/ROADMAP.md) - 12-phase development plan with progress tracking
-
-## Testing & Validation
-
-Review testing guides and API validation results:
-
-- **[E2E Testing Guide](testing/E2E_TESTING.md)** - Comprehensive end-to-end testing workflow
-- **[Validation Documentation Index](validation/README.md)** - Overview of all validation docs
-- [E2E Data Model](validation/E2E_DATA_MODEL.md) - Test data structure reference
-- [Gemini API Reference](validation/GEMINI_API_REFERENCE.md) - API capabilities, rate limits, pricing
-- [Notion API Validation](validation/NOTION_API_VALIDATION.md) - Comprehensive Notion API test results
-- [Notion Schema Analysis](validation/NOTION_SCHEMA_ANALYSIS.md) - Database field structures and types
-- [Date Parsing Library Comparison](validation/date-parsing-library-comparison.md) - dateutil vs dateparser analysis
-
-**Historical Docs**: Phase 0 documentation archived in [docs/archive/phase0/](archive/phase0/)
+### Testing & Validation
+- **[Testing Guide](testing/TESTING_GUIDE.md)**: General testing strategy.
+- **[E2E Testing](testing/E2E_TESTING.md)**: End-to-end testing workflow.
+- **[Validation Docs](validation/README.md)**: API validation reports and research.
 
 ## Project Status
 
-**Current Phase**: Phase 017 Complete ✅ (Production Readiness Fixes)
+**Current Phase**: Phase 018 Complete (Google Cloud Deployment) ✅
 
-### Completed Phases
-- ✅ **Phase 0**: Foundation Work (Architecture, Roadmap, Project Scaffold)
-- ✅ **Phase 1a**: Email Reception (Gmail API, OAuth2, Email Cleaning)
-- ✅ **Phase 1b**: Gemini Entity Extraction (100% accuracy on test dataset)
-- ✅ **Phase 005**: Gmail OAuth2 Setup (Group alias support, Token management)
-- ✅ **Phase 2a**: Notion Read Operations (Schema discovery, Data fetching, LLM formatting)
-- ✅ **Phase 2b**: LLM-Based Company Matching (100% accuracy, confidence scores)
-- ✅ **Phase 2c**: Classification & Summarization (Type, Intensity, Summary generation)
-- ✅ **Phase 2d**: Notion Write Operations (Duplicate detection, DLQ handling)
-- ✅ **Phase 010**: Error Handling & Retry Logic (Unified retry system with circuit breakers)
-- ✅ **Phase 011**: Admin CLI (Status, health checks, cost tracking, provider comparison)
-- ✅ **Phase 012**: Multi-LLM Support (Claude, OpenAI adapters with unified interface)
-- ✅ **Phase 013**: Quality Metrics & Intelligent Routing (Provider selection, metrics tracking)
-- ✅ **Phase 014**: Enhanced Field Mapping (Company fuzzy matching, person matching, auto-creation)
-- ✅ **Phase 015**: Test Suite Improvements (99%+ pass rate, stable CI/CD foundation)
-- ✅ **Phase 016**: Project Cleanup & Refactoring (Documentation consolidation, CLI polish)
-- ✅ **Phase 017**: Production Readiness Fixes (Async pipeline stability, Notion schema alignment)
+### Recent Milestones
+- **Phase 018**: Cloud Run Deployment, Dockerization, GCS State.
+- **Phase 017**: Production Readiness, Async pipeline stability.
+- **Phase 016**: Documentation & CLI Cleanup.
 
-**🎯 MVP Status**: PRODUCTION READY - Full async pipeline verified with 100% E2E success rate
-
-**Next Steps**: Basic Reporting (Phase 018)
-
-### Key Achievements
-- ✅ **E2E Success**: 100% Success Rate on Production Database (5/5 emails)
-- ✅ **Async Architecture**: Full non-blocking pipeline using `asyncio`
-- ✅ **Gemini API Validation**: 94% accuracy (exceeds 85% target)
-- ✅ **Notion API Validation**: All CRUD operations confirmed
-- ✅ **MVP Complete**: Email ingestion + entity extraction + company matching + classification + Notion write
-- ✅ **Notion Integration**: Schema discovery, pagination, relationship resolution, duplicate detection
-- ✅ **Infisical Integration**: Centralized secret management for all services
-- ✅ **Error Handling**: Unified retry system with circuit breakers, DLQ, and structured logging
-- ✅ **Classification Pipeline**: Dynamic type classification, LLM-based intensity, summary generation
-- ✅ **Field Mapping**: Fuzzy company matching (<1ms), person matching (100%), auto-creation of missing companies
-
-## Quick Links
-
-- [Main README](../README.md) - Project overview
-- [Speckit Commands](../.claude/commands/) - Available development workflows
-- [Test Fixtures](../tests/fixtures/) - Sample data for testing
-
-## Need Help?
-
-- Check the [Quick Start Guide](setup/quickstart.md) for setup issues
-- Review [Architecture](architecture/ARCHITECTURE.md) for high-level system design
-- See [Tech Stack](architecture/TECHSTACK.md) for implementation details and troubleshooting
-- Check [API Contracts](architecture/API_CONTRACTS.md) for interface specifications
+See [Roadmap](architecture/ROADMAP.md) for future plans.
