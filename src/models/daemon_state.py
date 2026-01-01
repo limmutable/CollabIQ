@@ -50,6 +50,41 @@ class DaemonProcessState(BaseModel):
     last_report_generated: Optional[datetime] = Field(None, description="Last daily report generation time.")
     last_alert_sent: Optional[datetime] = Field(None, description="Last critical alert sent time.")
 
+    # Processed email tracking (persisted to GCS for Cloud Run)
+    # This replaces the local processed_ids.json for cloud deployments
+    processed_message_ids: set[str] = Field(
+        default_factory=set,
+        description="Set of processed email message IDs. Synced to GCS for persistence across container restarts.",
+    )
+
+    def is_email_processed(self, message_id: str) -> bool:
+        """Check if an email has already been processed.
+
+        Args:
+            message_id: Gmail message ID to check
+
+        Returns:
+            True if email has been processed, False otherwise
+        """
+        return message_id in self.processed_message_ids
+
+    def mark_email_processed(self, message_id: str) -> None:
+        """Mark an email as processed.
+
+        Adds the message ID to the processed set. The set is persisted
+        to GCS when save_state() is called, ensuring durability across
+        Cloud Run container restarts.
+
+        Args:
+            message_id: Gmail message ID to mark as processed
+        """
+        self.processed_message_ids.add(message_id)
+        # Keep set size manageable - only store last 1000 IDs
+        if len(self.processed_message_ids) > 1000:
+            # Convert to list, sort by some order (lexicographic for IDs), keep recent
+            sorted_ids = sorted(self.processed_message_ids)
+            self.processed_message_ids = set(sorted_ids[-1000:])
+
     def record_error(self, severity: str, component: str, message: str, context: dict | None = None) -> None:
         """Record an error for reporting. Keeps last 100 errors."""
         error = {

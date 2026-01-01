@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from google import generativeai as genai
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 from google.api_core import exceptions as google_exceptions
 from pydantic import ValidationError
 
@@ -138,10 +139,10 @@ class GeminiAdapter(LLMProvider):
                     max_output_tokens=400, # Increased max output tokens to match summary length limit
                 ),
                 safety_settings={
-                    "HARASSMENT": "BLOCK_NONE",
-                    "HATE_SPEECH": "BLOCK_NONE",
-                    "SEXUALLY_EXPLICIT": "BLOCK_NONE",
-                    "DANGEROUS_CONTENT": "BLOCK_NONE",
+                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
                 },
             )
 
@@ -391,10 +392,10 @@ class GeminiAdapter(LLMProvider):
                     temperature=0.1,  # Low temperature for consistent extraction
                 ),
                 safety_settings={
-                    "HARASSMENT": "BLOCK_NONE",
-                    "HATE_SPEECH": "BLOCK_NONE",
-                    "SEXUALLY_EXPLICIT": "BLOCK_NONE",
-                    "DANGEROUS_CONTENT": "BLOCK_NONE",
+                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
                 },
             )
 

@@ -1,10 +1,11 @@
 """Unit tests for deterministic type classification logic.
 
 This module tests the classify_collaboration_type() method:
+- SIGNITE Event → "[E]SIGNITE Event"
 - Portfolio + SSG Affiliate → "[A]PortCoXSSG"
+- Non-Portfolio + SSG Affiliate → "[B]Non-PortCoXSSG"
 - Portfolio + Portfolio → "[C]PortCoXPortCo"
-- Portfolio + External/Other → "[B]Non-PortCoXSSG"
-- Non-Portfolio + Any → "[D]Other"
+- Portfolio + External/Other → "[D]PortCoXExt"
 - Null inputs → graceful degradation
 """
 
@@ -17,12 +18,13 @@ class TestTypeClassification:
 
     @pytest.fixture
     def collaboration_types(self):
-        """Fixture providing collaboration type values."""
+        """Fixture providing collaboration type values (matching Notion database)."""
         return {
             "A": "[A]PortCoXSSG",
             "B": "[B]Non-PortCoXSSG",
             "C": "[C]PortCoXPortCo",
-            "D": "[D]Other",
+            "D": "[D]PortCoXExt",
+            "E": "[E]SIGNITE Event",
         }
 
     @pytest.fixture
@@ -65,41 +67,58 @@ class TestTypeClassification:
         assert collab_type == "[C]PortCoXPortCo"
         assert confidence == 0.95
 
-    def test_portfolio_external_returns_type_b(
+    def test_portfolio_external_returns_type_d(
         self, classification_service, collaboration_types
     ):
-        """Test: Portfolio + External → type matching '[B]*' pattern."""
+        """Test: Portfolio + External → type matching '[D]PortCoXExt' pattern."""
         collab_type, confidence = classification_service.classify_collaboration_type(
             company_classification="Portfolio",
             partner_classification="Other",
             collaboration_types=collaboration_types,
         )
 
-        assert collab_type == "[B]Non-PortCoXSSG"
+        assert collab_type == "[D]PortCoXExt"
         assert confidence == 0.90  # Slightly lower confidence for external
 
-    def test_non_portfolio_returns_type_d(
+    def test_non_portfolio_ssg_returns_type_b(
         self, classification_service, collaboration_types
     ):
-        """Test: Non-Portfolio + Any → type matching '[D]*' pattern."""
+        """Test: Non-Portfolio + SSG Affiliate → type matching '[B]Non-PortCoXSSG' pattern."""
         collab_type, confidence = classification_service.classify_collaboration_type(
             company_classification="Other",
             partner_classification="SSG Affiliate",
             collaboration_types=collaboration_types,
         )
 
-        assert collab_type == "[D]Other"
-        assert confidence == 0.80
+        assert collab_type == "[B]Non-PortCoXSSG"
+        assert confidence == 0.90
 
-        # Test with different partner classification
-        collab_type2, confidence2 = classification_service.classify_collaboration_type(
+    def test_non_portfolio_non_ssg_returns_type_b_fallback(
+        self, classification_service, collaboration_types
+    ):
+        """Test: Non-Portfolio + Non-SSG → fallback to '[B]Non-PortCoXSSG' with lower confidence."""
+        collab_type, confidence = classification_service.classify_collaboration_type(
             company_classification="Other",
             partner_classification="Portfolio",
             collaboration_types=collaboration_types,
         )
 
-        assert collab_type2 == "[D]Other"
-        assert confidence2 == 0.80
+        assert collab_type == "[B]Non-PortCoXSSG"
+        assert confidence == 0.75  # Lower confidence for fallback case
+
+    def test_signite_event_returns_type_e(
+        self, classification_service, collaboration_types
+    ):
+        """Test: SIGNITE Event flag → type matching '[E]SIGNITE Event' pattern."""
+        collab_type, confidence = classification_service.classify_collaboration_type(
+            company_classification="Portfolio",
+            partner_classification="SSG Affiliate",
+            collaboration_types=collaboration_types,
+            is_signite_event=True,
+        )
+
+        assert collab_type == "[E]SIGNITE Event"
+        assert confidence == 0.90  # LLM-determined confidence
 
     def test_null_company_classification_returns_none(
         self, classification_service, collaboration_types

@@ -10,7 +10,10 @@ This module orchestrates collaboration classification:
 
 import logging
 import re
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional
+
+if TYPE_CHECKING:
+    from llm_provider.types import ExtractedEntities
 
 logger = logging.getLogger(__name__)
 
@@ -109,30 +112,127 @@ class ClassificationService:
 
         return self._type_values_cache
 
+    async def detect_signite_event(self, email_content: str) -> tuple[bool, float]:
+        """Detect if email is about a SIGNITE-hosted event using LLM.
+
+        Args:
+            email_content: Full email text for analysis
+
+        Returns:
+            Tuple of (is_signite_event, confidence):
+            - is_signite_event: True if email is about SIGNITE event
+            - confidence: 0.0-1.0 confidence score
+        """
+        import json
+        import asyncio
+
+        if not email_content or not email_content.strip():
+            return (False, 0.0)
+
+        prompt = """Analyze this Korean business email and determine if it's about a SIGNITE-hosted event.
+
+SIGNITE Events include:
+- 시그나이트 주최 네트워킹 이벤트
+- SIGNITE Demo Day, 데모데이
+- 시그나이트 포트폴리오 행사
+- SIGNITE 주관 프로그램 (엑셀러레이터 프로그램, 스타트업 행사)
+- 시그나이트 투자사 미팅 행사
+
+NOT SIGNITE Events:
+- Regular 1:1 collaboration between companies
+- PoC or pilot projects between specific companies
+- Investment discussions
+- General business meetings
+
+Email Content:
+""" + email_content + """
+
+Return ONLY a JSON object (no markdown):
+{
+  "is_signite_event": true/false,
+  "confidence": 0.0-1.0,
+  "reasoning": "Brief explanation"
+}"""
+
+        try:
+            response_text = await asyncio.to_thread(
+                self.gemini._call_with_retry,
+                lambda: self.gemini._call_gemini_api(
+                    prompt=prompt,
+                    temperature=0.1,
+                ),
+            )
+
+            response_text = response_text.strip()
+            if response_text.startswith("```"):
+                response_text = response_text.split("```")[1]
+                if response_text.startswith("json"):
+                    response_text = response_text[4:]
+                response_text = response_text.strip()
+
+            result = json.loads(response_text)
+            is_event = result.get("is_signite_event", False)
+            confidence = result.get("confidence", 0.0)
+
+            logger.info(
+                "SIGNITE event detection completed",
+                extra={
+                    "is_signite_event": is_event,
+                    "confidence": confidence,
+                    "reasoning": result.get("reasoning", "")[:100],
+                },
+            )
+
+            return (is_event, confidence)
+
+        except Exception as e:
+            logger.warning(
+                "SIGNITE event detection failed, defaulting to False",
+                extra={"error": str(e)},
+            )
+            return (False, 0.0)
+
     def classify_collaboration_type(
         self,
         company_classification: Optional[str],
         partner_classification: Optional[str],
         collaboration_types: Dict[str, str],
+        is_signite_event: bool = False,
     ) -> tuple[Optional[str], Optional[float]]:
         """Classify collaboration type deterministically.
 
         Uses Phase 2b company classifications to determine type:
+        - SIGNITE Event → "[E]SIGNITE Event"
         - Portfolio + SSG Affiliate → "[A]PortCoXSSG"
+        - Non-Portfolio + SSG Affiliate → "[B]Non-PortCoXSSG"
         - Portfolio + Portfolio → "[C]PortCoXPortCo"
-        - Portfolio + External/Other → "[B]Non-PortCoXSSG"
-        - Non-Portfolio + Any → "[D]Other"
+        - Portfolio + External/Other → "[D]PortCoXExt"
 
         Args:
             company_classification: Company type ("Portfolio", "SSG Affiliate", "Other")
             partner_classification: Partner type ("Portfolio", "SSG Affiliate", "Other")
             collaboration_types: Dict mapping codes to exact Notion field values
+            is_signite_event: Whether LLM detected this as a SIGNITE event
 
         Returns:
             Tuple of (collaboration_type, confidence_score):
             - collaboration_type: Exact Notion field value or None if cannot classify
-            - confidence: 0.95 (Portfolio+SSG), 0.90 (Portfolio+External), 0.80 (Other), None if cannot classify
+            - confidence: 0.95 (high confidence), 0.90 (medium), 0.80 (low), None if cannot classify
         """
+        # Check for SIGNITE event first (LLM-determined)
+        if is_signite_event:
+            collaboration_type = collaboration_types.get("E")
+            if collaboration_type:
+                logger.info(
+                    "Type classification: SIGNITE Event detected",
+                    extra={
+                        "type_code": "E",
+                        "collaboration_type": collaboration_type,
+                        "confidence": 0.90,
+                    },
+                )
+                return (collaboration_type, 0.90)
+
         if not company_classification or not partner_classification:
             logger.warning(
                 "Cannot classify type: missing company or partner classification",
@@ -143,27 +243,37 @@ class ClassificationService:
             )
             return (None, None)
 
-        # Deterministic classification logic
+        # Deterministic classification logic (updated mapping)
         if (
             company_classification == "Portfolio"
             and partner_classification == "SSG Affiliate"
         ):
+            # Portfolio Company × SSG Affiliate
             type_code = "A"
             confidence = 0.95
+        elif (
+            company_classification != "Portfolio"
+            and partner_classification == "SSG Affiliate"
+        ):
+            # Non-Portfolio Company × SSG Affiliate
+            type_code = "B"
+            confidence = 0.90
         elif (
             company_classification == "Portfolio"
             and partner_classification == "Portfolio"
         ):
+            # Portfolio Company × Portfolio Company
             type_code = "C"
             confidence = 0.95
         elif company_classification == "Portfolio":
-            # External or Other
-            type_code = "B"
+            # Portfolio Company × External/Other
+            type_code = "D"
             confidence = 0.90
         else:
-            # Non-Portfolio
-            type_code = "D"
-            confidence = 0.80
+            # Fallback: Non-Portfolio with Non-SSG partner
+            # Map to B (Non-PortCo) as closest match
+            type_code = "B"
+            confidence = 0.75
 
         collaboration_type = collaboration_types.get(type_code)
 
@@ -511,14 +621,20 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
         # Step 2: Fetch collaboration type values from Notion
         collaboration_types = await self.get_collaboration_types()
 
-        # Step 3: Classify collaboration type
+        # Step 3: Detect if this is a SIGNITE event (LLM-based)
+        is_signite_event, signite_confidence = await self.detect_signite_event(
+            email_content=email_content
+        )
+
+        # Step 4: Classify collaboration type (with SIGNITE event detection)
         collaboration_type, type_confidence = self.classify_collaboration_type(
             company_classification=company_classification,
             partner_classification=partner_classification,
             collaboration_types=collaboration_types,
+            is_signite_event=is_signite_event and signite_confidence >= 0.80,
         )
 
-        # Step 4: Classify collaboration intensity
+        # Step 5: Classify collaboration intensity
         (
             collaboration_intensity,
             intensity_confidence,
@@ -528,7 +644,7 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
             details=entities.details,
         )
 
-        # Step 5: Generate collaboration summary
+        # Step 6: Generate collaboration summary
         (
             collaboration_summary,
             summary_word_count,
@@ -538,7 +654,7 @@ Return ONLY a JSON object with this exact structure (no markdown, no explanation
             extracted_entities=entities,
         )
 
-        # Step 6: Create ExtractedEntitiesWithClassification with all fields
+        # Step 7: Create ExtractedEntitiesWithClassification with all fields
         result = ExtractedEntitiesWithClassification(
             # Phase 1b fields
             person_in_charge=entities.person_in_charge,

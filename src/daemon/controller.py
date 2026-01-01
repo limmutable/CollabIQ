@@ -140,7 +140,19 @@ class DaemonController:
             processed_count = 0
             skipped_count = 0
             for raw_email in emails:
-                if self.receiver.is_duplicate(raw_email.metadata.message_id):
+                message_id = raw_email.metadata.message_id
+
+                # Check state-based duplicate tracking (persisted to GCS for Cloud Run)
+                # This is the primary deduplication mechanism for cloud deployments
+                if state.is_email_processed(message_id):
+                    logger.debug(f"Email {message_id} already processed (state check)")
+                    skipped_count += 1
+                    continue
+
+                # Also check local file-based tracker (for backward compatibility)
+                if self.receiver.is_duplicate(message_id):
+                    logger.debug(f"Email {message_id} already processed (local file)")
+                    state.mark_email_processed(message_id)  # Sync to state
                     skipped_count += 1
                     continue
 
@@ -150,14 +162,14 @@ class DaemonController:
                 # Avoid expensive LLM calls if entry already exists
                 if self.writer:
                     try:
-                        existing_id = await self.writer.check_duplicate(
-                            raw_email.metadata.message_id
-                        )
+                        existing_id = await self.writer.check_duplicate(message_id)
                         if existing_id:
                             logger.info(
                                 f"Duplicate found in Notion (page_id={existing_id}). Skipping processing."
                             )
-                            self.receiver.mark_processed(raw_email.metadata.message_id)
+                            # Mark as processed in both state (for GCS) and local file
+                            state.mark_email_processed(message_id)
+                            self.receiver.mark_processed(message_id)
                             processed_count += 1
                             continue
                     except Exception as e:
@@ -224,9 +236,11 @@ class DaemonController:
                     state.last_notion_check = datetime.now(UTC)
 
                     if result.success:
-                        self.receiver.mark_processed(raw_email.metadata.message_id)
+                        # Mark as processed in both state (for GCS) and local file
+                        state.mark_email_processed(message_id)
+                        self.receiver.mark_processed(message_id)
                         processed_count += 1
-                        state.last_processed_email_id = raw_email.metadata.message_id
+                        state.last_processed_email_id = message_id
                         # Track Notion operation for metrics
                         state.record_notion_operation("create", success=True)
                     else:
